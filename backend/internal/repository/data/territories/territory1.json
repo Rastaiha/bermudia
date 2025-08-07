@@ -1,0 +1,72 @@
+{
+  "id": "territory1",
+  "name": "Mystic Archipelago",
+  "islands": [
+    {
+      "id": "island_start",
+      "name": "Welcome Harbor",
+      "x": 100,
+      "y": 150,
+      "assetFile": "harbor_icon.png",
+      "description": "The starting point for all new adventurers"
+    },
+    {
+      "id": "island_math1",
+      "name": "Number Island",
+      "x": 250,
+      "y": 180,
+      "assetFile": "numbers_icon.png",
+      "description": "Learn the fundamentals of arithmetic and number theory"
+    },
+    {
+      "id": "island_math2",
+      "name": "Geometry Peak",
+      "x": 400,
+      "y": 120,
+      "assetFile": "geometry_icon.png",
+      "description": "Explore shapes, angles, and spatial relationships"
+    },
+    {
+      "id": "island_science1",
+      "name": "Physics Bay",
+      "x": 320,
+      "y": 280,
+      "assetFile": "physics_icon.png",
+      "description": "Discover the laws of motion and energy"
+    },
+    {
+      "id": "island_final",
+      "name": "Knowledge Summit",
+      "x": 500,
+      "y": 200,
+      "assetFile": "summit_icon.png",
+      "description": "The ultimate challenge combining all learned concepts"
+    }
+  ],
+  "edges": [
+    {
+      "from": "island_start",
+      "to": "island_math1"
+    },
+    {
+      "from": "island_start",
+      "to": "island_science1"
+    },
+    {
+      "from": "island_math1",
+      "to": "island_math2"
+    },
+    {
+      "from": "island_math1",
+      "to": "island_science1"
+    },
+    {
+      "from": "island_math2",
+      "to": "island_final"
+    },
+    {
+      "from": "island_science1",
+      "to": "island_final"
+    }
+  ]
+}
