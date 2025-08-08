@@ -35,7 +35,9 @@ jobs:
             SCOPE="${BASH_REMATCH[1]}"
             # Convert to lowercase and strip spaces just in case
             SCOPE_CLEAN=$(echo "$SCOPE" | tr '[:upper:]' '[:lower:]' | tr -d ' ')
-            IMAGE_TAG="ghcr.io/${{ github.repository }}-${SCOPE_CLEAN}:${{ github.run_number }}"
+            RAW_TAG="ghcr.io/${{ github.repository }}-${SCOPE_CLEAN}:${{ github.run_number }}"
+            IMAGE_TAG=$(echo "$RAW_TAG" | tr '[:upper:]' '[:lower:]')
+            
             echo "✅ Extracted scope: $SCOPE_CLEAN"
             echo "📦 Image tag: $IMAGE_TAG"
 
