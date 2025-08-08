@@ -1,0 +1,60 @@
+name: Build & Push Image on PR Merge
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Get last commit message
+        id: commit
+        run: |
+          echo "message=$(git log -1 --pretty=%B)" >> "$GITHUB_OUTPUT"
+
+      - name: Extract scope from commit message
+        id: scope
+        run: |
+          COMMIT_MESSAGE="${{ steps.commit.outputs.message }}"
+          echo "Commit message: $COMMIT_MESSAGE"
+
+          if [[ "$COMMIT_MESSAGE" =~ ^[a-zA-Z]+\\(([^)]+)\\): ]]; then
+            SCOPE="${BASH_REMATCH[1]}"
+            echo "Extracted scope: $SCOPE"
+            echo "scope=$SCOPE" >> "$GITHUB_OUTPUT"
+            
+            TAG="ghcr.io/${{ github.repository }}-${{ steps.scope.outputs.scope }}:${{ github.run_number }}"
+            echo "Image Tag: $TAG"
+            echo "tag=$TAG" >> "GITHUB_OUTPUT"
+          else
+            echo "❌ Failed to extract scope from commit message."
+            exit 1
+          fi
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and Push Docker image
+        uses: docker/build-push-action@v5.3.0
+        with:
+          context: ./${{ steps.scope.outputs.scope }}
+          file: ./${{ steps.scope.outputs.scope }}/Dockerfile
+          push: true
+          tags: ${{ steps.scope.outputs.tag }}
