@@ -1,0 +1,26 @@
+@import "tailwindcss";
+
+@font-face {
+  font-family: Vazir;
+  src: url('./src/assets/fonts/Vazirmatn-Regular.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: Vazir;
+  src: url('./src/assets/fonts/Vazirmatn-Bold.ttf') format('truetype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@theme {
+  --font-vazir: Vazir,
+  --color-rasta-green:  '#008A00', // A nice, deep green
+  --color-rasta-yellow: '#F9D104', // A vibrant yellow
+  --color-rasta-red:    '#D62828',   // A bold red
+  --color-rasta-black:  '#1E1E1E', // A dark, subtle black for contrast
+}
+
