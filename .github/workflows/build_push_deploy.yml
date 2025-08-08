@@ -22,20 +22,25 @@ jobs:
         run: |
           echo "message=$(git log -1 --pretty=%B)" >> "$GITHUB_OUTPUT"
 
-      - name: Extract scope from commit message
+      - name: Extract scope and build image tag
         id: scope
+        shell: bash
         run: |
           COMMIT_MESSAGE="${{ steps.commit.outputs.message }}"
-          echo "Commit message: $COMMIT_MESSAGE"
+          echo "🔍 Commit message: $COMMIT_MESSAGE"
 
-          if [[ "$COMMIT_MESSAGE" =~ ^[a-zA-Z]+\\(([^)]+)\\): ]]; then
+          REGEX='^[a-zA-Z]+\( *([^)]+) *\):'
+
+          if [[ "$COMMIT_MESSAGE" =~ $REGEX ]]; then
             SCOPE="${BASH_REMATCH[1]}"
-            echo "Extracted scope: $SCOPE"
-            echo "scope=$SCOPE" >> "$GITHUB_OUTPUT"
-            
-            TAG="ghcr.io/${{ github.repository }}-${{ steps.scope.outputs.scope }}:${{ github.run_number }}"
-            echo "Image Tag: $TAG"
-            echo "tag=$TAG" >> "GITHUB_OUTPUT"
+            # Convert to lowercase and strip spaces just in case
+            SCOPE_CLEAN=$(echo "$SCOPE" | tr '[:upper:]' '[:lower:]' | tr -d ' ')
+            IMAGE_TAG="ghcr.io/${{ github.repository }}-${SCOPE_CLEAN}:${{ github.run_number }}"
+            echo "✅ Extracted scope: $SCOPE_CLEAN"
+            echo "📦 Image tag: $IMAGE_TAG"
+
+            echo "scope=$SCOPE_CLEAN" >> "$GITHUB_OUTPUT"
+            echo "image_tag=$IMAGE_TAG" >> "$GITHUB_OUTPUT"
           else
             echo "❌ Failed to extract scope from commit message."
             exit 1
@@ -57,4 +62,5 @@ jobs:
           context: ./${{ steps.scope.outputs.scope }}
           file: ./${{ steps.scope.outputs.scope }}/Dockerfile
           push: true
-          tags: ${{ steps.scope.outputs.tag }}
+          tags: ${{ steps.scope.outputs.image_tag }}
+          provenance: false  # optional, disables SBOM/attestations
