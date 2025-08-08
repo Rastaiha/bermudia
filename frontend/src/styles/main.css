@@ -17,10 +17,8 @@
 }
 
 @theme {
-  --font-vazir: Vazir,
-  --color-rasta-green:  '#008A00', // A nice, deep green
-  --color-rasta-yellow: '#F9D104', // A vibrant yellow
-  --color-rasta-red:    '#D62828',   // A bold red
-  --color-rasta-black:  '#1E1E1E', // A dark, subtle black for contrast
+  --font-vazir: Vazir;
+  --color-rasta-green:  #008A00;
+  --color-rasta-yellow: #F9D104; 
 }
 
