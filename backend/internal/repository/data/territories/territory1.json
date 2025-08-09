@@ -1,46 +1,52 @@
 {
   "id": "territory1",
-  "name": "Mystic Archipelago",
+  "name": "جزایر اسرارآمیز",
+  "backgroundAsset": "mystic_archipelago_bg.png",
   "islands": [
     {
       "id": "island_start",
-      "name": "Welcome Harbor",
-      "x": 100,
-      "y": 150,
-      "assetFile": "harbor_icon.png",
-      "description": "The starting point for all new adventurers"
+      "name": "بندر خوش‌آمدگویی",
+      "x": 0.15,
+      "y": 0.35,
+      "width": 0.12,
+      "height": 0.18,
+      "iconAsset": "harbor_icon.png"
     },
     {
       "id": "island_math1",
-      "name": "Number Island",
-      "x": 250,
-      "y": 180,
-      "assetFile": "numbers_icon.png",
-      "description": "Learn the fundamentals of arithmetic and number theory"
+      "name": "جزیره اعداد",
+      "x": 0.38,
+      "y": 0.42,
+      "width": 0.14,
+      "height": 0.16,
+      "iconAsset": "numbers_icon.png"
     },
     {
       "id": "island_math2",
-      "name": "Geometry Peak",
-      "x": 400,
-      "y": 120,
-      "assetFile": "geometry_icon.png",
-      "description": "Explore shapes, angles, and spatial relationships"
+      "name": "قله هندسه",
+      "x": 0.65,
+      "y": 0.25,
+      "width": 0.13,
+      "height": 0.20,
+      "iconAsset": "geometry_icon.png"
     },
     {
       "id": "island_science1",
-      "name": "Physics Bay",
-      "x": 320,
-      "y": 280,
-      "assetFile": "physics_icon.png",
-      "description": "Discover the laws of motion and energy"
+      "name": "خلیج فیزیک",
+      "x": 0.52,
+      "y": 0.68,
+      "width": 0.15,
+      "height": 0.17,
+      "iconAsset": "physics_icon.png"
     },
     {
       "id": "island_final",
-      "name": "Knowledge Summit",
-      "x": 500,
-      "y": 200,
-      "assetFile": "summit_icon.png",
-      "description": "The ultimate challenge combining all learned concepts"
+      "name": "قله دانش",
+      "x": 0.82,
+      "y": 0.52,
+      "width": 0.16,
+      "height": 0.22,
+      "iconAsset": "summit_icon.png"
     }
   ],
   "edges": [
