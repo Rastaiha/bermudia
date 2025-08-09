@@ -5,7 +5,7 @@
 For development purposes:
 
 ```
-http://4fc8b46c-194e-4fe5-970a-352fbaac2d27.hsvc.ir:32016/api/v1
+http://97590f57-b983-48f8-bb0a-c098bed1e658.hsvc.ir:30254/api/v1
 ```
 
 ## Response Format
