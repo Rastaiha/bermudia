@@ -1,0 +1,76 @@
+package handler
+
+import (
+	"context"
+	"errors"
+	"github.com/Rastaiha/bermudia/internal/service"
+	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
+	"log"
+	"log/slog"
+	"net/http"
+	"time"
+)
+
+type Handler struct {
+	server           *http.Server
+	territoryService *service.Territory
+	islandService    *service.Island
+}
+
+func New(territoryService *service.Territory, islandService *service.Island) *Handler {
+	return &Handler{territoryService: territoryService, islandService: islandService}
+}
+
+func (h *Handler) Start() {
+	r := chi.NewRouter()
+
+	r.Use(middleware.Logger)
+	r.Use(corsMiddleware)
+	r.Use(middleware.Recoverer)
+	r.Use(middleware.Timeout(30 * time.Second))
+
+	// Routes
+	r.Route("/api/v1", func(r chi.Router) {
+		r.Get("/territories/{territoryID}", h.GetTerritory)
+		r.Get("/islands/{islandID}", h.GetIsland)
+		r.Post("/answer/{inputID}", h.SubmitAnswer)
+	})
+
+	// Health check
+	r.Get("/health", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte("OK"))
+	})
+
+	slog.Info("Server starting")
+	h.server = &http.Server{
+		Addr:    ":8080",
+		Handler: r,
+	}
+	err := h.server.ListenAndServe()
+	if err != nil && !errors.Is(err, http.ErrServerClosed) {
+		log.Fatal("Error starting server:", err)
+	}
+}
+
+func (h *Handler) Stop() {
+	if err := h.server.Shutdown(context.Background()); err != nil {
+		slog.Error("Error stopping server:", err)
+	}
+}
+
+// Simple CORS middleware
+func corsMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+		w.Header().Set("Access-Control-Allow-Headers", "Accept, Authorization, Content-Type, X-CSRF-Token")
+
+		if r.Method == http.MethodOptions {
+			return
+		}
+
+		next.ServeHTTP(w, r)
+	})
+}

@@ -1,7 +1,7 @@
 {
   "id": "territory1",
   "name": "جزایر اسرارآمیز",
-  "backgroundAsset": "mystic_archipelago_bg.png",
+  "backgroundAsset": "background1.png",
   "islands": [
     {
       "id": "island_start",
@@ -10,7 +10,7 @@
       "y": 0.35,
       "width": 0.12,
       "height": 0.18,
-      "iconAsset": "harbor_icon.png"
+      "iconAsset": "island1.png"
     },
     {
       "id": "island_math1",
@@ -19,7 +19,7 @@
       "y": 0.42,
       "width": 0.14,
       "height": 0.16,
-      "iconAsset": "numbers_icon.png"
+      "iconAsset": "island6.png"
     },
     {
       "id": "island_math2",
@@ -28,7 +28,7 @@
       "y": 0.25,
       "width": 0.13,
       "height": 0.20,
-      "iconAsset": "geometry_icon.png"
+      "iconAsset": "island3.png"
     },
     {
       "id": "island_science1",
@@ -37,7 +37,7 @@
       "y": 0.68,
       "width": 0.15,
       "height": 0.17,
-      "iconAsset": "physics_icon.png"
+      "iconAsset": "island3.png"
     },
     {
       "id": "island_final",
@@ -46,7 +46,7 @@
       "y": 0.52,
       "width": 0.16,
       "height": 0.22,
-      "iconAsset": "summit_icon.png"
+      "iconAsset": "island7.png"
     }
   ],
   "edges": [
@@ -61,10 +61,6 @@
     {
       "from": "island_math1",
       "to": "island_math2"
-    },
-    {
-      "from": "island_math1",
-      "to": "island_science1"
     },
     {
       "from": "island_math2",

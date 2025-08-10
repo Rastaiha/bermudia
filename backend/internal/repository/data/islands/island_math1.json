@@ -1,0 +1,11 @@
+{
+  "components": [
+    {
+      "input": {
+        "id": "island_math1_1",
+        "type": "text",
+        "description": "جواب سؤال معروف 2x2 رو بفرست:"
+      }
+    }
+  ]
+}
