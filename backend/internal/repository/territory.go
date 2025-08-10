@@ -9,31 +9,29 @@ import (
 	"path"
 	"strings"
 
-	"github.com/Rastaiha/rasta-1404-contest/internal/models"
+	"github.com/Rastaiha/bermudia/internal/models"
 )
 
 //go:embed data/territories
 var territoryFiles embed.FS
 
-// Exported errors for use with errors.Is
 var (
 	ErrTerritoryNotFound = errors.New("territory not found")
-	ErrInvalidData       = errors.New("invalid territory data")
 )
 
-// TerritoryRepository defines the interface for territory data access
-type TerritoryRepository interface {
+// Territory defines the interface for territory data access
+type Territory interface {
 	GetTerritoryByID(ctx context.Context, territoryID string) (*models.Territory, error)
 	ListTerritories(ctx context.Context) ([]models.Territory, error)
 }
 
-// jsonTerritoryRepository implements TerritoryRepository using embedded JSON files
+// jsonTerritoryRepository implements Territory using embedded JSON files
 type jsonTerritoryRepository struct {
 	fs embed.FS
 }
 
 // NewJSONTerritoryRepository creates a new JSON-based territory repository
-func NewJSONTerritoryRepository() TerritoryRepository {
+func NewJSONTerritoryRepository() Territory {
 	return &jsonTerritoryRepository{
 		fs: territoryFiles,
 	}
@@ -59,7 +57,7 @@ func (r *jsonTerritoryRepository) GetTerritoryByID(ctx context.Context, territor
 	// Parse JSON
 	var territory models.Territory
 	if err := json.Unmarshal(data, &territory); err != nil {
-		return nil, fmt.Errorf("%w: failed to parse territory JSON: %v", ErrInvalidData, err)
+		return nil, fmt.Errorf("failed to parse territory JSON: %w", err)
 	}
 
 	return &territory, nil
@@ -112,7 +110,7 @@ type SQLTerritoryRepository struct {
 // 	return &SQLTerritoryRepository{db: db}
 // }
 
-// Implement TerritoryRepository interface methods for SQL version
+// Implement Territory interface methods for SQL version
 // func (r *SQLTerritoryRepository) GetTerritoryByID(territoryID string) (*models.Territory, error) {
 // 	// SQL implementation will go here
 // 	panic("not implemented")

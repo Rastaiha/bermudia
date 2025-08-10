@@ -1,0 +1,17 @@
+{
+  "components": [
+    {
+      "iframe": {
+        "url": "https://platform.kamva.academy/article/713"
+      }
+    },
+    {
+      "input": {
+        "id": "island_science1_1",
+        "type": "file",
+        "accept": ["image/png", "image/jpeg"],
+        "description": "از جوابت عکس بگیر بفرست:"
+      }
+    }
+  ]
+}

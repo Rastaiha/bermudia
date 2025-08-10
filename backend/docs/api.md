@@ -38,6 +38,30 @@ Returns a [Territory](#territory) in response.
 
 - `territoryID` (path parameter, required): The unique identifier of the territory
 
+### Get Island
+
+Retrieves the content of the island.
+
+Returns a [IslandContent](#islandcontent) in response.
+
+**Endpoint:** `GET /islands/{islandID}`
+
+**Parameters:**
+
+- `islandID` (path parameter, required): The unique identifier of the island
+
+### Submit Answer
+
+Receives the input of a [IslandInput](#islandinput) components.
+
+Returns an empty object on response.
+
+**Parameters:**
+
+- `data` (body parameter, required): The user data. Its type depends on the [IslandInput](#islandinput) `type`.
+
+**Note:** Request's `Content-Type` should be `multipart/form-data`
+
 ## Data Models
 
 ### Territory
@@ -70,3 +94,35 @@ Returns a [Territory](#territory) in response.
 | to    | string | ID of the destination island |
 
 **Note:** Edges represent bidirectional connections. If there's an edge from A to B, players can travel both ways.
+
+### IslandContent
+
+| Field      | Type                                  | Description                                   |
+|------------|---------------------------------------|-----------------------------------------------|
+| components | [IslandComponent](#islandcomponent)[] | Array of components to be displayed in the UI |
+
+
+### IslandComponent
+
+| Field  | Type                            | Description                  |
+|--------|---------------------------------|------------------------------|
+| iframe | [IslandIFrame](#islandiframe)[] | The data of iframe component |
+| input  | [IslandInput](#islandinput)[]   | The data of input component  |
+
+**Note:** Exactly one of these fields will be present in a component object
+
+### IslandIFrame
+
+| Field | Type   | Description                  |
+|-------|--------|------------------------------|
+| url   | string | The source url of the iframe |
+
+
+### IslandInput
+
+| Field       | Type      | Description                                                                                                                                                                                                  |
+|-------------|-----------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| id          | string    | The unique id of this input, to be used in [Submit Answer](#submit-answer)                                                                                                                                   |
+| type        | string    | Type of the data this input receives. One of [HTML Input Element Types](https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Elements/input#input_types) (usually one of `text`, `number` and `file`) |
+| accept      | []string? | If type is `file`, this field is present and contains the accepted MIME types.                                                                                                                               |
+| description | string    | Description of the input to be shown to user                                                                                                                                                                 |

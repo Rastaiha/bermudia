@@ -3,41 +3,29 @@ package service
 import (
 	"context"
 
-	"github.com/Rastaiha/rasta-1404-contest/internal/models"
-	"github.com/Rastaiha/rasta-1404-contest/internal/repository"
+	"github.com/Rastaiha/bermudia/internal/models"
+	"github.com/Rastaiha/bermudia/internal/repository"
 )
 
-// TerritoryService handles business logic for territories
-type TerritoryService struct {
-	repo repository.TerritoryRepository
+// Territory handles business logic for territories
+type Territory struct {
+	repo repository.Territory
 }
 
-// NewTerritoryService creates a new territory service
-func NewTerritoryService(repo repository.TerritoryRepository) *TerritoryService {
-	return &TerritoryService{
+// NewTerritory creates a new territory service
+func NewTerritory(repo repository.Territory) *Territory {
+	return &Territory{
 		repo: repo,
 	}
 }
 
 // GetTerritory retrieves a territory by ID with any business logic applied
-func (s *TerritoryService) GetTerritory(ctx context.Context, territoryID string) (*models.Territory, error) {
-	territory, err := s.repo.GetTerritoryByID(ctx, territoryID)
-	if err != nil {
-		return nil, err
-	}
-
-	// Apply any business logic here if needed
-	// For example, you might want to:
-	// - Validate territory data
-	// - Apply user-specific filtering
-	// - Add computed fields
-	// - Log access patterns
-
-	return territory, nil
+func (s *Territory) GetTerritory(ctx context.Context, territoryID string) (*models.Territory, error) {
+	return s.repo.GetTerritoryByID(ctx, territoryID)
 }
 
 // ListTerritories retrieves all territories with business logic applied
-func (s *TerritoryService) ListTerritories(ctx context.Context) ([]models.Territory, error) {
+func (s *Territory) ListTerritories(ctx context.Context) ([]models.Territory, error) {
 	territories, err := s.repo.ListTerritories(ctx)
 	if err != nil {
 		return nil, err
