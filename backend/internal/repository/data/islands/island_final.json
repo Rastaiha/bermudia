@@ -1,0 +1,32 @@
+{
+  "components": [
+    {
+      "iframe": {
+        "url": "https://platform.kamva.academy/article/713"
+      }
+    },
+    {
+      "input": {
+        "id": "island_final_1",
+        "type": "number",
+        "description": "اگه ۵ تا سیب داشته باشم یکیش رو بخورم چندتا سیب میمونه برام؟"
+      }
+    },
+    {
+      "iframe": {
+        "url": "https://platform.kamva.academy/article/713"
+      }
+    },
+    {
+      "input": {
+        "id": "island_final_2",
+        "type": "file",
+        "accept": [
+          "image/png",
+          "image/jpeg"
+        ],
+        "description": "از جوابت عکس بگیر بفرست:"
+      }
+    }
+  ]
+}

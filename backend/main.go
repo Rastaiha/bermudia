@@ -1,56 +1,29 @@
 package main
 
 import (
-	"log"
+	"github.com/Rastaiha/bermudia/api/handler"
+	"github.com/Rastaiha/bermudia/internal/repository"
+	"github.com/Rastaiha/bermudia/internal/service"
 	"net/http"
 	"os"
-
-	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/chi/v5/middleware"
-
-	"github.com/Rastaiha/rasta-1404-contest/api/handlers"
-	"github.com/Rastaiha/rasta-1404-contest/internal/repository"
-	"github.com/Rastaiha/rasta-1404-contest/internal/service"
+	"os/signal"
 )
 
 func main() {
-	// Initialize repository (currently JSON file-based with embedded files)
 	territoryRepo := repository.NewJSONTerritoryRepository()
+	islandRepo := repository.NewJSONIslandRepository()
 
-	// Initialize service
-	territoryService := service.NewTerritoryService(territoryRepo)
+	territoryService := service.NewTerritory(territoryRepo)
+	islandService := service.NewIsland(islandRepo)
 
-	// Initialize handlers
-	territoryHandler := handlers.NewTerritoryHandler(territoryService)
+	h := handler.New(territoryService, islandService)
 
-	// Setup router
-	r := chi.NewRouter()
+	h.Start()
 
-	// Middleware
-	r.Use(middleware.Logger)
-	r.Use(middleware.Recoverer)
-	r.Use(middleware.RealIP)
-	r.Use(corsMiddleware)
-
-	// Routes
-	r.Route("/api/v1", func(r chi.Router) {
-		r.Get("/territories/{territoryID}", territoryHandler.GetTerritory)
-	})
-
-	// Health check
-	r.Get("/health", func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("OK"))
-	})
-
-	// Get port from environment or default to 8080
-	port := os.Getenv("PORT")
-	if port == "" {
-		port = "8080"
-	}
-
-	log.Printf("Server starting on port %s", port)
-	log.Fatal(http.ListenAndServe(":"+port, r))
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, os.Interrupt, os.Kill)
+	<-c
+	h.Stop()
 }
 
 // Simple CORS middleware

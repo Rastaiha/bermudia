@@ -1,4 +1,4 @@
-module github.com/Rastaiha/rasta-1404-contest
+module github.com/Rastaiha/bermudia
 
 go 1.24.3
 

@@ -1,0 +1,12 @@
+{
+  "components": [
+    {
+      "input": {
+        "id": "island_math2_1",
+        "type": "file",
+        "accept": ["application/pdf"],
+        "description": "یه فایل pdf بفرست:"
+      }
+    }
+  ]
+}
