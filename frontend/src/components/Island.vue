@@ -31,7 +31,8 @@
       </template>
     </div>
     <div v-else class="loading-message">
-      {{ loadingMessage }}
+      <span> آیدی جزیره: {{props.islandId}} </span> <br/>
+      <span> {{ loadingMessage }} </span>
     </div>
   </div>
 </template>
@@ -45,7 +46,7 @@ const mapHeight = ref(window.innerHeight);
 // --- Define reactive state ---
 const BASE_URL = 'http://97590f57-b983-48f8-bb0a-c098bed1e658.hsvc.ir:30254/api/v1';
 const svgRef = ref(null);
-const isLoaded = true;
+const isLoaded = ref(false);
 const isFullscreen = ref(false);
 const backgroundImage = ref('');
 const chipBox = ref(null);
@@ -76,8 +77,9 @@ const fetchTerritoryData = async (id) => {
       throw new Error(data.error || 'Invalid API response format');
     }
 
-    const rawData = data.result; // Extract data from the 'result' key
-    //TODO get the image path from the api
+    isLoaded.value = true;
+
+    const rawData = data.result;
     backgroundImage.value = `/images/island/background.png`;
     components.value = rawData.components;
 
@@ -85,7 +87,7 @@ const fetchTerritoryData = async (id) => {
     await nextTick();
   } catch (error) {
     console.error('Failed to load territory data from API:', error);
-    loadingMessage.value = `Error loading map: ${error.message}`;
+    loadingMessage.value = `Error loading island: ${error.message}`;
   }
 };
 
@@ -100,32 +102,6 @@ const infoBoxStyle = computed(() => ({
   left: `${mousePosition.value.x}px`,
   transform: 'translateX(-50%)',
 }));
-
-function resolveComponent(comp) {
-  if (comp.iframe) return 'iframe'
-  if (comp.input) return 'input'
-  return 'div'
-}
-
-function getProps(comp) {
-  if (comp.iframe) {
-    return {
-      src: comp.iframe.url,
-      width: '100%',
-      height: '300',
-      frameborder: '0'
-    }
-  }
-  if (comp.input) {
-    return {
-      id: comp.input.id,
-      type: comp.input.type,
-      placeholder: comp.input.description,
-      accept: comp.input.accept?.join(',')
-    }
-  }
-  return {}
-}
 
 function fullScreen(button) {
   if (isFullscreen.value) {
@@ -245,6 +221,7 @@ onUnmounted(() => {
   background-color: var(--color-info-box-bg);
   padding: 1rem 2rem;
   border-radius: 0.5rem;
+  text-align: center;
 }
 
 button.fullscreen-button {
