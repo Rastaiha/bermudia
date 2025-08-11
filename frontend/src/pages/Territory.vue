@@ -4,6 +4,6 @@ import TerritoryMap from '@/components/TerritoryMap.vue';
 
 <template>
   <div class="h-screen w-full">
-    <TerritoryMap territory-id="1" />
+    <TerritoryMap territory-id="territory1" />
   </div>
 </template>

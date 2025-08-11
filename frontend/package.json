@@ -9,6 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@panzoom/panzoom": "^4.6.0",
     "@tailwindcss/vite": "^4.1.11",
     "axios": "^1.11.0",
     "panzoom": "^9.4.3",
