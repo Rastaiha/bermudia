@@ -17,13 +17,17 @@
           </iframe>
         </div>
 
-        <input
-          v-else-if="comp.input"
-          :id="comp.input.id"
-          :type="comp.input.type"
-          :placeholder="comp.input.description"
-          :accept="comp.input.accept?.join(',')"
-        />
+        <div v-else-if="comp.input" class="challenge">
+          <div class="question">{{ comp.input.description }}</div>
+          <input
+            :id="comp.input.id"
+            :type="comp.input.type"
+            :accept="comp.input.accept?.join(',')"
+            v-model="comp.input.answer"
+          />
+          <button @click="submit(comp.input)">تایید پاسخ!</button>
+
+        </div>
       </template>
     </div>
     <div v-else class="loading-message">
@@ -39,6 +43,7 @@ const mapWidth = ref(window.innerWidth);
 const mapHeight = ref(window.innerHeight);
 
 // --- Define reactive state ---
+const BASE_URL = 'http://97590f57-b983-48f8-bb0a-c098bed1e658.hsvc.ir:30254/api/v1';
 const svgRef = ref(null);
 const isLoaded = true;
 const isFullscreen = ref(false);
@@ -60,7 +65,6 @@ const props = defineProps({
 
 // --- Fetch and process data from the REAL API ---
 const fetchTerritoryData = async (id) => {
-  const BASE_URL = 'http://97590f57-b983-48f8-bb0a-c098bed1e658.hsvc.ir:30254/api/v1';
   const apiUrl = `${BASE_URL}/islands/${id}`;
   
   try {
@@ -146,12 +150,47 @@ function fullScreen(button) {
   }
 }
 
+async function submit(input) {
+  const inputValue = input.answer;
+  const formData = new FormData();
+  
+  if (typeof inputValue === 'object' && inputValue instanceof FileList) {
+    for (let i = 0; i < inputValue.length; i++) {
+      formData.append(input.id, inputValue[i]);
+    }
+  } else {
+    formData.append(input.id, inputValue);
+  }
+
+  try {
+    //TODO the response endpoint is unknown
+    const response = await fetch(BASE_URL, {
+      method: 'POST',
+      body: formData,
+    });
+    const data = await response.json();
+    console.log('Submit response:', data);
+  } catch (error) {
+    console.error('Error submitting answer:', error);
+  }
+}
+
+function onFullscreenChange() {
+  if (!document.fullscreenElement) {
+    isFullscreen.value = false;
+  } else {
+    isFullscreen.value = true;
+  }
+}
+
 // --- Lifecycle Hooks ---
 onMounted(() => {
   fetchTerritoryData(props.islandId);
+  document.addEventListener('fullscreenchange', onFullscreenChange);
 });
 onUnmounted(() => {
   if (panzoomInstance) panzoomInstance.dispose();
+  document.removeEventListener('fullscreenchange', onFullscreenChange);
 });
 </script>
 
@@ -165,10 +204,12 @@ onUnmounted(() => {
   --color-bg-fallback: #0c2036;
 
   width: 100vw;
+  min-height: 100vh;
   position: relative;
   background-color: var(--color-bg-fallback);
   overflow: hidden;
   background-size: 100vw 100vh;
+  background-attachment: fixed;
   background-repeat: no-repeat;
 }
 
@@ -218,6 +259,33 @@ button.fullscreen-button {
   z-index: 1;
   color: #123456;
   font-family: sans-serif;
+}
+
+.challenge {
+  width: 65%;
+  min-height: 200px;
+  margin: 3rem auto;
+  background: linear-gradient(45deg, #7BCCB5, #C2DFFF, #7BCCB5);
+  border: 5px ridge #C2DFFF;
+  padding: 20px;
+  border-radius: 20px;
+  color: #123456;
+  font-family: sans-serif;
+  opacity: 0.98;
+}
+
+.challenge input, .challenge button {
+  min-width: 50%;
+  background: inherit;
+  display: block;
+  margin: 50px auto;
+  filter: drop-shadow(2px 4px 6px black) invert(1);
+  height: 50px;
+  text-align: center;
+  padding: 5px;
+  border: inherit;
+  border-radius: inherit;
+  opacity: inherit;
 }
 
 .svg-wrapper.fullscreen iframe {
