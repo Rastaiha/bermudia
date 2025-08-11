@@ -124,8 +124,7 @@ const initializePanzoom = () => {
 // --- Fetch and process data from the REAL API ---
 const fetchTerritoryData = async (id) => {
   const BASE_URL = 'http://97590f57-b983-48f8-bb0a-c098bed1e658.hsvc.ir:30254/api/v1';
-  // Corrected the endpoint from "territories" to "territory"
-  const apiUrl = `${BASE_URL}/territory/${id}`;
+  const apiUrl = `${BASE_URL}/territories/${id}`;
   
   try {
     console.log(`Initiating fetch request to REAL API endpoint: ${apiUrl}`);
