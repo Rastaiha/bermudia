@@ -5,6 +5,10 @@
     </div>
 
     <div class="svg-wrapper" v-if="isLoaded" :class="{ fullscreen: isFullscreen }">
+      <a href="/territory"> 
+        <img id="go-back" src="/images/ships/ship1.svg" alt="Go to the territory" />
+      </a>
+
       <template v-for="(comp, index) in components" :key="index">
         <div v-if="comp.iframe" class="iframe-holder">
           <button class="fullscreen-button" @click="fullScreen($event.target)">
@@ -182,7 +186,7 @@ onUnmounted(() => {
   --color-bg-fallback: #0c2036;
   --iframe-width: 65%;
 
-  width: 100vw;
+  width: 98vw;
   min-height: 100vh;
   position: relative;
   background-color: var(--color-bg-fallback);
@@ -274,6 +278,14 @@ button.fullscreen-button {
   top: 0;
 }
 
+#go-back {
+    position: fixed;
+    z-index: 2;
+    width: 20vw;
+    bottom: 5vh;
+    filter: drop-shadow(6px 7px 13px black);
+}
+
 @media (orientation: portrait) {
   .svg-wrapper {
     --iframe-width: 90%;
@@ -287,12 +299,15 @@ button.fullscreen-button {
   button.fullscreen-button {
     margin: auto;
     left: 50%;
-    transform: translateX(-50%);
-    top: 1%;
+    transform: translate(-50%, -35%);
   }
 
   .svg-wrapper.fullscreen button.fullscreen-button {
     left: 50%;
+  }
+
+  #go-back {
+    bottom: -3vh;
   }
 }
 
