@@ -11,7 +11,7 @@
 
       <template v-for="(comp, index) in components" :key="index">
         <div v-if="comp.iframe" class="iframe-holder">
-          <button class="fullscreen-button" @click="fullScreen($event.target)">
+          <button class="fullscreen-button background-moving-animation" @click="fullScreen($event.target)">
             حالت تمام صفحه
           </button>
           <iframe
@@ -23,15 +23,16 @@
           </iframe>
         </div>
 
-        <div v-else-if="comp.input" class="challenge">
+        <div v-else-if="comp.input" class="challenge background-moving-animation">
           <div class="question">{{ comp.input.description }}</div>
           <input
             :id="comp.input.id"
             :type="comp.input.type"
             :accept="comp.input.accept?.join(',')"
             v-model="comp.input.answer"
+            class="background-moving-animation"
           />
-          <button @click="submit(comp.input)">تایید پاسخ!</button>
+          <button @click="submit(comp.input)" class="background-moving-animation">تایید پاسخ!</button>
 
         </div>
       </template>
@@ -243,8 +244,14 @@ onUnmounted(() => {
   text-align: center;
 }
 
+.background-moving-animation {
+  background: linear-gradient(45deg, #7BCCB5, #C2DFFF, #7BCCB5, #C2DFFF, #7BCCB5, #C2DFFF, #7BCCB5, #C2DFFF, #7BCCB5);
+  background-size: 400% 100%;
+  background-repeat: no-repeat;
+  animation: 15s cubic-bezier(1, 0, 0.73, 1) background-moving-d6e042fc 5s infinite;
+}
+
 button.fullscreen-button, .challenge, .challenge input, .challenge button {
-  background: linear-gradient(45deg, #7BCCB5, #C2DFFF, #7BCCB5);
   filter: drop-shadow(2px 4px 6px black);
   border-radius: 20px;
   border: 5px ridge #C2DFFF;
@@ -298,6 +305,11 @@ button.fullscreen-button {
     filter: drop-shadow(6px 7px 13px black);
 }
 
+button:hover, a>img:hover {
+    transform: translate(0, 5px);
+    filter: hue-rotate(45deg) !important;
+}
+
 @media (orientation: portrait) {
   .svg-wrapper {
     --iframe-width: 90%;
@@ -328,6 +340,18 @@ button.fullscreen-button {
     white-space: normal;
     overflow-wrap: break-word; 
     width: 98vw;
+  }
+}
+
+@keyframes background-moving {
+  0% {
+    background-position: 0 0;
+  }
+  10% {
+    background-position: 100% 0;
+  }
+  80% {
+    background-position: 0% 0;
   }
 }
 
