@@ -1,7 +1,7 @@
 <template>
   <div class="island-container" :style="{backgroundImage: `url(${backgroundImage})`}">
-    <div v-if="chipBox" class="info-box" :style="infoBoxStyle">
-      {{ chipBox.name }}
+    <div v-if="chipBox" class="info-box">
+      {{ chipBox }}
     </div>
 
     <div class="svg-wrapper" v-if="isLoaded" :class="{ fullscreen: isFullscreen }">
@@ -45,6 +45,7 @@
 
 <script setup>
 import { ref, onMounted, onUnmounted, computed, nextTick } from 'vue';
+import {useTimeout} from './service/ChainedTimeout';
 
 const mapWidth = ref(window.innerWidth);
 const mapHeight = ref(window.innerHeight);
@@ -61,6 +62,7 @@ const challenge = ref(null);
 const mousePosition = ref({ x: 0, y: 0 });
 const loadingMessage = ref('Loading island data...');
 const components = ref([]);
+const { startTimeout, clear } = useTimeout()
 
 // --- Define component props ---
 const props = defineProps({
@@ -100,14 +102,6 @@ const fetchTerritoryData = async (id) => {
 
 // --- Helper Functions ---
 const updateMousePosition = (event) => { mousePosition.value = { x: event.clientX, y: event.clientY }; };
-const showInfoBox = (node) => { hoveredNode.value = node; };
-const hideInfoBox = () => { hoveredNode.value = null; };
-const infoBoxStyle = computed(() => ({
-  position: 'fixed',
-  top: `${mousePosition.value.y + 20}px`,
-  left: `${mousePosition.value.x}px`,
-  transform: 'translateX(-50%)',
-}));
 
 function fullScreen(button) {
   if (isFullscreen.value) {
@@ -136,6 +130,14 @@ async function submit(input) {
   const inputValue = input.answer;
   const formData = new FormData();
   
+  if (!inputValue) {
+    chipBox.value = `چیزی برای ارسال وارد نشده‌است!`;
+    startTimeout(() => {
+      chipBox.value = null;
+    }, 5000);
+    return;
+  }
+  
   if (typeof inputValue === 'object' && inputValue instanceof FileList) {
     for (let i = 0; i < inputValue.length; i++) {
       formData.append(input.id, inputValue[i]);
@@ -145,13 +147,21 @@ async function submit(input) {
   }
 
   try {
-    //TODO the response endpoint is unknown
-    const response = await fetch(BASE_URL, {
+    const apiUrl = `${BASE_URL}/answer/${input.id}`;
+    const response = await fetch(apiUrl, {
       method: 'POST',
       body: formData,
     });
     const data = await response.json();
     console.log('Submit response:', data);
+    if (data.ok) {
+      chipBox.value = `پاسخ ثبت شد. پس از بررسی نمره آن ثبت می‌شود.`;
+    } else {
+      chipBox.value = e.error;
+    }
+    startTimeout(() => {
+      chipBox.value = null;
+    }, 5000);
   } catch (error) {
     console.error('Error submitting answer:', error);
   }
@@ -180,7 +190,7 @@ onUnmounted(() => {
 /* Styles remain the same */
 .island-container {
   --color-edge: #ffffff;
-  --color-info-box-bg: rgba(0, 0, 0, 0.8);
+  --color-info-box-bg: #123456df;
   --color-info-box-text: white;
   --color-loading-text: #ddd;
   --color-bg-fallback: #0c2036;
@@ -206,7 +216,6 @@ onUnmounted(() => {
 }
 
 .info-box {
-  position: absolute;
   background-color: var(--color-info-box-bg);
   color: var(--color-info-box-text);
   padding: 8px 12px;
@@ -215,7 +224,10 @@ onUnmounted(() => {
   font-size: 14px;
   pointer-events: none;
   z-index: 100;
-  white-space: nowrap;
+  max-width: 98vw;
+  position: fixed;
+  top: 10px;
+  left: 10px;
 }
 .loading-message {
   position: absolute;
@@ -308,6 +320,14 @@ button.fullscreen-button {
 
   #go-back {
     bottom: -3vh;
+  }
+
+  .info-box {
+    left: 50%;
+    transform: translateX(-50%);
+    white-space: normal;
+    overflow-wrap: break-word; 
+    width: 98vw;
   }
 }
 
