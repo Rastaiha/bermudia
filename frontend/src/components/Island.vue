@@ -13,6 +13,8 @@
           <iframe
             :src="comp.iframe.url"
             frameborder="0"
+            allowfullscreen
+            allow="fullscreen"
           >
           </iframe>
         </div>
@@ -178,6 +180,7 @@ onUnmounted(() => {
   --color-info-box-text: white;
   --color-loading-text: #ddd;
   --color-bg-fallback: #0c2036;
+  --iframe-width: 65%;
 
   width: 100vw;
   min-height: 100vh;
@@ -191,7 +194,7 @@ onUnmounted(() => {
 
 .svg-wrapper iframe {
   margin: 3rem auto;
-  width: 65%;
+  width: var(--iframe-width);
   height: 500px;
   border-radius: 20px;
   filter: drop-shadow(2px 4px 6px black);
@@ -224,45 +227,40 @@ onUnmounted(() => {
   text-align: center;
 }
 
-button.fullscreen-button {
+button.fullscreen-button, .challenge, .challenge input, .challenge button {
   background: linear-gradient(45deg, #7BCCB5, #C2DFFF, #7BCCB5);
-  padding: 8px;
-  border-radius: 20px;
   filter: drop-shadow(2px 4px 6px black);
+  border-radius: 20px;
   border: 5px ridge #C2DFFF;
-  position: absolute;
-  left: calc(50% - 65% / 2);
-  margin: 3px;
-  z-index: 1;
   color: #123456;
   font-family: sans-serif;
+  opacity: 0.98;  
+  max-width: -webkit-fill-available;
+}
+
+button.fullscreen-button {
+  padding: 8px;
+  position: absolute;
+  left: calc(50% - var(--iframe-width) / 2);
+  margin: 3px;
+  z-index: 1;
 }
 
 .challenge {
-  width: 65%;
+  width: var(--iframe-width);
   min-height: 200px;
   margin: 3rem auto;
-  background: linear-gradient(45deg, #7BCCB5, #C2DFFF, #7BCCB5);
-  border: 5px ridge #C2DFFF;
   padding: 20px;
-  border-radius: 20px;
-  color: #123456;
-  font-family: sans-serif;
-  opacity: 0.98;
 }
 
 .challenge input, .challenge button {
   min-width: 50%;
-  background: inherit;
   display: block;
   margin: 50px auto;
-  filter: drop-shadow(2px 4px 6px black) invert(1);
+  filter: drop-shadow(2px 4px 6px white) invert(1);
   height: 50px;
   text-align: center;
   padding: 5px;
-  border: inherit;
-  border-radius: inherit;
-  opacity: inherit;
 }
 
 .svg-wrapper.fullscreen iframe {
@@ -274,6 +272,28 @@ button.fullscreen-button {
 .svg-wrapper.fullscreen button.fullscreen-button {
   left: 0;
   top: 0;
+}
+
+@media (orientation: portrait) {
+  .svg-wrapper {
+    --iframe-width: 90%;
+  }
+
+  .island-container {
+    background-size: 180vw 100vh;
+    background-position: -40vw 0;
+  }
+
+  button.fullscreen-button {
+    margin: auto;
+    left: 50%;
+    transform: translateX(-50%);
+    top: 1%;
+  }
+
+  .svg-wrapper.fullscreen button.fullscreen-button {
+    left: 50%;
+  }
 }
 
 </style>
