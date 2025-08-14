@@ -10,7 +10,9 @@
 
     <div class="svg-wrapper" v-if="isLoaded" :class="{ fullscreen: isFullscreen }">
       <router-link :to="`/territory/${id}`" @mouseover="showTooltip('بازگشت به نقشه')" @mouseleave="hideTooltip"> 
-        <img id="go-back" src="/images/ships/ship1.svg" alt="Go to the territory" />
+        <div id="go-back">
+          <img src="/images/ships/ship1.svg" alt="Go to the territory" />
+      </div>
       </router-link>
 
       <template v-for="(comp, index) in components" :key="index">
@@ -236,7 +238,7 @@ onUnmounted(() => {
 
 /* --- 2. Main Layout --- */
 .island-container {
-  width: 100vw;
+  width: 99vw;
   min-height: 100vh;
   padding: 2rem;
   box-sizing: border-box;
@@ -301,6 +303,7 @@ onUnmounted(() => {
   width: 100%;
   max-width: 500px;
   margin-top: 1rem;
+  flex-direction: row-reverse;
 }
 
 .challenge-input {
@@ -318,6 +321,17 @@ onUnmounted(() => {
   box-shadow: 0 0 0 3px var(--color-border);
 }
 
+@media (orientation: portrait) {
+  .question {
+    font-size: 1rem;
+  }
+
+  .challenge-input {
+    font-size: 0.8rem;
+    width: inherit;
+  }
+}
+
 /* --- 4. Buttons --- */
 .submit-button {
   border: none;
@@ -332,6 +346,12 @@ onUnmounted(() => {
 }
 .submit-button:hover {
   background-color: var(--color-primary-dark);
+}
+
+@media (orientation: portrait) {
+  .submit-button {
+    font-size: 0.8rem;
+  }
 }
 
 .fullscreen-button {
@@ -378,16 +398,47 @@ onUnmounted(() => {
 #go-back {
   position: fixed;
   z-index: 20;
-  width: 150px;
-  height: 150px;
+  width: 15vw;
+  height: 15vw;
   bottom: 1.5rem;
   right: 1.5rem;
   filter: drop-shadow(0 5px 20px rgba(0,0,0,0.5));
-  transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1);
-  object-fit: contain;
+  animation: 10s linear boat-animation infinite;
 }
-#go-back:hover {
+
+#go-back img {
+  object-fit: contain;
+  width: 100%;
+  height: 100%;
+  transition: transform 2s cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+#go-back:hover img {
   transform: scale(1.15) rotate(-5deg);
+}
+
+@keyframes boat-animation {
+  0% {
+    transform: translate(0,0) rotate(10deg);
+  }
+  35% {
+    transform: translate(10px, 5px) rotate(-10deg)
+  }
+  70% {
+    transform: translate(-10px, 5px) rotate(3deg)
+  }
+  100% {
+    transform: translate(0,0) rotate(10deg);
+  }
+}
+
+@media (orientation: portrait) {
+  #go-back {
+    width: 15vh;
+    height: 15vh;
+    bottom: 0;
+    right: 0;
+  }
 }
 
 /* --- 7. Floating Info & Loading & NEW TOOLTIP --- */
