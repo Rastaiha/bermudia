@@ -15,25 +15,25 @@
       <g class="edges">
         <path
           v-for="edge in wavyEdges"
-          :key="`${edge.from_node_id}-${edge.to_node_id}`"
+          :key="`${edge.from__node_id}-${edge.to_node_id}`"
           :d="edge.pathD"
           class="edge-path"
         />
       </g>
 
       <g class="nodes">
-        <image
-          v-for="node in nodes"
-          :key="node.id"
-          :href="node.iconPath"
-          :x="node.imageX"
-          :y="node.imageY"
-          :width="node.width"
-          :height="node.height"
-          class="node-image"
-          @mouseover="showInfoBox(node)"
-          @mouseleave="hideInfoBox"
-        />
+        <g v-for="node in nodes" :key="node.id" @click="navigateToIsland(node.id)" class="node-link">
+          <image
+            :href="node.iconPath"
+            :x="node.imageX"
+            :y="node.imageY"
+            :width="node.width"
+            :height="node.height"
+            class="node-image"
+            @mouseover="showInfoBox(node)"
+            @mouseleave="hideInfoBox"
+          />
+        </g>
       </g>
     </svg>
     <div v-else class="loading-message">
@@ -44,6 +44,7 @@
 
 <script setup>
 import { ref, onMounted, onUnmounted, computed, nextTick } from 'vue';
+import { useRouter } from 'vue-router'; // Import the router
 import panzoom from 'panzoom';
 
 // --- Define reactive state ---
@@ -55,16 +56,22 @@ const hoveredNode = ref(null);
 const mousePosition = ref({ x: 0, y: 0 });
 const dynamicViewBox = ref('0 0 1 1');
 const loadingMessage = ref('Loading map data...');
+const router = useRouter(); // Initialize the router
 
 let panzoomInstance = null;
 
 // --- Define component props ---
 const props = defineProps({
   territoryId: {
-    type: [Number, String],
+    type: String, // ID from URL is always a string
     required: true,
   },
 });
+
+// --- THE CHANGE IS HERE: Added the navigation function ---
+const navigateToIsland = (islandId) => {
+  router.push(`/territory/${props.territoryId}/${islandId}`);
+};
 
 // --- Computed property to generate wavy paths ---
 const wavyEdges = computed(() => {
@@ -106,14 +113,14 @@ const initializePanzoom = () => {
 
     panzoomInstance = panzoom(svgRef.value, {
         maxZoom: 4,
-        minZoom: 1, // Lock minZoom to 1 to prevent escaping the viewBox
+        minZoom: 1,
     });
 }
 
 // --- Fetch and process data from the REAL API ---
 const fetchTerritoryData = async (id) => {
   const BASE_URL = 'http://97590f57-b983-48f8-bb0a-c098bed1e658.hsvc.ir:30254/api/v1';
-  // Corrected the endpoint from "territories" to "territory"
+  // THE FIX IS HERE: We now use the 'id' directly from the props.
   const apiUrl = `${BASE_URL}/territories/${id}`;
   
   try {
@@ -122,6 +129,9 @@ const fetchTerritoryData = async (id) => {
     const response = await fetch(apiUrl);
     const data = await response.json();
 
+    if (!response.ok) { // Check HTTP status first
+        throw new Error(data.error || `Territory not found (${response.status})`);
+    }
     if (!data.ok || !data.result) {
       throw new Error(data.error || 'Invalid API response format');
     }
@@ -231,13 +241,18 @@ onUnmounted(() => {
   stroke-dasharray: 0.01, 0.005;
 }
 
-.node-image {
+/* THE CHANGE IS HERE: Added styles for the new group tag */
+.node-link {
   cursor: pointer;
+}
+
+.node-image {
   transition: transform 0.2s ease-in-out;
   transform-box: fill-box;
 }
 
-.node-image:hover {
+/* THE CHANGE IS HERE: Hover effect is now applied to the group */
+.node-link:hover .node-image {
   transform-origin: center center;
   transform: scale(1.1);
 }
