@@ -1,9 +1,8 @@
 # Stage 1 — Build the Vue (Vite) app
 FROM node:20-alpine AS builder
 WORKDIR /app
-COPY package.json ./
-COPY package-lock.json ./
-RUN npm ci
+COPY package*.json ./
+RUN npm i
 COPY . .
 RUN npm run build
 
