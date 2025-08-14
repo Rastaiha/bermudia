@@ -238,7 +238,7 @@ onUnmounted(() => {
 
 /* --- 2. Main Layout --- */
 .island-container {
-  width: 100vw;
+  width: 99vw;
   min-height: 100vh;
   padding: 2rem;
   box-sizing: border-box;
@@ -321,6 +321,17 @@ onUnmounted(() => {
   box-shadow: 0 0 0 3px var(--color-border);
 }
 
+@media (orientation: portrait) {
+  .question {
+    font-size: 1rem;
+  }
+
+  .challenge-input {
+    font-size: 0.8rem;
+    width: inherit;
+  }
+}
+
 /* --- 4. Buttons --- */
 .submit-button {
   border: none;
@@ -335,6 +346,12 @@ onUnmounted(() => {
 }
 .submit-button:hover {
   background-color: var(--color-primary-dark);
+}
+
+@media (orientation: portrait) {
+  .submit-button {
+    font-size: 0.8rem;
+  }
 }
 
 .fullscreen-button {
@@ -412,6 +429,15 @@ onUnmounted(() => {
   }
   100% {
     transform: translate(0,0) rotate(10deg);
+  }
+}
+
+@media (orientation: portrait) {
+  #go-back {
+    width: 15vh;
+    height: 15vh;
+    bottom: 0;
+    right: 0;
   }
 }
 
