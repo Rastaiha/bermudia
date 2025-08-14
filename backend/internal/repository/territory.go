@@ -4,26 +4,15 @@ import (
 	"context"
 	"embed"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"path"
 	"strings"
 
-	"github.com/Rastaiha/bermudia/internal/models"
+	"github.com/Rastaiha/bermudia/internal/domain"
 )
 
 //go:embed data/territories
 var territoryFiles embed.FS
-
-var (
-	ErrTerritoryNotFound = errors.New("territory not found")
-)
-
-// Territory defines the interface for territory data access
-type Territory interface {
-	GetTerritoryByID(ctx context.Context, territoryID string) (*models.Territory, error)
-	ListTerritories(ctx context.Context) ([]models.Territory, error)
-}
 
 // jsonTerritoryRepository implements Territory using embedded JSON files
 type jsonTerritoryRepository struct {
@@ -31,14 +20,14 @@ type jsonTerritoryRepository struct {
 }
 
 // NewJSONTerritoryRepository creates a new JSON-based territory repository
-func NewJSONTerritoryRepository() Territory {
+func NewJSONTerritoryRepository() domain.TerritoryStore {
 	return &jsonTerritoryRepository{
 		fs: territoryFiles,
 	}
 }
 
 // GetTerritoryByID retrieves a territory by its ID from embedded JSON files
-func (r *jsonTerritoryRepository) GetTerritoryByID(ctx context.Context, territoryID string) (*models.Territory, error) {
+func (r *jsonTerritoryRepository) GetTerritoryByID(ctx context.Context, territoryID string) (*domain.Territory, error) {
 	filePath := path.Join("data/territories", fmt.Sprintf("%s.json", territoryID))
 
 	// Check context cancellation
@@ -51,11 +40,11 @@ func (r *jsonTerritoryRepository) GetTerritoryByID(ctx context.Context, territor
 	// Read embedded file
 	data, err := r.fs.ReadFile(filePath)
 	if err != nil {
-		return nil, fmt.Errorf("%w: %s", ErrTerritoryNotFound, territoryID)
+		return nil, fmt.Errorf("%w: %s", domain.ErrTerritoryNotFound, territoryID)
 	}
 
 	// Parse JSON
-	var territory models.Territory
+	var territory domain.Territory
 	if err := json.Unmarshal(data, &territory); err != nil {
 		return nil, fmt.Errorf("failed to parse territory JSON: %w", err)
 	}
@@ -64,7 +53,7 @@ func (r *jsonTerritoryRepository) GetTerritoryByID(ctx context.Context, territor
 }
 
 // ListTerritories returns all available territories from embedded files
-func (r *jsonTerritoryRepository) ListTerritories(ctx context.Context) ([]models.Territory, error) {
+func (r *jsonTerritoryRepository) ListTerritories(ctx context.Context) ([]domain.Territory, error) {
 	// Check context cancellation
 	select {
 	case <-ctx.Done():
@@ -77,7 +66,7 @@ func (r *jsonTerritoryRepository) ListTerritories(ctx context.Context) ([]models
 		return nil, fmt.Errorf("failed to list territory files: %w", err)
 	}
 
-	var territories []models.Territory
+	var territories []domain.Territory
 	for _, entry := range dirEntries {
 		if !entry.IsDir() && strings.HasSuffix(entry.Name(), ".json") {
 			filePath := path.Join("data/territories", entry.Name())
@@ -87,7 +76,7 @@ func (r *jsonTerritoryRepository) ListTerritories(ctx context.Context) ([]models
 				continue // Skip files that can't be read
 			}
 
-			var territory models.Territory
+			var territory domain.Territory
 			if err := json.Unmarshal(data, &territory); err != nil {
 				continue // Skip files that can't be parsed
 			}

@@ -2,10 +2,9 @@ package handler
 
 import (
 	"errors"
+	"github.com/Rastaiha/bermudia/internal/domain"
 	"github.com/go-chi/chi/v5"
 	"net/http"
-
-	"github.com/Rastaiha/bermudia/internal/repository"
 )
 
 func (h *Handler) GetTerritory(w http.ResponseWriter, r *http.Request) {
@@ -19,7 +18,7 @@ func (h *Handler) GetTerritory(w http.ResponseWriter, r *http.Request) {
 	territory, err := h.territoryService.GetTerritory(r.Context(), territoryID)
 	if err != nil {
 		// Check for specific error types using errors.Is
-		if errors.Is(err, repository.ErrTerritoryNotFound) {
+		if errors.Is(err, domain.ErrTerritoryNotFound) {
 			sendError(w, http.StatusNotFound, "Territory not found")
 			return
 		}

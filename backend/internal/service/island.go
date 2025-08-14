@@ -2,18 +2,17 @@ package service
 
 import (
 	"context"
-	"github.com/Rastaiha/bermudia/internal/models"
-	"github.com/Rastaiha/bermudia/internal/repository"
+	"github.com/Rastaiha/bermudia/internal/domain"
 )
 
 type Island struct {
-	repo repository.Island
+	repo domain.IslandStore
 }
 
-func NewIsland(repo repository.Island) *Island {
+func NewIsland(repo domain.IslandStore) *Island {
 	return &Island{repo: repo}
 }
 
-func (i *Island) GetIsland(ctx context.Context, id string) (*models.IslandContent, error) {
+func (i *Island) GetIsland(ctx context.Context, id string) (*domain.IslandContent, error) {
 	return i.repo.GetByID(ctx, id)
 }

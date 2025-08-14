@@ -1,4 +1,4 @@
-package models
+package domain
 
 // Edge represents a connection between two islands
 type Edge struct {
