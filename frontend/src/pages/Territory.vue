@@ -1,9 +1,14 @@
 <script setup>
 import TerritoryMap from '@/components/TerritoryMap.vue';
+
+defineProps({
+  id: {
+    type: String,
+    required: true,
+  },
+});
 </script>
 
 <template>
-  <div class="h-screen w-full">
-    <TerritoryMap territory-id="territory1" />
-  </div>
+  <TerritoryMap :territory-id="id" />
 </template>

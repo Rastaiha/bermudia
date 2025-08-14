@@ -9,8 +9,10 @@ const routes = [
   { path: '/', component: Home },
   { path: '/about', component: About },
   { path: '/api', component: ApiTest },
-  { path: '/territory', component: Territory },
-  { path: '/island', component: Island },
+  // Route for the territory map
+  { path: '/territory/:id', component: Territory, props: true },
+  // THE CORRECTED NESTED ROUTE for the island view
+  { path: '/territory/:id/:islandId', component: Island, props: true },
 ]
 
 export default createRouter({
