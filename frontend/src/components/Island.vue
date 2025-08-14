@@ -10,7 +10,9 @@
 
     <div class="svg-wrapper" v-if="isLoaded" :class="{ fullscreen: isFullscreen }">
       <router-link :to="`/territory/${id}`" @mouseover="showTooltip('بازگشت به نقشه')" @mouseleave="hideTooltip"> 
-        <img id="go-back" src="/images/ships/ship1.svg" alt="Go to the territory" />
+        <div id="go-back">
+          <img src="/images/ships/ship1.svg" alt="Go to the territory" />
+      </div>
       </router-link>
 
       <template v-for="(comp, index) in components" :key="index">
@@ -301,6 +303,7 @@ onUnmounted(() => {
   width: 100%;
   max-width: 500px;
   margin-top: 1rem;
+  flex-direction: row-reverse;
 }
 
 .challenge-input {
@@ -378,16 +381,38 @@ onUnmounted(() => {
 #go-back {
   position: fixed;
   z-index: 20;
-  width: 150px;
-  height: 150px;
+  width: 15vw;
+  height: 15vw;
   bottom: 1.5rem;
   right: 1.5rem;
   filter: drop-shadow(0 5px 20px rgba(0,0,0,0.5));
-  transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1);
-  object-fit: contain;
+  animation: 10s linear boat-animation infinite;
 }
-#go-back:hover {
+
+#go-back img {
+  object-fit: contain;
+  width: 100%;
+  height: 100%;
+  transition: transform 2s cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+#go-back:hover img {
   transform: scale(1.15) rotate(-5deg);
+}
+
+@keyframes boat-animation {
+  0% {
+    transform: translate(0,0) rotate(10deg);
+  }
+  35% {
+    transform: translate(10px, 5px) rotate(-10deg)
+  }
+  70% {
+    transform: translate(-10px, 5px) rotate(3deg)
+  }
+  100% {
+    transform: translate(0,0) rotate(10deg);
+  }
 }
 
 /* --- 7. Floating Info & Loading & NEW TOOLTIP --- */
