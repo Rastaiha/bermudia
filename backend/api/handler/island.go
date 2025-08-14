@@ -2,7 +2,7 @@ package handler
 
 import (
 	"errors"
-	"github.com/Rastaiha/bermudia/internal/repository"
+	"github.com/Rastaiha/bermudia/internal/domain"
 	"github.com/go-chi/chi/v5"
 	"net/http"
 )
@@ -17,7 +17,7 @@ func (h *Handler) GetIsland(w http.ResponseWriter, r *http.Request) {
 	island, err := h.islandService.GetIsland(r.Context(), id)
 	if err != nil {
 		// Check for specific error types using errors.Is
-		if errors.Is(err, repository.ErrIslandNotFound) {
+		if errors.Is(err, domain.ErrIslandNotFound) {
 			sendError(w, http.StatusNotFound, "Island not found")
 			return
 		}

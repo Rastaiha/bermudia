@@ -1,4 +1,4 @@
-package models
+package domain
 
 // Island represents a single island in a territory
 type Island struct {

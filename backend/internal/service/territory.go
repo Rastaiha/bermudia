@@ -3,29 +3,28 @@ package service
 import (
 	"context"
 
-	"github.com/Rastaiha/bermudia/internal/models"
-	"github.com/Rastaiha/bermudia/internal/repository"
+	"github.com/Rastaiha/bermudia/internal/domain"
 )
 
 // Territory handles business logic for territories
 type Territory struct {
-	repo repository.Territory
+	repo domain.TerritoryStore
 }
 
 // NewTerritory creates a new territory service
-func NewTerritory(repo repository.Territory) *Territory {
+func NewTerritory(repo domain.TerritoryStore) *Territory {
 	return &Territory{
 		repo: repo,
 	}
 }
 
 // GetTerritory retrieves a territory by ID with any business logic applied
-func (s *Territory) GetTerritory(ctx context.Context, territoryID string) (*models.Territory, error) {
+func (s *Territory) GetTerritory(ctx context.Context, territoryID string) (*domain.Territory, error) {
 	return s.repo.GetTerritoryByID(ctx, territoryID)
 }
 
 // ListTerritories retrieves all territories with business logic applied
-func (s *Territory) ListTerritories(ctx context.Context) ([]models.Territory, error) {
+func (s *Territory) ListTerritories(ctx context.Context) ([]domain.Territory, error) {
 	territories, err := s.repo.ListTerritories(ctx)
 	if err != nil {
 		return nil, err

@@ -56,6 +56,8 @@ Receives the input of a [IslandInput](#islandinput) components.
 
 Returns an empty object on response.
 
+**Endpoint:** `POST /answer/{inputID}`
+
 **Parameters:**
 
 - `data` (body parameter, required): The user data. Its type depends on the [IslandInput](#islandinput) `type`.

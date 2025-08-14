@@ -48,10 +48,12 @@ func (h *Handler) Start() {
 		Addr:    ":8080",
 		Handler: r,
 	}
-	err := h.server.ListenAndServe()
-	if err != nil && !errors.Is(err, http.ErrServerClosed) {
-		log.Fatal("Error starting server:", err)
-	}
+	go func() {
+		err := h.server.ListenAndServe()
+		if err != nil && !errors.Is(err, http.ErrServerClosed) {
+			log.Fatal("Error starting server:", err)
+		}
+	}()
 }
 
 func (h *Handler) Stop() {
