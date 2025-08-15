@@ -1,7 +1,10 @@
-FROM golang:1.24-alpine AS build
+FROM golang:1.24 AS build
+
+ENV CGO_ENABLED=1
 
 WORKDIR /app
 COPY ./ ./
+
 RUN go build -o main main.go
 
 FROM debian:12.11
