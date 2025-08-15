@@ -14,12 +14,17 @@ import (
 
 type Handler struct {
 	server           *http.Server
+	authService      *service.Auth
 	territoryService *service.Territory
 	islandService    *service.Island
 }
 
-func New(territoryService *service.Territory, islandService *service.Island) *Handler {
-	return &Handler{territoryService: territoryService, islandService: islandService}
+func New(authService *service.Auth, territoryService *service.Territory, islandService *service.Island) *Handler {
+	return &Handler{
+		authService:      authService,
+		territoryService: territoryService,
+		islandService:    islandService,
+	}
 }
 
 func (h *Handler) Start() {
@@ -35,6 +40,19 @@ func (h *Handler) Start() {
 		r.Get("/territories/{territoryID}", h.GetTerritory)
 		r.Get("/islands/{islandID}", h.GetIsland)
 		r.Post("/answer/{inputID}", h.SubmitAnswer)
+		r.Post("/login", h.Login)
+		// Authenticated endpoints
+		r.Group(func(r chi.Router) {
+			r.Use(h.authMiddleware)
+			r.Get("/me", func(w http.ResponseWriter, r *http.Request) {
+				user, ok := getUser(r.Context())
+				if !ok {
+					sendError(w, http.StatusInternalServerError, "Interval server error")
+					return
+				}
+				sendResult(w, user)
+			})
+		})
 	})
 
 	// Health check

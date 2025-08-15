@@ -1,0 +1,44 @@
+{
+  "id": "territory2",
+  "name": "جزایر دور",
+  "backgroundAsset": "background1.png",
+  "islands": [
+    {
+      "id": "island_thompson",
+      "name": "جزیره تامپسون",
+      "x": 0.05,
+      "y": 0.85,
+      "width": 0.12,
+      "height": 0.18,
+      "iconAsset": "island5.svg"
+    },
+    {
+      "id": "island_spectacle",
+      "name": "جزیره تماشا",
+      "x": 0.20,
+      "y": 0.75,
+      "width": 0.14,
+      "height": 0.16,
+      "iconAsset": "island4.svg"
+    },
+    {
+      "id": "island_deer",
+      "name": "جزیره آهو",
+      "x": 0.55,
+      "y": 0.30,
+      "width": 0.11,
+      "height": 0.11,
+      "iconAsset": "island3.svg"
+    }
+  ],
+  "edges": [
+    {
+      "from": "island_thompson",
+      "to": "island_spectacle"
+    },
+    {
+      "from": "island_spectacle",
+      "to": "island_deer"
+    }
+  ]
+}
