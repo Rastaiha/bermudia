@@ -24,7 +24,33 @@ All API endpoints return responses in a consistent format:
 - `error`: Error message (only present when ok=false)
 - `result`: Response data (only present when ok=true)
 
+## Authentication
+
+Some endpoints are authenticated and their request is authenticated done via JWT.
+
+User must [log in](#login) to receive a JWT.
+
+The generated JWT must be but in the `Authorization` request header for authenticated endpoints.
+
 ## Endpoints
+
+### Login
+
+Checks user credentials and generates a jwt token.
+
+Receives a [LoginRequest](#loginrequest) in body.
+
+Returns a [LoginResult](#loginresult) in response.
+
+**Endpoint:** `POST /login`
+
+### Get Me (authenticated)
+
+Returns [Me](#me) in response.
+
+This endpoint is just a way to test whether the JWT is correctly set and still valid.
+
+**Endpoint:** `GET /me`
 
 ### Get Territory
 
@@ -65,6 +91,26 @@ Returns an empty object on response.
 **Note:** Request's `Content-Type` should be `multipart/form-data`
 
 ## Data Models
+
+### LoginRequest
+
+| Field    | Type   | Description                 |
+|----------|--------|-----------------------------|
+| username | string | Unique username of the user |
+| password | string | Password of user            |
+
+### LoginResult
+
+| Field | Type   | Description                                                |
+|-------|--------|------------------------------------------------------------|
+| token | string | JWT to be put in future requests. It is valid for 16 hours |
+
+### Me
+
+| Field    | Type   | Description                 |
+|----------|--------|-----------------------------|
+| id       | int    | Unique numeric id of user   |
+| username | string | Unique username of the user |
 
 ### Territory
 
