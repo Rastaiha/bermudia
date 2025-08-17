@@ -10,7 +10,7 @@
   },
   "dependencies": {
     "@panzoom/panzoom": "^4.6.0",
-    "@tailwindcss/vite": "^4.1.11",
+    "@tailwindcss/vite": "^4.1.12",
     "axios": "^1.11.0",
     "panzoom": "^9.4.3",
     "vue": "^3.5.18",
@@ -21,7 +21,7 @@
     "@vitejs/plugin-vue": "^6.0.1",
     "autoprefixer": "^10.4.21",
     "postcss": "^8.5.6",
-    "tailwindcss": "^4.1.11",
+    "tailwindcss": "^4.1.12",
     "tailwindcss-rtl": "^0.9.0",
     "vite": "^7.1.0"
   }
