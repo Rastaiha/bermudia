@@ -4,15 +4,19 @@ import About from '../pages/About.vue'
 import ApiTest from '../pages/ApiTest.vue'
 import Territory from '../pages/Territory.vue'
 import Island from '../pages/TerritoryIsland.vue'
+import Login from '../pages/Login.vue'
+import UserPage from '../pages/UserPage.vue'
+
 
 const routes = [
   { path: '/', component: Home },
   { path: '/about', component: About },
   { path: '/api', component: ApiTest },
-  // Route for the territory map
   { path: '/territory/:id', component: Territory, props: true },
-  // THE CORRECTED NESTED ROUTE for the island view
   { path: '/territory/:id/:islandId', component: Island, props: true },
+  { path: '/login', component: Login},
+  { path: '/user_page', component: UserPage},
+
 ]
 
 export default createRouter({
