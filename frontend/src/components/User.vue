@@ -31,7 +31,6 @@ const BASE_URL = "http://97590f57-b983-48f8-bb0a-c098bed1e658.hsvc.ir:30254/api/
 
 
 onMounted(() => {
-  debugger;
   let token = localStorage.getItem("authToken")
   if (!token) token = sessionStorage.getItem("authToken")
 
