@@ -61,7 +61,7 @@
                   v-model="username"
                   autocomplete="on"
                   type="text"
-                  class="input-focus text-left bg-blue-50 border border-cyan-200 text-cyan-800 text-sm sm:text-base rounded-lg block w-full pl-10 p-2 sm:p-3 sm:pl-10"
+                  class="input-focus text-left [direction:ltr] bg-blue-50 border border-cyan-200 text-cyan-800 text-sm sm:text-base rounded-lg block w-full pl-10 p-2 sm:p-3 sm:pl-10"
                   placeholder="Username"
                   required
                 />
@@ -83,7 +83,7 @@
                   v-model="password"
                   type="password"
                   autocomplete="on"
-                  class="input-focus text-left bg-blue-50 border border-cyan-200 text-cyan-800 text-sm sm:text-base rounded-lg block w-full pl-10 p-2 sm:p-3 sm:pl-10"
+                  class="input-focus text-left [direction:ltr] bg-blue-50 border border-cyan-200 text-cyan-800 text-sm sm:text-base rounded-lg block w-full pl-10 p-2 sm:p-3 sm:pl-10"
                   placeholder="********"
                   required
                 />
@@ -154,10 +154,12 @@ async function handleLogin() {
       return;
     }
 
-    token.value = data.token;
+    token.value = data.result.token;
     error.value = "";
     if (remember.value) {
       localStorage.setItem("authToken", token.value);
+    } else {
+      sessionStorage.setItem("authToken", token.value);
     }
     window.location.href = "/user_page";
   } catch (err) {
