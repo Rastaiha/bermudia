@@ -7,6 +7,7 @@ import Island from '../pages/TerritoryIsland.vue'
 import Login from '../pages/Login.vue'
 import UserPage from '../pages/UserPage.vue'
 
+
 const routes = [
   { path: '/', component: Home },
   { path: '/about', component: About },
@@ -15,6 +16,7 @@ const routes = [
   { path: '/territory/:id/:islandId', component: Island, props: true },
   { path: '/login', component: Login},
   { path: '/user_page', component: UserPage},
+
 ]
 
 export default createRouter({
