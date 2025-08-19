@@ -45,9 +45,9 @@ func (h *Handler) Start() {
 		r.Group(func(r chi.Router) {
 			r.Use(h.authMiddleware)
 			r.Get("/me", func(w http.ResponseWriter, r *http.Request) {
-				user, ok := getUser(r.Context())
-				if !ok {
-					sendError(w, http.StatusInternalServerError, "Interval server error")
+				user, err := getUser(r.Context())
+				if err != nil {
+					handleError(w, err)
 					return
 				}
 				sendResult(w, user)
