@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"github.com/Rastaiha/bermudia/internal/domain"
 	"io/fs"
+	"log/slog"
 	"path/filepath"
 	"slices"
 	"strings"
@@ -20,6 +21,7 @@ var territoryFiles embed.FS
 var islandFiles embed.FS
 
 func CreateMockData(userStore domain.UserStore, playerStore domain.PlayerStore, territoryStore domain.TerritoryStore, islandStore domain.IslandStore, mockUsersPassword string) error {
+	slog.Info("Creating mock data...")
 	if mockUsersPassword == "" {
 		return errors.New("mock users password is empty")
 	}
@@ -29,15 +31,25 @@ func CreateMockData(userStore domain.UserStore, playerStore domain.PlayerStore, 
 	if err := createMockIslands(islandStore); err != nil {
 		return fmt.Errorf("failed to create mock islands: %w", err)
 	}
-	if err := errors.Join(
-		createMockUser(userStore, playerStore, territoryStore, 100, "alice", mockUsersPassword, "territory1"),
-	); err != nil {
+	territories, err := territoryStore.ListTerritories(context.Background())
+	if err != nil {
+		return fmt.Errorf("failed to list mock territories: %w", err)
+	}
+	if len(territories) == 0 {
+		return errors.New("mock territories are empty")
+	}
+	errs := []error{createMockUser(userStore, playerStore, 100, "alice", mockUsersPassword, territories[0])}
+	for i := range 100 {
+		i = i + 1
+		errs = append(errs, createMockUser(userStore, playerStore, int32(100+i), fmt.Sprintf("test%d", i), mockUsersPassword, territories[i%len(territories)]))
+	}
+	if err := errors.Join(errs...); err != nil {
 		return fmt.Errorf("failed to create mock users: %w", err)
 	}
 	return nil
 }
 
-func createMockUser(userStore domain.UserStore, playerStore domain.PlayerStore, territoryStore domain.TerritoryStore, id int32, username string, password string, startingTerritory string) error {
+func createMockUser(userStore domain.UserStore, playerStore domain.PlayerStore, id int32, username string, password string, startingTerritory domain.Territory) error {
 	hp, err := domain.HashPassword(password)
 	if err != nil {
 		return err
@@ -50,11 +62,7 @@ func createMockUser(userStore domain.UserStore, playerStore domain.PlayerStore, 
 	if err != nil {
 		return err
 	}
-	territory, err := territoryStore.GetTerritoryByID(context.Background(), startingTerritory)
-	if err != nil {
-		return err
-	}
-	return playerStore.Create(context.Background(), domain.NewPlayer(id, territory))
+	return playerStore.Create(context.Background(), domain.NewPlayer(id, &startingTerritory))
 }
 
 func createMockTerritories(territoryStore domain.TerritoryStore, islandStore domain.IslandStore) error {
