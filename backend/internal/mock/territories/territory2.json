@@ -2,6 +2,7 @@
   "id": "territory2",
   "name": "جزایر دور",
   "backgroundAsset": "background1.png",
+  "startIsland": "island_thompson",
   "islands": [
     {
       "id": "island_thompson",

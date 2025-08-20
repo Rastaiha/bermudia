@@ -3,7 +3,7 @@ package main
 import (
 	"github.com/Rastaiha/bermudia/api/handler"
 	"github.com/Rastaiha/bermudia/internal/config"
-	"github.com/Rastaiha/bermudia/internal/domain"
+	"github.com/Rastaiha/bermudia/internal/mock"
 	"github.com/Rastaiha/bermudia/internal/repository"
 	"github.com/Rastaiha/bermudia/internal/service"
 	_ "github.com/mattn/go-sqlite3"
@@ -21,22 +21,33 @@ func main() {
 	if err != nil {
 		log.Fatal("failed to connect to sqlite", err)
 	}
-	territoryRepo := repository.NewJSONTerritoryRepository()
-	islandRepo := repository.NewJSONIslandRepository()
+	territoryRepo, err := repository.NewSqlTerritoryRepository(db)
+	if err != nil {
+		log.Fatal(err)
+	}
+	islandRepo, err := repository.NewSqlIslandRepository(db)
+	if err != nil {
+		log.Fatal(err)
+	}
 	userRepo, err := repository.NewSqlUser(db)
 	if err != nil {
 		log.Fatal(err)
 	}
-	err = domain.CreateMockData(userRepo, cfg.MockUsersPassword)
+	playerRepo, err := repository.NewSqlPlayerRepository(db)
 	if err != nil {
-		log.Fatal("failed to create mock data", err)
+		log.Fatal(err)
+	}
+	err = mock.CreateMockData(userRepo, playerRepo, territoryRepo, islandRepo, cfg.MockUsersPassword)
+	if err != nil {
+		log.Fatal("failed to create mock data: ", err)
 	}
 
 	authService := service.NewAuth(cfg, userRepo)
 	territoryService := service.NewTerritory(territoryRepo)
 	islandService := service.NewIsland(islandRepo)
+	playerService := service.NewPlayer(playerRepo, territoryRepo)
 
-	h := handler.New(authService, territoryService, islandService)
+	h := handler.New(authService, territoryService, islandService, playerService)
 
 	h.Start()
 

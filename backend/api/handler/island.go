@@ -36,5 +36,5 @@ func (h *Handler) SubmitAnswer(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	sendResult(w, map[string]any{})
+	sendResult(w, struct{}{})
 }

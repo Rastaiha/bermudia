@@ -3,9 +3,11 @@ package handler
 import (
 	"context"
 	"errors"
+	"github.com/Rastaiha/bermudia/api/hub"
 	"github.com/Rastaiha/bermudia/internal/service"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	"github.com/gorilla/websocket"
 	"log"
 	"log/slog"
 	"net/http"
@@ -14,16 +16,21 @@ import (
 
 type Handler struct {
 	server           *http.Server
+	wsUpgrader       websocket.Upgrader
 	authService      *service.Auth
 	territoryService *service.Territory
 	islandService    *service.Island
+	playerService    *service.Player
+	connectionHub    *hub.Hub
 }
 
-func New(authService *service.Auth, territoryService *service.Territory, islandService *service.Island) *Handler {
+func New(authService *service.Auth, territoryService *service.Territory, islandService *service.Island, playerService *service.Player) *Handler {
 	return &Handler{
 		authService:      authService,
 		territoryService: territoryService,
 		islandService:    islandService,
+		playerService:    playerService,
+		connectionHub:    hub.NewHub(),
 	}
 }
 
@@ -37,21 +44,25 @@ func (h *Handler) Start() {
 
 	// Routes
 	r.Route("/api/v1", func(r chi.Router) {
-		r.Get("/territories/{territoryID}", h.GetTerritory)
-		r.Get("/islands/{islandID}", h.GetIsland)
-		r.Post("/answer/{inputID}", h.SubmitAnswer)
+		r.Get("/territories/{territoryID}", h.GetTerritory) // TODO: make it authenticated
+		r.Get("/islands/{islandID}", h.GetIsland)           // TODO: make it authenticated
 		r.Post("/login", h.Login)
+
 		// Authenticated endpoints
 		r.Group(func(r chi.Router) {
 			r.Use(h.authMiddleware)
 			r.Get("/me", func(w http.ResponseWriter, r *http.Request) {
-				user, ok := getUser(r.Context())
-				if !ok {
-					sendError(w, http.StatusInternalServerError, "Interval server error")
+				user, err := getUser(r.Context())
+				if err != nil {
+					handleError(w, err)
 					return
 				}
 				sendResult(w, user)
 			})
+			r.HandleFunc("/events", h.StreamEvents)
+			r.Post("/answer/{inputID}", h.SubmitAnswer)
+			r.Get("/player", h.GetPlayer)
+			r.Post("/travel", h.Travel)
 		})
 	})
 
@@ -61,11 +72,14 @@ func (h *Handler) Start() {
 		_, _ = w.Write([]byte("OK"))
 	})
 
+	h.playerService.OnPlayerUpdate(h.HandlePlayerUpdateEvent)
+
 	slog.Info("Server starting")
 	h.server = &http.Server{
 		Addr:    ":8080",
 		Handler: r,
 	}
+	h.wsUpgrader = websocket.Upgrader{}
 	go func() {
 		err := h.server.ListenAndServe()
 		if err != nil && !errors.Is(err, http.ErrServerClosed) {

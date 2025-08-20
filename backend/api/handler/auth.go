@@ -41,7 +41,7 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 	var req loginRequest
 	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
-		sendError(w, http.StatusBadRequest, "Invalid request payload")
+		sendDecodeError(w)
 		return
 	}
 	token, err := h.authService.Login(r.Context(), req.Username, req.Password)
@@ -58,8 +58,11 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-func getUser(ctx context.Context) (*domain.User, bool) {
+func getUser(ctx context.Context) (*domain.User, error) {
 	v := ctx.Value(userContextKey)
 	user, ok := v.(*domain.User)
-	return user, ok
+	if !ok {
+		return nil, errors.New("expected user was not found in context")
+	}
+	return user, nil
 }

@@ -2,6 +2,7 @@
   "id": "territory1",
   "name": "جزایر اسرارآمیز",
   "backgroundAsset": "background1.png",
+  "startIsland": "island_start",
   "islands": [
     {
       "id": "island_start",
