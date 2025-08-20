@@ -46,6 +46,8 @@ Returns a [LoginResult](#loginresult) in response.
 
 **Endpoint:** `POST /login`
 
+---
+
 ### Get Me (authenticated)
 
 Returns [Me](#me) in response.
@@ -53,6 +55,8 @@ Returns [Me](#me) in response.
 This endpoint is just a way to test whether the JWT is correctly set and still valid.
 
 **Endpoint:** `GET /me`
+
+---
 
 ### Get Territory
 
@@ -66,6 +70,8 @@ Returns a [Territory](#territory) in response.
 
 - `territoryID` (path parameter, required): The unique identifier of the territory
 
+---
+
 ### Get Island
 
 Retrieves the content of the island.
@@ -77,6 +83,8 @@ Returns a [IslandContent](#islandcontent) in response.
 **Parameters:**
 
 - `islandID` (path parameter, required): The unique identifier of the island
+
+---
 
 ### Submit Answer (authenticated)
 
@@ -92,7 +100,9 @@ Returns an empty object in response.
 
 **Note:** Request's `Content-Type` should be `multipart/form-data`
 
-## Stream Events (authenticated)
+---
+
+### Stream Events (authenticated)
 
 A **websocket** endpoint for receiving realtime events.
 
@@ -100,11 +110,15 @@ Type of messages is text; JSON encoding of [Event](#event).
 
 **Endpoint:** `/events`
 
+---
+
 ### Get Player (authenticated)
 
 Returns the [Player](#player) object.
 
 **Endpoint:** `POST /player`
+
+---
 
 ### Travel (authenticated)
 
@@ -126,6 +140,8 @@ curl --request POST \
 	"toIsland": "island_math2"
 }'
 ```
+
+---
 
 ## Data Models
 
