@@ -17,13 +17,15 @@ type Handler struct {
 	authService      *service.Auth
 	territoryService *service.Territory
 	islandService    *service.Island
+	playerService    *service.Player
 }
 
-func New(authService *service.Auth, territoryService *service.Territory, islandService *service.Island) *Handler {
+func New(authService *service.Auth, territoryService *service.Territory, islandService *service.Island, playerService *service.Player) *Handler {
 	return &Handler{
 		authService:      authService,
 		territoryService: territoryService,
 		islandService:    islandService,
+		playerService:    playerService,
 	}
 }
 
@@ -41,6 +43,7 @@ func (h *Handler) Start() {
 		r.Get("/islands/{islandID}", h.GetIsland)
 		r.Post("/answer/{inputID}", h.SubmitAnswer)
 		r.Post("/login", h.Login)
+
 		// Authenticated endpoints
 		r.Group(func(r chi.Router) {
 			r.Use(h.authMiddleware)
@@ -52,6 +55,8 @@ func (h *Handler) Start() {
 				}
 				sendResult(w, user)
 			})
+			r.Get("/player", h.GetPlayer)
+			r.Post("/travel", h.Travel)
 		})
 	})
 

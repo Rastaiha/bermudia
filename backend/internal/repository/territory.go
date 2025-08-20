@@ -15,7 +15,7 @@ const (
 	territorySchema = `
 CREATE TABLE IF NOT EXISTS territories (
 	id VARCHAR(255) PRIMARY KEY,
-    first_island_id VARCHAR(255),
+    start_island VARCHAR(255) NOT NULL,
     content TEXT NOT NULL,
     updated_at TIMESTAMP NOT NULL
 );
@@ -44,17 +44,17 @@ type territoryContent struct {
 }
 
 func (s sqlTerritoryRepository) columns() string {
-	return "SELECT id, first_island_id, content FROM territories"
+	return "SELECT id, start_island, content FROM territories"
 }
 
 func (s sqlTerritoryRepository) scan(row scannable, territory *domain.Territory) error {
 	var content []byte
-	err := row.Scan(&territory.ID, &territory.FirstIsland, &content)
+	err := row.Scan(&territory.ID, &territory.StartIsland, &content)
 	if errors.Is(err, sql.ErrNoRows) {
 		return domain.ErrTerritoryNotFound
 	}
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to get territory from db: %w", err)
 	}
 	var tc territoryContent
 	err = json.Unmarshal(content, &tc)
@@ -79,7 +79,7 @@ func (s sqlTerritoryRepository) CreateTerritory(ctx context.Context, territory *
 	if err != nil {
 		return err
 	}
-	_, err = s.db.ExecContext(ctx, `INSERT INTO territories (id, first_island_id, content, updated_at) VALUES ($1, $2, $3, $4)`, territory.ID, territory.FirstIsland, content, time.Now().UTC())
+	_, err = s.db.ExecContext(ctx, `INSERT INTO territories (id, start_island, content, updated_at) VALUES ($1, $2, $3, $4)`, territory.ID, territory.StartIsland, content, time.Now().UTC())
 	return err
 }
 

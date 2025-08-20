@@ -19,14 +19,9 @@ var territoryFiles embed.FS
 //go:embed islands
 var islandFiles embed.FS
 
-func CreateMockData(userStore domain.UserStore, territoryStore domain.TerritoryStore, islandStore domain.IslandStore, mockUsersPassword string) error {
+func CreateMockData(userStore domain.UserStore, playerStore domain.PlayerStore, territoryStore domain.TerritoryStore, islandStore domain.IslandStore, mockUsersPassword string) error {
 	if mockUsersPassword == "" {
 		return errors.New("mock users password is empty")
-	}
-	if err := errors.Join(
-		createMockUser(userStore, 100, "alice", mockUsersPassword),
-	); err != nil {
-		return fmt.Errorf("failed to create mock users: %w", err)
 	}
 	if err := createMockTerritories(territoryStore, islandStore); err != nil {
 		return fmt.Errorf("failed to create mock territories: %w", err)
@@ -34,23 +29,32 @@ func CreateMockData(userStore domain.UserStore, territoryStore domain.TerritoryS
 	if err := createMockIslands(islandStore); err != nil {
 		return fmt.Errorf("failed to create mock islands: %w", err)
 	}
+	if err := errors.Join(
+		createMockUser(userStore, playerStore, territoryStore, 100, "alice", mockUsersPassword, "territory1"),
+	); err != nil {
+		return fmt.Errorf("failed to create mock users: %w", err)
+	}
 	return nil
 }
 
-func createMockUser(store domain.UserStore, id int32, username string, password string) error {
+func createMockUser(userStore domain.UserStore, playerStore domain.PlayerStore, territoryStore domain.TerritoryStore, id int32, username string, password string, startingTerritory string) error {
 	hp, err := domain.HashPassword(password)
 	if err != nil {
 		return err
 	}
-	err = store.Create(context.Background(), &domain.User{
+	err = userStore.Create(context.Background(), &domain.User{
 		ID:             id,
 		Username:       username,
 		HashedPassword: hp,
 	})
 	if err != nil {
-		return fmt.Errorf("failed to create mock user: %w", err)
+		return err
 	}
-	return nil
+	territory, err := territoryStore.GetTerritoryByID(context.Background(), startingTerritory)
+	if err != nil {
+		return err
+	}
+	return playerStore.Create(context.Background(), domain.NewPlayer(id, territory))
 }
 
 func createMockTerritories(territoryStore domain.TerritoryStore, islandStore domain.IslandStore) error {
@@ -74,6 +78,19 @@ func createMockTerritories(territoryStore domain.TerritoryStore, islandStore dom
 			return err
 		}
 
+		for _, island := range territory.Islands {
+			if island.ID == "" {
+				return fmt.Errorf("empty island id in island list")
+			}
+		}
+		if territory.StartIsland == "" {
+			return errors.New("invalid territory startIsland")
+		}
+		if !slices.ContainsFunc(territory.Islands, func(island domain.Island) bool {
+			return island.ID == territory.StartIsland
+		}) {
+			return fmt.Errorf("startIsland %q not found in island list", territory.StartIsland)
+		}
 		for _, e := range territory.Edges {
 			if e.From == "" || e.To == "" {
 				return fmt.Errorf("empty edge.from or edge.to: %v", e)
@@ -91,9 +108,6 @@ func createMockTerritories(territoryStore domain.TerritoryStore, islandStore dom
 		}
 
 		for _, island := range territory.Islands {
-			if island.ID == "" {
-				return fmt.Errorf("empty island id in island list")
-			}
 			if err := islandStore.ReserveIDForTerritory(ctx, id, island.ID); err != nil {
 				return err
 			}

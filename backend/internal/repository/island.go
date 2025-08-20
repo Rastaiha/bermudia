@@ -69,7 +69,8 @@ func (s sqlIslandRepository) GetByID(ctx context.Context, id string) (*domain.Is
 	err := s.db.QueryRowContext(ctx, `SELECT content FROM islands WHERE id = $1`, id).Scan(&content)
 	if errors.Is(err, sql.ErrNoRows) {
 		return nil, domain.ErrIslandNotFound
-	} else if err != nil {
+	}
+	if err != nil {
 		return nil, err
 	}
 	var result domain.IslandContent
@@ -77,4 +78,13 @@ func (s sqlIslandRepository) GetByID(ctx context.Context, id string) (*domain.Is
 		return nil, err
 	}
 	return &result, nil
+}
+
+func (s sqlIslandRepository) GetTerritory(ctx context.Context, id string) (string, error) {
+	var territoryId string
+	err := s.db.QueryRowContext(ctx, `SELECT territory_id FROM islands WHERE id = $1`, id).Scan(&territoryId)
+	if errors.Is(err, sql.ErrNoRows) {
+		return "", domain.ErrIslandNotFound
+	}
+	return territoryId, err
 }

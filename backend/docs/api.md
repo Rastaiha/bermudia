@@ -80,7 +80,7 @@ Returns a [IslandContent](#islandcontent) in response.
 
 Receives the input of a [IslandInput](#islandinput) components.
 
-Returns an empty object on response.
+Returns an empty object in response.
 
 **Endpoint:** `POST /answer/{inputID}`
 
@@ -89,6 +89,22 @@ Returns an empty object on response.
 - `data` (body parameter, required): The user data. Its type depends on the [IslandInput](#islandinput) `type`.
 
 **Note:** Request's `Content-Type` should be `multipart/form-data`
+
+### Get Player (authenticated)
+
+Returns the [Player](#player) object.
+
+**Endpoint:** `POST /player`
+
+### Travel (authenticated)
+
+Changes the current island by traveling to another.
+
+Receives a [TravelRequest](#travelrequest) in body.
+
+Returns an empty object in response.
+
+**Endpoint:** `POST /travel`
 
 ## Data Models
 
@@ -105,12 +121,29 @@ Returns an empty object on response.
 |-------|--------|------------------------------------------------------------|
 | token | string | JWT to be put in future requests. It is valid for 16 hours |
 
+### TravelRequest
+
+| Field      | Type   | Description                                                                                         |
+|------------|--------|-----------------------------------------------------------------------------------------------------|
+| fromIsland | string | The current island of player (it is received by server to prevent travel in case of state mismatch) |
+| toIsland   | string | The destination island                                                                              |
+
 ### Me
 
 | Field    | Type   | Description                 |
 |----------|--------|-----------------------------|
 | id       | int    | Unique numeric id of user   |
 | username | string | Unique username of the user |
+
+
+### Player
+
+| Field       | Type   | Description                               |
+|-------------|--------|-------------------------------------------|
+| atTerritory | string | Current territory of player               |
+| atIsland    | string | Current island of player                  |
+| fuel        | string | Current fuel level of player's vehicle    |
+| fuelCap     | int    | Current fuel capacity of player's vehicle |
 
 ### Territory
 
