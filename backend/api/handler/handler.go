@@ -3,9 +3,11 @@ package handler
 import (
 	"context"
 	"errors"
+	"github.com/Rastaiha/bermudia/api/hub"
 	"github.com/Rastaiha/bermudia/internal/service"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	"github.com/gorilla/websocket"
 	"log"
 	"log/slog"
 	"net/http"
@@ -14,10 +16,12 @@ import (
 
 type Handler struct {
 	server           *http.Server
+	wsUpgrader       websocket.Upgrader
 	authService      *service.Auth
 	territoryService *service.Territory
 	islandService    *service.Island
 	playerService    *service.Player
+	connectionHub    *hub.Hub
 }
 
 func New(authService *service.Auth, territoryService *service.Territory, islandService *service.Island, playerService *service.Player) *Handler {
@@ -26,6 +30,7 @@ func New(authService *service.Auth, territoryService *service.Territory, islandS
 		territoryService: territoryService,
 		islandService:    islandService,
 		playerService:    playerService,
+		connectionHub:    hub.NewHub(),
 	}
 }
 
@@ -54,6 +59,7 @@ func (h *Handler) Start() {
 				}
 				sendResult(w, user)
 			})
+			r.HandleFunc("/events", h.StreamEvents)
 			r.Post("/answer/{inputID}", h.SubmitAnswer)
 			r.Get("/player", h.GetPlayer)
 			r.Post("/travel", h.Travel)
@@ -66,11 +72,14 @@ func (h *Handler) Start() {
 		_, _ = w.Write([]byte("OK"))
 	})
 
+	h.playerService.OnPlayerUpdate(h.HandlePlayerUpdateEvent)
+
 	slog.Info("Server starting")
 	h.server = &http.Server{
 		Addr:    ":8080",
 		Handler: r,
 	}
+	h.wsUpgrader = websocket.Upgrader{}
 	go func() {
 		err := h.server.ListenAndServe()
 		if err != nil && !errors.Is(err, http.ErrServerClosed) {

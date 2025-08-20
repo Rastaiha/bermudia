@@ -2,8 +2,13 @@ package handler
 
 import (
 	"encoding/json"
+	"github.com/Rastaiha/bermudia/internal/domain"
 	"net/http"
 )
+
+func (h *Handler) HandlePlayerUpdateEvent(e *domain.PlayerUpdateEvent) {
+	h.sendEvent(e.Player.UserId, event{PlayerUpdate: e})
+}
 
 func (h *Handler) GetPlayer(w http.ResponseWriter, r *http.Request) {
 	user, err := getUser(r.Context())

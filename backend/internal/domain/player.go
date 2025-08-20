@@ -17,6 +17,15 @@ type Player struct {
 	FuelCap     int32  `json:"fuelCap"`
 }
 
+const (
+	PlayerUpdateEventTravel = "travel"
+)
+
+type PlayerUpdateEvent struct {
+	Reason string  `json:"reason"`
+	Player *Player `json:"player"`
+}
+
 func NewPlayer(userId int32, startingTerritory *Territory) Player {
 	return Player{
 		UserId:      userId,
@@ -27,28 +36,33 @@ func NewPlayer(userId int32, startingTerritory *Territory) Player {
 	}
 }
 
-func Travel(player *Player, fromIsland, toIsland string, territory *Territory) error {
+func Travel(player Player, fromIsland, toIsland string, territory *Territory) (*PlayerUpdateEvent, error) {
 	if player.AtIsland != fromIsland {
-		return Error{
+		return nil, Error{
 			text:   "شما در جزیره اعلامی قرار ندارید.",
-			reason: ErrorReasonRuleViolation,
+			reason: ErrorReasonResourceNotFound,
 		}
 	}
 	if !slices.ContainsFunc(territory.Edges, func(edge Edge) bool {
-		return edge.From == fromIsland && edge.To == toIsland
+		return (edge.From == fromIsland && edge.To == toIsland) ||
+			(edge.From == toIsland && edge.To == fromIsland)
 	}) {
-		return Error{
+		return nil, Error{
 			text:   "مسیری بین این دو جزیره وجود ندارد.",
 			reason: ErrorReasonRuleViolation,
 		}
 	}
 	if player.Fuel-travelFuelConsumption < 0 {
-		return Error{
+		return nil, Error{
 			text:   "سوخت شما برای سفر کافی نیست.",
 			reason: ErrorReasonRuleViolation,
 		}
 	}
+
 	player.Fuel -= travelFuelConsumption
 	player.AtIsland = toIsland
-	return nil
+	return &PlayerUpdateEvent{
+		Reason: PlayerUpdateEventTravel,
+		Player: &player,
+	}, nil
 }
