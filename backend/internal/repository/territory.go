@@ -2,110 +2,106 @@ package repository
 
 import (
 	"context"
-	"embed"
+	"database/sql"
 	"encoding/json"
+	"errors"
 	"fmt"
-	"path"
-	"strings"
+	"time"
 
 	"github.com/Rastaiha/bermudia/internal/domain"
 )
 
-//go:embed data/territories
-var territoryFiles embed.FS
+const (
+	territorySchema = `
+CREATE TABLE IF NOT EXISTS territories (
+	id VARCHAR(255) PRIMARY KEY,
+    first_island_id VARCHAR(255),
+    content TEXT NOT NULL,
+    updated_at TIMESTAMP NOT NULL
+);
+`
+)
 
-// jsonTerritoryRepository implements Territory using embedded JSON files
-type jsonTerritoryRepository struct {
-	fs embed.FS
+type sqlTerritoryRepository struct {
+	db *sql.DB
 }
 
-// NewJSONTerritoryRepository creates a new JSON-based territory repository
-func NewJSONTerritoryRepository() domain.TerritoryStore {
-	return &jsonTerritoryRepository{
-		fs: territoryFiles,
-	}
-}
-
-// GetTerritoryByID retrieves a territory by its ID from embedded JSON files
-func (r *jsonTerritoryRepository) GetTerritoryByID(ctx context.Context, territoryID string) (*domain.Territory, error) {
-	filePath := path.Join("data/territories", fmt.Sprintf("%s.json", territoryID))
-
-	// Check context cancellation
-	select {
-	case <-ctx.Done():
-		return nil, ctx.Err()
-	default:
-	}
-
-	// Read embedded file
-	data, err := r.fs.ReadFile(filePath)
+func NewSqlTerritoryRepository(db *sql.DB) (domain.TerritoryStore, error) {
+	_, err := db.Exec(territorySchema)
 	if err != nil {
-		return nil, fmt.Errorf("%w: %s", domain.ErrTerritoryNotFound, territoryID)
+		return nil, fmt.Errorf("failed to create territories table: %w", err)
 	}
+	return sqlTerritoryRepository{
+		db: db,
+	}, nil
+}
 
-	// Parse JSON
-	var territory domain.Territory
-	if err := json.Unmarshal(data, &territory); err != nil {
-		return nil, fmt.Errorf("failed to parse territory JSON: %w", err)
+type territoryContent struct {
+	Name            string          `json:"name"`
+	BackgroundAsset string          `json:"backgroundAsset"`
+	Islands         []domain.Island `json:"islands"`
+	Edges           []domain.Edge   `json:"edges"`
+}
+
+func (s sqlTerritoryRepository) columns() string {
+	return "SELECT id, first_island_id, content FROM territories"
+}
+
+func (s sqlTerritoryRepository) scan(row scannable, territory *domain.Territory) error {
+	var content []byte
+	err := row.Scan(&territory.ID, &territory.FirstIsland, &content)
+	if errors.Is(err, sql.ErrNoRows) {
+		return domain.ErrTerritoryNotFound
 	}
+	if err != nil {
+		return err
+	}
+	var tc territoryContent
+	err = json.Unmarshal(content, &tc)
+	if err != nil {
+		return err
+	}
+	territory.Name = tc.Name
+	territory.BackgroundAsset = tc.BackgroundAsset
+	territory.Islands = tc.Islands
+	territory.Edges = tc.Edges
+	return nil
+}
 
-	return &territory, nil
+func (s sqlTerritoryRepository) CreateTerritory(ctx context.Context, territory *domain.Territory) error {
+	tc := territoryContent{
+		Name:            territory.Name,
+		BackgroundAsset: territory.BackgroundAsset,
+		Islands:         territory.Islands,
+		Edges:           territory.Edges,
+	}
+	content, err := json.Marshal(tc)
+	if err != nil {
+		return err
+	}
+	_, err = s.db.ExecContext(ctx, `INSERT INTO territories (id, first_island_id, content, updated_at) VALUES ($1, $2, $3, $4)`, territory.ID, territory.FirstIsland, content, time.Now().UTC())
+	return err
+}
+
+func (s sqlTerritoryRepository) GetTerritoryByID(ctx context.Context, territoryID string) (*domain.Territory, error) {
+	var t domain.Territory
+	err := s.scan(s.db.QueryRowContext(ctx, s.columns()+" WHERE id = $1", territoryID), &t)
+	return &t, err
 }
 
 // ListTerritories returns all available territories from embedded files
-func (r *jsonTerritoryRepository) ListTerritories(ctx context.Context) ([]domain.Territory, error) {
-	// Check context cancellation
-	select {
-	case <-ctx.Done():
-		return nil, ctx.Err()
-	default:
-	}
-
-	dirEntries, err := r.fs.ReadDir("data/territories")
+func (s sqlTerritoryRepository) ListTerritories(ctx context.Context) ([]domain.Territory, error) {
+	var result []domain.Territory
+	rows, err := s.db.QueryContext(ctx, s.columns())
 	if err != nil {
-		return nil, fmt.Errorf("failed to list territory files: %w", err)
+		return nil, err
 	}
-
-	var territories []domain.Territory
-	for _, entry := range dirEntries {
-		if !entry.IsDir() && strings.HasSuffix(entry.Name(), ".json") {
-			filePath := path.Join("data/territories", entry.Name())
-
-			data, err := r.fs.ReadFile(filePath)
-			if err != nil {
-				continue // Skip files that can't be read
-			}
-
-			var territory domain.Territory
-			if err := json.Unmarshal(data, &territory); err != nil {
-				continue // Skip files that can't be parsed
-			}
-
-			territories = append(territories, territory)
+	for rows.Next() {
+		var t domain.Territory
+		if err := s.scan(rows, &t); err != nil {
+			return nil, err
 		}
+		result = append(result, t)
 	}
-
-	return territories, nil
+	return result, rows.Close()
 }
-
-// SQLTerritoryRepository is a placeholder for future SQL implementation
-// This shows how easy it will be to swap implementations
-type SQLTerritoryRepository struct {
-	// db *sql.DB // Will be added when implementing SQL version
-}
-
-// NewSQLTerritoryRepository creates a new SQL-based territory repository
-// func NewSQLTerritoryRepository(db *sql.DB) *SQLTerritoryRepository {
-// 	return &SQLTerritoryRepository{db: db}
-// }
-
-// Implement Territory interface methods for SQL version
-// func (r *SQLTerritoryRepository) GetTerritoryByID(territoryID string) (*models.Territory, error) {
-// 	// SQL implementation will go here
-// 	panic("not implemented")
-// }
-
-// func (r *SQLTerritoryRepository) ListTerritories() ([]models.Territory, error) {
-// 	// SQL implementation will go here
-// 	panic("not implemented")
-// }

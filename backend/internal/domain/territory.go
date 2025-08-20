@@ -11,6 +11,7 @@ type Territory struct {
 	ID              string   `json:"id"`
 	Name            string   `json:"name"`
 	BackgroundAsset string   `json:"backgroundAsset"`
+	FirstIsland     *string  `json:"firstIsland,omitempty"`
 	Islands         []Island `json:"islands"`
 	Edges           []Edge   `json:"edges"`
 }
