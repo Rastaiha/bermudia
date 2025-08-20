@@ -2,11 +2,13 @@
 
 ## Base URL
 
-For development purposes:
+### Development
 
 ```
-http://97590f57-b983-48f8-bb0a-c098bed1e658.hsvc.ir:30254/api/v1
+{{protocol}}://97590f57-b983-48f8-bb0a-c098bed1e658.hsvc.ir:30254/api/v1
 ```
+
+protocols: `http`, `ws`
 
 ## Response Format
 
@@ -90,6 +92,14 @@ Returns an empty object in response.
 
 **Note:** Request's `Content-Type` should be `multipart/form-data`
 
+## Stream Events (authenticated)
+
+A **websocket** endpoint for receiving realtime events.
+
+Type of messages is text; JSON encoding of [Event](#event).
+
+**Endpoint:** `/events`
+
 ### Get Player (authenticated)
 
 Returns the [Player](#player) object.
@@ -105,6 +115,17 @@ Receives a [TravelRequest](#travelrequest) in body.
 Returns an empty object in response.
 
 **Endpoint:** `POST /travel`
+
+```shell
+curl --request POST \
+  --url http://97590f57-b983-48f8-bb0a-c098bed1e658.hsvc.ir:30254/api/v1/travel \
+  --header 'Authorization: TOKEN' \
+  --header 'Content-Type: application/json' \
+  --data '{
+	"fromIsland": "island_final",
+	"toIsland": "island_math2"
+}'
+```
 
 ## Data Models
 
@@ -207,3 +228,18 @@ Returns an empty object in response.
 | type        | string    | Type of the data this input receives. One of [HTML Input Element Types](https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Elements/input#input_types) (usually one of `text`, `number` and `file`) |
 | accept      | []string? | If type is `file`, this field is present and contains the accepted MIME types.                                                                                                                               |
 | description | string    | Description of the input to be shown to user                                                                                                                                                                 |
+
+### Event
+
+| Field        | Type                                    | Description                                                                          |
+|--------------|-----------------------------------------|--------------------------------------------------------------------------------------|
+| playerUpdate | [PlayerUpdateEvent](#playerupdateevent) | If event is a player update event, this field is present.                            |
+| timestamp    | string                                  | Time of event emission in Unix milliseconds. Can be used to discard very old events. |
+
+### PlayerUpdateEvent
+
+| Field  | Type              | Description                            |
+|--------|-------------------|----------------------------------------|
+| reason | string            | The reason for change in player state. |
+| player | [Player](#player) | The new value of player object.        |
+
