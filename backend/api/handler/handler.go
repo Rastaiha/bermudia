@@ -62,6 +62,7 @@ func (h *Handler) Start() {
 			r.HandleFunc("/events", h.StreamEvents)
 			r.Post("/answer/{inputID}", h.SubmitAnswer)
 			r.Get("/player", h.GetPlayer)
+			r.Post("/travel_check", h.TravelCheck)
 			r.Post("/travel", h.Travel)
 		})
 	})

@@ -36,26 +36,42 @@ func NewPlayer(userId int32, startingTerritory *Territory) Player {
 	}
 }
 
-func Travel(player Player, fromIsland, toIsland string, territory *Territory) (*PlayerUpdateEvent, error) {
+type TravelCheckResult struct {
+	Feasible bool   `json:"feasible"`
+	FuelCost int32  `json:"fuelCost"`
+	Reason   string `json:"reason,omitempty"`
+}
+
+func TravelCheck(player Player, fromIsland, toIsland string, territory *Territory) (result TravelCheckResult) {
+	result = TravelCheckResult{
+		Feasible: false,
+		FuelCost: travelFuelConsumption,
+	}
 	if player.AtIsland != fromIsland {
-		return nil, Error{
-			text:   "شما در جزیره اعلامی قرار ندارید.",
-			reason: ErrorReasonResourceNotFound,
-		}
+		result.Reason = "شما در جزیره اعلامی قرار ندارید."
+		return
 	}
 	if !slices.ContainsFunc(territory.Edges, func(edge Edge) bool {
 		return (edge.From == fromIsland && edge.To == toIsland) ||
 			(edge.From == toIsland && edge.To == fromIsland)
 	}) {
-		return nil, Error{
-			text:   "مسیری بین این دو جزیره وجود ندارد.",
-			reason: ErrorReasonRuleViolation,
-		}
+		result.Reason = "مسیری بین جزیره کنونی و جزیره مقصد وجود ندارد."
+		return
 	}
 	if player.Fuel-travelFuelConsumption < 0 {
+		result.Reason = "سوخت شما برای سفر کافی نیست."
+		return
+	}
+	result.Feasible = true
+	return
+}
+
+func Travel(player Player, fromIsland, toIsland string, territory *Territory) (*PlayerUpdateEvent, error) {
+	check := TravelCheck(player, fromIsland, toIsland, territory)
+	if !check.Feasible {
 		return nil, Error{
-			text:   "سوخت شما برای سفر کافی نیست.",
 			reason: ErrorReasonRuleViolation,
+			text:   check.Reason,
 		}
 	}
 
