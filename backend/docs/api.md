@@ -76,7 +76,7 @@ Returns a [IslandContent](#islandcontent) in response.
 
 - `islandID` (path parameter, required): The unique identifier of the island
 
-### Submit Answer
+### Submit Answer (authenticated)
 
 Receives the input of a [IslandInput](#islandinput) components.
 
