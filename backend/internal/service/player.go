@@ -19,6 +19,20 @@ func (p *Player) GetPlayer(ctx context.Context, user *domain.User) (domain.Playe
 	return p.playerStore.Get(ctx, user.ID)
 }
 
+func (p *Player) TravelCheck(ctx context.Context, user *domain.User, fromIsland, toIsland string) (*domain.TravelCheckResult, error) {
+	player, err := p.playerStore.Get(ctx, user.ID)
+	if err != nil {
+		return nil, err
+	}
+	territory, err := p.territoryStore.GetTerritoryByID(ctx, player.AtTerritory)
+	if err != nil {
+		return nil, err
+	}
+
+	checkResult := domain.TravelCheck(player, fromIsland, toIsland, territory)
+	return &checkResult, nil
+}
+
 func (p *Player) Travel(ctx context.Context, user *domain.User, fromIsland string, toIsland string) error {
 	player, err := p.playerStore.Get(ctx, user.ID)
 	if err != nil {

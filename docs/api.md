@@ -120,6 +120,29 @@ Returns the [Player](#player) object.
 
 ---
 
+### Travel Check (authenticated)
+
+Checks whether the specified travel is possible.
+
+Receives a [TravelCheckRequest](#travelcheckrequest) in body.
+
+Returns [TravelCheckResult](#travelcheckresult) in response.
+
+**Endpoint:** `POST /travel_check`
+
+```shell
+curl --request POST \
+  --url http://97590f57-b983-48f8-bb0a-c098bed1e658.hsvc.ir:30254/api/v1/travel_check \
+  --header 'Authorization: TOKEN' \
+  --header 'Content-Type: application/json' \
+  --data '{
+	"fromIsland": "island_final",
+	"toIsland": "island_math2"
+}'
+```
+
+---
+
 ### Travel (authenticated)
 
 Changes the current island by traveling to another.
@@ -157,6 +180,15 @@ curl --request POST \
 | Field | Type   | Description                                                |
 |-------|--------|------------------------------------------------------------|
 | token | string | JWT to be put in future requests. It is valid for 16 hours |
+
+
+### TravelCheckRequest
+
+| Field      | Type   | Description                                                                                         |
+|------------|--------|-----------------------------------------------------------------------------------------------------|
+| fromIsland | string | The current island of player (it is received by server to prevent travel in case of state mismatch) |
+| toIsland   | string | The destination island                                                                              |
+
 
 ### TravelRequest
 
@@ -251,6 +283,14 @@ curl --request POST \
 |--------------|-----------------------------------------|--------------------------------------------------------------------------------------|
 | playerUpdate | [PlayerUpdateEvent](#playerupdateevent) | If event is a player update event, this field is present.                            |
 | timestamp    | string                                  | Time of event emission in Unix milliseconds. Can be used to discard very old events. |
+
+### TravelCheckResult
+
+| Field    | Type    | Description                                                    |
+|----------|---------|----------------------------------------------------------------|
+| feasible | boolean | True if the travel can be done, false otherwise.               |
+| fuelCost | int     | The fuel cost of this travel                                   |
+| reason   | string? | If _feasible_ is false, this field is presents and reports why |
 
 ### PlayerUpdateEvent
 
