@@ -35,6 +35,15 @@
           />
         </g>
       </g>
+      <g v-if="player && props.territoryId == player.atTerritory" class="ship">
+        <image 
+          href="/images/ships/ship1.svg" 
+          width="0.16" 
+          height="0.22" 
+          :x="player.atIsland.imageX - 0.08" 
+          :y="player.atIsland.imageY - 0.08"
+        />
+      </g>
     </svg>
     <div v-else class="loading-message">
       {{ loadingMessage }}
@@ -45,12 +54,14 @@
 <script setup>
 import { ref, onMounted, onUnmounted, computed, nextTick } from 'vue';
 import { useRouter } from 'vue-router'; // Import the router
+import { getPlayer, getToken } from "@/services/api";
 import panzoom from 'panzoom';
 
 // --- Define reactive state ---
 const svgRef = ref(null);
 const nodes = ref([]);
 const edges = ref([]);
+const player = ref(null);
 const backgroundImage = ref('');
 const hoveredNode = ref(null);
 const mousePosition = ref({ x: 0, y: 0 });
@@ -171,12 +182,29 @@ const fetchTerritoryData = async (id) => {
 
     await nextTick();
     initializePanzoom();
+    await fetchPlayer();
 
   } catch (error) {
     console.error('Failed to load or process territory data:', error);
     loadingMessage.value = `Error: ${error.message}`;
   }
 };
+
+const fetchPlayer = async () => {
+  if (!getToken()) return;
+  try {
+    const playerData = await getPlayer();
+      const island = nodes.value.find(node => node.id === playerData.atIsland);
+      player.value = {
+        atTerritory: playerData.atTerritory,
+        atIsland: island,
+        fuel: playerData.fuel,
+        fuelCap: playerData.fuelCap
+      };
+  } catch (err) {
+    console.error("Failed to get player data:", err);
+  }
+} 
 
 // --- Helper Functions ---
 const getNodeById = (id) => nodes.value.find(node => node.id === id);
@@ -246,7 +274,7 @@ onUnmounted(() => {
   cursor: pointer;
 }
 
-.node-image {
+.node-image, .ship image {
   transition: transform 0.2s ease-in-out;
   transform-box: fill-box;
 }
@@ -276,5 +304,40 @@ onUnmounted(() => {
   background-color: var(--color-info-box-bg);
   padding: 1rem 2rem;
   border-radius: 0.5rem;
+}
+
+
+/*TODO remove this part; temporary fix for svgs*/
+image.node-image{
+  width: 50%;
+  height: 70%;
+  transform-origin: 0px 0px !important;
+  transform: scale(0.3) !important;
+}
+.ship image{
+  width: 50%;
+  height: 70%;
+  transform-origin: 0px 0px !important;
+}
+
+/* SHIP ANIMATION */
+.ship image {
+  filter: drop-shadow(0 5px 20px rgba(0,0,0,0.5));
+  animation: 10s linear boat-animation infinite;
+}
+
+@keyframes boat-animation {
+  0% {
+    transform: translate(0,0) rotate(10deg) scale(0.3);
+  }
+  35% {
+    transform: translate(0.02px, 0.01px) rotate(-10deg) scale(0.3)
+  }
+  70% {
+    transform: translate(-0.02px, 0.01px) rotate(3deg) scale(0.3)
+  }
+  100% {
+    transform: translate(0,0) rotate(10deg) scale(0.3);
+  }
 }
 </style>

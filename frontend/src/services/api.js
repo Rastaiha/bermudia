@@ -31,7 +31,7 @@ const gameApiClient = axios.create({
 // Intercept requests to automatically add the auth token for the game API
 gameApiClient.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
+    const token = getToken();
     if (token) {
       config.headers.Authorization = token;
     }
@@ -102,8 +102,12 @@ export const submitAnswer = async (inputID, formData) => {
 
 // Helper for auth state
 export const isLoggedIn = () => {
-  return !!(localStorage.getItem('authToken') || sessionStorage.getItem('authToken'));
+  return !!(getToken());
 };
+
+export const getToken = () => {
+  return localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
+}
 
 export const logout = () => {
   localStorage.removeItem('authToken');
