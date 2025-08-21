@@ -37,15 +37,17 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	err = mock.CreateMockData(userRepo, playerRepo, territoryRepo, islandRepo, cfg.MockUsersPassword)
-	if err != nil {
-		log.Fatal("failed to create mock data: ", err)
-	}
 
 	authService := service.NewAuth(cfg, userRepo)
 	territoryService := service.NewTerritory(territoryRepo)
 	islandService := service.NewIsland(islandRepo)
 	playerService := service.NewPlayer(playerRepo, territoryRepo)
+	adminService := service.NewAdmin(territoryRepo, islandRepo, userRepo, playerRepo)
+
+	err = mock.CreateMockData(adminService, cfg.MockUsersPassword)
+	if err != nil {
+		log.Fatal("failed to create mock data: ", err)
+	}
 
 	h := handler.New(authService, territoryService, islandService, playerService)
 
