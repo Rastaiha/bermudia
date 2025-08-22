@@ -94,17 +94,18 @@ Returns a [IslandContent](#islandcontent) in response.
 
 _This endpoint **is authenticated** and needs an auth token for access._
 
-Receives the input of a [IslandInput](#islandinput) components.
+Receives the input that the user enters into a [IslandInput](#islandinput) component.
 
-Returns the new [SubmissionState](#submissionstate) of the answer in response.
+Returns the updated [SubmissionState](#submissionstate) field of the [IslandInput](#islandinput) component in response.
 
 **Endpoint:** `POST /answer/{inputID}`
 
 **Parameters:**
 
-- `data` (body parameter, required): The user data. Its type depends on the [IslandInput](#islandinput) `type`.
+- `inputID` (path parameter, required): The _id_ of the [IslandInput](#islandinput) component.
+- `data` (body parameter, required): The user data. Its type depends on the _type_ field in [IslandInput](#islandinput); If _type_ is `file` , pass the file, otherwise pass the plain text in this field.
 
-**Note:** Request's `Content-Type` should be `multipart/form-data`
+**Note:** Request's `Content-Type` must be `multipart/form-data`
 
 ```shell
 curl --request POST \
