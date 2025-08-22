@@ -106,6 +106,14 @@ Returns the new [SubmissionState](#submissionstate) of the answer in response.
 
 **Note:** Request's `Content-Type` should be `multipart/form-data`
 
+```shell
+curl --request POST \
+  --url http://97590f57-b983-48f8-bb0a-c098bed1e658.hsvc.ir:30254/api/v1/answer/ans_29C12F3C7D089666 \
+  --header 'Authorization: TOKEN' \
+  --header 'Content-Type: multipart/form-data' \
+  --form data=@/path/to/file.txt
+```
+
 ---
 
 ### Stream Events
@@ -147,17 +155,16 @@ curl --request POST \
   --url http://97590f57-b983-48f8-bb0a-c098bed1e658.hsvc.ir:30254/api/v1/travel_check \
   --header 'Authorization: TOKEN' \
   --header 'Content-Type: application/json' \
-  --data '{
-	"fromIsland": "island_final",
-	"toIsland": "island_math2"
-}'
+  --data '{"fromIsland": "island_final","toIsland": "island_math2"}'
 ```
 
 ---
 
-### Travel (authenticated)
+### Travel
 
-Changes the current island by traveling to another.
+_This endpoint **is authenticated** and needs an auth token for access._
+
+Makes the player travel from the current island to another island. 
 
 Receives a [TravelRequest](#travelrequest) in body.
 
@@ -170,10 +177,49 @@ curl --request POST \
   --url http://97590f57-b983-48f8-bb0a-c098bed1e658.hsvc.ir:30254/api/v1/travel \
   --header 'Authorization: TOKEN' \
   --header 'Content-Type: application/json' \
-  --data '{
-	"fromIsland": "island_final",
-	"toIsland": "island_math2"
-}'
+  --data '{"fromIsland": "island_final","toIsland": "island_math2"}'
+```
+
+---
+
+### Refuel Check
+
+_This endpoint **is authenticated** and needs an auth token for access._
+
+Used to check whether refuel is possible in the current state.
+
+Does not receive anything.
+
+Returns a [RefuelCheckResult](#refuelcheckresult) in response.
+
+**Endpoint:** `POST /refuel_check`
+
+```shell
+curl --request POST \
+  --url http://97590f57-b983-48f8-bb0a-c098bed1e658.hsvc.ir:30254/api/v1/refuel_check \
+  --header 'Authorization: TOKEN'
+```
+
+---
+
+### Refuel
+
+_This endpoint **is authenticated** and needs an auth token for access._
+
+Used to refuel player's vehicle.
+
+Receives [RefuelRequest](#refuelrequest) in body.
+
+Returns an empty object in response.
+
+**Endpoint:** `POST /refuel`
+
+```shell
+curl --request POST \
+  --url http://97590f57-b983-48f8-bb0a-c098bed1e658.hsvc.ir:30254/api/v1/refuel \
+  --header 'Authorization: TOKEN' \
+  --header 'Content-Type: application/json' \
+  --data '{"amount": 5}'
 ```
 
 ---
@@ -209,6 +255,13 @@ curl --request POST \
 | fromIsland | string | The current island of player (it is received by server to prevent travel in case of state mismatch) |
 | toIsland   | string | The destination island                                                                              |
 
+
+### RefuelRequest
+
+| Field  | Type   | Description                                                                                                                  |
+|--------|--------|------------------------------------------------------------------------------------------------------------------------------|
+| amount | int    | Amount of fuel to buy. Must be positive and not bigger that _maxAvailableAmount_ in [RefuelCheckResult](#refuelcheckresult). |
+
 ### Me
 
 | Field    | Type   | Description                 |
@@ -228,13 +281,14 @@ curl --request POST \
 
 ### Territory
 
-| Field           | Type                | Description                          |
-|-----------------|---------------------|--------------------------------------|
-| id              | string              | Unique identifier for the territory  |
-| name            | string              | Display name of the territory        |
-| backgroundAsset | string              | Asset file name for background       |
-| islands         | [Island](#island)[] | Array of islands in this territory   |
-| edges           | [Edge](#edge)[]     | Array of connections between islands |
+| Field           | Type                            | Description                          |
+|-----------------|---------------------------------|--------------------------------------|
+| id              | string                          | Unique identifier for the territory  |
+| name            | string                          | Display name of the territory        |
+| backgroundAsset | string                          | Asset file name for background       |
+| islands         | [Island](#island)[]             | Array of islands in this territory   |
+| edges           | [Edge](#edge)[]                 | Array of connections between islands |
+| refuelIslands   | [RefuelIsland](#refuelIsland)[] | Array of refuel islands              |
 
 ### Island
 
@@ -256,6 +310,12 @@ curl --request POST \
 | to    | string | ID of the destination island |
 
 **Note:** Edges represent bidirectional connections. If there's an edge from A to B, players can travel both ways.
+
+### RefuelIsland
+
+| Field | Type   | Description  |
+|-------|--------|--------------|
+| id    | string | ID of island |
 
 ### IslandContent
 
@@ -315,10 +375,19 @@ curl --request POST \
 | fuelCost | int     | The fuel cost of this travel                                   |
 | reason   | string? | If _feasible_ is false, this field is presents and reports why |
 
+
+### RefuelCheckResult
+
+| Field              | Type   | Description                                                                     |
+|--------------------|--------|---------------------------------------------------------------------------------|
+| maxAvailableAmount | int    | Maximum amount of fuel that can be bought depending on conditions. Can be zero. |
+| coinCostPerUnit    | int    | The number of coins needed to buy a unit of fuel.                               |
+| maxReason          | string | A description for the cause of _maxAvailableAmount_                             |
+
 ### PlayerUpdateEvent
 
-| Field  | Type              | Description                            |
-|--------|-------------------|----------------------------------------|
-| reason | string            | The reason for change in player state. |
-| player | [Player](#player) | The new value of player object.        |
+| Field  | Type              | Description                                                      |
+|--------|-------------------|------------------------------------------------------------------|
+| reason | string            | The reason for change in player state. One of `travel`, `refuel` |
+| player | [Player](#player) | The new value of player object.                                  |
 

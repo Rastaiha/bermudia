@@ -1,12 +1,14 @@
 package domain
 
 import (
+	"math"
 	"slices"
 )
 
 const (
 	travelFuelConsumption = 1
 	fuelTankCapacity      = 15
+	refuelCoinCostPerUnit = 0
 )
 
 type Player struct {
@@ -15,10 +17,12 @@ type Player struct {
 	AtIsland    string `json:"atIsland"`
 	Fuel        int32  `json:"fuel"`
 	FuelCap     int32  `json:"fuelCap"`
+	Coins       int32  `json:"coins"`
 }
 
 const (
 	PlayerUpdateEventTravel = "travel"
+	PlayerUpdateEventRefuel = "refuel"
 )
 
 type PlayerUpdateEvent struct {
@@ -79,6 +83,58 @@ func Travel(player Player, fromIsland, toIsland string, territory *Territory) (*
 	player.AtIsland = toIsland
 	return &PlayerUpdateEvent{
 		Reason: PlayerUpdateEventTravel,
+		Player: &player,
+	}, nil
+}
+
+type RefuelCheckResult struct {
+	MaxAvailableAmount int32  `json:"maxAvailableAmount"`
+	CoinCostPerUnit    int32  `json:"coinCostPerUnit"`
+	MaxReason          string `json:"maxReason"`
+}
+
+func RefuelCheck(player Player, territory *Territory) (result RefuelCheckResult) {
+	idx := slices.IndexFunc(territory.RefuelIslands, func(ri RefuelIsland) bool {
+		return ri.ID == player.AtIsland
+	})
+	if idx < 0 {
+		result.MaxReason = "شما در حال حاضر در جزیره سوخت‌گیری قرار ندارید."
+		return
+	}
+	result.CoinCostPerUnit = refuelCoinCostPerUnit
+	fuelCapBound := player.FuelCap - player.Fuel
+	coinBound := int32(math.MaxInt32)
+	if result.CoinCostPerUnit > 0 {
+		coinBound = player.Coins / result.CoinCostPerUnit
+	}
+	if coinBound < fuelCapBound {
+		result.MaxAvailableAmount = coinBound
+		result.MaxReason = "موجودی سکه شما تنها برای خرید این میزان سوخت کافی است."
+	} else {
+		result.MaxAvailableAmount = fuelCapBound
+		result.MaxReason = "باک شما بیش از این مقدار گنجایش ندارد."
+	}
+	return
+}
+
+func Refuel(player Player, territory *Territory, amount int32) (*PlayerUpdateEvent, error) {
+	check := RefuelCheck(player, territory)
+	if amount <= 0 {
+		return nil, Error{
+			text:   "Invalid refuel amount",
+			reason: ErrorReasonRuleViolation,
+		}
+	}
+	if check.MaxAvailableAmount < amount {
+		return nil, Error{
+			text:   check.MaxReason,
+			reason: ErrorReasonRuleViolation,
+		}
+	}
+	player.Fuel += amount
+	player.Coins -= amount * check.CoinCostPerUnit
+	return &PlayerUpdateEvent{
+		Reason: PlayerUpdateEventRefuel,
 		Player: &player,
 	}, nil
 }
