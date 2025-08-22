@@ -1,7 +1,19 @@
 <template>
   <div class="territory-container" :style="{ backgroundImage: `url(${backgroundImage})` }">
-    <div v-if="hoveredNode" class="info-box" :style="infoBoxStyle">
-      {{ hoveredNode.name }}
+    <div v-if="hoveredNode" class="info-box" :style="infoBoxStyle" @mouseover="isHoveringBox = true" @mouseleave="unHoverBox">
+      <div>{{ hoveredNode.name }}</div>
+      <div>
+        <button v-if="hoveredNode.id == player.atIsland.id" @click="navigateToIsland(player.atIsland.id)">ورود به جزیره</button>
+        <button 
+          v-else-if="edges.some(edge => 
+            (edge.from_node_id === player.atIsland.id && edge.to_node_id === hoveredNode.id) ||
+            (edge.to_node_id === player.atIsland.id && edge.from_node_id === hoveredNode.id)
+          )"
+        >
+          سفر به جزیره <span :travel.feulCost></span>
+        </button>
+        <button v-else>جزیره دور است!</button> 
+      </div>
     </div>
 
     <svg
@@ -22,7 +34,7 @@
       </g>
 
       <g class="nodes">
-        <g v-for="node in nodes" :key="node.id" @click="navigateToIsland(node.id)" class="node-link">
+        <g v-for="node in nodes" :key="node.id" class="node-link">
           <image
             :href="node.iconPath"
             :x="node.imageX"
@@ -30,8 +42,9 @@
             :width="node.width"
             :height="node.height"
             class="node-image"
-            @mouseover="showInfoBox(node)"
-            @mouseleave="hideInfoBox"
+            @click="showInfoBox(node)"
+            @mouseover="isHoveringNode = true"
+            @mouseleave="unhoverNode"
           />
         </g>
       </g>
@@ -54,7 +67,7 @@
 <script setup>
 import { ref, onMounted, onUnmounted, computed, nextTick } from 'vue';
 import { useRouter } from 'vue-router'; // Import the router
-import { getPlayer, getToken } from "@/services/api";
+import { getPlayer, getToken, checkTravel } from "@/services/api";
 import panzoom from 'panzoom';
 
 // --- Define reactive state ---
@@ -62,6 +75,9 @@ const svgRef = ref(null);
 const nodes = ref([]);
 const edges = ref([]);
 const player = ref(null);
+const travel = ref(null);
+let isHoveringNode = false;
+let isHoveringBox = false;
 const backgroundImage = ref('');
 const hoveredNode = ref(null);
 const mousePosition = ref({ x: 0, y: 0 });
@@ -203,20 +219,68 @@ const fetchPlayer = async () => {
       };
   } catch (err) {
     console.error("Failed to get player data:", err);
+    loadingMessage.value = "Error: " + err;
   }
 } 
 
 // --- Helper Functions ---
 const getNodeById = (id) => nodes.value.find(node => node.id === id);
 const updateMousePosition = (event) => { mousePosition.value = { x: event.clientX, y: event.clientY }; };
-const showInfoBox = (node) => { hoveredNode.value = node; };
-const hideInfoBox = () => { hoveredNode.value = null; };
-const infoBoxStyle = computed(() => ({
-  position: 'fixed',
-  top: `${mousePosition.value.y + 20}px`,
-  left: `${mousePosition.value.x}px`,
-  transform: 'translateX(-50%)',
-}));
+const showInfoBox = (node) => { 
+  if (!player) return;
+  hoveredNode.value = node;
+  if (hoveredNode.value.id == player.value.atIsland.id) return;
+  try {
+    const travelData = checkTravel(player.value.atIsland.id, hoveredNode.value.id);
+    travel.value = {
+      feasable: travelData.feasable,
+      fuelCost: travelData.fuelCost,
+      reason: travelData.feasable ? "" : travelData.reason,
+    }
+  } catch (err) {
+    console.error("Failed to get travel data:", err);
+    loadingMessage.value = "Error: " + err;
+  }
+};
+const hideInfoBox = () => { 
+  hoveredNode.value = null; 
+  travel.value = null;
+};
+const unhoverNode = () => {
+  isHoveringNode = false;
+  setTimeout(() => {
+    if (!isHoveringBox) {
+      hideInfoBox();
+    }
+  }, 1000);
+}
+const unHoverBox = () => {
+  isHoveringBox = false;
+  setTimeout(() => {
+    if (!isHoveringNode) {
+      hideInfoBox();
+    }
+  }, 1000);
+}
+const infoBoxStyle = computed(() => {
+  if (!hoveredNode.value || !svgRef.value) return {};
+
+  const svg = svgRef.value;
+  const pt = svg.createSVGPoint();
+  pt.x = hoveredNode.value.x;
+  pt.y = hoveredNode.value.y;
+
+  // Convert SVG coordinates → screen coordinates
+  const screenPoint = pt.matrixTransform(svg.getScreenCTM());
+
+  return {
+    position: 'fixed',
+    top: `${screenPoint.y - 100}px`,   // above the node
+    left: `${screenPoint.x}px`,
+    transform: 'translateX(-50%)',
+  };
+});
+
 
 // --- Lifecycle Hook ---
 onMounted(() => {
@@ -292,7 +356,6 @@ onUnmounted(() => {
   border-radius: 6px;
   font-family: sans-serif;
   font-size: 14px;
-  pointer-events: none;
   z-index: 100;
   white-space: nowrap;
 }

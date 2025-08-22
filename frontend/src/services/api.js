@@ -72,6 +72,15 @@ export const getPlayer = async () => {
   return response;
 };
 
+// CHECL TRAVEL
+export const checkTravel = async (fromId, toId) => {
+  const response = await gameApiClient.post('/travel_check', {
+    fromIsland: fromId,
+    toIsland: toId,
+  });
+  return response;
+};
+
 // Get current user info (authenticated)
 export const getMe = async () => {
   const response = await gameApiClient.get('/me');
