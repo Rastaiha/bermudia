@@ -67,7 +67,7 @@
 <script setup>
 import { ref, onMounted, onUnmounted, computed, nextTick } from 'vue';
 import { useRouter } from 'vue-router'; // Import the router
-import { getPlayer, getToken } from "@/services/api";
+import { getPlayer, getToken, checkTravel } from "@/services/api";
 import panzoom from 'panzoom';
 
 // --- Define reactive state ---
@@ -75,6 +75,9 @@ const svgRef = ref(null);
 const nodes = ref([]);
 const edges = ref([]);
 const player = ref(null);
+const travel = ref(null);
+let isHoveringBox = false;
+let isHoveringNode = false;
 const backgroundImage = ref('');
 const hoveredNode = ref(null);
 const mousePosition = ref({ x: 0, y: 0 });
