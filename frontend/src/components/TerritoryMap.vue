@@ -10,7 +10,8 @@
             (edge.to_node_id === player.atIsland.id && edge.from_node_id === hoveredNode.id)
           )"
         >
-          سفر به جزیره <span :travel.feulCost></span>
+          سفر به جزیره 
+          <span v-if="fuelCost">{{ fuelCost }}</span>
         </button>
         <button v-else>جزیره دور است!</button> 
       </div>
@@ -76,6 +77,7 @@ const nodes = ref([]);
 const edges = ref([]);
 const player = ref(null);
 const travel = ref(null);
+const fuelCost = computed(() => travel.value?.fuelCost ?? null);
 let isHoveringBox = false;
 let isHoveringNode = false;
 const backgroundImage = ref('');
@@ -225,16 +227,17 @@ const fetchPlayer = async () => {
 // --- Helper Functions ---
 const getNodeById = (id) => nodes.value.find(node => node.id === id);
 const updateMousePosition = (event) => { mousePosition.value = { x: event.clientX, y: event.clientY }; };
-const showInfoBox = (node) => { 
+const showInfoBox = async (node) => { 
+  isHoveringNode = true;
   if (!player) return;
   hoveredNode.value = node;
   if (hoveredNode.value.id == player.value.atIsland.id) return;
   try {
-    const travelData = checkTravel(player.value.atIsland.id, hoveredNode.value.id);
+    const travelData = await checkTravel(player.value.atIsland.id, hoveredNode.value.id);
     travel.value = {
-      feasable: travelData.feasable,
+      feasible: travelData.feasible,
       fuelCost: travelData.fuelCost,
-      reason: travelData.feasable ? "" : travelData.reason,
+      reason: travelData.feasible ? "" : travelData.reason,
     }
   } catch (err) {
     console.error("Failed to get travel data:", err);
@@ -290,6 +293,7 @@ onUnmounted(() => {
     panzoomInstance.dispose();
   }
 });
+const debug = () => {debugger;}
 </script>
 
 <style scoped>
