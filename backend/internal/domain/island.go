@@ -1,7 +1,5 @@
 package domain
 
-import "time"
-
 // Island represents a single island in a territory
 type Island struct {
 	ID        string  `json:"id"`
@@ -59,10 +57,10 @@ type IslandInput struct {
 }
 
 type SubmissionState struct {
-	Submittable bool         `json:"submittable"`
-	Status      AnswerStatus `json:"status"`
-	Filename    string       `json:"filename,omitempty"`
-	SubmittedAt time.Time    `json:"submittedAt,omitempty,omitzero"`
+	Submittable bool   `json:"submittable"`
+	Status      string `json:"status"`
+	Filename    string `json:"filename,omitempty"`
+	SubmittedAt int64  `json:"submittedAt,omitempty,string"`
 }
 
 type UserComponent struct {

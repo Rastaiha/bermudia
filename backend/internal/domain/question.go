@@ -32,13 +32,24 @@ const (
 )
 
 func GetSubmissionStateFromAnswer(answer Answer) SubmissionState {
-	submittedAt := answer.UpdatedAt
+	submittedAt := answer.UpdatedAt.UnixMilli()
 	if answer.Status == AnswerStatusEmpty {
-		submittedAt = time.Time{}
+		submittedAt = 0
+	}
+	status := ""
+	switch answer.Status {
+	case AnswerStatusEmpty:
+		status = "empty"
+	case AnswerStatusPending:
+		status = "pending"
+	case AnswerStatusCorrect:
+		status = "correct"
+	case AnswerStatusWrong:
+		status = "wrong"
 	}
 	return SubmissionState{
 		Submittable: answer.Status == AnswerStatusEmpty || answer.Status == AnswerStatusWrong,
-		Status:      answer.Status,
+		Status:      status,
 		Filename:    answer.Filename,
 		SubmittedAt: submittedAt,
 	}
