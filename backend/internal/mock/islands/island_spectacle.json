@@ -1,11 +1,11 @@
 {
   "components": [
     {
-      "input": {
-        "id": "island_spectacle_1",
-        "type": "file",
-        "accept": ["application/pdf"],
-        "description": "یه فایل pdf بفرست:"
+      "question": {
+        "inputType": "file",
+        "knowledgeAmount": 100,
+        "inputAccept": ["application/pdf"],
+        "text": "یه فایل pdf بفرست:"
       }
     }
   ]

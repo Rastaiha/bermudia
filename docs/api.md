@@ -48,7 +48,9 @@ Returns a [LoginResult](#loginresult) in response.
 
 ---
 
-### Get Me (authenticated)
+### Get Me
+
+_This endpoint **is authenticated** and needs an auth token for access._
 
 Returns [Me](#me) in response.
 
@@ -74,6 +76,8 @@ Returns a [Territory](#territory) in response.
 
 ### Get Island
 
+_This endpoint **is authenticated** and needs an auth token for access._
+
 Retrieves the content of the island.
 
 Returns a [IslandContent](#islandcontent) in response.
@@ -86,11 +90,13 @@ Returns a [IslandContent](#islandcontent) in response.
 
 ---
 
-### Submit Answer (authenticated)
+### Submit Answer
+
+_This endpoint **is authenticated** and needs an auth token for access._
 
 Receives the input of a [IslandInput](#islandinput) components.
 
-Returns an empty object in response.
+Returns the new [SubmissionState](#submissionstate) of the answer in response.
 
 **Endpoint:** `POST /answer/{inputID}`
 
@@ -102,7 +108,9 @@ Returns an empty object in response.
 
 ---
 
-### Stream Events (authenticated)
+### Stream Events
+
+_This endpoint **is authenticated** and needs an auth token for access._
 
 A **websocket** endpoint for receiving realtime events.
 
@@ -112,7 +120,9 @@ Type of messages is text; JSON encoding of [Event](#event).
 
 ---
 
-### Get Player (authenticated)
+### Get Player
+
+_This endpoint **is authenticated** and needs an auth token for access._
 
 Returns the [Player](#player) object.
 
@@ -120,7 +130,9 @@ Returns the [Player](#player) object.
 
 ---
 
-### Travel Check (authenticated)
+### Travel Check
+
+_This endpoint **is authenticated** and needs an auth token for access._
 
 Checks whether the specified travel is possible.
 
@@ -270,12 +282,23 @@ curl --request POST \
 
 ### IslandInput
 
-| Field       | Type      | Description                                                                                                                                                                                                  |
-|-------------|-----------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| id          | string    | The unique id of this input, to be used in [Submit Answer](#submit-answer)                                                                                                                                   |
-| type        | string    | Type of the data this input receives. One of [HTML Input Element Types](https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Elements/input#input_types) (usually one of `text`, `number` and `file`) |
-| accept      | []string? | If type is `file`, this field is present and contains the accepted MIME types.                                                                                                                               |
-| description | string    | Description of the input to be shown to user                                                                                                                                                                 |
+| Field           | Type                                | Description                                                                                                                                                                                                  |
+|-----------------|-------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| id              | string                              | The unique id of this input, to be used in [Submit Answer](#submit-answer)                                                                                                                                   |
+| type            | string                              | Type of the data this input receives. One of [HTML Input Element Types](https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Elements/input#input_types) (usually one of `text`, `number` and `file`) |
+| accept          | []string?                           | If type is `file`, this field is present and contains the accepted MIME types.                                                                                                                               |
+| description     | string                              | Description of the input to be shown to user                                                                                                                                                                 |
+| submissionState | [SubmissionState](#submissionstate) | The current submission state of this input.                                                                                                                                                                  |
+
+
+### SubmissionState
+
+| Field       | Type    | Description                                                                                     |
+|-------------|---------|-------------------------------------------------------------------------------------------------|
+| submittable | boolean | True if the a new answer can be submitted, false otherwise.                                     |
+| status      | string  | The status of answer; one of `empty`, `pending` (in process of correction) , `correct`, `wrong` |
+| filename    | string? | If _status_ is not `empty`, the name of the last submitted file.                                |
+| submittedAt | string? | If _status_ is not `empty`, the time of last submission in Unix milliseconds.                   |
 
 ### Event
 
