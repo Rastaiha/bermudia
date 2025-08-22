@@ -43,11 +43,20 @@
     {
       "id": "island_final",
       "name": "قله دانش",
-      "x": 0.82,
-      "y": 0.52,
+      "x": 0.92,
+      "y": 0.62,
       "width": 0.16,
       "height": 0.22,
       "iconAsset": "island7.svg"
+    },
+    {
+      "id": "island_refuel1",
+      "name": "سوخت گیری",
+      "x": 0.70,
+      "y": 0.62,
+      "width": 0.16,
+      "height": 0.22,
+      "iconAsset": "island3.svg"
     }
   ],
   "edges": [
@@ -69,7 +78,16 @@
     },
     {
       "from": "island_science1",
+      "to": "island_refuel1"
+    },
+    {
+      "from": "island_refuel1",
       "to": "island_final"
+    }
+  ],
+  "refuelIslands": [
+    {
+      "id": "island_refuel1"
     }
   ]
 }

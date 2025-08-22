@@ -55,6 +55,42 @@ func (p *Player) Travel(ctx context.Context, user *domain.User, fromIsland strin
 	return nil
 }
 
+func (p *Player) RefuelCheck(ctx context.Context, userId int32) (*domain.RefuelCheckResult, error) {
+	player, err := p.playerStore.Get(ctx, userId)
+	if err != nil {
+		return nil, err
+	}
+	territory, err := p.territoryStore.GetTerritoryByID(ctx, player.AtTerritory)
+	if err != nil {
+		return nil, err
+	}
+
+	checkResult := domain.RefuelCheck(player, territory)
+	return &checkResult, nil
+}
+
+func (p *Player) Refuel(ctx context.Context, userId int32, amount int32) error {
+	player, err := p.playerStore.Get(ctx, userId)
+	if err != nil {
+		return err
+	}
+	territory, err := p.territoryStore.GetTerritoryByID(ctx, player.AtTerritory)
+	if err != nil {
+		return err
+	}
+
+	event, err := domain.Refuel(player, territory, amount)
+	if err != nil {
+		return err
+	}
+	if err := p.playerStore.Update(ctx, player, *event.Player); err != nil {
+		return err
+	}
+	p.sendPlayerUpdateEvent(event)
+
+	return nil
+}
+
 func (p *Player) OnPlayerUpdate(eventHandler func(event *domain.PlayerUpdateEvent)) {
 	p.playerUpdateEventHandler = eventHandler
 }

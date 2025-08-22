@@ -64,6 +64,8 @@ func (h *Handler) Start() {
 			r.Get("/player", h.GetPlayer)
 			r.Post("/travel_check", h.TravelCheck)
 			r.Post("/travel", h.Travel)
+			r.Post("/refuel_check", h.RefuelCheck)
+			r.Post("/refuel", h.Refuel)
 		})
 	})
 

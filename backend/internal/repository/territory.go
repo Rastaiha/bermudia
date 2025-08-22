@@ -37,10 +37,11 @@ func NewSqlTerritoryRepository(db *sql.DB) (domain.TerritoryStore, error) {
 }
 
 type territoryContent struct {
-	Name            string          `json:"name"`
-	BackgroundAsset string          `json:"backgroundAsset"`
-	Islands         []domain.Island `json:"islands"`
-	Edges           []domain.Edge   `json:"edges"`
+	Name            string                `json:"name"`
+	BackgroundAsset string                `json:"backgroundAsset"`
+	Islands         []domain.Island       `json:"islands"`
+	Edges           []domain.Edge         `json:"edges"`
+	RefuelIslands   []domain.RefuelIsland `json:"refuelIslands"`
 }
 
 func (s sqlTerritoryRepository) columns() string {
@@ -65,6 +66,7 @@ func (s sqlTerritoryRepository) scan(row scannable, territory *domain.Territory)
 	territory.BackgroundAsset = tc.BackgroundAsset
 	territory.Islands = tc.Islands
 	territory.Edges = tc.Edges
+	territory.RefuelIslands = tc.RefuelIslands
 	return nil
 }
 
@@ -74,6 +76,7 @@ func (s sqlTerritoryRepository) CreateTerritory(ctx context.Context, territory *
 		BackgroundAsset: territory.BackgroundAsset,
 		Islands:         territory.Islands,
 		Edges:           territory.Edges,
+		RefuelIslands:   territory.RefuelIslands,
 	}
 	content, err := json.Marshal(tc)
 	if err != nil {

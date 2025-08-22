@@ -30,6 +30,15 @@
       "width": 0.11,
       "height": 0.11,
       "iconAsset": "island3.svg"
+    },
+    {
+      "id": "island_long_refuel",
+      "name": "جزیره طولانی (سوخت گیری)",
+      "x": 0.47,
+      "y": 0.75,
+      "width": 0.16,
+      "height": 0.22,
+      "iconAsset": "island3.svg"
     }
   ],
   "edges": [
@@ -40,6 +49,19 @@
     {
       "from": "island_spectacle",
       "to": "island_deer"
+    },
+    {
+      "from": "island_spectacle",
+      "to": "island_long_refuel"
+    },
+    {
+      "from": "island_long_refuel",
+      "to": "island_deer"
+    }
+  ],
+  "refuelIslands": [
+    {
+      "id": "island_long_refuel"
     }
   ]
 }
