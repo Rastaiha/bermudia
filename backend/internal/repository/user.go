@@ -47,9 +47,9 @@ func (s sqlUser) scan(row *sql.Row, user *domain.User) error {
 
 func (s sqlUser) Create(ctx context.Context, user *domain.User) error {
 	_, err := s.db.ExecContext(ctx, `INSERT INTO users (id, username_display, username, hashed_password) VALUES ($1, $2, $3, $4)`,
-		user.ID,
-		user.Username,
-		strings.ToLower(user.Username),
+		n(user.ID),
+		n(user.Username),
+		n(strings.ToLower(user.Username)),
 		user.HashedPassword,
 	)
 	return err

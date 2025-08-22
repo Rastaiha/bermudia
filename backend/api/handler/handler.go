@@ -45,7 +45,6 @@ func (h *Handler) Start() {
 	// Routes
 	r.Route("/api/v1", func(r chi.Router) {
 		r.Get("/territories/{territoryID}", h.GetTerritory) // TODO: make it authenticated
-		r.Get("/islands/{islandID}", h.GetIsland)           // TODO: make it authenticated
 		r.Post("/login", h.Login)
 
 		// Authenticated endpoints
@@ -59,6 +58,7 @@ func (h *Handler) Start() {
 				}
 				sendResult(w, user)
 			})
+			r.Get("/islands/{islandID}", h.GetIsland)
 			r.HandleFunc("/events", h.StreamEvents)
 			r.Post("/answer/{inputID}", h.SubmitAnswer)
 			r.Get("/player", h.GetPlayer)

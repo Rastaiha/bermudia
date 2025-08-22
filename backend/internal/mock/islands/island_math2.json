@@ -1,11 +1,11 @@
 {
   "components": [
     {
-      "input": {
-        "id": "island_math2_1",
-        "type": "file",
-        "accept": ["application/pdf"],
-        "description": "یه فایل pdf بفرست:"
+      "question": {
+        "inputType": "file",
+        "inputAccept": ["application/pdf"],
+        "knowledgeAmount": 100,
+        "text": "یه فایل pdf بفرست:"
       }
     }
   ]

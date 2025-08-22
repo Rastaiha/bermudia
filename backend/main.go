@@ -6,7 +6,7 @@ import (
 	"github.com/Rastaiha/bermudia/internal/mock"
 	"github.com/Rastaiha/bermudia/internal/repository"
 	"github.com/Rastaiha/bermudia/internal/service"
-	_ "github.com/mattn/go-sqlite3"
+	"github.com/go-telegram/bot"
 	"log"
 	"log/slog"
 	"os"
@@ -17,9 +17,14 @@ import (
 func main() {
 	cfg := config.Load()
 
+	theBot, err := bot.New(cfg.BotToken, bot.WithServerURL("https://tapi.bale.ai"))
+	if err != nil {
+		log.Fatal("failed to connect to bot api: ", err)
+	}
+
 	db, err := repository.ConnectToSqlite()
 	if err != nil {
-		log.Fatal("failed to connect to sqlite", err)
+		log.Fatal("failed to connect to sqlite: ", err)
 	}
 	territoryRepo, err := repository.NewSqlTerritoryRepository(db)
 	if err != nil {
@@ -37,12 +42,16 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	questionStore, err := repository.NewSqlQuestionRepository(db)
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	authService := service.NewAuth(cfg, userRepo)
 	territoryService := service.NewTerritory(territoryRepo)
-	islandService := service.NewIsland(islandRepo)
+	islandService := service.NewIsland(theBot, islandRepo, questionStore)
 	playerService := service.NewPlayer(playerRepo, territoryRepo)
-	adminService := service.NewAdmin(territoryRepo, islandRepo, userRepo, playerRepo)
+	adminService := service.NewAdmin(territoryRepo, islandRepo, userRepo, playerRepo, questionStore)
 
 	err = mock.CreateMockData(adminService, cfg.MockUsersPassword)
 	if err != nil {

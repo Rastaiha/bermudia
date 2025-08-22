@@ -6,10 +6,10 @@
       }
     },
     {
-      "input": {
-        "id": "island_deer_1",
-        "type": "number",
-        "description": "اگه ۵ تا سیب داشته باشم یکیش رو بخورم چندتا سیب میمونه برام؟"
+      "question": {
+        "inputType": "number",
+        "text": "اگه ۵ تا سیب داشته باشم یکیش رو بخورم چندتا سیب میمونه برام؟",
+        "knowledgeAmount": 100
       }
     },
     {
@@ -18,14 +18,14 @@
       }
     },
     {
-      "input": {
-        "id": "island_deer_2",
-        "type": "file",
-        "accept": [
+      "question": {
+        "inputType": "file",
+        "inputAccept": [
           "image/png",
           "image/jpeg"
         ],
-        "description": "به کجا می رویم؟ به سوی پیروزی!"
+        "knowledgeAmount": 100,
+        "text": "به کجا می رویم؟ به سوی پیروزی!"
       }
     }
   ]

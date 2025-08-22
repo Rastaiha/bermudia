@@ -79,7 +79,7 @@ func (s sqlTerritoryRepository) CreateTerritory(ctx context.Context, territory *
 	if err != nil {
 		return err
 	}
-	_, err = s.db.ExecContext(ctx, `INSERT INTO territories (id, start_island, content, updated_at) VALUES ($1, $2, $3, $4)`, territory.ID, territory.StartIsland, content, time.Now().UTC())
+	_, err = s.db.ExecContext(ctx, `INSERT INTO territories (id, start_island, content, updated_at) VALUES ($1, $2, $3, $4)`, n(territory.ID), n(territory.StartIsland), content, time.Now().UTC())
 	return err
 }
 

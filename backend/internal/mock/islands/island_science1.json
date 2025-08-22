@@ -6,11 +6,11 @@
       }
     },
     {
-      "input": {
-        "id": "island_science1_1",
-        "type": "file",
-        "accept": ["image/png", "image/jpeg"],
-        "description": "از جوابت عکس بگیر بفرست:"
+      "question": {
+        "inputType": "file",
+        "inputAccept": ["image/png", "image/jpeg"],
+        "knowledgeAmount": 100,
+        "text": "از جوابت عکس بگیر بفرست:"
       }
     }
   ]

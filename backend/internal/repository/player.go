@@ -32,7 +32,7 @@ func NewSqlPlayerRepository(db *sql.DB) (domain.PlayerStore, error) {
 func (s sqlPlayerRepository) Create(ctx context.Context, player domain.Player) error {
 	_, err := s.db.ExecContext(ctx,
 		`INSERT INTO players (user_id, at_territory, at_island, fuel, fuel_cap) VALUES ($1, $2, $3, $4, $5)`,
-		player.UserId, player.AtTerritory, player.AtIsland, player.Fuel, player.FuelCap,
+		n(player.UserId), n(player.AtTerritory), n(player.AtIsland), n(player.Fuel), n(player.FuelCap),
 	)
 	return err
 }
@@ -61,7 +61,7 @@ func (s sqlPlayerRepository) Update(ctx context.Context, old, updated domain.Pla
 		   AND at_island = $7
 		   AND fuel = $8
 		   AND fuel_cap = $9`,
-		updated.AtTerritory, updated.AtIsland, updated.Fuel, updated.FuelCap,
+		n(updated.AtTerritory), n(updated.AtIsland), updated.Fuel, n(updated.FuelCap),
 		old.UserId, old.AtTerritory, old.AtIsland, old.Fuel, old.FuelCap,
 	)
 	if err != nil {

@@ -1,5 +1,7 @@
 package domain
 
+import "time"
+
 // Island represents a single island in a territory
 type Island struct {
 	ID        string  `json:"id"`
@@ -9,6 +11,30 @@ type Island struct {
 	Width     float64 `json:"width"`
 	Height    float64 `json:"height"`
 	IconAsset string  `json:"iconAsset"`
+}
+
+type IslandInputContent struct {
+	Components []*IslandInputComponent `json:"components"`
+}
+
+type IslandInputComponent struct {
+	ID       string        `json:"id,omitempty"`
+	IFrame   *IslandIFrame `json:"iframe,omitempty"`
+	Question *Question     `json:"question,omitempty"`
+}
+
+type IslandRawContent struct {
+	Components []IslandRawComponent `json:"components"`
+}
+
+type IslandRawComponent struct {
+	ID       string             `json:"id,omitempty"`
+	IFrame   *IslandIFrame      `json:"iframe,omitempty"`
+	Question *QuestionComponent `json:"question,omitempty"`
+}
+
+type QuestionComponent struct {
+	QuestionID string `json:"questionId"`
 }
 
 type IslandContent struct {
@@ -25,8 +51,23 @@ type IslandIFrame struct {
 }
 
 type IslandInput struct {
-	ID          string   `json:"id"`
-	Type        string   `json:"type"`
-	Accept      []string `json:"accept,omitempty"`
-	Description string   `json:"description"`
+	ID              string          `json:"id"`
+	Type            string          `json:"type"`
+	Accept          []string        `json:"accept,omitempty"`
+	Description     string          `json:"description"`
+	SubmissionState SubmissionState `json:"submissionState"`
+}
+
+type SubmissionState struct {
+	Submittable bool         `json:"submittable"`
+	Status      AnswerStatus `json:"status"`
+	Filename    string       `json:"filename,omitempty"`
+	SubmittedAt time.Time    `json:"submittedAt,omitempty,omitzero"`
+}
+
+type UserComponent struct {
+	IslandID    string
+	UserID      int32
+	ComponentID string
+	ResourceID  string
 }

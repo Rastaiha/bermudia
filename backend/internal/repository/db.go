@@ -5,6 +5,7 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 	"os"
 	"path/filepath"
+	"reflect"
 )
 
 func ConnectToSqlite() (*sql.DB, error) {
@@ -18,4 +19,8 @@ func ConnectToSqlite() (*sql.DB, error) {
 
 type scannable interface {
 	Scan(dest ...any) error
+}
+
+func n[T any](v T) sql.Null[T] {
+	return sql.Null[T]{Valid: !reflect.ValueOf(v).IsZero(), V: v}
 }

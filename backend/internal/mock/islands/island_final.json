@@ -6,10 +6,10 @@
       }
     },
     {
-      "input": {
-        "id": "island_final_1",
-        "type": "number",
-        "description": "اگه ۵ تا سیب داشته باشم یکیش رو بخورم چندتا سیب میمونه برام؟"
+      "question": {
+        "inputType": "number",
+        "knowledgeAmount": 100,
+        "text": "اگه ۵ تا سیب داشته باشم یکیش رو بخورم چندتا سیب میمونه برام؟"
       }
     },
     {
@@ -18,14 +18,14 @@
       }
     },
     {
-      "input": {
-        "id": "island_final_2",
-        "type": "file",
-        "accept": [
+      "question": {
+        "inputType": "file",
+        "inputAccept": [
           "image/png",
           "image/jpeg"
         ],
-        "description": "از جوابت عکس بگیر بفرست:"
+        "knowledgeAmount": 100,
+        "text": "از جوابت عکس بگیر بفرست:"
       }
     }
   ]

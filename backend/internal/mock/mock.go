@@ -56,10 +56,6 @@ func createMockTerritories(adminService *service.Admin) error {
 		if d.IsDir() {
 			return nil
 		}
-		id := strings.TrimSuffix(filepath.Base(path), filepath.Ext(path))
-		if id == "" {
-			return errors.New("invalid territory id")
-		}
 
 		content, err := territoryFiles.ReadFile(path)
 		if err != nil {
@@ -89,10 +85,11 @@ func createMockIslands(adminService *service.Admin) error {
 		if err != nil {
 			return err
 		}
-		var islandContent domain.IslandContent
+		var islandContent domain.IslandInputContent
 		if err := json.Unmarshal(content, &islandContent); err != nil {
 			return err
 		}
-		return adminService.SetIsland(ctx, id, islandContent)
+		_, err = adminService.SetIsland(ctx, id, islandContent)
+		return err
 	})
 }

@@ -13,14 +13,16 @@ type Admin struct {
 	islandStore    domain.IslandStore
 	userStore      domain.UserStore
 	playerStore    domain.PlayerStore
+	questionStore  domain.QuestionStore
 }
 
-func NewAdmin(territoryStore domain.TerritoryStore, islandStore domain.IslandStore, userStore domain.UserStore, playerStore domain.PlayerStore) *Admin {
+func NewAdmin(territoryStore domain.TerritoryStore, islandStore domain.IslandStore, userStore domain.UserStore, playerStore domain.PlayerStore, questionStore domain.QuestionStore) *Admin {
 	return &Admin{
 		territoryStore: territoryStore,
 		islandStore:    islandStore,
 		userStore:      userStore,
 		playerStore:    playerStore,
+		questionStore:  questionStore,
 	}
 }
 
@@ -63,8 +65,53 @@ func (a *Admin) SetTerritory(ctx context.Context, territory domain.Territory) er
 	return a.territoryStore.CreateTerritory(ctx, &territory)
 }
 
-func (a *Admin) SetIsland(ctx context.Context, id string, islandContent domain.IslandContent) error {
-	return a.islandStore.SetContent(ctx, id, &islandContent)
+func (a *Admin) SetIsland(ctx context.Context, id string, input domain.IslandInputContent) (domain.IslandInputContent, error) {
+	raw := &domain.IslandRawContent{Components: make([]domain.IslandRawComponent, 0)}
+	var questions []domain.Question
+	for i, c := range input.Components {
+		if c.ID == "" || !domain.IdHasType(c.ID, domain.ResourceTypeComponent) {
+			c.ID = domain.NewID(domain.ResourceTypeComponent)
+		}
+		if c.IFrame != nil {
+			if c.IFrame.Url == "" {
+				return input, fmt.Errorf("empty url for island %q iframe component at index %d", id, i)
+			}
+			raw.Components = append(raw.Components, domain.IslandRawComponent{ID: c.ID, IFrame: c.IFrame})
+			continue
+		}
+		if c.Question != nil {
+			if c.Question.InputType == "" {
+				return input, fmt.Errorf("empty inputType for island %q question at index %d", id, i)
+			}
+			if c.Question.InputType == "file" && len(c.Question.InputAccept) == 0 {
+				return input, fmt.Errorf("empty inputAccept for island %q question at index %d", id, i)
+			}
+			if c.Question.KnowledgeAmount <= 0 {
+				return input, fmt.Errorf("non-positive knowledgeAmount for island %q question at index %d", id, i)
+			}
+			if c.Question.Text == "" {
+				return input, fmt.Errorf("empty text for island %q question at index %d", id, i)
+			}
+			if c.Question.ID == "" || !domain.IdHasType(c.Question.ID, domain.ResourceTypeQuestion) {
+				c.Question.ID = domain.NewID(domain.ResourceTypeQuestion)
+			}
+			questions = append(questions, *c.Question)
+			raw.Components = append(raw.Components, domain.IslandRawComponent{ID: c.ID, Question: &domain.QuestionComponent{QuestionID: c.Question.ID}})
+			continue
+		}
+		return input, fmt.Errorf("unknown component for island %q at index %d", id, i)
+	}
+	for _, q := range questions {
+		err := a.questionStore.SetQuestion(ctx, q)
+		if err != nil {
+			return input, err
+		}
+	}
+	err := a.islandStore.SetContent(ctx, id, raw)
+	if err != nil {
+		return input, err
+	}
+	return input, nil
 }
 
 func (a *Admin) CreateUser(ctx context.Context, id int32, username, password string) error {
