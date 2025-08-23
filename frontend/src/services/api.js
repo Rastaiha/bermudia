@@ -90,6 +90,20 @@ export const travelTo = async (fromIsland, toIsland) => {
   return response;
 };
 
+// REFUEL CHECK
+export const refuelCheck = async () => {
+  const response = await gameApiClient.post('/refuel_check', {});
+  return response;
+};
+
+// REFUEL
+export const buyFuel = async (amount) => {
+  const response = await gameApiClient.post('/refuel', {
+    amount
+  });
+  return response;
+};
+
 // Get current user info (authenticated)
 export const getMe = async () => {
   const response = await gameApiClient.get('/me');
