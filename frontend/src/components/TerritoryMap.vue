@@ -84,6 +84,7 @@
 import { ref, onMounted, onUnmounted, computed, nextTick, watch } from 'vue';
 import { useRouter } from 'vue-router'; // Import the router
 import { getPlayer, getToken, checkTravel, travelTo, refuelCheck, buyFuel } from "@/services/api";
+import { usePlayerWebSocket } from '@/components/service/WebSocket';
 import panzoom from 'panzoom';
 
 // --- Define reactive state ---
@@ -361,6 +362,7 @@ watch(fuelCount, (newValue) => {
 
 
 const debug = () => {debugger;}
+usePlayerWebSocket(player);
 </script>
 
 <style scoped>
