@@ -24,7 +24,7 @@ func NewIsland(bot *bot.Bot, islandStore domain.IslandStore, questionStore domai
 }
 
 func (i *Island) GetIsland(ctx context.Context, userId int32, islandId string) (*domain.IslandContent, error) {
-	rawContent, err := i.islandStore.GetByID(ctx, islandId)
+	rawContent, territoryID, err := i.islandStore.GetByID(ctx, islandId)
 	if err != nil {
 		return nil, err
 	}
@@ -44,7 +44,7 @@ func (i *Island) GetIsland(ctx context.Context, userId int32, islandId string) (
 			if err != nil {
 				return nil, err
 			}
-			answer, err := i.questionStore.GetOrCreateAnswer(ctx, userId, userComponent.ResourceID, question.ID)
+			answer, err := i.questionStore.GetOrCreateAnswer(ctx, userId, userComponent.ResourceID, question.ID, territoryID)
 			if err != nil {
 				return nil, err
 			}

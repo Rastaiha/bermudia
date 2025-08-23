@@ -78,20 +78,21 @@ func (s sqlIslandRepository) ReserveIDForTerritory(ctx context.Context, territor
 	return nil
 }
 
-func (s sqlIslandRepository) GetByID(ctx context.Context, id string) (*domain.IslandRawContent, error) {
+func (s sqlIslandRepository) GetByID(ctx context.Context, id string) (*domain.IslandRawContent, string, error) {
+	var territoryId string
 	var content []byte
-	err := s.db.QueryRowContext(ctx, `SELECT content FROM islands WHERE id = $1`, id).Scan(&content)
+	err := s.db.QueryRowContext(ctx, `SELECT territory_id, content FROM islands WHERE id = $1`, id).Scan(&territoryId, &content)
 	if errors.Is(err, sql.ErrNoRows) {
-		return nil, domain.ErrIslandNotFound
+		return nil, "", domain.ErrIslandNotFound
 	}
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
 	var result domain.IslandRawContent
 	if err := json.Unmarshal(content, &result); err != nil {
-		return nil, err
+		return nil, "", err
 	}
-	return &result, nil
+	return &result, territoryId, nil
 }
 
 func (s sqlIslandRepository) GetTerritory(ctx context.Context, id string) (string, error) {

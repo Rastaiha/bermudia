@@ -16,9 +16,14 @@ type IslandInputContent struct {
 }
 
 type IslandInputComponent struct {
-	ID       string        `json:"id,omitempty"`
-	IFrame   *IslandIFrame `json:"iframe,omitempty"`
-	Question *Question     `json:"question,omitempty"`
+	ID       string               `json:"id,omitempty"`
+	IFrame   *IslandIFrame        `json:"iframe,omitempty"`
+	Question *IslandInputQuestion `json:"question,omitempty"`
+}
+
+type IslandInputQuestion struct {
+	Question
+	KnowledgeAmount int32 `json:"knowledgeAmount"`
 }
 
 type IslandRawContent struct {

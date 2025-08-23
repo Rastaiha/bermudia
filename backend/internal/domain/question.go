@@ -3,12 +3,11 @@ package domain
 import "time"
 
 type Question struct {
-	ID              string   `json:"id"`
-	Text            string   `json:"text"`
-	KnowledgeAmount int32    `json:"knowledgeAmount"`
-	RewardSources   []int    `json:"reward_sources"`
-	InputType       string   `json:"inputType"`
-	InputAccept     []string `json:"inputAccept"`
+	ID            string   `json:"id"`
+	Text          string   `json:"text"`
+	RewardSources []int    `json:"reward_sources"`
+	InputType     string   `json:"inputType"`
+	InputAccept   []string `json:"inputAccept"`
 }
 
 type Answer struct {
@@ -69,6 +68,12 @@ var (
 		reason: ErrorReasonRuleViolation,
 	}
 )
+
+type KnowledgeBar struct {
+	TerritoryID string `json:"territoryId"`
+	Value       int32  `json:"value"`
+	Total       int32  `json:"total"`
+}
 
 type QueuedCorrection struct {
 	AnswerID  string

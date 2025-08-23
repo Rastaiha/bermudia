@@ -6,7 +6,7 @@ import (
 	"net/http"
 )
 
-func (h *Handler) HandlePlayerUpdateEvent(e *domain.PlayerUpdateEvent) {
+func (h *Handler) HandlePlayerUpdateEvent(e *domain.FullPlayerUpdateEvent) {
 	h.sendEvent(e.Player.UserId, event{PlayerUpdate: e})
 }
 

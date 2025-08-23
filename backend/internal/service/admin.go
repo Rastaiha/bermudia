@@ -73,8 +73,12 @@ func (a *Admin) SetTerritory(ctx context.Context, territory domain.Territory) er
 }
 
 func (a *Admin) SetIsland(ctx context.Context, id string, input domain.IslandInputContent) (domain.IslandInputContent, error) {
+	territoryId, err := a.islandStore.GetTerritory(ctx, id)
+	if err != nil {
+		return input, fmt.Errorf("island %q does not have territory", id)
+	}
 	raw := &domain.IslandRawContent{Components: make([]domain.IslandRawComponent, 0)}
-	var questions []domain.Question
+	var questions []domain.IslandInputQuestion
 	for i, c := range input.Components {
 		if c.ID == "" || !domain.IdHasType(c.ID, domain.ResourceTypeComponent) {
 			c.ID = domain.NewID(domain.ResourceTypeComponent)
@@ -109,12 +113,16 @@ func (a *Admin) SetIsland(ctx context.Context, id string, input domain.IslandInp
 		return input, fmt.Errorf("unknown component for island %q at index %d", id, i)
 	}
 	for _, q := range questions {
-		err := a.questionStore.SetQuestion(ctx, q)
+		err := a.questionStore.SetQuestion(ctx, q.Question)
+		if err != nil {
+			return input, err
+		}
+		err = a.questionStore.BindQuestionToTerritory(ctx, q.Question.ID, territoryId, q.KnowledgeAmount)
 		if err != nil {
 			return input, err
 		}
 	}
-	err := a.islandStore.SetContent(ctx, id, raw)
+	err = a.islandStore.SetContent(ctx, id, raw)
 	if err != nil {
 		return input, err
 	}

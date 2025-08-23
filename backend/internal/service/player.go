@@ -3,20 +3,30 @@ package service
 import (
 	"context"
 	"github.com/Rastaiha/bermudia/internal/domain"
+	"log/slog"
 )
 
 type Player struct {
 	playerStore              domain.PlayerStore
 	territoryStore           domain.TerritoryStore
-	playerUpdateEventHandler func(event *domain.PlayerUpdateEvent)
+	questionStore            domain.QuestionStore
+	playerUpdateEventHandler func(event *domain.FullPlayerUpdateEvent)
 }
 
-func NewPlayer(playerStore domain.PlayerStore, territoryStore domain.TerritoryStore) *Player {
-	return &Player{playerStore: playerStore, territoryStore: territoryStore}
+func NewPlayer(playerStore domain.PlayerStore, territoryStore domain.TerritoryStore, questionStore domain.QuestionStore) *Player {
+	return &Player{
+		playerStore:    playerStore,
+		territoryStore: territoryStore,
+		questionStore:  questionStore,
+	}
 }
 
-func (p *Player) GetPlayer(ctx context.Context, user *domain.User) (domain.Player, error) {
-	return p.playerStore.Get(ctx, user.ID)
+func (p *Player) GetPlayer(ctx context.Context, user *domain.User) (domain.FullPlayer, error) {
+	player, err := p.playerStore.Get(ctx, user.ID)
+	if err != nil {
+		return domain.FullPlayer{}, err
+	}
+	return p.getFullPlayer(ctx, player)
 }
 
 func (p *Player) TravelCheck(ctx context.Context, user *domain.User, fromIsland, toIsland string) (*domain.TravelCheckResult, error) {
@@ -50,7 +60,7 @@ func (p *Player) Travel(ctx context.Context, user *domain.User, fromIsland strin
 	if err := p.playerStore.Update(ctx, player, *event.Player); err != nil {
 		return err
 	}
-	p.sendPlayerUpdateEvent(event)
+	p.sendPlayerUpdateEvent(ctx, event)
 
 	return nil
 }
@@ -86,17 +96,36 @@ func (p *Player) Refuel(ctx context.Context, userId int32, amount int32) error {
 	if err := p.playerStore.Update(ctx, player, *event.Player); err != nil {
 		return err
 	}
-	p.sendPlayerUpdateEvent(event)
+	p.sendPlayerUpdateEvent(ctx, event)
 
 	return nil
 }
 
-func (p *Player) OnPlayerUpdate(eventHandler func(event *domain.PlayerUpdateEvent)) {
+func (p *Player) OnPlayerUpdate(eventHandler func(event *domain.FullPlayerUpdateEvent)) {
 	p.playerUpdateEventHandler = eventHandler
 }
 
-func (p *Player) sendPlayerUpdateEvent(event *domain.PlayerUpdateEvent) {
+func (p *Player) sendPlayerUpdateEvent(ctx context.Context, event *domain.PlayerUpdateEvent) {
 	if p.playerUpdateEventHandler != nil {
-		p.playerUpdateEventHandler(event)
+		fullPlayer, err := p.getFullPlayer(ctx, *event.Player)
+		if err != nil {
+			slog.Error("failed to get the knowledge bars, missing event", err, "userId", event.Player.UserId)
+			return
+		}
+		p.playerUpdateEventHandler(&domain.FullPlayerUpdateEvent{
+			Reason: event.Reason,
+			Player: &fullPlayer,
+		})
 	}
+}
+
+func (p *Player) getFullPlayer(ctx context.Context, player domain.Player) (domain.FullPlayer, error) {
+	knowledgeBars, err := p.questionStore.GetKnowledgeBars(ctx, player.UserId)
+	if err != nil {
+		return domain.FullPlayer{}, err
+	}
+	return domain.FullPlayer{
+		Player:        player,
+		KnowledgeBars: knowledgeBars,
+	}, nil
 }

@@ -50,7 +50,7 @@ func main() {
 	authService := service.NewAuth(cfg, userRepo)
 	territoryService := service.NewTerritory(territoryRepo)
 	islandService := service.NewIsland(theBot, islandRepo, questionStore)
-	playerService := service.NewPlayer(playerRepo, territoryRepo)
+	playerService := service.NewPlayer(playerRepo, territoryRepo, questionStore)
 	adminService := service.NewAdmin(territoryRepo, islandRepo, userRepo, playerRepo, questionStore)
 
 	err = mock.CreateMockData(adminService, cfg.MockUsersPassword)
