@@ -124,11 +124,7 @@ export const getIsland = async (islandID) => {
 
 // Submit an answer for a challenge
 export const submitAnswer = async (inputID, formData) => {
-  const response = await gameApiClient.post(`/answer/${inputID}`, formData, {
-    headers: {
-      'Content-Type': 'multipart/form-data',
-    },
-  });
+  const response = await gameApiClient.post(`/answer/${inputID}`, formData);
   return response;
 };
 
