@@ -20,9 +20,10 @@ func (h *Handler) sendEvent(userId int32, e event) {
 }
 
 func (h *Handler) StreamEvents(w http.ResponseWriter, r *http.Request) {
-	user, err := getUser(r.Context())
-	if err != nil {
-		handleError(w, err)
+	token := r.URL.Query().Get("token")
+	user, ok := h.authService.ValidateToken(r.Context(), token)
+	if !ok {
+		sendError(w, http.StatusUnauthorized, "Invalid auth token")
 		return
 	}
 	conn, err := h.wsUpgrader.Upgrade(w, r, nil)

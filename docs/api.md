@@ -32,7 +32,9 @@ Some endpoints are authenticated and their request is authenticated done via JWT
 
 User must [log in](#login) to receive a JWT.
 
-The generated JWT must be but in the `Authorization` request header for authenticated endpoints.
+The generated JWT must be but in the `Authorization` request header for authenticated HTTP endpoints.
+
+For websocket endpoints, the JWT is received in `token` query parameter.
 
 ## Endpoints
 
@@ -125,7 +127,7 @@ A **websocket** endpoint for receiving realtime events.
 
 Type of messages is text; JSON encoding of [Event](#event).
 
-**Endpoint:** `/events`
+**Endpoint:** `/events?token=TOKEN`
 
 ---
 
