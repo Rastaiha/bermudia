@@ -3,7 +3,22 @@
     <div v-if="hoveredNode" class="info-box" :style="infoBoxStyle" @mouseover="isHoveringBox = true" @mouseleave="unHoverBox">
       <div>{{ hoveredNode.name }}</div>
       <div>
-        <button v-if="hoveredNode.id == player.atIsland.id" @click="navigateToIsland(player.atIsland.id)">ورود به جزیره</button>
+        <div 
+          v-if="hoveredNode.id == player.atIsland.id && fuelStations.some(station => station.id === hoveredNode.id)" class="refuel"
+        > 
+          <div v-if="refuel"> قیمت هر واحد: {{ refuel.coinCostPerUnit }} </div>
+          <div v-if="refuel"> حداکثر واحد قابل اخذ: {{ refuel.maxAvailableAmount }} </div>
+          <input type="number" 
+            :max="refuel ? refuel.maxAvailableAmount : player.fuelCap - player.fuel" 
+            v-model.number="fuelCount"
+          />
+          <button @click="buyFuelFromIsland">{{ fuelPriceText }}</button>
+        </div>
+        <button 
+          v-else-if="hoveredNode.id == player.atIsland.id" 
+          @click="navigateToIsland(player.atIsland.id)"
+        > ورود به جزیره
+        </button>
         <button 
           v-else :disabled="!edges.some(edge =>
             (edge.from_node_id === player.atIsland.id && edge.to_node_id === hoveredNode.id) ||
@@ -66,17 +81,20 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, computed, nextTick } from 'vue';
+import { ref, onMounted, onUnmounted, computed, nextTick, watch } from 'vue';
 import { useRouter } from 'vue-router'; // Import the router
-import { getPlayer, getToken, checkTravel, travelTo } from "@/services/api";
+import { getPlayer, getToken, checkTravel, travelTo, refuelCheck, buyFuel } from "@/services/api";
 import panzoom from 'panzoom';
 
 // --- Define reactive state ---
 const svgRef = ref(null);
 const nodes = ref([]);
+const fuelStations = ref([]);
 const edges = ref([]);
 const player = ref(null);
 const travel = ref(null);
+const fuelCount = ref(0);
+const refuel = ref(null);
 const fuelCost = computed(() => travel.value?.fuelCost ?? null);
 let isHoveringBox = false;
 let isHoveringNode = false;
@@ -104,6 +122,10 @@ const navigateToIsland = (islandId) => {
 
 const travelToIsland = (dest) => {
   travelTo(player.value.atIsland.id, dest);
+}
+
+const buyFuelFromIsland = () => {
+  buyFuel(fuelCount.value);
 }
 
 // --- Computed property to generate wavy paths ---
@@ -201,6 +223,7 @@ const fetchTerritoryData = async (id) => {
     }));
     nodes.value = transformedNodes;
     edges.value = transformedEdges;
+    fuelStations.value = rawData.refuelIslands;
 
     await nextTick();
     initializePanzoom();
@@ -229,13 +252,26 @@ const fetchPlayer = async () => {
 } 
 
 // --- Helper Functions ---
+const fuelPriceText = computed(() => {
+  if (!refuel.value) return "خرید سوخت";
+  return `خرید سوخت ${refuel.value.coinCostPerUnit * fuelCount.value}`;
+});
 const getNodeById = (id) => nodes.value.find(node => node.id === id);
 const updateMousePosition = (event) => { mousePosition.value = { x: event.clientX, y: event.clientY }; };
 const showInfoBox = async (node) => { 
   isHoveringNode = true;
   if (!player) return;
   hoveredNode.value = node;
-  if (hoveredNode.value.id == player.value.atIsland.id) return;
+  if (hoveredNode.value.id == player.value.atIsland.id) {
+    if (fuelStations.value.some(station => station.id === hoveredNode.value.id)) {
+      updateRefuel();
+    }
+  } else {
+    updateTravel();
+  }
+};
+
+const updateTravel = async () => {
   try {
     const travelData = await checkTravel(player.value.atIsland.id, hoveredNode.value.id);
     travel.value = {
@@ -247,10 +283,26 @@ const showInfoBox = async (node) => {
     console.error("Failed to get travel data:", err);
     loadingMessage.value = "Error: " + err;
   }
-};
+}
+
+const updateRefuel = async () => {
+  try {
+    const refuelData = await refuelCheck();
+    refuel.value = {
+      maxReason: refuelData.maxReason,
+      coinCostPerUnit: refuelData.coinCostPerUnit,
+      maxAvailableAmount: refuelData.maxAvailableAmount,
+    }
+  } catch (err) {
+    console.error("Failed to get refuel data:", err);
+    loadingMessage.value = "Error: " + err;
+  }
+}
+
 const hideInfoBox = () => { 
   hoveredNode.value = null; 
   travel.value = null;
+  refuel.value = null;
 };
 const unhoverNode = () => {
   isHoveringNode = false;
@@ -297,6 +349,17 @@ onUnmounted(() => {
     panzoomInstance.dispose();
   }
 });
+
+watch(fuelCount, (newValue) => {
+  if (!refuel.value) return;
+  if (newValue > refuel.value.maxAvailableAmount) {
+    fuelCount.value = refuel.value.maxAvailableAmount;
+  } else if (newValue < 0) {
+    fuelCount.value = 0;
+  }
+});
+
+
 const debug = () => {debugger;}
 </script>
 
@@ -371,11 +434,26 @@ const debug = () => {debugger;}
   align-items: center;
 }
 
+
+.refuel {
+  white-space: nowrap;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
 .info-box button {
   padding: 5px;
   border-radius: 10px;
   background: #07458bb5;
   margin: 10px 0 0;
+}
+
+input[type="number"] {
+  width: 4rem;
+  border-radius: 10px;
+  border: 1px solid #07458bb5;
 }
 
 .info-box button[disabled] {
