@@ -30,7 +30,7 @@
           </iframe>
         </div>
 
-        <div v-else-if="comp.input" class="challenge">
+        <div v-else-if="comp.input" class="challenge" :class="`challenge-${comp.input.submissionState.status}`">
           <p class="question">{{ comp.input.description }}</p>
           <div class="input-group">
             <input
@@ -40,8 +40,15 @@
               v-model="comp.input.answer"
               class="challenge-input"
               placeholder="پاسخ خود را اینجا وارد کنید..."
+              :disabled="!comp.input.submissionState.submittable"
             />
-            <button @click="submit(comp.input)" class="submit-button">ارسال</button>
+            <button
+              v-if="comp.input.submissionState.submittable" 
+              @click="submit(comp.input)"
+              class="submit-button"
+            >
+              ارسال
+            </button>
           </div>
         </div>
       </template>
@@ -55,6 +62,7 @@
 <script setup>
 import { ref, onMounted, onUnmounted, computed, nextTick } from 'vue';
 import {useTimeout} from './service/ChainedTimeout';
+import { getIsland, submitAnswer } from "@/services/api";
 
 const mapWidth = ref(window.innerWidth);
 const mapHeight = ref(window.innerHeight);
@@ -89,21 +97,10 @@ const props = defineProps({
 
 // --- Fetch and process data from the REAL API ---
 const fetchIslandData = async (id) => {
-  const apiUrl = `${BASE_URL}/islands/${id}`;
   
   try {
-    loadingMessage.value = 'Fetching island data from server...';
-    console.log(`Initiating fetch request to REAL API endpoint: ${apiUrl}`);
-    const response = await fetch(apiUrl);
-    const data = await response.json();
-
-    if (!data.ok || !data.result) {
-      throw new Error(data.error || 'Invalid API response format');
-    }
-
+    const rawData = await getIsland(id);
     isLoaded.value = true;
-
-    const rawData = data.result;
     backgroundImage.value = `/images/island/background.png`;
     components.value = rawData.components;
 
@@ -144,11 +141,10 @@ function fullScreen(clickedElement) {
     }
   }
 }
-
 async function submit(input) {
   const inputValue = input.answer;
   const formData = new FormData();
-  
+
   if (!inputValue) {
     chipBox.value = `چیزی برای ارسال وارد نشده‌است!`;
     startTimeout(() => {
@@ -156,7 +152,7 @@ async function submit(input) {
     }, 5000);
     return;
   }
-  
+
   if (typeof inputValue === 'object' && inputValue instanceof FileList) {
     for (let i = 0; i < inputValue.length; i++) {
       formData.append(input.id, inputValue[i]);
@@ -166,25 +162,27 @@ async function submit(input) {
   }
 
   try {
-    const apiUrl = `${BASE_URL}/answer/${input.id}`;
-    const response = await fetch(apiUrl, {
-      method: 'POST',
-      body: formData,
-    });
-    const data = await response.json();
-    console.log('Submit response:', data);
-    if (data.ok) {
+    const response = await submitAnswer(input.id, formData);
+    console.log('Submit response:', response.data);
+
+    if (response.data.ok) {
       chipBox.value = `پاسخ ثبت شد. پس از بررسی نمره آن ثبت می‌شود.`;
     } else {
-      chipBox.value = data.error; 
+      chipBox.value = response.data.error;
     }
+
     startTimeout(() => {
       chipBox.value = null;
     }, 5000);
   } catch (error) {
     console.error('Error submitting answer:', error);
+    chipBox.value = 'خطا در ارسال پاسخ!';
+    startTimeout(() => {
+      chipBox.value = null;
+    }, 5000);
   }
 }
+
 
 function onFullscreenChange() {
   if (!document.fullscreenElement) {
