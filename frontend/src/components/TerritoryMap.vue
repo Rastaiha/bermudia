@@ -5,15 +5,15 @@
       <div>
         <button v-if="hoveredNode.id == player.atIsland.id" @click="navigateToIsland(player.atIsland.id)">ورود به جزیره</button>
         <button 
-          v-else-if="edges.some(edge => 
+          v-else :disabled="!edges.some(edge =>
             (edge.from_node_id === player.atIsland.id && edge.to_node_id === hoveredNode.id) ||
             (edge.to_node_id === player.atIsland.id && edge.from_node_id === hoveredNode.id)
           )"
+          @click="travelToIsland(hoveredNode.id)"
         >
           سفر به جزیره 
           <span v-if="fuelCost">{{ fuelCost }}</span>
         </button>
-        <button v-else>جزیره دور است!</button> 
       </div>
     </div>
 
@@ -68,7 +68,7 @@
 <script setup>
 import { ref, onMounted, onUnmounted, computed, nextTick } from 'vue';
 import { useRouter } from 'vue-router'; // Import the router
-import { getPlayer, getToken, checkTravel } from "@/services/api";
+import { getPlayer, getToken, checkTravel, travelTo } from "@/services/api";
 import panzoom from 'panzoom';
 
 // --- Define reactive state ---
@@ -101,6 +101,10 @@ const props = defineProps({
 const navigateToIsland = (islandId) => {
   router.push(`/territory/${props.territoryId}/${islandId}`);
 };
+
+const travelToIsland = (dest) => {
+  travelTo(player.value.atIsland.id, dest);
+}
 
 // --- Computed property to generate wavy paths ---
 const wavyEdges = computed(() => {
@@ -300,8 +304,8 @@ const debug = () => {debugger;}
 /* Define all colors as CSS variables for easy management */
 .territory-container {
   --color-edge: #ffffff;
-  --color-info-box-bg: rgba(0, 0, 0, 0.8);
-  --color-info-box-text: white;
+  --color-info-box-bg: rgb(121 200 237 / 80%);
+  --color-info-box-text: #310f0f;
   --color-loading-text: #ddd;
   --color-bg-fallback: #0c2036;
 
@@ -355,12 +359,27 @@ const debug = () => {debugger;}
 .info-box {
   background-color: var(--color-info-box-bg);
   color: var(--color-info-box-text);
-  padding: 8px 12px;
+  padding: 13px 20px;
   border-radius: 6px;
-  font-family: sans-serif;
-  font-size: 14px;
+  font-family: var(--font-vazir);
+  font-size: 16px;
   z-index: 100;
   white-space: nowrap;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.info-box button {
+  padding: 5px;
+  border-radius: 10px;
+  background: #07458bb5;
+  margin: 10px 0 0;
+}
+
+.info-box button[disabled] {
+  filter: contrast(0.5);
 }
 
 .loading-message {
