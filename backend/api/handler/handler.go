@@ -46,6 +46,7 @@ func (h *Handler) Start() {
 	r.Route("/api/v1", func(r chi.Router) {
 		r.Get("/territories/{territoryID}", h.GetTerritory) // TODO: make it authenticated
 		r.Post("/login", h.Login)
+		r.HandleFunc("/events", h.StreamEvents)
 
 		// Authenticated endpoints
 		r.Group(func(r chi.Router) {
@@ -59,7 +60,6 @@ func (h *Handler) Start() {
 				sendResult(w, user)
 			})
 			r.Get("/islands/{islandID}", h.GetIsland)
-			r.HandleFunc("/events", h.StreamEvents)
 			r.Post("/answer/{inputID}", h.SubmitAnswer)
 			r.Get("/player", h.GetPlayer)
 			r.Post("/travel_check", h.TravelCheck)
@@ -82,7 +82,11 @@ func (h *Handler) Start() {
 		Addr:    ":8080",
 		Handler: r,
 	}
-	h.wsUpgrader = websocket.Upgrader{}
+	h.wsUpgrader = websocket.Upgrader{
+		CheckOrigin: func(r *http.Request) bool {
+			return true
+		},
+	}
 	go func() {
 		err := h.server.ListenAndServe()
 		if err != nil && !errors.Is(err, http.ErrServerClosed) {
