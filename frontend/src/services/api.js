@@ -61,6 +61,7 @@ gameApiClient.interceptors.response.use(
 
 // Perform user login
 export const login = async (username, password) => {
+  logout();
   const response = await gameApiClient.post('/login', { username, password });
   return response; // response is already the "result" object { token: "..." }
 };

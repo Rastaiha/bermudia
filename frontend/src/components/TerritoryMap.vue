@@ -11,14 +11,16 @@
           <div v-if="refuel"> قیمت هر واحد: {{ refuel.coinCostPerUnit }} </div>
           <div v-if="refuel"> حداکثر واحد قابل اخذ: {{ refuel.maxAvailableAmount }} </div>
           <input type="number" 
+            ref="fuelInput"
             :max="refuel ? refuel.maxAvailableAmount : player.fuelCap - player.fuel" 
             v-model.number="fuelCount"
+            @pointerdown="focusFuelInput"
           />
-          <button @click="buyFuelFromIsland">{{ fuelPriceText }}</button>
+          <button @pointerdown="buyFuelFromIsland">{{ fuelPriceText }}</button>
         </div>
         <button 
           v-else-if="hoveredNode.id == player.atIsland.id" 
-          @click="navigateToIsland(player.atIsland.id)"
+          @pointerdown="navigateToIsland(player.atIsland.id)"
         > ورود به جزیره
         </button>
         <button 
@@ -26,7 +28,7 @@
             (edge.from_node_id === player.atIsland.id && edge.to_node_id === hoveredNode.id) ||
             (edge.to_node_id === player.atIsland.id && edge.from_node_id === hoveredNode.id)
           )"
-          @click="travelToIsland(hoveredNode.id)"
+          @pointerdown="travelToIsland(hoveredNode.id)"
         >
           سفر به جزیره 
           <span v-if="fuelCost">{{ fuelCost }}</span>
@@ -61,7 +63,7 @@
             :width="node.width"
             :height="node.height"
             class="node-image"
-            @click="showInfoBox(node)"
+            @pointerdown="showInfoBox(node)"
             @mouseover="isHoveringNode = true"
             @mouseleave="unhoverNode"
           />
@@ -101,11 +103,12 @@
 <script setup>
 import { ref, onMounted, onUnmounted, computed, nextTick, watch } from 'vue';
 import { useRouter } from 'vue-router';
-import { getPlayer, getToken, checkTravel, travelTo, refuelCheck, buyFuel } from "@/services/api";
+import { logout, getPlayer, getToken, checkTravel, travelTo, refuelCheck, buyFuel } from "@/services/api";
 import { usePlayerWebSocket } from '@/components/service/WebSocket';
 import panzoom from 'panzoom';
 
 const svgRef = ref(null);
+const fuelInput = ref(null);
 const nodes = ref([]);
 const fuelStations = ref([]);
 const edges = ref([]);
@@ -179,6 +182,12 @@ const wavyEdges = computed(() => {
 const initializePanzoom = () => {
   if (!svgRef.value || panzoomInstance) return;
   panzoomInstance = panzoom(svgRef.value, { maxZoom: 4, minZoom: 1 });
+
+  svgRef.value.addEventListener('pointerdown', (e) => {
+    if (e.target.closest('.info-box')) {
+      e.stopPropagation();
+    }
+  });
 };
 
 const fetchTerritoryData = async (id) => {
@@ -239,7 +248,11 @@ const fetchTerritoryData = async (id) => {
 };
 
 const fetchPlayer = async () => {
-  if (!getToken()) return;
+  if (!getToken()) {
+    logout();
+    router.push(`/login`);
+    return;
+  }
   try {
     const playerData = await getPlayer();
     const island = nodes.value.find(node => node.id === playerData.atIsland);
@@ -274,6 +287,13 @@ const showInfoBox = async (node) => {
   } else {
     updateTravel();
   }
+};
+
+const focusFuelInput = () => {
+  // Delay to let the pointer event settle before focusing
+  requestAnimationFrame(() => {
+    fuelInput.value?.focus();
+  });
 };
 
 const updateTravel = async () => {
@@ -386,10 +406,29 @@ usePlayerWebSocket(player, nodes);
 .node-image, .ship image { transition: transform 0.2s ease-in-out; transform-box: fill-box; }
 .node-link:hover .node-image { transform-origin: center center; transform: scale(1.1); }
 
-.info-box { background-color: var(--color-info-box-bg); color: var(--color-info-box-text); padding: 13px 20px; border-radius: 6px; font-family: var(--font-vazir); font-size: 16px; z-index: 100; white-space: nowrap; display: flex; flex-direction: column; justify-content: center; align-items: center; }
+.info-box {
+    background-color: var(--color-info-box-bg);
+    color: var(--color-info-box-text); 
+    padding: 13px 20px; 
+    border-radius: 6px; 
+    font-family: var(--font-vazir); 
+    font-size: 16px; 
+    z-index: 10000; 
+    white-space: nowrap; 
+    display: flex; 
+    flex-direction: column; 
+    justify-content: center; 
+    align-items: center; 
+    pointer-events: auto;
+}
 .refuel { white-space: nowrap; display: flex; flex-direction: column; justify-content: center; align-items: center; }
 .info-box button { padding: 5px; border-radius: 10px; background: #07458bb5; margin: 10px 0 0; }
-input[type="number"] { width: 4rem; border-radius: 10px; border: 1px solid #07458bb5; }
+.info-box input { 
+    width: 4rem; 
+    border-radius: 10px; 
+    border: 1px solid #07458bb5;
+    text-align: center;
+}
 .info-box button[disabled] { filter: contrast(0.5); }
 
 .loading-message { font-size: 1.5rem; color: var(--color-loading-text); font-family: sans-serif; background-color: var(--color-info-box-bg); padding: 1rem 2rem; border-radius: 0.5rem; }

@@ -19,7 +19,6 @@ export const usePlayerWebSocket = (playerRef, nodes) => {
         const data = JSON.parse(event.data);
         if (data.playerUpdate) {
           const update = data.playerUpdate;
-          debugger;
           const island = nodes.value.find(node => node.id === update.player.atIsland);
           playerRef.value.atTerritory = update.player.atTerritory;
           playerRef.value.atIsland = island;
