@@ -1,14 +1,14 @@
 import { ref, onUnmounted } from 'vue';
 import { getToken } from '@/services/api';
 
-export const usePlayerWebSocket = (playerRef) => {
+export const usePlayerWebSocket = (playerRef, nodes) => {
   const ws = ref(null);
   const reconnectInterval = 10000; // 10 seconds
   let reconnectTimeout = null;
 
   const connect = () => {
     const token = getToken();
-    const wsUrl = `wss://97590f57-b983-48f8-bb0a-c098bed1e658.hsvc.ir:30254/api/v1/events?token=${encodeURIComponent(token)}`;
+    const wsUrl = `ws://97590f57-b983-48f8-bb0a-c098bed1e658.hsvc.ir:30254/api/v1/events?token=${token}`;
     ws.value = new WebSocket(wsUrl);
 
     ws.value.onopen = () => console.log('WebSocket connected!');
@@ -19,13 +19,12 @@ export const usePlayerWebSocket = (playerRef) => {
         const data = JSON.parse(event.data);
         if (data.playerUpdate) {
           const update = data.playerUpdate;
-          playerRef.value = {
-            ...playerRef.value,
-            atTerritory: update.player.atTerritory,
-            atIsland: update.player.atIsland,
-            fuel: update.player.fuel,
-            fuelCap: update.player.fuelCap,
-          };
+          debugger;
+          const island = nodes.value.find(node => node.id === update.player.atIsland);
+          playerRef.value.atTerritory = update.player.atTerritory;
+          playerRef.value.atIsland = island;
+          playerRef.value.fuel = update.player.fuel;
+          playerRef.value.fuelCap = update.player.fuelCap;
           console.log('Player updated via WebSocket:', playerRef.value);
         }
       } catch (err) {

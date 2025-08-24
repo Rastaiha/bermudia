@@ -362,7 +362,7 @@ watch(fuelCount, (newValue) => {
 
 
 const debug = () => {debugger;}
-usePlayerWebSocket(player);
+usePlayerWebSocket(player, nodes);
 </script>
 
 <style scoped>
