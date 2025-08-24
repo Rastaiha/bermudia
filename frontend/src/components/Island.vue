@@ -155,10 +155,10 @@ async function submit(input) {
 
   if (typeof inputValue === 'object' && inputValue instanceof FileList) {
     for (let i = 0; i < inputValue.length; i++) {
-      formData.append(input.id, inputValue[i]);
+      formData.append('data', inputValue[i]);
     }
   } else {
-    formData.append(input.id, inputValue);
+    formData.append('data', inputValue);
   }
 
   try {
