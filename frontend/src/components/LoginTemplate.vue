@@ -159,11 +159,12 @@
 <script setup>
 import { ref, onMounted, onBeforeUnmount } from "vue";
 import { useTimeout } from "./service/ChainedTimeout.js"; // import your timeout service
+import { login } from "../services/api.js";
+import router from "../router/index.js";
 
 const username = ref("");
 const password = ref("");
 const error = ref("");
-const token = ref("");
 const boatLeft = ref(10);
 let boatEl;
 const remember = ref(false);
@@ -171,35 +172,16 @@ const showPassword = ref(false)
 
 const { startTimeout, clear } = useTimeout(); // initialize timeout
 
-const BASE_URL = "http://97590f57-b983-48f8-bb0a-c098bed1e658.hsvc.ir:30254/api/v1";
-
 async function handleLogin() {
   try {
-    const response = await fetch(`${BASE_URL}/login`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ username: username.value, password: password.value }),
-    });
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      error.value = data.error;
-      startTimeout(() => {
-        error.value = "";
-      }, 5000);
-
-      return;
-    }
-
-    token.value = data.result.token;
+    const result = await login(username.value, password.value);
     error.value = "";
     if (remember.value) {
-      localStorage.setItem("authToken", token.value);
+      localStorage.setItem("authToken", result.token);
     } else {
-      sessionStorage.setItem("authToken", token.value);
+      sessionStorage.setItem("authToken", result.token);
     }
-    window.location.href = "/user_page";
+    router.push('/user_page');
   } catch (err) {
     error.value = err.message;
     startTimeout(() => {
