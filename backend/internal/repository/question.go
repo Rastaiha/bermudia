@@ -29,8 +29,9 @@ CREATE TABLE IF NOT EXISTS answers (
     user_id INT4 NOT NULL,
     question_id VARCHAR(255) NOT NULL,
     status INT4 NOT NULL,
-    file_id VARCHAR(255) NOT NULL,
-    filename VARCHAR(255) NOT NULL,
+    file_id VARCHAR(255),
+    filename VARCHAR(255),
+    text_content TEXT,
     created_at TIMESTAMP NOT NULL,
     updated_at TIMESTAMP NOT NULL
 );
@@ -126,12 +127,12 @@ func (s sqlQuestionRepository) GetOrCreateAnswer(ctx context.Context, userId int
 	now := time.Now().UTC()
 
 	err := s.db.QueryRowContext(ctx,
-		`INSERT INTO answers (id, user_id, question_id, status, file_id, filename, created_at, updated_at) 
-		 VALUES ($1, $2, $3, $4, '', '', $5, $5)
+		`INSERT INTO answers (id, user_id, question_id, status, created_at, updated_at) 
+		 VALUES ($1, $2, $3, $4, $5, $5)
 		 ON CONFLICT (id) DO UPDATE SET id = EXCLUDED.id
-		 RETURNING id, user_id, question_id, status, file_id, filename, created_at, updated_at`,
+		 RETURNING id, user_id, question_id, status, file_id, filename, text_content, created_at, updated_at`,
 		n(answerID), n(userId), n(questionID), domain.AnswerStatusEmpty, now,
-	).Scan(&answer.ID, &answer.UserID, &answer.QuestionID, &answer.Status, &answer.FileID, &answer.Filename, &answer.CreatedAt, &answer.UpdatedAt)
+	).Scan(&answer.ID, &answer.UserID, &answer.QuestionID, &answer.Status, &answer.FileID, &answer.Filename, &answer.TextContent, &answer.CreatedAt, &answer.UpdatedAt)
 
 	if err != nil {
 		return domain.Answer{}, fmt.Errorf("failed to get or create answer: %w", err)
@@ -140,7 +141,7 @@ func (s sqlQuestionRepository) GetOrCreateAnswer(ctx context.Context, userId int
 	return answer, nil
 }
 
-func (s sqlQuestionRepository) SubmitAnswer(ctx context.Context, answerId string, userId int32, fileID, filename string) (domain.Answer, error) {
+func (s sqlQuestionRepository) SubmitAnswer(ctx context.Context, answerId string, userId int32, fileID, filename, textContent string) (domain.Answer, error) {
 	var answer domain.Answer
 	now := time.Now().UTC()
 
@@ -149,11 +150,12 @@ func (s sqlQuestionRepository) SubmitAnswer(ctx context.Context, answerId string
 		 SET status = CASE WHEN status = $1 OR status = $2 THEN $3 ELSE status END,
 		     file_id = CASE WHEN status = $1 OR status = $2 THEN $4 ELSE file_id END,
 		     filename = CASE WHEN status = $1 OR status = $2 THEN $5 ELSE filename END,
-		     updated_at = CASE WHEN status = $1 OR status = $2 THEN $6 ELSE updated_at END
-		 WHERE id = $7 and user_id = $8
-		 RETURNING id, user_id, question_id, status, file_id, filename, created_at, updated_at`,
-		domain.AnswerStatusEmpty, domain.AnswerStatusWrong, domain.AnswerStatusPending, fileID, filename, now, answerId, userId,
-	).Scan(&answer.ID, &answer.UserID, &answer.QuestionID, &answer.Status, &answer.FileID, &answer.Filename, &answer.CreatedAt, &answer.UpdatedAt)
+		     text_content = CASE WHEN status = $1 OR status = $2 THEN $6 ELSE text_content END,
+		     updated_at = CASE WHEN status = $1 OR status = $2 THEN $7 ELSE updated_at END
+		 WHERE id = $8 and user_id = $9
+		 RETURNING id, user_id, question_id, status, file_id, filename, text_content, created_at, updated_at`,
+		domain.AnswerStatusEmpty, domain.AnswerStatusWrong, domain.AnswerStatusPending, n(fileID), n(filename), n(textContent), now, answerId, userId,
+	).Scan(&answer.ID, &answer.UserID, &answer.QuestionID, &answer.Status, &answer.FileID, &answer.Filename, &answer.TextContent, &answer.CreatedAt, &answer.UpdatedAt)
 
 	if errors.Is(err, sql.ErrNoRows) {
 		return domain.Answer{}, domain.ErrSubmitToNonExistingAnswer
@@ -165,7 +167,7 @@ func (s sqlQuestionRepository) SubmitAnswer(ctx context.Context, answerId string
 	if answer.Status == domain.AnswerStatusCorrect {
 		return domain.Answer{}, domain.ErrSubmitToCorrectAnswer
 	}
-	if answer.Status == domain.AnswerStatusPending && (answer.FileID != fileID || !answer.UpdatedAt.Equal(now)) {
+	if answer.Status == domain.AnswerStatusPending && !answer.UpdatedAt.Equal(now) {
 		return domain.Answer{}, domain.ErrSubmitToPendingAnswer
 	}
 

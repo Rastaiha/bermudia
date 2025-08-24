@@ -64,25 +64,28 @@ func (i *Island) GetIsland(ctx context.Context, userId int32, islandId string) (
 	return content, nil
 }
 
-func (i *Island) SubmitAnswer(ctx context.Context, userId int32, answerId string, file io.ReadCloser, filename string) (*domain.SubmissionState, error) {
+func (i *Island) SubmitAnswer(ctx context.Context, userId int32, answerId string, file io.ReadCloser, filename string, textContent string) (*domain.SubmissionState, error) {
 	// TODO: check player is in the island
 
-	msg, err := i.bot.SendDocument(ctx, &bot.SendDocumentParams{
-		ChatID: i.bot.ID(),
-		Document: &models.InputFileUpload{
-			Data:     file,
-			Filename: filename,
-		},
-	})
-	if err != nil {
-		return nil, fmt.Errorf("failed to upload file by bot sendDocument: %w", err)
+	fileId := ""
+	if file != nil {
+		msg, err := i.bot.SendDocument(ctx, &bot.SendDocumentParams{
+			ChatID: i.bot.ID(),
+			Document: &models.InputFileUpload{
+				Data:     file,
+				Filename: filename,
+			},
+		})
+		if err != nil {
+			return nil, fmt.Errorf("failed to upload file by bot sendDocument: %w", err)
+		}
+		if msg == nil || msg.Document == nil || msg.Document.FileID == "" {
+			return nil, fmt.Errorf("failed to upload file by bot sendDocument: document is empty")
+		}
+		fileId = msg.Document.FileID
 	}
-	if msg == nil || msg.Document == nil || msg.Document.FileID == "" {
-		return nil, fmt.Errorf("failed to upload file by bot sendDocument: document is empty")
-	}
-	fileId := msg.Document.FileID
 
-	answer, err := i.questionStore.SubmitAnswer(ctx, answerId, userId, fileId, filename)
+	answer, err := i.questionStore.SubmitAnswer(ctx, answerId, userId, fileId, filename, textContent)
 	if err != nil {
 		return nil, err
 	}

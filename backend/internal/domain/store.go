@@ -51,6 +51,6 @@ type QuestionStore interface {
 	// SubmitAnswer updates the existing Answer with the given args and sets the answer status to AnswerStatusPending.
 	// If the answer is in AnswerStatusCorrect status, it returns ErrSubmitToCorrectAnswer error.
 	// If the answer is in AnswerStatusPending status, it returns ErrSubmitToPendingAnswer error.
-	SubmitAnswer(ctx context.Context, answerId string, userId int32, fileID, filename string) (Answer, error)
+	SubmitAnswer(ctx context.Context, answerId string, userId int32, fileID, filename, textContent string) (Answer, error)
 	GetKnowledgeBars(ctx context.Context, userId int32) ([]KnowledgeBar, error)
 }

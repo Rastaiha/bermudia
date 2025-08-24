@@ -1,6 +1,9 @@
 package domain
 
-import "time"
+import (
+	"database/sql"
+	"time"
+)
 
 type Question struct {
 	ID            string   `json:"id"`
@@ -11,14 +14,15 @@ type Question struct {
 }
 
 type Answer struct {
-	ID         string
-	UserID     int32
-	QuestionID string
-	Status     AnswerStatus
-	FileID     string
-	Filename   string
-	CreatedAt  time.Time
-	UpdatedAt  time.Time
+	ID          string
+	UserID      int32
+	QuestionID  string
+	Status      AnswerStatus
+	FileID      sql.NullString
+	Filename    sql.NullString
+	TextContent sql.NullString
+	CreatedAt   time.Time
+	UpdatedAt   time.Time
 }
 
 type AnswerStatus int
@@ -49,7 +53,8 @@ func GetSubmissionStateFromAnswer(answer Answer) SubmissionState {
 	return SubmissionState{
 		Submittable: answer.Status == AnswerStatusEmpty || answer.Status == AnswerStatusWrong,
 		Status:      status,
-		Filename:    answer.Filename,
+		Filename:    answer.Filename.String,
+		Value:       answer.TextContent.String,
 		SubmittedAt: submittedAt,
 	}
 }
