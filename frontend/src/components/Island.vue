@@ -12,7 +12,7 @@
       <router-link :to="`/territory/${id}`" @mouseover="showTooltip('بازگشت به نقشه')" @mouseleave="hideTooltip"> 
         <div id="go-back">
           <img src="/images/ships/ship1.svg" alt="Go to the territory" />
-      </div>
+        </div>
       </router-link>
 
       <template v-for="(comp, index) in components" :key="index">
@@ -30,21 +30,31 @@
           </iframe>
         </div>
 
-        <div v-else-if="comp.input" class="challenge" :class="`challenge-${comp.input.submissionState.status}`">
+        <div v-else-if="comp.input" class="challenge" :class="`challenge-${inputsSubmissionState[comp.input.id].status}`">
           <p class="question">{{ comp.input.description }}</p>
           <div class="input-group">
             <input
+              v-if="comp.input.type !== 'file'"
+              :id="comp.input.id"
+              :type="comp.input.type"
+              v-model="inputsFormData[comp.input.id]"
+              class="challenge-input"
+              placeholder="پاسخ خود را اینجا وارد کنید..."
+              :disabled="!inputsSubmissionState[comp.input.id].submittable"
+            />
+            <input
+              v-else
               :id="comp.input.id"
               :type="comp.input.type"
               :accept="comp.input.accept?.join(',')"
-              v-model="comp.input.answer"
+              @change="handleFileChange($event, comp.input.id)"
               class="challenge-input"
               placeholder="پاسخ خود را اینجا وارد کنید..."
-              :disabled="!comp.input.submissionState.submittable"
+              :disabled="!inputsSubmissionState[comp.input.id].submittable"
             />
             <button
-              v-if="comp.input.submissionState.submittable" 
-              @click="submit(comp.input)"
+              v-if="inputsSubmissionState[comp.input.id].submittable" 
+              @click="submit(comp.input.id)"
               class="submit-button"
             >
               ارسال
@@ -60,7 +70,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, computed, nextTick } from 'vue';
+import { ref, onMounted, onUnmounted, computed, nextTick, reactive } from 'vue';
 import {useTimeout} from './service/ChainedTimeout';
 import { getIsland, submitAnswer } from "@/services/api";
 
@@ -68,7 +78,6 @@ const mapWidth = ref(window.innerWidth);
 const mapHeight = ref(window.innerHeight);
 
 // --- Define reactive state ---
-const BASE_URL = 'http://97590f57-b983-48f8-bb0a-c098bed1e658.hsvc.ir:30254/api/v1';
 const svgRef = ref(null);
 const isLoaded = ref(false);
 const isFullscreen = ref(false);
@@ -82,6 +91,9 @@ const components = ref([]);
 const { startTimeout, clear } = useTimeout()
 // THE CHANGE IS HERE: Added state for the new tooltip
 const tooltipText = ref('');
+
+const inputsFormData = reactive({});
+const inputsSubmissionState = reactive({});
 
 // --- Define component props ---
 const props = defineProps({
@@ -103,8 +115,13 @@ const fetchIslandData = async (id) => {
     isLoaded.value = true;
     backgroundImage.value = `/images/island/background.png`;
     components.value = rawData.components;
+    rawData.components.forEach((c) => {
+      if (c.input) {
+        inputsFormData[c.input.id] = c.input.type === 'file' ? null : '';
+        inputsSubmissionState[c.input.id] = c.input.submissionState;
+      }
+    });
 
-    
     await nextTick();
   } catch (error) {
     console.error('Failed to load island data from API:', error);
@@ -141,9 +158,14 @@ function fullScreen(clickedElement) {
     }
   }
 }
-async function submit(input) {
-  const inputValue = input.answer;
-  const formData = new FormData();
+
+const handleFileChange = (event, inputId) => {
+  const file = event.target.files[0]
+  inputsFormData[inputId] = file;
+}
+
+async function submit(inputId) {
+  const inputValue = inputsFormData[inputId];
 
   if (!inputValue) {
     chipBox.value = `چیزی برای ارسال وارد نشده‌است!`;
@@ -153,34 +175,19 @@ async function submit(input) {
     return;
   }
 
-  if (typeof inputValue === 'object' && inputValue instanceof FileList) {
-    for (let i = 0; i < inputValue.length; i++) {
-      formData.append(input.id, inputValue[i]);
-    }
-  } else {
-    formData.append(input.id, inputValue);
-  }
+  const formData = new FormData();
+  formData.append('data', inputValue);
 
   try {
-    const response = await submitAnswer(input.id, formData);
-    console.log('Submit response:', response.data);
-
-    if (response.data.ok) {
-      chipBox.value = `پاسخ ثبت شد. پس از بررسی نمره آن ثبت می‌شود.`;
-    } else {
-      chipBox.value = response.data.error;
-    }
-
-    startTimeout(() => {
-      chipBox.value = null;
-    }, 5000);
+    inputsSubmissionState[inputId] = await submitAnswer(inputId, formData);
+    chipBox.value = `پاسخ ثبت شد. پس از بررسی نمره آن ثبت می‌شود.`;
   } catch (error) {
     console.error('Error submitting answer:', error);
     chipBox.value = 'خطا در ارسال پاسخ!';
-    startTimeout(() => {
-      chipBox.value = null;
-    }, 5000);
   }
+  startTimeout(() => {
+    chipBox.value = null;
+  }, 5000);
 }
 
 
