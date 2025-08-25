@@ -7,23 +7,19 @@
         <p class="text-gray-700"><span class="font-semibold">نام کاربری:</span> {{ username }}</p>
         <p class="text-gray-700"><span class="font-semibold">شناسه:</span> {{ userId }}</p>
       </div>
-      
-      <p v-if="errorMsg" class="bg-red-100 text-red-700 text-sm text-center my-3 rounded-lg px-5 py-2.5">{{ errorMsg }}</p>
+
+      <p v-if="errorMsg" class="bg-red-100 text-red-700 text-sm text-center my-3 rounded-lg px-5 py-2.5">{{ errorMsg }}
+      </p>
 
       <div class="border-t pt-6 space-y-3">
-        <button
-          @click="enterTerritory"
-          :disabled="isLoading"
-          class="w-full py-2.5 px-4 bg-cyan-600 hover:bg-cyan-700 text-white font-medium rounded-lg transition disabled:bg-gray-400"
-        >
+        <button @click="enterTerritory" :disabled="isLoading"
+          class="w-full py-2.5 px-4 bg-cyan-600 hover:bg-cyan-700 text-white font-medium rounded-lg transition disabled:bg-gray-400">
           <span v-if="!isLoading">ورود به جزیره</span>
           <span v-else>در حال بارگذاری...</span>
         </button>
 
-        <button
-          @click="handleLogout"
-          class="w-full py-2 px-4 bg-red-500 hover:bg-red-600 text-white font-medium rounded-lg transition"
-        >
+        <button @click="handleLogout"
+          class="w-full py-2 px-4 bg-red-500 hover:bg-red-600 text-white font-medium rounded-lg transition">
           خروج
         </button>
       </div>
@@ -34,36 +30,36 @@
 <script setup>
 import { ref, onMounted } from "vue";
 import { useRouter } from "vue-router";
-// Import from the API service
+// --- Service Imports ---
 import { getMe, getPlayer, logout } from "@/services/api";
 
+// --- Component State ---
 const username = ref("...");
 const userId = ref("...");
 const errorMsg = ref("");
 const isLoading = ref(false);
 const router = useRouter();
 
-// Fetch user data on component mount
+// --- Lifecycle Hooks ---
 onMounted(async () => {
   try {
     const meData = await getMe();
     username.value = meData.username;
     userId.value = meData.id;
   } catch (err) {
-    // If getMe fails, token is likely invalid or expired
     errorMsg.value = "نشست شما منقضی شده است. لطفاً دوباره وارد شوید.";
     setTimeout(handleLogout, 2000);
   }
 });
 
-// Function to get player data and navigate to their territory
+// --- Component Methods ---
 async function enterTerritory() {
   isLoading.value = true;
   errorMsg.value = "";
   try {
     const playerData = await getPlayer();
     if (playerData && playerData.atTerritory) {
-      router.push(`/territory/${playerData.atTerritory}`);
+      router.push({ name: 'Territory', params: { id: playerData.atTerritory } });
     } else {
       throw new Error("اطلاعات تریتوری از سرور دریافت نشد.");
     }
@@ -75,9 +71,8 @@ async function enterTerritory() {
   }
 }
 
-// Function to log out the user
 function handleLogout() {
   logout();
-  router.push("/login");
+  router.push({ name: 'Login' });
 }
 </script>

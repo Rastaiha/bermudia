@@ -1,97 +1,59 @@
 <template>
   <div class="territory-container" :style="{ backgroundImage: `url(${backgroundImage})` }">
-    
-    <!-- Info Box -->
-    <div v-if="hoveredNode" class="info-box" :style="infoBoxStyle" @mouseover="isHoveringBox = true" @mouseleave="unHoverBox">
+
+    <div v-if="hoveredNode" class="info-box" :style="infoBoxStyle" @mouseover="isHoveringBox = true"
+      @mouseleave="unHoverBox">
       <div>{{ hoveredNode.name }}</div>
       <div>
-        <div 
-          v-if="hoveredNode.id == player.atIsland.id && fuelStations.some(station => station.id === hoveredNode.id)" class="refuel"
-        > 
+        <div v-if="hoveredNode.id == player.atIsland.id && fuelStations.some(station => station.id === hoveredNode.id)"
+          class="refuel">
           <div v-if="refuel"> قیمت هر واحد: {{ refuel.coinCostPerUnit }} </div>
           <div v-if="refuel"> حداکثر واحد قابل اخذ: {{ refuel.maxAvailableAmount }} </div>
-          <input type="number" 
-            ref="fuelInput"
-            :max="refuel ? refuel.maxAvailableAmount : player.fuelCap - player.fuel" 
-            v-model.number="fuelCount"
-            @pointerdown="focusFuelInput"
-          />
+          <input type="number" ref="fuelInput" :max="refuel ? refuel.maxAvailableAmount : player.fuelCap - player.fuel"
+            v-model.number="fuelCount" @pointerdown="focusFuelInput" />
           <button @pointerdown="buyFuelFromIsland">{{ fuelPriceText }}</button>
         </div>
-        <button 
-          v-else-if="hoveredNode.id == player.atIsland.id" 
-          @pointerdown="navigateToIsland(player.atIsland.id)"
-        > ورود به جزیره
+        <button v-else-if="hoveredNode.id == player.atIsland.id" @pointerdown="navigateToIsland(player.atIsland.id)">
+          ورود به جزیره
         </button>
-        <button 
-          v-else :disabled="!edges.some(edge =>
-            (edge.from_node_id === player.atIsland.id && edge.to_node_id === hoveredNode.id) ||
-            (edge.to_node_id === player.atIsland.id && edge.from_node_id === hoveredNode.id)
-          )"
-          @pointerdown="travelToIsland(hoveredNode.id)"
-        >
-          سفر به جزیره 
+        <button v-else :disabled="!edges.some(edge =>
+          (edge.from_node_id === player.atIsland.id && edge.to_node_id === hoveredNode.id) ||
+          (edge.to_node_id === player.atIsland.id && edge.from_node_id === hoveredNode.id)
+        )" @pointerdown="travelToIsland(hoveredNode.id)">
+          سفر به جزیره
           <span v-if="fuelCost">{{ fuelCost }}</span>
         </button>
       </div>
     </div>
 
-    <!-- Map SVG -->
-    <svg
-      ref="svgRef"
-      v-if="nodes.length > 0"
-      :viewBox="dynamicViewBox"
-      preserveAspectRatio="xMidYMid meet"
-      @mousemove="updateMousePosition"
-      class="map-svg"
-    >
+    <svg ref="svgRef" v-if="nodes.length > 0" :viewBox="dynamicViewBox" preserveAspectRatio="xMidYMid meet"
+      class="map-svg">
       <g class="edges">
-        <path
-          v-for="edge in wavyEdges"
-          :key="`${edge.from__node_id}-${edge.to_node_id}`"
-          :d="edge.pathD"
-          class="edge-path"
-        />
+        <path v-for="edge in wavyEdges" :key="`${edge.from__node_id}-${edge.to_node_id}`" :d="edge.pathD"
+          class="edge-path" />
       </g>
 
       <g class="nodes">
         <g v-for="node in nodes" :key="node.id" class="node-link">
-          <image
-            :href="node.iconPath"
-            :x="node.imageX"
-            :y="node.imageY"
-            :width="node.width"
-            :height="node.height"
-            class="node-image"
-            @pointerdown="showInfoBox(node)"
-            @mouseover="isHoveringNode = true"
-            @mouseleave="unhoverNode"
-          />
+          <image :href="node.iconPath" :x="node.imageX" :y="node.imageY" :width="node.width" :height="node.height"
+            class="node-image" @pointerdown="showInfoBox(node)" @mouseover="isHoveringNode = true"
+            @mouseleave="unhoverNode" />
         </g>
       </g>
 
       <g v-if="player && props.territoryId == player.atTerritory" class="ship">
-        <image 
-          href="/images/ships/ship1.svg" 
-          width="0.16" 
-          height="0.22" 
-          :x="player.atIsland.imageX - 0.08" 
-          :y="player.atIsland.imageY - 0.08"
-        />
+        <image href="/images/ships/ship1.svg" width="0.16" height="0.22" :x="player.atIsland.imageX - 0.08"
+          :y="player.atIsland.imageY - 0.08" />
       </g>
     </svg>
     <div v-else class="loading-message">
       {{ loadingMessage }}
     </div>
 
-    <!-- Fuel Bar -->
     <div class="fuel-bar-container" v-if="player">
       <div class="fuel-bar-label">
-        <div class="fuel-bar-label">
-          <img src="../../public/images/icons/drop.svg" alt="Drop Icon" width="24" height="24">
-        </div>
+        <img src="../../public/images/icons/drop.svg" alt="Drop Icon" width="24" height="24">
       </div>
-
       <div class="fuel-bar">
         <div class="fuel-bar-fill" :style="{ height: `${(player.fuel / player.fuelCap) * 100}%` }"></div>
         <div class="fuel-wave"></div>
@@ -107,6 +69,7 @@ import { logout, getPlayer, getToken, checkTravel, travelTo, refuelCheck, buyFue
 import { usePlayerWebSocket } from '@/components/service/WebSocket';
 import panzoom from 'panzoom';
 
+const BASE_URL = 'http://97590f57-b983-48f8-bb0a-c098bed1e658.hsvc.ir:30254/api/v1';
 const svgRef = ref(null);
 const fuelInput = ref(null);
 const nodes = ref([]);
@@ -116,14 +79,12 @@ const player = ref(null);
 const travel = ref(null);
 const fuelCount = ref(0);
 const refuel = ref(null);
-const fuelCost = computed(() => travel.value?.fuelCost ?? null);
-let isHoveringBox = false;
-let isHoveringNode = false;
 const backgroundImage = ref('');
 const hoveredNode = ref(null);
-const mousePosition = ref({ x: 0, y: 0 });
 const dynamicViewBox = ref('0 0 1 1');
 const loadingMessage = ref('Loading map data...');
+const isHoveringBox = ref(false);
+const isHoveringNode = ref(false);
 const router = useRouter();
 let panzoomInstance = null;
 
@@ -133,6 +94,8 @@ const props = defineProps({
     required: true,
   },
 });
+
+const fuelCost = computed(() => travel.value?.fuelCost ?? null);
 
 const navigateToIsland = (islandId) => {
   router.push(`/territory/${props.territoryId}/${islandId}`);
@@ -163,7 +126,7 @@ const wavyEdges = computed(() => {
     const dx = x2 - x1;
     const dy = y2 - y1;
     const lineLength = Math.sqrt(dx * dx + dy * dy);
-    
+
     const amplitude = lineLength * 0.2;
     const perpDx = -dy / lineLength;
     const perpDy = dx / lineLength;
@@ -191,9 +154,8 @@ const initializePanzoom = () => {
 };
 
 const fetchTerritoryData = async (id) => {
-  const BASE_URL = 'http://97590f57-b983-48f8-bb0a-c098bed1e658.hsvc.ir:30254/api/v1';
   const apiUrl = `${BASE_URL}/territories/${id}`;
-  
+
   try {
     loadingMessage.value = 'Fetching data from server...';
     const response = await fetch(apiUrl);
@@ -274,10 +236,8 @@ const fuelPriceText = computed(() => {
 
 const getNodeById = (id) => nodes.value.find(node => node.id === id);
 
-const updateMousePosition = (event) => { mousePosition.value = { x: event.clientX, y: event.clientY }; };
-
-const showInfoBox = async (node) => { 
-  isHoveringNode = true;
+const showInfoBox = async (node) => {
+  isHoveringNode.value = true;
   if (!player) return;
   hoveredNode.value = node;
   if (hoveredNode.value.id == player.value.atIsland.id) {
@@ -290,7 +250,6 @@ const showInfoBox = async (node) => {
 };
 
 const focusFuelInput = () => {
-  // Delay to let the pointer event settle before focusing
   requestAnimationFrame(() => {
     fuelInput.value?.focus();
   });
@@ -324,23 +283,23 @@ const updateRefuel = async () => {
   }
 };
 
-const hideInfoBox = () => { 
-  hoveredNode.value = null; 
+const hideInfoBox = () => {
+  hoveredNode.value = null;
   travel.value = null;
   refuel.value = null;
 };
 
 const unhoverNode = () => {
-  isHoveringNode = false;
+  isHoveringNode.value = false;
   setTimeout(() => {
-    if (!isHoveringBox) hideInfoBox();
+    if (!isHoveringBox.value) hideInfoBox();
   }, 1000);
 };
 
 const unHoverBox = () => {
-  isHoveringBox = false;
+  isHoveringBox.value = false;
   setTimeout(() => {
-    if (!isHoveringNode) hideInfoBox();
+    if (!isHoveringNode.value) hideInfoBox();
   }, 1000);
 };
 
@@ -398,85 +357,157 @@ usePlayerWebSocket(player, nodes);
   display: block;
   cursor: grab;
 }
-.map-svg:active { cursor: grabbing; }
 
-.edge-path { fill: none; stroke: var(--color-edge); stroke-width: 0.005; stroke-dasharray: 0.01, 0.005; }
+.map-svg:active {
+  cursor: grabbing;
+}
 
-.node-link { cursor: pointer; }
-.node-image, .ship image { transition: transform 0.2s ease-in-out; transform-box: fill-box; }
-.node-link:hover .node-image { transform-origin: center center; transform: scale(1.1); }
+.edge-path {
+  fill: none;
+  stroke: var(--color-edge);
+  stroke-width: 0.005;
+  stroke-dasharray: 0.01, 0.005;
+}
+
+.node-link {
+  cursor: pointer;
+}
+
+.node-image,
+.ship image {
+  transition: transform 0.2s ease-in-out;
+  transform-box: fill-box;
+}
+
+.node-link:hover .node-image {
+  transform-origin: center center;
+  transform: scale(1.1);
+}
 
 .info-box {
-    background-color: var(--color-info-box-bg);
-    color: var(--color-info-box-text); 
-    padding: 13px 20px; 
-    border-radius: 6px; 
-    font-family: var(--font-vazir); 
-    font-size: 16px; 
-    z-index: 10000; 
-    white-space: nowrap; 
-    display: flex; 
-    flex-direction: column; 
-    justify-content: center; 
-    align-items: center; 
-    pointer-events: auto;
+  background-color: var(--color-info-box-bg);
+  color: var(--color-info-box-text);
+  padding: 13px 20px;
+  border-radius: 6px;
+  font-family: var(--font-vazir);
+  font-size: 16px;
+  z-index: 10000;
+  white-space: nowrap;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  pointer-events: auto;
 }
-.refuel { white-space: nowrap; display: flex; flex-direction: column; justify-content: center; align-items: center; }
-.info-box button { padding: 5px; border-radius: 10px; background: #07458bb5; margin: 10px 0 0; }
-.info-box input { 
-    width: 4rem; 
-    border-radius: 10px; 
-    border: 1px solid #07458bb5;
-    text-align: center;
+
+.refuel {
+  white-space: nowrap;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
 }
-.info-box button[disabled] { filter: contrast(0.5); }
 
-.loading-message { font-size: 1.5rem; color: var(--color-loading-text); font-family: sans-serif; background-color: var(--color-info-box-bg); padding: 1rem 2rem; border-radius: 0.5rem; }
+.info-box button {
+  padding: 5px;
+  border-radius: 10px;
+  background: #07458bb5;
+  margin: 10px 0 0;
+}
 
-image.node-image{ width: 50%; height: 70%; transform-origin: 0px 0px !important; transform: scale(0.3) !important; }
-.ship image{ width: 50%; height: 70%; transform-origin: 0px 0px !important; }
+.info-box input {
+  width: 4rem;
+  border-radius: 10px;
+  border: 1px solid #07458bb5;
+  text-align: center;
+}
 
-.ship image { filter: drop-shadow(0 5px 20px rgba(0,0,0,0.5)); animation: 10s linear boat-animation infinite; }
-@keyframes boat-animation { 0% { transform: translate(0,0) rotate(10deg) scale(0.3); } 35% { transform: translate(0.02px, 0.01px) rotate(-10deg) scale(0.3) } 70% { transform: translate(-0.02px, 0.01px) rotate(3deg) scale(0.3) } 100% { transform: translate(0,0) rotate(10deg) scale(0.3); } }
+.info-box button[disabled] {
+  filter: contrast(0.5);
+}
+
+.loading-message {
+  font-size: 1.5rem;
+  color: var(--color-loading-text);
+  font-family: sans-serif;
+  background-color: var(--color-info-box-bg);
+  padding: 1rem 2rem;
+  border-radius: 0.5rem;
+}
+
+image.node-image {
+  width: 50%;
+  height: 70%;
+  transform-origin: 0px 0px !important;
+  transform: scale(0.3) !important;
+}
+
+.ship image {
+  width: 50%;
+  height: 70%;
+  transform-origin: 0px 0px !important;
+}
+
+.ship image {
+  filter: drop-shadow(0 5px 20px rgba(0, 0, 0, 0.5));
+  animation: 10s linear boat-animation infinite;
+}
+
+@keyframes boat-animation {
+  0% {
+    transform: translate(0, 0) rotate(10deg) scale(0.3);
+  }
+
+  35% {
+    transform: translate(0.02px, 0.01px) rotate(-10deg) scale(0.3)
+  }
+
+  70% {
+    transform: translate(-0.02px, 0.01px) rotate(3deg) scale(0.3)
+  }
+
+  100% {
+    transform: translate(0, 0) rotate(10deg) scale(0.3);
+  }
+}
 
 .fuel-bar-container {
-    position: fixed; 
-    top: 50%; 
-    right: 20px; 
-    transform: translateY(-50%); 
-    width: 40px; 
-    display: flex; 
-    flex-direction: column; 
-    align-items: center; 
-    z-index: 200; 
-    font-family: var(--font-vazir);
+  position: fixed;
+  top: 50%;
+  right: 20px;
+  transform: translateY(-50%);
+  width: 40px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  z-index: 200;
+  font-family: var(--font-vazir);
 }
-.fuel-bar-label { 
-    margin-bottom: 8px; 
-    font-size: 14px; 
-    color: #fff;
+
+.fuel-bar-label {
+  margin-bottom: 8px;
+  font-size: 14px;
+  color: #fff;
 }
 
 .fuel-bar {
-    width: 20px;
-    height: 150px;
-    background-color: rgb(38 72 174 / 95%);
-    border-radius: 6px;
-    overflow: hidden;
-    position: relative;
-    display: flex;
-    flex-direction: column-reverse;
-    padding: 3px;
+  width: 20px;
+  height: 150px;
+  background-color: rgb(38 72 174 / 95%);
+  border-radius: 6px;
+  overflow: hidden;
+  position: relative;
+  display: flex;
+  flex-direction: column-reverse;
+  padding: 3px;
 }
 
 .fuel-bar-fill {
-    width: 100%;
-    background-color: #000000;
-    border-radius: 6px 6px 0 0;
-    position: relative;
-    overflow: hidden;
-    transition: height 0.3s ease;
+  width: 100%;
+  background-color: #000000;
+  border-radius: 6px 6px 0 0;
+  position: relative;
+  overflow: hidden;
+  transition: height 0.3s ease;
 }
-
-
 </style>
