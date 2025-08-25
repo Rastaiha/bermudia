@@ -275,13 +275,14 @@ curl --request POST \
 
 ### Player
 
-| Field       | Type   | Description                               |
-|-------------|--------|-------------------------------------------|
-| atTerritory | string | Current territory of player               |
-| atIsland    | string | Current island of player                  |
-| fuel        | string | Current fuel level of player's vehicle    |
-| fuelCap     | int    | Current fuel capacity of player's vehicle |
-| coins       | int    | Current number of coins of player         |
+| Field         | Type                            | Description                                           |
+|---------------|---------------------------------|-------------------------------------------------------|
+| atTerritory   | string                          | Current territory of player                           |
+| atIsland      | string                          | Current island of player                              |
+| fuel          | string                          | Current fuel level of player's vehicle                |
+| fuelCap       | int                             | Current fuel capacity of player's vehicle             |
+| coins         | int                             | Current number of coins of player                     |
+| knowledgeBars | [KnowledgeBar](#knowledgebar)[] | Current state of player's knowledge in each territory |
 
 ### Territory
 
@@ -357,12 +358,22 @@ curl --request POST \
 
 ### SubmissionState
 
-| Field       | Type    | Description                                                                                     |
-|-------------|---------|-------------------------------------------------------------------------------------------------|
-| submittable | boolean | True if the a new answer can be submitted, false otherwise.                                     |
-| status      | string  | The status of answer; one of `empty`, `pending` (in process of correction) , `correct`, `wrong` |
-| filename    | string? | If _status_ is not `empty`, the name of the last submitted file.                                |
-| submittedAt | string? | If _status_ is not `empty`, the time of last submission in Unix milliseconds.                   |
+| Field       | Type    | Description                                                                                                          |
+|-------------|---------|----------------------------------------------------------------------------------------------------------------------|
+| submittable | boolean | True if the a new answer can be submitted, false otherwise.                                                          |
+| status      | string  | The status of answer; one of `empty`, `pending` (in process of correction) , `correct`, `wrong`                      |
+| filename    | string? | If _status_ is not `empty` and [IslandInput](#islandinput) _type_ is `file`, the name of the last submitted file.    |
+| value       | string? | If _status_ is not `empty` and [IslandInput](#islandinput) _type_ is not `file`, the last submitted plain text value |
+| submittedAt | string? | If _status_ is not `empty`, the time of last submission in Unix milliseconds.                                        |
+
+
+### KnowledgeBar
+
+| Field       | Type   | Description                                            |
+|-------------|--------|--------------------------------------------------------|
+| territoryId | string | ID of territory this knowledge bar belongs to          |
+| value       | int    | Player's knowledge in the territory                    |
+| total       | int    | Total amount of knowledge that exists in the territory |
 
 ### Event
 
@@ -390,8 +401,8 @@ curl --request POST \
 
 ### PlayerUpdateEvent
 
-| Field  | Type              | Description                                                      |
-|--------|-------------------|------------------------------------------------------------------|
-| reason | string            | The reason for change in player state. One of `travel`, `refuel` |
-| player | [Player](#player) | The new value of player object.                                  |
+| Field  | Type              | Description                                                                    |
+|--------|-------------------|--------------------------------------------------------------------------------|
+| reason | string            | The reason for change in player state. One of `travel`, `refuel`, `correction` |
+| player | [Player](#player) | The new value of player object.                                                |
 
