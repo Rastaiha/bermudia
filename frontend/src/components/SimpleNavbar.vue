@@ -7,7 +7,7 @@
         <div class="flex items-center space-x-3">
           <router-link to="/" class="flex items-center space-x-3">
             <img 
-              src="../../public/logo.png" 
+              src="../../logo.png" 
               alt="Rasta Logo" 
               class="h-10 w-10 object-contain"
             />
