@@ -4,18 +4,7 @@ import { getToken } from '../services/api'; // For checking authentication
 const routes = [
   {
     path: '/',
-    name: 'Home',
-    component: () => import('../pages/Home.vue'),
-  },
-  {
-    path: '/about',
-    name: 'About',
-    component: () => import('../pages/About.vue'),
-  },
-  {
-    path: '/api',
-    name: 'ApiTest',
-    component: () => import('../pages/ApiTest.vue'),
+    redirect: { name: 'Login' } // Redirect root to login
   },
   {
     path: '/territory/:id',
