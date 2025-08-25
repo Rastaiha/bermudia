@@ -20,14 +20,25 @@ type Player struct {
 	Coins       int32  `json:"coins"`
 }
 
+type FullPlayer struct {
+	Player
+	KnowledgeBars []KnowledgeBar `json:"knowledgeBars"`
+}
+
 const (
-	PlayerUpdateEventTravel = "travel"
-	PlayerUpdateEventRefuel = "refuel"
+	PlayerUpdateEventTravel     = "travel"
+	PlayerUpdateEventRefuel     = "refuel"
+	PlayerUpdateEventCorrection = "correction"
 )
 
 type PlayerUpdateEvent struct {
-	Reason string  `json:"reason"`
-	Player *Player `json:"player"`
+	Reason string
+	Player *Player
+}
+
+type FullPlayerUpdateEvent struct {
+	Reason string      `json:"reason"`
+	Player *FullPlayer `json:"player"`
 }
 
 func NewPlayer(userId int32, startingTerritory *Territory) Player {

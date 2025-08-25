@@ -9,10 +9,11 @@ import (
 type ResourceType string
 
 const (
-	ResourceTypeQuestion  ResourceType = "ques"
-	ResourceTypeChest     ResourceType = "chst"
-	ResourceTypeComponent ResourceType = "comp"
-	ResourceTypeAnswer    ResourceType = "ans"
+	ResourceTypeQuestion   ResourceType = "qst"
+	ResourceTypeChest      ResourceType = "cst"
+	ResourceTypeComponent  ResourceType = "cmp"
+	ResourceTypeAnswer     ResourceType = "ans"
+	ResourceTypeCorrection ResourceType = "crt"
 )
 
 func NewID(resourceType ResourceType) string {

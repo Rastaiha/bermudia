@@ -8,8 +8,8 @@ import (
 )
 
 type event struct {
-	PlayerUpdate *domain.PlayerUpdateEvent `json:"playerUpdate"`
-	Timestamp    int64                     `json:"timestamp,string"`
+	PlayerUpdate *domain.FullPlayerUpdateEvent `json:"playerUpdate"`
+	Timestamp    int64                         `json:"timestamp,string"`
 }
 
 func (h *Handler) sendEvent(userId int32, e event) {

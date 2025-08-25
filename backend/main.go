@@ -50,7 +50,7 @@ func main() {
 	authService := service.NewAuth(cfg, userRepo)
 	territoryService := service.NewTerritory(territoryRepo)
 	islandService := service.NewIsland(theBot, islandRepo, questionStore)
-	playerService := service.NewPlayer(playerRepo, territoryRepo)
+	playerService := service.NewPlayer(cfg, playerRepo, territoryRepo, questionStore)
 	adminService := service.NewAdmin(territoryRepo, islandRepo, userRepo, playerRepo, questionStore)
 
 	err = mock.CreateMockData(adminService, cfg.MockUsersPassword)
@@ -60,11 +60,14 @@ func main() {
 
 	h := handler.New(authService, territoryService, islandService, playerService)
 
+	playerService.Start()
 	h.Start()
 
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt, os.Kill, syscall.SIGTERM, syscall.SIGQUIT, syscall.SIGINT)
 	<-c
 	slog.Info("Got signal, shutting down...")
+
 	h.Stop()
+	playerService.Stop()
 }

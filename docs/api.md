@@ -281,6 +281,7 @@ curl --request POST \
 | atIsland    | string | Current island of player                  |
 | fuel        | string | Current fuel level of player's vehicle    |
 | fuelCap     | int    | Current fuel capacity of player's vehicle |
+| coins       | int    | Current number of coins of player         |
 
 ### Territory
 

@@ -7,6 +7,9 @@ import (
 	"github.com/go-telegram/bot"
 	"github.com/go-telegram/bot/models"
 	"io"
+	"log/slog"
+	"strings"
+	"time"
 )
 
 type Island struct {
@@ -24,7 +27,7 @@ func NewIsland(bot *bot.Bot, islandStore domain.IslandStore, questionStore domai
 }
 
 func (i *Island) GetIsland(ctx context.Context, userId int32, islandId string) (*domain.IslandContent, error) {
-	rawContent, err := i.islandStore.GetByID(ctx, islandId)
+	rawContent, territoryID, err := i.islandStore.GetByID(ctx, islandId)
 	if err != nil {
 		return nil, err
 	}
@@ -44,7 +47,7 @@ func (i *Island) GetIsland(ctx context.Context, userId int32, islandId string) (
 			if err != nil {
 				return nil, err
 			}
-			answer, err := i.questionStore.GetOrCreateAnswer(ctx, userId, userComponent.ResourceID, question.ID)
+			answer, err := i.questionStore.GetOrCreateAnswer(ctx, userId, userComponent.ResourceID, question.ID, territoryID)
 			if err != nil {
 				return nil, err
 			}
@@ -64,28 +67,55 @@ func (i *Island) GetIsland(ctx context.Context, userId int32, islandId string) (
 	return content, nil
 }
 
-func (i *Island) SubmitAnswer(ctx context.Context, userId int32, answerId string, file io.ReadCloser, filename string) (*domain.SubmissionState, error) {
+func (i *Island) SubmitAnswer(ctx context.Context, userId int32, answerId string, file io.ReadCloser, filename string, textContent string) (*domain.SubmissionState, error) {
 	// TODO: check player is in the island
 
-	msg, err := i.bot.SendDocument(ctx, &bot.SendDocumentParams{
-		ChatID: i.bot.ID(),
-		Document: &models.InputFileUpload{
-			Data:     file,
-			Filename: filename,
-		},
-	})
-	if err != nil {
-		return nil, fmt.Errorf("failed to upload file by bot sendDocument: %w", err)
+	fileId := ""
+	if file != nil {
+		msg, err := i.bot.SendDocument(ctx, &bot.SendDocumentParams{
+			ChatID: i.bot.ID(),
+			Document: &models.InputFileUpload{
+				Data:     file,
+				Filename: filename,
+			},
+		})
+		if err != nil {
+			return nil, fmt.Errorf("failed to upload file by bot sendDocument: %w", err)
+		}
+		if msg == nil || msg.Document == nil || msg.Document.FileID == "" {
+			return nil, fmt.Errorf("failed to upload file by bot sendDocument: document is empty")
+		}
+		fileId = msg.Document.FileID
 	}
-	if msg == nil || msg.Document == nil || msg.Document.FileID == "" {
-		return nil, fmt.Errorf("failed to upload file by bot sendDocument: document is empty")
-	}
-	fileId := msg.Document.FileID
 
-	answer, err := i.questionStore.SubmitAnswer(ctx, answerId, userId, fileId, filename)
+	answer, err := i.questionStore.SubmitAnswer(ctx, answerId, userId, fileId, filename, textContent)
 	if err != nil {
 		return nil, err
 	}
+
+	// TODO: remove
+	func() {
+		correction := domain.Correction{
+			ID:        domain.NewID(domain.ResourceTypeCorrection),
+			AnswerID:  answer.ID,
+			IsCorrect: false,
+			CreatedAt: time.Now().UTC(),
+		}
+		create := false
+		lowerFilename := strings.ToLower(filename)
+		if strings.Contains(lowerFilename, "false") || strings.Contains(textContent, "false") || strings.Contains(textContent, "0") {
+			correction.IsCorrect = false
+			create = true
+		} else if strings.Contains(lowerFilename, "true") || strings.Contains(textContent, "true") || strings.Contains(textContent, "1") {
+			correction.IsCorrect = true
+			create = true
+		}
+		if create {
+			if err := i.questionStore.CreateCorrection(ctx, correction); err != nil {
+				slog.Error("failed to create correction", err)
+			}
+		}
+	}()
 
 	r := domain.GetSubmissionStateFromAnswer(answer)
 	return &r, nil
