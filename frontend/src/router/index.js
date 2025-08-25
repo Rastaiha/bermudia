@@ -1,25 +1,65 @@
-import { createRouter, createWebHistory } from 'vue-router'
-import Home from '../pages/Home.vue'
-import About from '../pages/About.vue'
-import ApiTest from '../pages/ApiTest.vue'
-import Territory from '../pages/Territory.vue'
-import Island from '../pages/TerritoryIsland.vue'
-import Login from '../pages/Login.vue'
-import UserPage from '../pages/UserPage.vue'
-
+import { createRouter, createWebHistory } from 'vue-router';
+import { getToken } from '../services/api'; // For checking authentication
 
 const routes = [
-  { path: '/', component: Home },
-  { path: '/about', component: About },
-  { path: '/api', component: ApiTest },
-  { path: '/territory/:id', component: Territory, props: true },
-  { path: '/territory/:id/:islandId', component: Island, props: true },
-  { path: '/login', component: Login},
-  { path: '/user_page', component: UserPage},
+  {
+    path: '/',
+    name: 'Home',
+    component: () => import('../pages/Home.vue'),
+  },
+  {
+    path: '/about',
+    name: 'About',
+    component: () => import('../pages/About.vue'),
+  },
+  {
+    path: '/api',
+    name: 'ApiTest',
+    component: () => import('../pages/ApiTest.vue'),
+  },
+  {
+    path: '/territory/:id',
+    name: 'Territory',
+    component: () => import('../pages/Territory.vue'),
+    props: true,
+    meta: { requiresAuth: true }, // This route requires login
+  },
+  {
+    path: '/territory/:id/:islandId',
+    name: 'Island',
+    component: () => import('../pages/TerritoryIsland.vue'),
+    props: true,
+    meta: { requiresAuth: true }, // This route requires login
+  },
+  {
+    path: '/login',
+    name: 'Login',
+    component: () => import('../pages/Login.vue'),
+  },
+  {
+    path: '/user_page',
+    name: 'UserPage',
+    component: () => import('../pages/UserPage.vue'),
+    meta: { requiresAuth: true }, // This route requires login
+  },
+];
 
-]
-
-export default createRouter({
+const router = createRouter({
   history: createWebHistory(),
-  routes
-})
+  routes,
+});
+
+// Navigation Guard to protect routes
+router.beforeEach((to, from, next) => {
+  const isLoggedIn = !!getToken(); // Check if user token exists
+
+  if (to.meta.requiresAuth && !isLoggedIn) {
+    // If the route requires auth and user is not logged in, redirect to login page
+    next({ name: 'Login' });
+  } else {
+    // Otherwise, allow navigation
+    next();
+  }
+});
+
+export default router;

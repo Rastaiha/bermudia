@@ -1,50 +1,73 @@
-import { ref, onUnmounted } from 'vue';
-import { getToken } from '@/services/api';
+// frontend/src/components/service/WebSocket.js
 
-export const usePlayerWebSocket = (playerRef, nodes) => {
-  const ws = ref(null);
-  const reconnectInterval = 10000; // 10 seconds
-  let reconnectTimeout = null;
+import { ref, onMounted, onUnmounted, watch } from 'vue';
+import { getToken } from '@/services/api.js'; // Also added .js here for consistency
+import { API_ENDPOINTS } from '@/services/apiConfig.js'; // Fix: Added .js extension
 
-  const connect = () => {
-    const token = getToken();
-    const wsUrl = `ws://97590f57-b983-48f8-bb0a-c098bed1e658.hsvc.ir:30254/api/v1/events?token=${token}`;
-    ws.value = new WebSocket(wsUrl);
+function connectWebSocket(player, nodes) {
+  const token = getToken();
+  if (!token) {
+    console.error("No auth token found, WebSocket connection aborted.");
+    return;
+  }
 
-    ws.value.onopen = () => console.log('WebSocket connected!');
-    
+  const socket = new WebSocket(`${API_ENDPOINTS.events}?token=${token}`);
 
-    ws.value.onmessage = (event) => {
-      try {
-        const data = JSON.parse(event.data);
-        if (data.playerUpdate) {
-          const update = data.playerUpdate;
-          const island = nodes.value.find(node => node.id === update.player.atIsland);
-          playerRef.value.atTerritory = update.player.atTerritory;
-          playerRef.value.atIsland = island;
-          playerRef.value.fuel = update.player.fuel;
-          playerRef.value.fuelCap = update.player.fuelCap;
-          console.log('Player updated via WebSocket:', playerRef.value);
-        }
-      } catch (err) {
-        console.error('Failed to parse WebSocket message:', err);
-      }
-    };
-
-    ws.value.onerror = (err) => {
-      console.error('WebSocket error:', err);
-    };
-
-    ws.value.onclose = () => {
-      console.warn('WebSocket closed. Reconnecting in 10s...');
-      reconnectTimeout = setTimeout(connect, reconnectInterval);
-    };
+  socket.onopen = () => {
+    console.log("WebSocket connection established.");
   };
 
-  connect();
+  socket.onmessage = (event) => {
+    try {
+      const data = JSON.parse(event.data);
+      console.log("WebSocket message received:", data);
+
+      if (data.type === "player-update" && player.value) {
+        const payload = data.payload;
+        if (payload.fuel !== undefined) player.value.fuel = payload.fuel;
+
+        if (payload.atIsland) {
+          const newIsland = nodes.value.find(node => node.id === payload.atIsland);
+          if (newIsland) {
+            player.value.atIsland = newIsland;
+          }
+        }
+      }
+    } catch (error) {
+      console.error("Error parsing WebSocket message:", error);
+    }
+  };
+
+  socket.onclose = (event) => {
+    console.log("WebSocket connection closed:", event.reason);
+  };
+
+  socket.onerror = (error) => {
+    console.error("WebSocket error:", error);
+  };
+
+  return socket;
+}
+
+export function usePlayerWebSocket(player, nodes) {
+  let socket = null;
+
+  const setupWebSocket = () => {
+    if (player.value && nodes.value.length > 0) {
+      if (socket) {
+        socket.close();
+      }
+      socket = connectWebSocket(player, nodes);
+    }
+  };
+
+  onMounted(setupWebSocket);
+
+  watch([player, nodes], setupWebSocket, { deep: true });
 
   onUnmounted(() => {
-    if (ws.value) ws.value.close();
-    if (reconnectTimeout) clearTimeout(reconnectTimeout);
+    if (socket) {
+      socket.close();
+    }
   });
-};
+}
