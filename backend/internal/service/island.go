@@ -7,6 +7,9 @@ import (
 	"github.com/go-telegram/bot"
 	"github.com/go-telegram/bot/models"
 	"io"
+	"log/slog"
+	"strings"
+	"time"
 )
 
 type Island struct {
@@ -89,6 +92,30 @@ func (i *Island) SubmitAnswer(ctx context.Context, userId int32, answerId string
 	if err != nil {
 		return nil, err
 	}
+
+	// TODO: remove
+	func() {
+		correction := domain.Correction{
+			ID:        domain.NewID(domain.ResourceTypeCorrection),
+			AnswerID:  answer.ID,
+			IsCorrect: false,
+			CreatedAt: time.Now().UTC(),
+		}
+		create := false
+		lowerFilename := strings.ToLower(filename)
+		if strings.Contains(lowerFilename, "false") || strings.Contains(textContent, "false") || strings.Contains(textContent, "0") {
+			correction.IsCorrect = false
+			create = true
+		} else if strings.Contains(lowerFilename, "true") || strings.Contains(textContent, "true") || strings.Contains(textContent, "1") {
+			correction.IsCorrect = true
+			create = true
+		}
+		if create {
+			if err := i.questionStore.CreateCorrection(ctx, correction); err != nil {
+				slog.Error("failed to create correction", err)
+			}
+		}
+	}()
 
 	r := domain.GetSubmissionStateFromAnswer(answer)
 	return &r, nil

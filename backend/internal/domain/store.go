@@ -3,6 +3,7 @@ package domain
 import (
 	"context"
 	"errors"
+	"time"
 )
 
 var (
@@ -10,6 +11,7 @@ var (
 	ErrTerritoryNotFound = errors.New("territory not found")
 	ErrUserNotFound      = errors.New("user not found")
 	ErrPlayerConflict    = errors.New("player update conflict")
+	ErrAnswerNotPending  = errors.New("answer not in pending state")
 )
 
 type TerritoryStore interface {
@@ -53,4 +55,7 @@ type QuestionStore interface {
 	// If the answer is in AnswerStatusPending status, it returns ErrSubmitToPendingAnswer error.
 	SubmitAnswer(ctx context.Context, answerId string, userId int32, fileID, filename, textContent string) (Answer, error)
 	GetKnowledgeBars(ctx context.Context, userId int32) ([]KnowledgeBar, error)
+	CreateCorrection(ctx context.Context, Correction Correction) error
+	ApplyCorrection(ctx context.Context, correction Correction, ifBefore time.Time) (int32, bool, error)
+	GetUnappliedCorrections(ctx context.Context) ([]Correction, error)
 }

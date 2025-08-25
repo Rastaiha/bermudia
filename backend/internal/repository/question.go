@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log/slog"
 	"slices"
 	"strings"
 	"time"
@@ -45,6 +46,16 @@ CREATE TABLE IF NOT EXISTS territory_questions (
     knowledge_amount INT4 NOT NULL
 );
 `
+
+	correctionsSchema = `
+CREATE TABLE IF NOT EXISTS corrections (
+    id VARCHAR(255) PRIMARY KEY,
+    answer_id VARCHAR(255),
+    is_correct BOOLEAN NOT NULL,
+    applied BOOLEAN NOT NULL DEFAULT FALSE,
+    created_at TIMESTAMP NOT NULL
+);
+`
 )
 
 type sqlQuestionRepository struct {
@@ -63,6 +74,10 @@ func NewSqlQuestionRepository(db *sql.DB) (domain.QuestionStore, error) {
 	_, err = db.Exec(territoryQuestionsSchema)
 	if err != nil {
 		return nil, fmt.Errorf("create territory_questions table: %w", err)
+	}
+	_, err = db.Exec(correctionsSchema)
+	if err != nil {
+		return nil, fmt.Errorf("create corrections table: %w", err)
 	}
 	return sqlQuestionRepository{
 		db: db,
@@ -202,5 +217,62 @@ GROUP BY t.territory_id;`
 	slices.SortFunc(result, func(a, b domain.KnowledgeBar) int {
 		return strings.Compare(a.TerritoryID, b.TerritoryID)
 	})
+	return result, nil
+}
+
+func (s sqlQuestionRepository) CreateCorrection(ctx context.Context, correction domain.Correction) error {
+	correction.CreatedAt = time.Now().UTC()
+	_, err := s.db.ExecContext(ctx,
+		`INSERT INTO corrections (id, answer_id, is_correct, created_at) VALUES ($1, $2, $3, $4)`,
+		correction.ID, correction.AnswerID, correction.IsCorrect, correction.CreatedAt,
+	)
+	return err
+}
+
+func (s sqlQuestionRepository) ApplyCorrection(ctx context.Context, correction domain.Correction, ifBefore time.Time) (int32, bool, error) {
+	newStatus := domain.AnswerStatusWrong
+	if correction.IsCorrect {
+		newStatus = domain.AnswerStatusCorrect
+	}
+	var postApplyStatus domain.AnswerStatus
+	var userId int32
+	err := s.db.QueryRowContext(ctx,
+		`UPDATE answers SET status = CASE WHEN status = $1 THEN $2 ELSE status END WHERE id = $3 AND updated_at <= $4 RETURNING status, user_id`,
+		domain.AnswerStatusPending, newStatus, correction.AnswerID, ifBefore,
+	).Scan(&postApplyStatus, &userId)
+	if errors.Is(err, sql.ErrNoRows) {
+		return 0, false, nil
+	}
+	if err != nil {
+		return userId, false, err
+	}
+	if _, err := s.db.ExecContext(ctx, `UPDATE corrections SET applied = TRUE WHERE id = $1 ;`, correction.ID); err != nil {
+		slog.Error("db: failed to set is_applied for correction to true", slog.Any("error", err), slog.String("correction_id", correction.ID))
+	}
+	if postApplyStatus != newStatus {
+		err = domain.ErrAnswerNotPending
+	}
+	return userId, true, err
+}
+
+func (s sqlQuestionRepository) GetUnappliedCorrections(ctx context.Context) (result []domain.Correction, err error) {
+	rows, err := s.db.QueryContext(ctx,
+		`SELECT id, answer_id, is_correct, created_at FROM corrections WHERE applied = FALSE `,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer func() {
+		closeErr := rows.Close()
+		err = errors.Join(err, closeErr)
+	}()
+	for rows.Next() {
+		var correction domain.Correction
+		err := rows.Scan(&correction.ID, &correction.AnswerID, &correction.IsCorrect, &correction.CreatedAt)
+		if err != nil {
+			return nil, err
+		}
+		result = append(result, correction)
+	}
 	return result, nil
 }

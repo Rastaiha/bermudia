@@ -2,22 +2,49 @@ package service
 
 import (
 	"context"
+	"github.com/Rastaiha/bermudia/internal/config"
 	"github.com/Rastaiha/bermudia/internal/domain"
+	"github.com/go-co-op/gocron/v2"
 	"log/slog"
+	"sync"
+	"sync/atomic"
+	"time"
 )
 
 type Player struct {
+	cfg                      config.Config
 	playerStore              domain.PlayerStore
 	territoryStore           domain.TerritoryStore
 	questionStore            domain.QuestionStore
 	playerUpdateEventHandler func(event *domain.FullPlayerUpdateEvent)
+	cron                     gocron.Scheduler
 }
 
-func NewPlayer(playerStore domain.PlayerStore, territoryStore domain.TerritoryStore, questionStore domain.QuestionStore) *Player {
+func NewPlayer(cfg config.Config, playerStore domain.PlayerStore, territoryStore domain.TerritoryStore, questionStore domain.QuestionStore) *Player {
 	return &Player{
+		cfg:            cfg,
 		playerStore:    playerStore,
 		territoryStore: territoryStore,
 		questionStore:  questionStore,
+	}
+}
+
+func (p *Player) Start() {
+	var err error
+	p.cron, err = gocron.NewScheduler(gocron.WithLimitConcurrentJobs(1, gocron.LimitModeReschedule))
+	if err != nil {
+		panic(err)
+	}
+	_, err = p.cron.NewJob(gocron.DurationJob(p.cfg.CorrectionJobInterval), gocron.NewTask(p.applyCorrections))
+	if err != nil {
+		panic(err)
+	}
+	p.cron.Start()
+}
+
+func (p *Player) Stop() {
+	if err := p.cron.Shutdown(); err != nil {
+		slog.Error("failed to stop cron", err)
 	}
 }
 
@@ -128,4 +155,71 @@ func (p *Player) getFullPlayer(ctx context.Context, player domain.Player) (domai
 		Player:        player,
 		KnowledgeBars: knowledgeBars,
 	}, nil
+}
+
+func (p *Player) applyCorrections(ctx context.Context) {
+	ctx, cancel := context.WithTimeout(ctx, 10*time.Minute)
+	defer cancel()
+
+	slog.Info("applying corrections...")
+
+	corrections, err := p.questionStore.GetUnappliedCorrections(ctx)
+	if err != nil {
+		slog.Error("failed to GetUnappliedCorrections from db", err)
+		return
+	}
+
+	var wg sync.WaitGroup
+	workerLimit := make(chan struct{}, 2)
+
+	appliedCorrections := &atomic.Int64{}
+	updatedUserIDs := make(map[int32]struct{})
+	lock := sync.Mutex{}
+	for _, c := range corrections {
+		workerLimit <- struct{}{}
+		wg.Add(1)
+		go func() {
+			defer func() {
+				<-workerLimit
+				wg.Done()
+			}()
+			userId, ok, err := p.questionStore.ApplyCorrection(ctx, c, time.Now().Add(-p.cfg.MinCorrectionDelay))
+			if err != nil {
+				slog.Error("failed to ApplyCorrection from db", err)
+				return
+			}
+			if ok {
+				appliedCorrections.Add(1)
+			}
+			if ok && c.IsCorrect {
+				lock.Lock()
+				defer lock.Unlock()
+				updatedUserIDs[userId] = struct{}{}
+			}
+		}()
+	}
+	wg.Wait()
+
+	for userId := range updatedUserIDs {
+		workerLimit <- struct{}{}
+		wg.Add(1)
+		go func() {
+			defer func() {
+				<-workerLimit
+				wg.Done()
+			}()
+			player, err := p.playerStore.Get(ctx, userId)
+			if err != nil {
+				slog.Error("failed to Get player from db", err)
+				return
+			}
+			p.sendPlayerUpdateEvent(ctx, &domain.PlayerUpdateEvent{
+				Reason: domain.PlayerUpdateEventCorrection,
+				Player: &player,
+			})
+		}()
+	}
+	wg.Wait()
+
+	slog.Info("successfully applied corrections", slog.Int64("count", appliedCorrections.Load()))
 }

@@ -26,8 +26,9 @@ type FullPlayer struct {
 }
 
 const (
-	PlayerUpdateEventTravel = "travel"
-	PlayerUpdateEventRefuel = "refuel"
+	PlayerUpdateEventTravel     = "travel"
+	PlayerUpdateEventRefuel     = "refuel"
+	PlayerUpdateEventCorrection = "correction"
 )
 
 type PlayerUpdateEvent struct {

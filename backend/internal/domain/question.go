@@ -80,7 +80,8 @@ type KnowledgeBar struct {
 	Total       int32  `json:"total"`
 }
 
-type QueuedCorrection struct {
+type Correction struct {
+	ID        string
 	AnswerID  string
 	IsCorrect bool
 	CreatedAt time.Time
