@@ -230,6 +230,7 @@ func (s sqlQuestionRepository) CreateCorrection(ctx context.Context, correction 
 }
 
 func (s sqlQuestionRepository) ApplyCorrection(ctx context.Context, correction domain.Correction, ifBefore time.Time) (int32, bool, error) {
+	ifBefore = ifBefore.UTC()
 	newStatus := domain.AnswerStatusWrong
 	if correction.IsCorrect {
 		newStatus = domain.AnswerStatusCorrect

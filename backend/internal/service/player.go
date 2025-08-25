@@ -183,7 +183,7 @@ func (p *Player) applyCorrections(ctx context.Context) {
 				<-workerLimit
 				wg.Done()
 			}()
-			userId, ok, err := p.questionStore.ApplyCorrection(ctx, c, time.Now().Add(-p.cfg.MinCorrectionDelay))
+			userId, ok, err := p.questionStore.ApplyCorrection(ctx, c, time.Now().Add(-p.cfg.MinCorrectionDelay).UTC())
 			if err != nil {
 				slog.Error("failed to ApplyCorrection from db", err)
 				return
