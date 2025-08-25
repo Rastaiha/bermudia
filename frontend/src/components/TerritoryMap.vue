@@ -42,7 +42,7 @@
       </g>
 
       <g v-if="player && props.territoryId == player.atTerritory" class="ship">
-        <image href="/images/ships/ship1.svg" width="0.16" height="0.22" :x="player.atIsland.imageX - 0.08"
+        <image href="../../images/ships/ship1.svg" width="0.16" height="0.22" :x="player.atIsland.imageX - 0.08"
           :y="player.atIsland.imageY - 0.08" />
       </g>
     </svg>
@@ -52,7 +52,7 @@
 
     <div class="fuel-bar-container" v-if="player">
       <div class="fuel-bar-label">
-        <img src="../../public/images/icons/drop.svg" alt="Drop Icon" width="24" height="24">
+        <img src="../../images/icons/drop.svg" alt="Drop Icon" width="24" height="24">
       </div>
       <div class="fuel-bar">
         <div class="fuel-bar-fill" :style="{ height: `${(player.fuel / player.fuelCap) * 100}%` }"></div>

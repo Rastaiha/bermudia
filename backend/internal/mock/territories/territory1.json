@@ -1,7 +1,7 @@
 {
   "id": "territory1",
   "name": "جزایر اسرارآمیز",
-  "backgroundAsset": "background1.png",
+  "backgroundAsset": "background1.jpg",
   "startIsland": "island_start",
   "islands": [
     {
@@ -11,7 +11,7 @@
       "y": 0.35,
       "width": 0.12,
       "height": 0.18,
-      "iconAsset": "island1.svg"
+      "iconAsset": "island1.png"
     },
     {
       "id": "island_math1",
@@ -20,7 +20,7 @@
       "y": 0.42,
       "width": 0.14,
       "height": 0.16,
-      "iconAsset": "island6.svg"
+      "iconAsset": "island6.png"
     },
     {
       "id": "island_math2",
@@ -29,7 +29,7 @@
       "y": 0.25,
       "width": 0.13,
       "height": 0.20,
-      "iconAsset": "island3.svg"
+      "iconAsset": "island3.png"
     },
     {
       "id": "island_science1",
@@ -38,7 +38,7 @@
       "y": 0.68,
       "width": 0.15,
       "height": 0.17,
-      "iconAsset": "island3.svg"
+      "iconAsset": "island3.png"
     },
     {
       "id": "island_final",
@@ -47,7 +47,7 @@
       "y": 0.62,
       "width": 0.16,
       "height": 0.22,
-      "iconAsset": "island7.svg"
+      "iconAsset": "island7.png"
     },
     {
       "id": "island_refuel1",
@@ -56,7 +56,7 @@
       "y": 0.62,
       "width": 0.16,
       "height": 0.22,
-      "iconAsset": "island3.svg"
+      "iconAsset": "island3.png"
     }
   ],
   "edges": [
