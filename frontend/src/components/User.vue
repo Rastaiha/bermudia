@@ -30,17 +30,15 @@
 <script setup>
 import { ref, onMounted } from "vue";
 import { useRouter } from "vue-router";
-// --- Service Imports ---
+
 import { getMe, getPlayer, logout } from "@/services/api";
 
-// --- Component State ---
 const username = ref("...");
 const userId = ref("...");
 const errorMsg = ref("");
 const isLoading = ref(false);
 const router = useRouter();
 
-// --- Lifecycle Hooks ---
 onMounted(async () => {
   try {
     const meData = await getMe();
@@ -52,7 +50,6 @@ onMounted(async () => {
   }
 });
 
-// --- Component Methods ---
 async function enterTerritory() {
   isLoading.value = true;
   errorMsg.value = "";

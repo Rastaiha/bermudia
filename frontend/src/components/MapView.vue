@@ -89,7 +89,6 @@ onUnmounted(() => {
     if (panzoomInstance) panzoomInstance.dispose();
 });
 
-// این خط اضافه شد تا ref به svg از بیرون قابل دسترس باشد
 defineExpose({
     svgRef,
 });
