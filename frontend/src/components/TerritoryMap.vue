@@ -16,7 +16,7 @@
             v-model.number="fuelCount" @pointerdown="focusFuelInput"
             class="w-16 rounded-lg border border-[#07458bb5] text-center" />
           <button @pointerdown="buyFuelFromIsland" class="p-1.5 rounded-lg bg-[#07458bb5] mt-2.5">{{ fuelPriceText
-            }}</button>
+          }}</button>
         </div>
         <button v-else-if="hoveredNode.id == player.atIsland.id" @pointerdown="navigateToIsland(player.atIsland.id)"
           class="p-1.5 rounded-lg bg-[#07458bb5] mt-2.5 disabled:contrast-50">
@@ -45,6 +45,7 @@
           <ellipse :cx="node.x" :cy="node.y" :rx="node.width / 2" :ry="node.height / 2" fill="transparent"
             @pointerdown="showInfoBox(node)" @mouseover="isHoveringNode = true" @mouseleave="unhoverNode" />
           <image :href="node.iconPath" :x="node.imageX" :y="node.imageY" :width="node.width" :height="node.height"
+            style="transform-box: fill-box;"
             class="transition-transform duration-200 ease-in-out origin-center group-hover:scale-105 pointer-events-none" />
         </g>
       </g>
