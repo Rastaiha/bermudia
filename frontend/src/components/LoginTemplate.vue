@@ -125,7 +125,7 @@ const remember = ref(false);
 const showPassword = ref(false);
 
 const { startTimeout, clear } = useTimeout();
-const router = useRouter(); // Use useRouter to get the router instance
+const router = useRouter();
 
 // --- Logic ---
 async function handleLogin() {

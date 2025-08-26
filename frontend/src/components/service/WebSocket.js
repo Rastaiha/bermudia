@@ -1,8 +1,8 @@
 // frontend/src/components/service/WebSocket.js
 
 import { ref, onMounted, onUnmounted, watch } from 'vue';
-import { getToken } from '@/services/api.js'; // Also added .js here for consistency
-import { API_ENDPOINTS } from '@/services/apiConfig.js'; // Fix: Added .js extension
+import { getToken } from '@/services/api.js';
+import { API_ENDPOINTS } from '@/services/apiConfig.js';
 
 function connectWebSocket(player, nodes, reconnectCallback) {
   const token = getToken();

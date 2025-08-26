@@ -1,25 +1,32 @@
 <template>
-  <div class="territory-container" :style="{ backgroundImage: `url(${backgroundImage})` }">
+  <div
+    class="w-full h-screen flex justify-center items-center p-4 box-border bg-cover bg-center bg-no-repeat overflow-hidden bg-[#0c2036]"
+    :style="{ backgroundImage: `url(${backgroundImage})` }">
 
-    <div v-if="hoveredNode" class="info-box" :style="infoBoxStyle" @mouseover="isHoveringBox = true"
-      @mouseleave="unHoverBox">
+    <div v-if="hoveredNode"
+      class="bg-[rgb(121,200,237,0.8)] text-[#310f0f] px-5 py-3 rounded-md font-vazir text-base z-[10000] whitespace-nowrap flex flex-col justify-center items-center pointer-events-auto"
+      :style="infoBoxStyle" @mouseover="isHoveringBox = true" @mouseleave="unHoverBox">
       <div>{{ hoveredNode.name }}</div>
       <div>
         <div v-if="hoveredNode.id == player.atIsland.id && fuelStations.some(station => station.id === hoveredNode.id)"
-          class="refuel">
+          class="whitespace-nowrap flex flex-col justify-center items-center">
           <div v-if="refuel"> قیمت هر واحد: {{ refuel.coinCostPerUnit }} </div>
           <div v-if="refuel"> حداکثر واحد قابل اخذ: {{ refuel.maxAvailableAmount }} </div>
           <input type="number" ref="fuelInput" :max="refuel ? refuel.maxAvailableAmount : player.fuelCap - player.fuel"
-            v-model.number="fuelCount" @pointerdown="focusFuelInput" />
-          <button @pointerdown="buyFuelFromIsland">{{ fuelPriceText }}</button>
+            v-model.number="fuelCount" @pointerdown="focusFuelInput"
+            class="w-16 rounded-lg border border-[#07458bb5] text-center" />
+          <button @pointerdown="buyFuelFromIsland" class="p-1.5 rounded-lg bg-[#07458bb5] mt-2.5">{{ fuelPriceText
+          }}</button>
         </div>
-        <button v-else-if="hoveredNode.id == player.atIsland.id" @pointerdown="navigateToIsland(player.atIsland.id)">
+        <button v-else-if="hoveredNode.id == player.atIsland.id" @pointerdown="navigateToIsland(player.atIsland.id)"
+          class="p-1.5 rounded-lg bg-[#07458bb5] mt-2.5 disabled:contrast-50">
           ورود به جزیره
         </button>
         <button v-else :disabled="!edges.some(edge =>
           (edge.from_node_id === player.atIsland.id && edge.to_node_id === hoveredNode.id) ||
           (edge.to_node_id === player.atIsland.id && edge.from_node_id === hoveredNode.id)
-        )" @pointerdown="travelToIsland(hoveredNode.id)">
+        )" @pointerdown="travelToIsland(hoveredNode.id)"
+          class="p-1.5 rounded-lg bg-[#07458bb5] mt-2.5 disabled:contrast-50">
           سفر به جزیره
           <span v-if="fuelCost">{{ fuelCost }}</span>
         </button>
@@ -27,36 +34,39 @@
     </div>
 
     <svg ref="svgRef" v-if="nodes.length > 0" :viewBox="dynamicViewBox" preserveAspectRatio="xMidYMid meet"
-      class="map-svg">
+      class="w-full h-full block cursor-grab active:cursor-grabbing">
       <g class="edges">
-        <path v-for="edge in wavyEdges" :key="`${edge.from__node_id}-${edge.to_node_id}`" :d="edge.pathD"
-          class="edge-path" />
+        <path v-for="edge in wavyEdges" :key="`${edge.from_node_id}-${edge.to_node_id}`" :d="edge.pathD"
+          class="fill-none stroke-white" stroke-width="0.005" stroke-dasharray="0.01, 0.005" />
       </g>
 
       <g class="nodes">
-        <g v-for="node in nodes" :key="node.id" class="node-link">
+        <g v-for="node in nodes" :key="node.id" class="cursor-pointer group">
+          <ellipse :cx="node.x" :cy="node.y" :rx="node.width / 2" :ry="node.height / 2" fill="transparent"
+            @pointerdown="showInfoBox(node)" @mouseover="isHoveringNode = true" @mouseleave="unhoverNode" />
           <image :href="node.iconPath" :x="node.imageX" :y="node.imageY" :width="node.width" :height="node.height"
-            class="node-image" @pointerdown="showInfoBox(node)" @mouseover="isHoveringNode = true"
-            @mouseleave="unhoverNode" />
+            style="transform-box: fill-box;"
+            class="transition-transform duration-200 ease-in-out origin-center group-hover:scale-105 pointer-events-none" />
         </g>
       </g>
 
       <g v-if="player && props.territoryId == player.atTerritory" class="ship">
-        <image href="/images/ships/ship1.svg" width="0.16" height="0.22" :x="player.atIsland.imageX - 0.08"
-          :y="player.atIsland.imageY - 0.08" />
+        <image href="/images/ships/ship1.png" width="0.16" height="0.22" :x="player.atIsland.imageX - 0.08"
+          :y="player.atIsland.imageY - 0.08" class="drop-shadow-lg animate-boat" />
       </g>
     </svg>
-    <div v-else class="loading-message">
+    <div v-else class="text-2xl text-gray-300 font-sans bg-[rgb(121,200,237,0.8)] px-8 py-4 rounded-lg">
       {{ loadingMessage }}
     </div>
-
-    <div class="fuel-bar-container" v-if="player">
-      <div class="fuel-bar-label">
+    
+    <div class="fixed top-1/2 right-5 -translate-y-1/2 w-10 flex flex-col items-center z-[200] font-vazir"
+      v-if="player">
+      <div class="mb-2 text-sm text-white">
         <img src="/images/icons/drop.svg" alt="Drop Icon" width="24" height="24">
       </div>
-      <div class="fuel-bar">
-        <div class="fuel-bar-fill" :style="{ height: `${(player.fuel / player.fuelCap) * 100}%` }"></div>
-        <div class="fuel-wave"></div>
+      <div class="w-5 h-[150px] bg-blue-900/95 rounded-md overflow-hidden relative flex flex-col-reverse p-0.5">
+        <div class="w-full bg-black rounded-t-md relative overflow-hidden transition-height duration-300 ease-in"
+          :style="{ height: `${(player.fuel / player.fuelCap) * 100}%` }"></div>
       </div>
     </div>
   </div>
@@ -65,8 +75,8 @@
 <script setup>
 import { ref, onMounted, onUnmounted, computed, nextTick, watch } from 'vue';
 import { useRouter } from 'vue-router';
-import { logout, getPlayer, getToken, checkTravel, travelTo, refuelCheck, buyFuel } from "@/services/api";
-import { usePlayerWebSocket } from '@/components/service/WebSocket';
+import { getPlayer, getToken, checkTravel, travelTo, refuelCheck, buyFuel, logout } from "@/services/api.js";
+import { usePlayerWebSocket } from '@/components/service/WebSocket.js';
 import panzoom from 'panzoom';
 
 const BASE_URL = 'http://97590f57-b983-48f8-bb0a-c098bed1e658.hsvc.ir:30254/api/v1';
@@ -98,7 +108,7 @@ const props = defineProps({
 const fuelCost = computed(() => travel.value?.fuelCost ?? null);
 
 const navigateToIsland = (islandId) => {
-  router.push(`/territory/${props.territoryId}/${islandId}`);
+  router.push({ name: 'Island', params: { id: props.territoryId, islandId: islandId } });
 };
 
 const travelToIsland = (dest) => {
@@ -212,7 +222,7 @@ const fetchTerritoryData = async (id) => {
 const fetchPlayer = async () => {
   if (!getToken()) {
     logout();
-    router.push(`/login`);
+    router.push({ name: 'Login' });
     return;
   }
   try {
@@ -329,185 +339,3 @@ watch(fuelCount, (newValue) => {
 
 usePlayerWebSocket(player, nodes);
 </script>
-
-<style scoped>
-.territory-container {
-  --color-edge: #ffffff;
-  --color-info-box-bg: rgb(121 200 237 / 80%);
-  --color-info-box-text: #310f0f;
-  --color-loading-text: #ddd;
-  --color-bg-fallback: #0c2036;
-  width: 100%;
-  height: 100vh;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 1rem;
-  box-sizing: border-box;
-  background-color: var(--color-bg-fallback);
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
-  overflow: hidden;
-}
-
-.map-svg {
-  width: 100%;
-  height: 100%;
-  display: block;
-  cursor: grab;
-}
-
-.map-svg:active {
-  cursor: grabbing;
-}
-
-.edge-path {
-  fill: none;
-  stroke: var(--color-edge);
-  stroke-width: 0.005;
-  stroke-dasharray: 0.01, 0.005;
-}
-
-.node-link {
-  cursor: pointer;
-}
-
-.node-image,
-.ship image {
-  transition: transform 0.2s ease-in-out;
-  transform-box: fill-box;
-}
-
-.node-link:hover .node-image {
-  transform-origin: center center;
-  transform: scale(1.1);
-}
-
-.info-box {
-  background-color: var(--color-info-box-bg);
-  color: var(--color-info-box-text);
-  padding: 13px 20px;
-  border-radius: 6px;
-  font-family: var(--font-vazir);
-  font-size: 16px;
-  z-index: 10000;
-  white-space: nowrap;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  pointer-events: auto;
-}
-
-.refuel {
-  white-space: nowrap;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-}
-
-.info-box button {
-  padding: 5px;
-  border-radius: 10px;
-  background: #07458bb5;
-  margin: 10px 0 0;
-}
-
-.info-box input {
-  width: 4rem;
-  border-radius: 10px;
-  border: 1px solid #07458bb5;
-  text-align: center;
-}
-
-.info-box button[disabled] {
-  filter: contrast(0.5);
-}
-
-.loading-message {
-  font-size: 1.5rem;
-  color: var(--color-loading-text);
-  font-family: sans-serif;
-  background-color: var(--color-info-box-bg);
-  padding: 1rem 2rem;
-  border-radius: 0.5rem;
-}
-
-image.node-image {
-  width: 50%;
-  height: 70%;
-  transform-origin: 0px 0px !important;
-  transform: scale(0.3) !important;
-}
-
-.ship image {
-  width: 50%;
-  height: 70%;
-  transform-origin: 0px 0px !important;
-}
-
-.ship image {
-  filter: drop-shadow(0 5px 20px rgba(0, 0, 0, 0.5));
-  animation: 10s linear boat-animation infinite;
-}
-
-@keyframes boat-animation {
-  0% {
-    transform: translate(0, 0) rotate(10deg) scale(0.3);
-  }
-
-  35% {
-    transform: translate(0.02px, 0.01px) rotate(-10deg) scale(0.3)
-  }
-
-  70% {
-    transform: translate(-0.02px, 0.01px) rotate(3deg) scale(0.3)
-  }
-
-  100% {
-    transform: translate(0, 0) rotate(10deg) scale(0.3);
-  }
-}
-
-.fuel-bar-container {
-  position: fixed;
-  top: 50%;
-  right: 20px;
-  transform: translateY(-50%);
-  width: 40px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  z-index: 200;
-  font-family: var(--font-vazir);
-}
-
-.fuel-bar-label {
-  margin-bottom: 8px;
-  font-size: 14px;
-  color: #fff;
-}
-
-.fuel-bar {
-  width: 20px;
-  height: 150px;
-  background-color: rgb(38 72 174 / 95%);
-  border-radius: 6px;
-  overflow: hidden;
-  position: relative;
-  display: flex;
-  flex-direction: column-reverse;
-  padding: 3px;
-}
-
-.fuel-bar-fill {
-  width: 100%;
-  background-color: #000000;
-  border-radius: 6px 6px 0 0;
-  position: relative;
-  overflow: hidden;
-  transition: height 0.3s ease;
-}
-</style>
