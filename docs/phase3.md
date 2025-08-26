@@ -101,3 +101,37 @@
   <img src="images/tradeBazzar3.jpg" width="200" />
   <figcaption style="text-align:center;">تصاویر بازار مبادلات کابار</figcaption>
 </p>
+
+# اتفاقات تصادفی بازی و امتیازات مختلف
+
+## ضرایب تبدیل دارایی‌ها
+
+
+### 🔹 Fuel
+
+* **10 Coins**
+
+### 🔹 Keys
+
+| Key Type | Cost     |
+| -------- | -------- |
+| Golden   | 50 Coins |
+| Red      | 30 Coins |
+| Blue     | 20 Coins |
+
+### 🔹 Educational Islands
+
+* Reward grows linearly: 10 → 20 → 30 → 40 → 50 → 60 Coins
+
+### 🔹 Challenge Islands
+
+| Difficulty | Reward   |
+| ---------- | -------- |
+| Easy       | 20 Coins |
+| Medium     | 40 Coins |
+| Hard       | 80 Coins |
+
+### 🔹 Treasure
+
+* Reward: `1.5 × (sum of required keys)` Coins
+* 1 in 10 chance of giving **items** (next phases)
