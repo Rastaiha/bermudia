@@ -78,7 +78,12 @@ const wavyEdges = computed(() => {
 
 const initializePanzoom = () => {
     if (!svgRef.value || panzoomInstance) return;
-    panzoomInstance = panzoom(svgRef.value, { maxZoom: 4, minZoom: 1 });
+    panzoomInstance = panzoom(svgRef.value, {
+        maxZoom: 4,
+        minZoom: 1,
+        friction: 1,
+        smoothScroll: false
+    });
 };
 
 onMounted(() => {
