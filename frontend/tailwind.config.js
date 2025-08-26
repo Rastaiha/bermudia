@@ -9,6 +9,9 @@ export default {
       fontFamily: {
         'vazir': ['Vazirmatn', 'sans-serif'],
       },
+      transitionTimingFunction: {
+        'smooth-expand': 'cubic-bezier(0.25, 0.1, 0.25, 1.0)',
+      },
       keyframes: {
         'boat-animation': {
           '0%, 100%': { transform: 'translate(0, 0) rotate(10deg) scale(0.3)' },
