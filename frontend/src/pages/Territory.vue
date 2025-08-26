@@ -6,17 +6,22 @@
 
     <template v-else>
       <MapView ref="mapViewComponentRef" :nodes="nodes" :edges="edges" :player="player" :dynamicViewBox="dynamicViewBox"
-        :territoryId="territoryId" @nodeClick="showInfoBox" />
+        :territoryId="territoryId" @nodeClick="showInfoBox" @mapTransformed="updateInfoBoxPosition" />
       <PlayerInfo :player="player" />
-      <IslandInfoBox :hoveredNode="hoveredNode" :player="player" :refuel="refuel" :travel="travel"
-        :infoBoxStyle="infoBoxStyle" :isFuelStation="isHoveredNodeFuelStation" :isAdjacent="isHoveredNodeAdjacent"
-        @navigateToIsland="navigateToIsland" @travelToIsland="travelToIsland" @buyFuel="buyFuelFromIsland" />
+
+      <Transition name="popup-fade">
+        <IslandInfoBox v-if="hoveredNode" :key="hoveredNode.id" :hoveredNode="hoveredNode" :player="player"
+          :refuel="refuel" :travel="travel" :infoBoxStyle="infoBoxStyle" :isFuelStation="isHoveredNodeFuelStation"
+          :isAdjacent="isHoveredNodeAdjacent" :loading="isInfoBoxLoading" @navigateToIsland="navigateToIsland"
+          @travelToIsland="travelToIsland" @buyFuel="buyFuelFromIsland" />
+      </Transition>
+
     </template>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue';
+import { ref, onMounted, computed, nextTick, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { getPlayer, getToken, checkTravel, travelTo, refuelCheck, buyFuel, logout } from "@/services/api.js";
 import { usePlayerWebSocket } from '@/components/service/WebSocket.js';
@@ -30,6 +35,8 @@ import LoadingIndicator from '@/components/LoadingIndicator.vue';
 const route = useRoute();
 const router = useRouter();
 const mapViewComponentRef = ref(null);
+const transformCounter = ref(0);
+const isInfoBoxLoading = ref(false);
 
 const territoryId = ref(route.params.id);
 const nodes = ref([]);
@@ -62,26 +69,27 @@ const isHoveredNodeAdjacent = computed(() => {
 });
 
 const infoBoxStyle = computed(() => {
+  const _ = transformCounter.value;
   const svgElement = mapViewComponentRef.value?.svgRef;
-  if (!hoveredNode.value || !svgElement) {
-    return { display: 'none' };
-  }
-
+  if (!hoveredNode.value || !svgElement) return { display: 'none' };
   const pt = svgElement.createSVGPoint();
   pt.x = hoveredNode.value.x;
   pt.y = hoveredNode.value.y;
-
   const screenPoint = pt.matrixTransform(svgElement.getScreenCTM());
   return {
     position: 'fixed',
-    top: `${screenPoint.y - 100}px`,
+    top: `${screenPoint.y}px`,
     left: `${screenPoint.x}px`,
-    transform: 'translateX(-50%)',
-    display: 'flex',
+    transform: 'translate(-50%, -100%) translateY(-20px)',
   };
 });
 
+
 // --- Methods ---
+const updateInfoBoxPosition = () => {
+  transformCounter.value++;
+};
+
 const getNodeById = (id) => nodes.value.find(node => node.id === id);
 
 const navigateToIsland = (islandId) => {
@@ -99,17 +107,14 @@ const buyFuelFromIsland = (fuelAmount) => {
 // --- API Calls & Data Fetching ---
 const fetchTerritoryData = async (id) => {
   isLoading.value = true;
-  // ... (این بخش بدون تغییر باقی می‌ماند)
   loadingMessage.value = 'Fetching data from server...';
   try {
     const response = await fetch(`${BASE_URL}/territories/${id}`);
     const data = await response.json();
     if (!response.ok || !data.ok || !data.result) throw new Error(data.error || 'Invalid API response');
-
     loadingMessage.value = 'Processing data...';
     const rawData = data.result;
     backgroundImage.value = `/images/${rawData.backgroundAsset}`;
-
     const padding = 0.1;
     let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
     rawData.islands.forEach(island => {
@@ -119,7 +124,6 @@ const fetchTerritoryData = async (id) => {
       maxY = Math.max(maxY, island.y + island.height / 2);
     });
     dynamicViewBox.value = `${minX - padding} ${minY - padding} ${maxX - minX + padding * 2} ${maxY - minY + padding * 2}`;
-
     nodes.value = rawData.islands.map(island => ({
       ...island,
       iconPath: `/images/islands/${island.iconAsset}`,
@@ -128,7 +132,6 @@ const fetchTerritoryData = async (id) => {
     }));
     edges.value = rawData.edges.map(edge => ({ from_node_id: edge.from, to_node_id: edge.to }));
     fuelStations.value = rawData.refuelIslands;
-
     await fetchPlayer();
   } catch (error) {
     console.error('Failed to load territory data:', error);
@@ -139,7 +142,6 @@ const fetchTerritoryData = async (id) => {
 };
 
 const fetchPlayer = async () => {
-  // ... (این بخش بدون تغییر باقی می‌ماند)
   if (!getToken()) {
     logout();
     router.push({ name: 'Login' });
@@ -179,24 +181,29 @@ const updateRefuel = async () => {
 // --- Event Handlers from Child Components ---
 const showInfoBox = async (node) => {
   if (!player.value) return;
-
-  // اگر روی همان جزیره باز کلیک شد، آن را ببند
   if (hoveredNode.value && hoveredNode.value.id === node.id) {
     hideInfoBox();
     return;
   }
 
+  isInfoBoxLoading.value = true;
   hoveredNode.value = node;
-
   travel.value = null;
   refuel.value = null;
 
-  if (node.id === player.value.atIsland.id) {
-    if (isHoveredNodeFuelStation.value) {
-      updateRefuel();
+  try {
+    const isCurrent = node.id === player.value.atIsland.id;
+    if (isCurrent) {
+      if (isHoveredNodeFuelStation.value) {
+        await updateRefuel();
+      } else {
+        await nextTick();
+      }
+    } else {
+      await updateTravel();
     }
-  } else {
-    updateTravel();
+  } finally {
+    isInfoBoxLoading.value = false;
   }
 };
 
@@ -204,6 +211,7 @@ const hideInfoBox = () => {
   hoveredNode.value = null;
   travel.value = null;
   refuel.value = null;
+  isInfoBoxLoading.value = false;
 };
 
 // --- Lifecycle Hooks ---
@@ -213,4 +221,24 @@ onMounted(() => {
 
 // --- WebSocket ---
 usePlayerWebSocket(player, nodes);
+
+// --- Watcher to update infobox on arrival ---
+watch(() => player.value?.atIsland, (newIsland, oldIsland) => {
+  if (newIsland && oldIsland && newIsland.id !== oldIsland.id) {
+    hideInfoBox();
+  }
+}, { deep: true });
 </script>
+
+<style scoped>
+.popup-fade-enter-active,
+.popup-fade-leave-active {
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.popup-fade-enter-from,
+.popup-fade-leave-to {
+  opacity: 0;
+  transform: translateY(10px);
+}
+</style>

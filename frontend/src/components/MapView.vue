@@ -8,8 +8,7 @@
 
         <g class="nodes">
             <g v-for="node in nodes" :key="node.id" class="cursor-pointer group"
-                @pointerdown.stop="$emit('nodeClick', node)" @mouseover="$emit('nodeMouseover', node)"
-                @mouseleave="$emit('nodeMouseleave')">
+                @pointerdown.stop="handlePointerDown(node)" @pointerup.stop="handlePointerUp(node)">
                 <ellipse :cx="node.x" :cy="node.y" :rx="node.width / 2" :ry="node.height / 2" fill="transparent" />
                 <image :href="node.iconPath" :x="node.imageX" :y="node.imageY" :width="node.width" :height="node.height"
                     style="transform-box: fill-box"
@@ -36,10 +35,22 @@ const props = defineProps({
     territoryId: { type: String, required: true },
 });
 
-defineEmits(['nodeClick', 'nodeMouseover', 'nodeMouseleave']);
+const emit = defineEmits(['nodeClick', 'mapTransformed']);
 
 const svgRef = ref(null);
 let panzoomInstance = null;
+let potentialClickNode = null;
+
+const handlePointerDown = (node) => {
+    potentialClickNode = node;
+};
+
+const handlePointerUp = (node) => {
+    if (potentialClickNode && potentialClickNode.id === node.id) {
+        emit('nodeClick', node);
+    }
+    potentialClickNode = null;
+};
 
 const getNodeById = (id) => props.nodes.find((node) => node.id === id);
 
@@ -83,6 +94,14 @@ const initializePanzoom = () => {
         minZoom: 1,
         friction: 1,
         smoothScroll: false
+    });
+
+    panzoomInstance.on('panstart', () => {
+        potentialClickNode = null;
+    });
+
+    panzoomInstance.on('transform', () => {
+        emit('mapTransformed');
     });
 };
 
