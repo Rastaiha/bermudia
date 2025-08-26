@@ -58,7 +58,7 @@
     <div v-else class="text-2xl text-gray-300 font-sans bg-[rgb(121,200,237,0.8)] px-8 py-4 rounded-lg">
       {{ loadingMessage }}
     </div>
-
+    
     <div class="fixed top-1/2 right-5 -translate-y-1/2 w-10 flex flex-col items-center z-[200] font-vazir"
       v-if="player">
       <div class="mb-2 text-sm text-white">
