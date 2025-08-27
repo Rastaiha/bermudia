@@ -8,7 +8,7 @@
 
     <div v-if="isLoaded" class="w-full max-w-4xl flex flex-col gap-10">
       <template v-for="(componentData) in components" :key="componentData.id">
-        <IframeComponent v-if="componentData.iframe" :url="componentData.iframe.url" @showTooltip="showTooltip"
+        <Iframe v-if="componentData.iframe" :url="componentData.iframe.url" @showTooltip="showTooltip"
           @hideTooltip="hideTooltip" />
         <challengeBox v-else-if="componentData.input" :challenge="componentData.input"
           @submit="handleChallengeSubmit" />
@@ -26,7 +26,7 @@ import { ref, onMounted, onUnmounted } from 'vue';
 import { useTimeout } from '@/components/service/ChainedTimeout';
 import { getIsland, submitAnswer } from "@/services/api";
 
-import IframeComponent from '@/components/IframeComponent.vue';
+import Iframe from '@/components/Iframe.vue';
 import challengeBox from '@/components/challengeBox.vue';
 import BackButton from '@/components/BackButton.vue';
 import FloatingUI from '@/components/FloatingUI.vue';
