@@ -161,8 +161,6 @@ func (p *Player) applyCorrections(ctx context.Context) {
 	ctx, cancel := context.WithTimeout(ctx, 10*time.Minute)
 	defer cancel()
 
-	slog.Info("applying corrections...")
-
 	corrections, err := p.questionStore.GetUnappliedCorrections(ctx)
 	if err != nil {
 		slog.Error("failed to GetUnappliedCorrections from db", err)
@@ -221,5 +219,7 @@ func (p *Player) applyCorrections(ctx context.Context) {
 	}
 	wg.Wait()
 
-	slog.Info("successfully applied corrections", slog.Int64("count", appliedCorrections.Load()))
+	if appliedCorrections.Load() > 0 {
+		slog.Info("successfully applied corrections", slog.Int64("count", appliedCorrections.Load()))
+	}
 }

@@ -7,7 +7,7 @@ type Config struct {
 	MockUsersPassword     string        `config:"mock_users_password"`
 	BotToken              string        `config:"bot_token"`
 	MinCorrectionDelay    time.Duration `config:"min_correction_delay"`
-	CorrectionJobInterval time.Duration `config:"min_correction_delay"`
+	CorrectionJobInterval time.Duration `config:"correction_job_interval"`
 }
 
 func defaultConfig() *Config {
