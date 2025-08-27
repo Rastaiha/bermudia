@@ -1,6 +1,6 @@
 // frontend/src/components/service/WebSocket.js
 
-import { ref, onMounted, onUnmounted, watch } from 'vue';
+import { onMounted, onUnmounted } from 'vue';
 import { getToken } from '@/services/api.js';
 import { API_ENDPOINTS } from '@/services/apiConfig.js';
 
@@ -68,7 +68,7 @@ export function usePlayerWebSocket(player, nodes) {
   let reconnectTimeoutId = null;
   let reconnectAttempts = 0;
   const maxReconnectAttempts = 10;
-  const baseReconnectDelay = 100; // 1 second
+  const baseReconnectDelay = 1000; // 1 second
 
   const cleanup = () => {
     if (reconnectTimeoutId) {
@@ -104,21 +104,17 @@ export function usePlayerWebSocket(player, nodes) {
   };
 
   const setupWebSocket = () => {
-    if (player.value && nodes.value.length > 0) {
-      if (socket) {
-        cleanup();
-      }
-      
-      socket = connectWebSocket(player, nodes, {
-        scheduleReconnect,
-        resetAttempts
-      });
+    if (socket) {
+      cleanup();
     }
+    
+    socket = connectWebSocket(player, nodes, {
+      scheduleReconnect,
+      resetAttempts
+    });
   };
 
   onMounted(setupWebSocket);
-
-  watch([player, nodes], setupWebSocket, { deep: true });
 
   onUnmounted(() => {
     cleanup();

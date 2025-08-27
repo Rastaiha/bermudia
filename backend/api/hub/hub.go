@@ -3,6 +3,7 @@ package hub
 import (
 	"errors"
 	"github.com/gorilla/websocket"
+	"log/slog"
 	"sync"
 	"time"
 )
@@ -34,7 +35,11 @@ func (c *connection) Close() {
 	c.lock.Lock()
 	c.closed = true
 	c.lock.Unlock()
-	_ = c.conn.Close()
+	if err := c.conn.Close(); err != nil {
+		slog.Error("failed to close websocket connection",
+			slog.String("reason", err.Error()),
+		)
+	}
 }
 
 type Hub struct {
@@ -60,7 +65,28 @@ func (h *Hub) Send(userId int32, data any, timeout time.Duration) {
 		return
 	}
 
-	// receive error; remove and close the connection
+	slog.Error("failed to write to websocket: closing connection",
+		slog.Int("user_id", int(userId)),
+		slog.String("reason", err.Error()),
+	)
+
+	// received error; remove and close the connection
+	h.removeConnection(userId, c)
+}
+
+func (h *Hub) Register(userId int32, conn *websocket.Conn) {
+	newConn := &connection{conn: conn}
+	h.lock.Lock()
+	old := h.connections[userId]
+	h.connections[userId] = newConn
+	go h.readMessages(userId, newConn)
+	h.lock.Unlock()
+	if old != nil {
+		old.Close()
+	}
+}
+
+func (h *Hub) removeConnection(userId int32, c *connection) {
 	h.lock.Lock()
 	n, ok := h.connections[userId]
 	if !ok || c != n {
@@ -72,13 +98,17 @@ func (h *Hub) Send(userId int32, data any, timeout time.Duration) {
 	c.Close()
 }
 
-func (h *Hub) Register(userId int32, conn *websocket.Conn) {
-	newConn := &connection{conn: conn}
-	h.lock.Lock()
-	old := h.connections[userId]
-	h.connections[userId] = newConn
-	h.lock.Unlock()
-	if old != nil {
-		old.Close()
+func (h *Hub) readMessages(userId int32, c *connection) {
+	c.conn.SetReadLimit(1024)
+	for {
+		_, _, err := c.conn.NextReader()
+		if err != nil {
+			slog.Error("connection read error",
+				slog.Int("user_id", int(userId)),
+				slog.String("error", err.Error()),
+			)
+			h.removeConnection(userId, c)
+			return
+		}
 	}
 }
