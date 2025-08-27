@@ -10,7 +10,7 @@
       <template v-for="(componentData) in components" :key="componentData.id">
         <IframeComponent v-if="componentData.iframe" :url="componentData.iframe.url" @showTooltip="showTooltip"
           @hideTooltip="hideTooltip" />
-        <ChallengeComponent v-else-if="componentData.input" :challenge="componentData.input"
+        <challengeBox v-else-if="componentData.input" :challenge="componentData.input"
           @submit="handleChallengeSubmit" />
       </template>
     </div>
@@ -27,7 +27,7 @@ import { useTimeout } from '@/components/service/ChainedTimeout';
 import { getIsland, submitAnswer } from "@/services/api";
 
 import IframeComponent from '@/components/IframeComponent.vue';
-import ChallengeComponent from '@/components/ChallengeComponent.vue';
+import challengeBox from '@/components/challengeBox.vue';
 import BackButton from '@/components/BackButton.vue';
 import FloatingUI from '@/components/FloatingUI.vue';
 
