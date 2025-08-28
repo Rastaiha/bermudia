@@ -16,15 +16,16 @@
             </g>
         </g>
 
-        <g v-if="player && player.atTerritory == territoryId" class="ship">
-            <image href="/images/ships/ship1.png" width="0.16" height="0.22" :x="player.atIsland.imageX - 0.08"
-                :y="player.atIsland.imageY - 0.08" class="drop-shadow-lg animate-boat" />
+        <g v-if="player && player.atTerritory == territoryId" class="ship-container" :transform="shipTransform"
+            :style="{ transition: shipTransition }">
+            <image href="/images/ships/ship1.png" :width="BOAT_WIDTH" :height="BOAT_HEIGHT"
+                class="drop-shadow-lg animate-boat" />
         </g>
     </svg>
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, computed } from 'vue';
+import { ref, onMounted, onUnmounted, computed, watch, nextTick } from 'vue';
 import panzoom from 'panzoom';
 
 const props = defineProps({
@@ -40,6 +41,47 @@ const emit = defineEmits(['nodeClick', 'mapTransformed']);
 const svgRef = ref(null);
 let panzoomInstance = null;
 let potentialClickNode = null;
+
+// --- Ship animation state ---
+const shipTransform = ref('');
+const shipTransition = ref('none');
+const previousIsland = ref(null);
+
+
+const BOAT_WIDTH = 0.16;
+const BOAT_HEIGHT = 0.22;
+
+const getBoatPosition = (island) => {
+  const x = island.imageX + (island.width) / 2;
+  const y = island.imageY;
+  return { x, y };
+};
+
+// --- Watch for player's island changes to animate the ship ---
+watch(() => props.player?.atIsland, (newIsland) => {
+    if (!newIsland) return;
+
+    const startIsland = previousIsland.value;
+    const endIsland = newIsland;
+    if (!startIsland) {
+        const { x, y } = getBoatPosition(endIsland);
+        shipTransition.value = 'none';
+        shipTransform.value = `translate(${x} ${y})`;
+    } else if (startIsland.id !== endIsland.id) {
+        const { x: startX, y: startY } = getBoatPosition(startIsland);
+        const { x: endX, y: endY } = getBoatPosition(endIsland);
+
+        shipTransition.value = 'none';
+        shipTransform.value = `translate(${startX} ${startY})`;
+
+        nextTick(() => {
+            shipTransition.value = 'transform 2s ease-in-out';
+            shipTransform.value = `translate(${endX} ${endY})`;
+        });
+    }
+    previousIsland.value = endIsland;
+}, { deep: true, immediate: true });
+
 
 const handlePointerDown = (node) => {
     potentialClickNode = node;
@@ -117,3 +159,16 @@ defineExpose({
     svgRef,
 });
 </script>
+
+<style scoped>
+@keyframes boat-bobbing {
+  0%   { transform: translateY(0); }
+  50%  { transform: translateY(-3%); }
+  100% { transform: translateY(0); }
+}
+
+.animate-boat {
+    animation: boat-bobbing 4s ease-in-out infinite;
+    transform-origin: center;
+}
+</style>
