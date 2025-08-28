@@ -133,17 +133,34 @@ func (p *Player) OnPlayerUpdate(eventHandler func(event *domain.FullPlayerUpdate
 }
 
 func (p *Player) sendPlayerUpdateEvent(ctx context.Context, event *domain.PlayerUpdateEvent) {
+	if err := p.sendPlayerUpdateEventErr(ctx, event); err != nil {
+		slog.Error("failed to get the knowledge bars, missing event", err, "userId", event.Player.UserId)
+	}
+}
+
+func (p *Player) sendPlayerUpdateEventErr(ctx context.Context, event *domain.PlayerUpdateEvent) error {
 	if p.playerUpdateEventHandler != nil {
 		fullPlayer, err := p.getFullPlayer(ctx, *event.Player)
 		if err != nil {
-			slog.Error("failed to get the knowledge bars, missing event", err, "userId", event.Player.UserId)
-			return
+			return err
 		}
 		p.playerUpdateEventHandler(&domain.FullPlayerUpdateEvent{
 			Reason: event.Reason,
 			Player: &fullPlayer,
 		})
 	}
+	return nil
+}
+
+func (p *Player) SendInitialEvents(ctx context.Context, userId int32) error {
+	player, err := p.playerStore.Get(ctx, userId)
+	if err != nil {
+		return err
+	}
+	return p.sendPlayerUpdateEventErr(ctx, &domain.PlayerUpdateEvent{
+		Reason: domain.PlayerUpdateEventInitial,
+		Player: &player,
+	})
 }
 
 func (p *Player) getFullPlayer(ctx context.Context, player domain.Player) (domain.FullPlayer, error) {
