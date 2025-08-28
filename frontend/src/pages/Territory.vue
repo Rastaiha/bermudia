@@ -7,7 +7,8 @@
     <template v-else>
       <MapView ref="mapViewComponentRef" :nodes="nodes" :edges="edges" :player="player" :dynamicViewBox="dynamicViewBox"
         :territoryId="territoryId" @nodeClick="showInfoBox" @mapTransformed="updateInfoBoxPosition" />
-      <PlayerInfo :player="player" />
+
+      <PlayerInfo :player="player" :username="username" v-if="player" />
 
       <Transition name="popup-fade">
         <IslandInfoBox v-if="hoveredNode" :key="hoveredNode.id" :hoveredNode="hoveredNode" :player="player"
@@ -23,7 +24,8 @@
 <script setup>
 import { ref, onMounted, computed, nextTick, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { getPlayer, getToken, checkTravel, travelTo, refuelCheck, buyFuel, logout } from "@/services/api.js";
+// getMe را برای دریافت نام کاربری اضافه می‌کنیم
+import { getPlayer, getMe, getToken, checkTravel, travelTo, refuelCheck, buyFuel, logout } from "@/services/api.js";
 import { usePlayerWebSocket } from '@/components/service/WebSocket.js';
 
 import MapView from '@/components/MapView.vue';
@@ -43,6 +45,7 @@ const nodes = ref([]);
 const fuelStations = ref([]);
 const edges = ref([]);
 const player = ref(null);
+const username = ref('...'); // متغیر برای نام کاربری
 const travel = ref(null);
 const refuel = ref(null);
 const backgroundImage = ref('');
@@ -109,7 +112,9 @@ const fetchTerritoryData = async (id) => {
   isLoading.value = true;
   loadingMessage.value = 'Fetching data from server...';
   try {
-    const response = await fetch(`${BASE_URL}/territories/${id}`);
+    const response = await fetch(`${BASE_URL}/territories/${id}`, {
+      headers: { 'Authorization': `Bearer ${getToken()}` }
+    });
     const data = await response.json();
     if (!response.ok || !data.ok || !data.result) throw new Error(data.error || 'Invalid API response');
     loadingMessage.value = 'Processing data...';
@@ -132,7 +137,7 @@ const fetchTerritoryData = async (id) => {
     }));
     edges.value = rawData.edges.map(edge => ({ from_node_id: edge.from, to_node_id: edge.to }));
     fuelStations.value = rawData.refuelIslands;
-    await fetchPlayer();
+    await fetchPlayerAndUser();
   } catch (error) {
     console.error('Failed to load territory data:', error);
     loadingMessage.value = `Error: ${error.message}`;
@@ -141,23 +146,26 @@ const fetchTerritoryData = async (id) => {
   }
 };
 
-const fetchPlayer = async () => {
+const fetchPlayerAndUser = async () => {
   if (!getToken()) {
     logout();
     router.push({ name: 'Login' });
     return;
   }
   try {
-    const playerData = await getPlayer();
+    // دریافت همزمان اطلاعات کاربر و بازیکن
+    const [playerData, meData] = await Promise.all([getPlayer(), getMe()]);
+
+    username.value = meData.username;
+
     const island = getNodeById(playerData.atIsland);
+    // **مهم:** تمام اطلاعات بازیکن را نگه می‌داریم تا knowledgeBars حذف نشود
     player.value = {
-      atTerritory: playerData.atTerritory,
+      ...playerData,
       atIsland: island,
-      fuel: playerData.fuel,
-      fuelCap: playerData.fuelCap
     };
   } catch (err) {
-    console.error("Failed to get player data:", err);
+    console.error("Failed to get player/user data:", err);
   }
 };
 
