@@ -54,7 +54,7 @@ export const getTerritory = async (id) => {
   const response = await fetch(API_ENDPOINTS.getTerritory(id), {
     headers: getAuthHeaders(),
   });
-  return response.json();
+  return handleResponse(response);
 };
 
 export const checkTravel = async (from, dest) => {
