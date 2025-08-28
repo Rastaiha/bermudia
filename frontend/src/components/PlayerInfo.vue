@@ -44,7 +44,6 @@ import { computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { logout as apiLogout } from '@/services/api';
 
-// این کامپوننت داده‌ها را از والد خود (Territory.vue) می‌گیرد
 const props = defineProps({
     player: {
         type: Object,

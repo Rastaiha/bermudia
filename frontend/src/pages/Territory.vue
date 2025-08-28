@@ -24,7 +24,6 @@
 <script setup>
 import { ref, onMounted, computed, nextTick, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-// getMe را برای دریافت نام کاربری اضافه می‌کنیم
 import { getPlayer, getMe, getToken, checkTravel, travelTo, refuelCheck, buyFuel, logout } from "@/services/api.js";
 import { usePlayerWebSocket } from '@/components/service/WebSocket.js';
 
@@ -45,7 +44,7 @@ const nodes = ref([]);
 const fuelStations = ref([]);
 const edges = ref([]);
 const player = ref(null);
-const username = ref('...'); // متغیر برای نام کاربری
+const username = ref('...');
 const travel = ref(null);
 const refuel = ref(null);
 const backgroundImage = ref('');
@@ -153,13 +152,11 @@ const fetchPlayerAndUser = async () => {
     return;
   }
   try {
-    // دریافت همزمان اطلاعات کاربر و بازیکن
     const [playerData, meData] = await Promise.all([getPlayer(), getMe()]);
 
     username.value = meData.username;
 
     const island = getNodeById(playerData.atIsland);
-    // **مهم:** تمام اطلاعات بازیکن را نگه می‌داریم تا knowledgeBars حذف نشود
     player.value = {
       ...playerData,
       atIsland: island,
