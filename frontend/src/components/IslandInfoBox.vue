@@ -23,7 +23,7 @@
                             </div>
                             <input type="number" ref="fuelInput"
                                 :max="refuel ? refuel.maxAvailableAmount : player.fuelCap - player.fuel"
-                                v-model.number="fuelCount" @pointerdown.stop="focusFuelInput"
+                                v-model.number="fuelCount" @pointerdown.stop="focusFuelInput" @dblclick.stop
                                 class="w-full mt-1 rounded-lg border border-[#07458bb5] text-center bg-transparent py-1.5" />
                             <button @pointerdown.stop="buyFuel"
                                 class="btn-hover w-full p-2 rounded-lg bg-[#07458bb5] text-white">
@@ -40,18 +40,25 @@
                         </div>
 
                         <div v-else class="w-full space-y-3">
-                            <div v-if="isAdjacent" class="flex justify-between items-center text-sm">
+                            <div v-if="isAdjacent && travel" class="flex justify-between items-center text-sm">
                                 <span class="text-gray-800">هزینه سفر:</span>
                                 <div class="flex items-center gap-x-1">
                                     <span class="text-gray-900 font-bold">{{ travel.fuelCost }}</span>
                                     <img src="/images/icons/fuel.png" alt="Fuel Icon" class="w-5 h-5" />
                                 </div>
                             </div>
-                            <button :disabled="!isAdjacent" @pointerdown.stop="$emit('travelToIsland', hoveredNode.id)"
+                            <button
+                                :disabled="loading || !isAdjacent || !!travelError || (travel && player.fuel < travel.fuelCost)"
+                                @pointerdown.stop="$emit('travelToIsland', hoveredNode.id)"
                                 class="btn-hover w-full p-2 rounded-lg bg-green-600 text-white disabled:opacity-50 disabled:cursor-not-allowed text-xs">
-                                <span v-if="isAdjacent">سفر به این جزیره</span>
-                                <span v-else>درحال حاضر سفر امکان پذیر نیست</span>
+                                <span v-if="!isAdjacent">مسیر مستقیمی وجود ندارد</span>
+                                <span v-else-if="travel && player.fuel < travel.fuelCost">سوخت کافی نیست</span>
+                                <span v-else>سفر به این جزیره</span>
                             </button>
+                            <p v-if="travelError"
+                                class="text-center text-sm text-red-700 font-semibold bg-red-200 p-2 rounded-md">
+                                {{ travelError }}
+                            </p>
                         </div>
                     </div>
                 </div>
@@ -72,6 +79,7 @@ const props = defineProps({
     isFuelStation: Boolean,
     isAdjacent: Boolean,
     loading: Boolean,
+    travelError: String,
 });
 
 const emit = defineEmits(['buyFuel', 'navigateToIsland', 'travelToIsland']);
