@@ -137,6 +137,7 @@ async function handleLogin() {
     } else {
       sessionStorage.setItem("authToken", result.token);
     }
+    
     router.push({ name: 'UserPage' });
 
   } catch (err) {

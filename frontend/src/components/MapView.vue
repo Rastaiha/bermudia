@@ -1,16 +1,19 @@
 <template>
-    <svg ref="svgRef" v-if="nodes.length > 0" :viewBox="dynamicViewBox" preserveAspectRatio="xMidYMid meet"
+    <svg ref="svgRef" v-if="islands.length > 0" :viewBox="dynamicViewBox" preserveAspectRatio="xMidYMid meet"
         class="w-full h-full block cursor-grab active:cursor-grabbing">
         <g class="edges">
-            <path v-for="edge in wavyEdges" :key="`${edge.from_node_id}-${edge.to_node_id}`" :d="edge.pathD"
+            <path v-for="edge in wavyEdges" :key="`${edge.from}-${edge.to}`" :d="edge.pathD"
                 class="fill-none stroke-white" stroke-width="0.005" stroke-dasharray="0.01, 0.005" />
         </g>
 
-        <g class="nodes">
-            <g v-for="node in nodes" :key="node.id" class="cursor-pointer group"
-                @pointerdown.stop="handlePointerDown(node)" @pointerup.stop="handlePointerUp(node)">
-                <ellipse :cx="node.x" :cy="node.y" :rx="node.width / 2" :ry="node.height / 2" fill="transparent" />
-                <image :href="node.iconPath" :x="node.imageX" :y="node.imageY" :width="node.width" :height="node.height"
+        <g class="islands">
+            <g v-for="island in islands" :key="island.id" class="cursor-pointer group"
+                @pointerdown.stop="handlePointerDown(island)" @pointerup.stop="handlePointerUp(island)">
+                <ellipse :cx="island.x" :cy="island.y" :rx="island.width / 2" :ry="island.height / 2" fill="transparent" />
+                <image :href="`/images/islands/${island.iconAsset}`"
+                    :x="island.x - island.width / 2"
+                    :y="island.y - island.height / 2"
+                    :width="island.width" :height="island.height"
                     style="transform-box: fill-box"
                     class="transition-transform duration-200 ease-in-out origin-center group-hover:scale-105 pointer-events-none" />
             </g>
@@ -29,7 +32,7 @@ import { ref, onMounted, onUnmounted, computed, watch, nextTick } from 'vue';
 import panzoom from 'panzoom';
 
 const props = defineProps({
-    nodes: { type: Array, required: true },
+    islands: { type: Array, required: true },
     edges: { type: Array, required: true },
     player: { type: Object },
     dynamicViewBox: { type: String, required: true },
@@ -51,9 +54,9 @@ const previousIsland = ref(null);
 const BOAT_WIDTH = 0.16;
 const BOAT_HEIGHT = 0.22;
 
-const getBoatPosition = (island) => {
-  const x = island.imageX + (island.width) / 2;
-  const y = island.imageY;
+const getShipPosition = (island) => {
+  const x = island.x; // center X
+  const y = island.y - island.height / 2; // top edge
   return { x, y };
 };
 
@@ -64,12 +67,12 @@ watch(() => props.player?.atIsland, (newIsland) => {
     const startIsland = previousIsland.value;
     const endIsland = newIsland;
     if (!startIsland) {
-        const { x, y } = getBoatPosition(endIsland);
+        const { x, y } = getShipPosition(endIsland);
         shipTransition.value = 'none';
         shipTransform.value = `translate(${x} ${y})`;
     } else if (startIsland.id !== endIsland.id) {
-        const { x: startX, y: startY } = getBoatPosition(startIsland);
-        const { x: endX, y: endY } = getBoatPosition(endIsland);
+        const { x: startX, y: startY } = getShipPosition(startIsland);
+        const { x: endX, y: endY } = getShipPosition(endIsland);
 
         shipTransition.value = 'none';
         shipTransform.value = `translate(${startX} ${startY})`;
@@ -83,23 +86,23 @@ watch(() => props.player?.atIsland, (newIsland) => {
 }, { deep: true, immediate: true });
 
 
-const handlePointerDown = (node) => {
-    potentialClickNode = node;
+const handlePointerDown = (island) => {
+    potentialClickNode = island;
 };
 
-const handlePointerUp = (node) => {
-    if (potentialClickNode && potentialClickNode.id === node.id) {
-        emit('nodeClick', node);
+const handlePointerUp = (island) => {
+    if (potentialClickNode && potentialClickNode.id === island.id) {
+        emit('nodeClick', island);
     }
     potentialClickNode = null;
 };
 
-const getNodeById = (id) => props.nodes.find((node) => node.id === id);
+const getIslandById = (id) => props.islands.find((island) => island.id === id);
 
 const wavyEdges = computed(() => {
     return props.edges.map((edge) => {
-        const startNode = getNodeById(edge.from_node_id);
-        const endNode = getNodeById(edge.to_node_id);
+        const startNode = getIslandById(edge.from);
+        const endNode = getIslandById(edge.to);
 
         if (!startNode || !endNode) {
             return { ...edge, pathD: '' };

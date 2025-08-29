@@ -4,7 +4,7 @@ import { onMounted, onUnmounted } from 'vue';
 import { getToken } from '@/services/api.js';
 import { API_ENDPOINTS } from '@/services/apiConfig.js';
 
-function connectWebSocket(player, nodes, reconnectCallback) {
+function connectWebSocket(player, islands, reconnectCallback) {
   const token = getToken();
   if (!token) {
     console.error("No auth token found, WebSocket connection aborted.");
@@ -37,7 +37,7 @@ function connectWebSocket(player, nodes, reconnectCallback) {
         
         // Update island location if present
         if (playerData.atIsland) {
-          const newIsland = nodes.value.find(node => node.id === playerData.atIsland);
+          const newIsland = islands.value.find(island => island.id === playerData.atIsland);
           if (newIsland) {
             player.value.atIsland = newIsland;
           }
@@ -63,7 +63,7 @@ function connectWebSocket(player, nodes, reconnectCallback) {
   return socket;
 }
 
-export function usePlayerWebSocket(player, nodes) {
+export function usePlayerWebSocket(player, islands) {
   let socket = null;
   let reconnectTimeoutId = null;
   let reconnectAttempts = 0;
@@ -108,7 +108,7 @@ export function usePlayerWebSocket(player, nodes) {
       cleanup();
     }
     
-    socket = connectWebSocket(player, nodes, {
+    socket = connectWebSocket(player, islands, {
       scheduleReconnect,
       resetAttempts
     });
