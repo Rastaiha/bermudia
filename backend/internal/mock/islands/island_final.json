@@ -16,17 +16,6 @@
       "iframe": {
         "url": "https://platform.kamva.academy/article/713"
       }
-    },
-    {
-      "question": {
-        "inputType": "file",
-        "inputAccept": [
-          "image/png",
-          "image/jpeg"
-        ],
-        "knowledgeAmount": 100,
-        "text": "از جوابت عکس بگیر بفرست:"
-      }
     }
   ]
 }
