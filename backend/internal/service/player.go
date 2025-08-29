@@ -84,12 +84,7 @@ func (p *Player) Travel(ctx context.Context, user *domain.User, fromIsland strin
 	if err != nil {
 		return err
 	}
-	if err := p.playerStore.Update(ctx, player, *event.Player); err != nil {
-		return err
-	}
-	p.sendPlayerUpdateEvent(ctx, event)
-
-	return nil
+	return p.applyAndSendPlayerUpdateEvent(ctx, player, event)
 }
 
 func (p *Player) RefuelCheck(ctx context.Context, userId int32) (*domain.RefuelCheckResult, error) {
@@ -120,22 +115,42 @@ func (p *Player) Refuel(ctx context.Context, userId int32, amount int32) error {
 	if err != nil {
 		return err
 	}
-	if err := p.playerStore.Update(ctx, player, *event.Player); err != nil {
+	return p.applyAndSendPlayerUpdateEvent(ctx, player, event)
+}
+
+func (p *Player) AnchorCheck(ctx context.Context, userId int32, islandID string) (*domain.AnchorCheckResult, error) {
+	player, err := p.playerStore.Get(ctx, userId)
+	if err != nil {
+		return nil, err
+	}
+	checkResult := domain.AnchorCheck(player, islandID)
+	return &checkResult, nil
+}
+
+func (p *Player) Anchor(ctx context.Context, userId int32, islandID string) error {
+	player, err := p.playerStore.Get(ctx, userId)
+	if err != nil {
 		return err
 	}
-	p.sendPlayerUpdateEvent(ctx, event)
-
-	return nil
+	event, err := domain.Anchor(player, islandID)
+	if err != nil {
+		return err
+	}
+	return p.applyAndSendPlayerUpdateEvent(ctx, player, event)
 }
 
 func (p *Player) OnPlayerUpdate(eventHandler func(event *domain.FullPlayerUpdateEvent)) {
 	p.playerUpdateEventHandler = eventHandler
 }
 
-func (p *Player) sendPlayerUpdateEvent(ctx context.Context, event *domain.PlayerUpdateEvent) {
+func (p *Player) applyAndSendPlayerUpdateEvent(ctx context.Context, oldPlayer domain.Player, event *domain.PlayerUpdateEvent) error {
+	if err := p.playerStore.Update(ctx, oldPlayer, *event.Player); err != nil {
+		return err
+	}
 	if err := p.sendPlayerUpdateEventErr(ctx, event); err != nil {
 		slog.Error("failed to get the knowledge bars, missing event", err, "userId", event.Player.UserId)
 	}
+	return nil
 }
 
 func (p *Player) sendPlayerUpdateEventErr(ctx context.Context, event *domain.PlayerUpdateEvent) error {
@@ -228,10 +243,13 @@ func (p *Player) applyCorrections(ctx context.Context) {
 				slog.Error("failed to Get player from db", err)
 				return
 			}
-			p.sendPlayerUpdateEvent(ctx, &domain.PlayerUpdateEvent{
+			err = p.sendPlayerUpdateEventErr(ctx, &domain.PlayerUpdateEvent{
 				Reason: domain.PlayerUpdateEventCorrection,
 				Player: &player,
 			})
+			if err != nil {
+				slog.Error("failed to sendPlayerUpdateEventErr after applying correction", slog.String("error", err.Error()))
+			}
 		}()
 	}
 	wg.Wait()

@@ -1,6 +1,13 @@
 {
   "components": [
     {
+      "question": {
+        "inputType": "number",
+        "knowledgeAmount": 30,
+        "text": "what year is it?"
+      }
+    },
+    {
       "iframe": {
         "url": "https://platform.kamva.academy/article/713"
       }

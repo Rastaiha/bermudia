@@ -126,3 +126,19 @@ func (s sqlIslandRepository) GetOrCreateUserComponent(ctx context.Context, islan
 
 	return component, nil
 }
+
+func (s sqlIslandRepository) ResourceIsRelatedToIsland(ctx context.Context, userId int32, islandId string, resourceId string) error {
+	var exists bool
+	err := s.db.QueryRowContext(ctx, `SELECT TRUE FROM user_components WHERE user_id = $1 AND island_id = $2 and resource_id = $3 LIMIT 1 ;`,
+		userId, islandId, resourceId).Scan(&exists)
+	if errors.Is(err, sql.ErrNoRows) {
+		return domain.ErrResourceNotRelatedToIsland
+	}
+	if err != nil {
+		return err
+	}
+	if !exists {
+		return domain.ErrResourceNotRelatedToIsland
+	}
+	return nil
+}

@@ -15,13 +15,15 @@ import (
 type Island struct {
 	islandStore   domain.IslandStore
 	questionStore domain.QuestionStore
+	playerStore   domain.PlayerStore
 	bot           *bot.Bot
 }
 
-func NewIsland(bot *bot.Bot, islandStore domain.IslandStore, questionStore domain.QuestionStore) *Island {
+func NewIsland(bot *bot.Bot, islandStore domain.IslandStore, questionStore domain.QuestionStore, playerStore domain.PlayerStore) *Island {
 	return &Island{
 		islandStore:   islandStore,
 		questionStore: questionStore,
+		playerStore:   playerStore,
 		bot:           bot,
 	}
 }
@@ -29,6 +31,13 @@ func NewIsland(bot *bot.Bot, islandStore domain.IslandStore, questionStore domai
 func (i *Island) GetIsland(ctx context.Context, userId int32, islandId string) (*domain.IslandContent, error) {
 	rawContent, territoryID, err := i.islandStore.GetByID(ctx, islandId)
 	if err != nil {
+		return nil, err
+	}
+	player, err := i.playerStore.Get(ctx, userId)
+	if err != nil {
+		return nil, err
+	}
+	if err := domain.PlayerHasAccessToIsland(player, islandId); err != nil {
 		return nil, err
 	}
 
@@ -68,7 +77,16 @@ func (i *Island) GetIsland(ctx context.Context, userId int32, islandId string) (
 }
 
 func (i *Island) SubmitAnswer(ctx context.Context, userId int32, answerId string, file io.ReadCloser, filename string, textContent string) (*domain.SubmissionState, error) {
-	// TODO: check player is in the island
+	player, err := i.playerStore.Get(ctx, userId)
+	if err != nil {
+		return nil, err
+	}
+	if err := i.islandStore.ResourceIsRelatedToIsland(ctx, userId, player.AtIsland, answerId); err != nil {
+		return nil, err
+	}
+	if err := domain.PlayerHasAccessToIsland(player, player.AtIsland); err != nil {
+		return nil, err
+	}
 
 	fileId := ""
 	if file != nil {

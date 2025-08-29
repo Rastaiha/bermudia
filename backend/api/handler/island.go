@@ -64,6 +64,10 @@ func (h *Handler) SubmitAnswer(w http.ResponseWriter, r *http.Request) {
 			sendError(w, http.StatusBadRequest, "Incorrect number of files in 'data' field in multipart form")
 			return
 		}
+		if data[0].Size <= 0 {
+			sendError(w, http.StatusBadRequest, "Empty file in 'data' field in multipart form")
+			return
+		}
 		f, err := data[0].Open()
 		if err != nil {
 			handleError(w, err)
@@ -89,6 +93,10 @@ func (h *Handler) SubmitAnswer(w http.ResponseWriter, r *http.Request) {
 
 	result, err := h.islandService.SubmitAnswer(r.Context(), user.ID, id, file, filename, textContent)
 	if err != nil {
+		if errors.Is(err, domain.ErrResourceNotRelatedToIsland) {
+			sendError(w, http.StatusForbidden, "answer not related to player's current island")
+			return
+		}
 		handleError(w, err)
 		return
 	}
