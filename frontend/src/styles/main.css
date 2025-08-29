@@ -21,3 +21,9 @@
   --color-rasta-green: #008A00;
   --color-rasta-yellow: #F9D104;
 }
+
+.Vue-Toastification__toast-body {
+  font-family: Vazirmatn, sans-serif !important;
+  text-align: right;
+  direction: rtl;
+}
