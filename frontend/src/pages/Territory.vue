@@ -24,7 +24,7 @@
 <script setup>
 import { ref, onMounted, computed, nextTick, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { getPlayer, getMe, getToken, checkTravel, travelTo, refuelCheck, buyFuel, logout } from "@/services/api.js";
+import { getPlayer, getMe, getToken, checkTravel, travelTo, refuelCheck, buyFuel, logout, getTerritory } from "@/services/api.js";
 import { usePlayerWebSocket } from '@/components/service/WebSocket.js';
 
 import MapView from '@/components/MapView.vue';
@@ -53,9 +53,6 @@ const hoveredNode = ref(null);
 const dynamicViewBox = ref('0 0 1 1');
 const loadingMessage = ref('Loading map data...');
 const isLoading = ref(true);
-
-// --- Constants ---
-const BASE_URL = 'http://97590f57-b983-48f8-bb0a-c098bed1e658.hsvc.ir:30254/api/v1';
 
 // --- Computed Properties ---
 const isHoveredNodeFuelStation = computed(() => {
@@ -124,62 +121,55 @@ const calculateViewBox = (islands, padding = 0.1) => {
 
 // --- API Calls & Data Fetching ---
 const fetchTerritoryData = async (id) => {
-  isLoading.value = true;
-  loadingMessage.value = 'Fetching data from server...';
-  try {
-    const response = await fetch(`${BASE_URL}/territories/${id}`, {
-      headers: { 'Authorization': `Bearer ${getToken()}` }
-    });
-    const data = await response.json();
-    if (!response.ok || !data.ok || !data.result) throw new Error(data.error || 'Invalid API response');
-    loadingMessage.value = 'Processing data...';
-    const rawData = data.result;
-    backgroundImage.value = `/images/${rawData.backgroundAsset}`;
-    const padding = 0.1;
-    let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
-    rawData.islands.forEach(island => {
-      minX = Math.min(minX, island.x - island.width / 2);
-      maxX = Math.max(maxX, island.x + island.width / 2);
-      minY = Math.min(minY, island.y - island.height / 2);
-      maxY = Math.max(maxY, island.y + island.height / 2);
-    });
-    dynamicViewBox.value = `${minX - padding} ${minY - padding} ${maxX - minX + padding * 2} ${maxY - minY + padding * 2}`;
-    nodes.value = rawData.islands.map(island => ({
-      ...island,
-      iconPath: `/images/islands/${island.iconAsset}`,
-      imageX: island.x - island.width / 2,
-      imageY: island.y - island.height / 2,
-    }));
-    edges.value = rawData.edges.map(edge => ({ from_node_id: edge.from, to_node_id: edge.to }));
-    fuelStations.value = rawData.refuelIslands;
-    await fetchPlayerAndUser();
-  } catch (error) {
-    console.error('Failed to load territory data:', error);
-    loadingMessage.value = `Error: ${error.message}`;
-  } finally {
-    isLoading.value = false;
-  }
+  return await getTerritory(id);
 };
 
-const fetchPlayerAndUser = async () => {
+const fetchPlayerAndUserData = async () => {
   if (!getToken()) {
     logout();
     router.push({ name: 'Login' });
-    return;
+    return null;
   }
   try {
     const [playerData, meData] = await Promise.all([getPlayer(), getMe()]);
-
-    username.value = meData.username;
-
-    const island = getNodeById(playerData.atIsland);
-    player.value = {
-      ...playerData,
-      atIsland: island,
-    };
+    return { playerData, meData };
   } catch (err) {
     console.error("Failed to get player/user data:", err);
+    throw err;
   }
+};
+
+// --- Setup Functions (Processing and state setting) ---
+const setupTerritoryData = (territoryData) => {
+  backgroundImage.value = `/images/${territoryData.backgroundAsset}`;
+  dynamicViewBox.value = calculateViewBox(territoryData.islands);
+  
+  nodes.value = territoryData.islands.map(island => ({
+    ...island,
+    iconPath: `/images/islands/${island.iconAsset}`,
+    imageX: island.x - island.width / 2,
+    imageY: island.y - island.height / 2,
+  }));
+  
+  edges.value = territoryData.edges.map(edge => ({
+    from_node_id: edge.from,
+    to_node_id: edge.to
+  }));
+  
+  fuelStations.value = territoryData.refuelIslands;
+};
+
+const setupPlayerAndUserData = (playerAndUserData) => {
+  if (!playerAndUserData) return;
+  
+  const { playerData, meData } = playerAndUserData;
+  username.value = meData.username;
+  
+  const island = getNodeById(playerData.atIsland);
+  player.value = {
+    ...playerData,
+    atIsland: island,
+  };
 };
 
 const updateTravel = async () => {
@@ -238,10 +228,24 @@ const hideInfoBox = () => {
 };
 
 // --- Lifecycle Hooks ---
-onMounted(() => {
-  fetchTerritoryData(territoryId.value);
+onMounted(async () => {
+  isLoading.value = true;
+  try {
+    loadingMessage.value = 'Fetching data...';
+    const [territoryData, playerAndUserData] = await Promise.all([
+      fetchTerritoryData(territoryId.value),
+      fetchPlayerAndUserData()
+    ]);
+    
+    loadingMessage.value = 'Setting up data...';
+    
+    setupTerritoryData(territoryData);
+    setupPlayerAndUserData(playerAndUserData);
+    
+  } finally {
+    isLoading.value = false;
+  }
 });
-
 // --- WebSocket ---
 usePlayerWebSocket(player, nodes);
 
