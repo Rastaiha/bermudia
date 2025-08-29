@@ -75,3 +75,13 @@ type UserComponent struct {
 	ComponentID string
 	ResourceID  string
 }
+
+func PlayerHasAccessToIsland(player Player, islandID string) error {
+	if player.AtIsland == islandID && player.Anchored {
+		return nil
+	}
+	return Error{
+		reason: ErrorReasonRuleViolation,
+		text:   "شما باید در این جزیره لنگر بیندازید تا بتوانید وارد آن شوید.",
+	}
+}

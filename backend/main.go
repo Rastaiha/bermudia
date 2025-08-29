@@ -49,7 +49,7 @@ func main() {
 
 	authService := service.NewAuth(cfg, userRepo)
 	territoryService := service.NewTerritory(territoryRepo)
-	islandService := service.NewIsland(theBot, islandRepo, questionStore)
+	islandService := service.NewIsland(theBot, islandRepo, questionStore, playerRepo)
 	playerService := service.NewPlayer(cfg, playerRepo, territoryRepo, questionStore)
 	adminService := service.NewAdmin(territoryRepo, islandRepo, userRepo, playerRepo, questionStore)
 

@@ -116,3 +116,55 @@ func (h *Handler) Refuel(w http.ResponseWriter, r *http.Request) {
 
 	sendResult(w, struct{}{})
 }
+
+type anchorCheckRequest struct {
+	Island string `json:"island"`
+}
+
+func (h *Handler) AnchorCheck(w http.ResponseWriter, r *http.Request) {
+	user, err := getUser(r.Context())
+	if err != nil {
+		handleError(w, err)
+		return
+	}
+
+	var req anchorCheckRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		sendDecodeError(w)
+		return
+	}
+
+	result, err := h.playerService.AnchorCheck(r.Context(), user.ID, req.Island)
+	if err != nil {
+		handleError(w, err)
+		return
+	}
+
+	sendResult(w, result)
+}
+
+type anchorRequest struct {
+	Island string `json:"island"`
+}
+
+func (h *Handler) Anchor(w http.ResponseWriter, r *http.Request) {
+	user, err := getUser(r.Context())
+	if err != nil {
+		handleError(w, err)
+		return
+	}
+
+	var req anchorRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		sendDecodeError(w)
+		return
+	}
+
+	err = h.playerService.Anchor(r.Context(), user.ID, req.Island)
+	if err != nil {
+		handleError(w, err)
+		return
+	}
+
+	sendResult(w, struct{}{})
+}

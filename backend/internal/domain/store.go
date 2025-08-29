@@ -7,11 +7,12 @@ import (
 )
 
 var (
-	ErrIslandNotFound    = errors.New("island not found")
-	ErrTerritoryNotFound = errors.New("territory not found")
-	ErrUserNotFound      = errors.New("user not found")
-	ErrPlayerConflict    = errors.New("player update conflict")
-	ErrAnswerNotPending  = errors.New("answer not in pending state")
+	ErrIslandNotFound             = errors.New("island not found")
+	ErrTerritoryNotFound          = errors.New("territory not found")
+	ErrUserNotFound               = errors.New("user not found")
+	ErrPlayerConflict             = errors.New("player update conflict")
+	ErrAnswerNotPending           = errors.New("answer not in pending state")
+	ErrResourceNotRelatedToIsland = errors.New("resource not related to island")
 )
 
 type TerritoryStore interface {
@@ -28,6 +29,7 @@ type IslandStore interface {
 	// GetOrCreateUserComponent gets the component if it exists, otherwise it creates a new component by generating a NewID for the resource type.
 	// If the IdHasType returns false for the exiting ResourceID, it returns an error.
 	GetOrCreateUserComponent(ctx context.Context, islandId string, userId int32, componentId string, resourceType ResourceType) (UserComponent, error)
+	ResourceIsRelatedToIsland(ctx context.Context, userId int32, islandId string, resourceId string) error
 }
 
 type UserStore interface {
