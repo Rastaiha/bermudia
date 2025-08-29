@@ -4,7 +4,7 @@
       <svg viewBox="0 24 150 28" preserveAspectRatio="none" class="w-full h-full">
         <defs>
           <path id="gentle-wave" d="M-160 44c30 0 58-18 88-18s 58 18 88 18
-               58-18 88-18 58 18 88 18 v44h-352z" />
+                 58-18 88-18 58 18 88 18 v44h-352z" />
         </defs>
         <use href="#gentle-wave" x="48" y="5" />
         <use href="#gentle-wave" x="48" y="7" />
@@ -64,14 +64,14 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                       d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.477 0 8.268 2.943 9.542 7-1.274 
-                         4.057-5.065 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                           4.057-5.065 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                   </svg>
                   <svg v-else xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-cyan-400" fill="none"
                     viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.477 0-8.268-2.943-9.542-7
-                         a9.956 9.956 0 012.783-4.419M6.228 6.228A9.956 9.956 0 0112 5c4.477 0
-                         8.268 2.943 9.542 7a9.96 9.96 0 01-4.132 5.411M15 12a3 3 0 
-                         11-6 0 3 3 0 016 0z" />
+                           a9.956 9.956 0 012.783-4.419M6.228 6.228A9.956 9.956 0 0112 5c4.477 0
+                           8.268 2.943 9.542 7a9.96 9.96 0 01-4.132 5.411M15 12a3 3 0 
+                           11-6 0 3 3 0 016 0z" />
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3l18 18" />
                   </svg>
                 </div>
@@ -95,13 +95,12 @@
               <div></div>
             </div>
 
-            <button type="submit"
-              class="btn-hover w-full text-white bg-cyan-600 hover:bg-cyan-700 font-medium rounded-lg text-sm px-5 py-2.5 text-center">
-              لاگین
+            <button type="submit" :disabled="isLoading"
+              class="btn-hover w-full text-white bg-cyan-600 hover:bg-cyan-700 font-medium rounded-lg text-sm px-5 py-2.5 text-center disabled:opacity-50 disabled:cursor-not-allowed">
+              <span v-if="isLoading">در حال ورود...</span>
+              <span v-else>ورود</span>
             </button>
 
-            <p v-if="error" class="bg-red-500 text-white text-sm text-center mt-3 rounded-lg px-5 py-2.5">{{ error }}
-            </p>
           </form>
         </div>
       </div>
@@ -112,39 +111,50 @@
 <script setup>
 import { ref, onMounted, onBeforeUnmount } from "vue";
 import { useRouter } from "vue-router";
-import { useTimeout } from "./service/ChainedTimeout.js";
+import { useToast } from "vue-toastification";
 import { login } from "../services/api.js";
 
-// --- State ---
 const username = ref("");
 const password = ref("");
-const error = ref("");
 const boatLeft = ref(10);
 let boatEl;
 const remember = ref(false);
 const showPassword = ref(false);
+const isLoading = ref(false);
 
-const { startTimeout, clear } = useTimeout();
 const router = useRouter();
+const toast = useToast();
 
-// --- Logic ---
 async function handleLogin() {
+  if (!username.value || !password.value) {
+    toast.warning("لطفا نام کاربری و رمز عبور را وارد کنید.");
+    return;
+  }
+
+  isLoading.value = true;
   try {
     const result = await login(username.value, password.value);
-    error.value = "";
+
     if (remember.value) {
       localStorage.setItem("authToken", result.token);
     } else {
       sessionStorage.setItem("authToken", result.token);
     }
-    
-    router.push({ name: 'UserPage' });
+
+    toast.success("ورود با موفقیت انجام شد! در حال انتقال...");
+
+    setTimeout(() => {
+      router.push({ name: 'UserPage' });
+    }, 1500);
 
   } catch (err) {
-    error.value = err.message;
-    startTimeout(() => {
-      error.value = "";
-    }, 5000);
+    if (err.message && err.message.includes("invalid credentials")) {
+      toast.error("نام کاربری یا رمز عبور اشتباه است.");
+    } else {
+      toast.error("خطایی در ارتباط با سرور رخ داد. لطفا دوباره تلاش کنید.");
+    }
+  } finally {
+    isLoading.value = false;
   }
 }
 
@@ -155,7 +165,6 @@ function moveBoat(e) {
   boatEl.style.left = `${boatLeft.value}vw`;
 }
 
-// --- Lifecycle ---
 onMounted(() => {
   boatEl = document.querySelector(".boat");
   window.addEventListener("keydown", moveBoat);
@@ -163,12 +172,10 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
   window.removeEventListener("keydown", moveBoat);
-  clear();
 });
 </script>
 
 <style scoped>
-/* Animations */
 @keyframes fadeInScale {
   0% {
     opacity: 0;
@@ -207,12 +214,11 @@ onBeforeUnmount(() => {
   transition: all 0.3s ease, transform 0.2s ease;
 }
 
-.btn-hover:hover {
+.btn-hover:hover:not(:disabled) {
   background-color: #0ea5e9;
   transform: scale(1.03);
 }
 
-/* Waves */
 .waves {
   position: fixed;
   bottom: 50px;
@@ -282,7 +288,6 @@ onBeforeUnmount(() => {
   }
 }
 
-/* Boat */
 .boat {
   width: 25vw;
   position: fixed;
