@@ -4,7 +4,7 @@ import { onMounted, onUnmounted } from 'vue';
 import { getToken } from '@/services/api.js';
 import { API_ENDPOINTS } from '@/services/apiConfig.js';
 
-function connectWebSocket(player, islands, reconnectCallback) {
+function connectWebSocket(player, reconnectCallback) {
   const token = getToken();
   if (!token) {
     console.error("No auth token found, WebSocket connection aborted.");
@@ -26,22 +26,8 @@ function connectWebSocket(player, islands, reconnectCallback) {
       const data = JSON.parse(event.data);
       console.log("WebSocket message received:", data);
 
-      // According to API docs, events have a 'playerUpdate' field, not 'type'
-      if (data.playerUpdate && player.value) {
-        const playerData = data.playerUpdate.player;
-        
-        // Update fuel if present
-        if (playerData.fuel !== undefined) {
-          player.value.fuel = playerData.fuel;
-        }
-        
-        // Update island location if present
-        if (playerData.atIsland) {
-          const newIsland = islands.value.find(island => island.id === playerData.atIsland);
-          if (newIsland) {
-            player.value.atIsland = newIsland;
-          }
-        }
+      if (data.playerUpdate) {
+        player.value = data.playerUpdate.player;
       }
     } catch (error) {
       console.error("Error parsing WebSocket message:", error);
@@ -63,7 +49,7 @@ function connectWebSocket(player, islands, reconnectCallback) {
   return socket;
 }
 
-export function usePlayerWebSocket(player, islands) {
+export function usePlayerWebSocket(player) {
   let socket = null;
   let reconnectTimeoutId = null;
   let reconnectAttempts = 0;
@@ -108,7 +94,7 @@ export function usePlayerWebSocket(player, islands) {
       cleanup();
     }
     
-    socket = connectWebSocket(player, islands, {
+    socket = connectWebSocket(player, {
       scheduleReconnect,
       resetAttempts
     });
