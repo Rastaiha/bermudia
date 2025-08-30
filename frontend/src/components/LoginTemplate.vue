@@ -112,7 +112,7 @@
 import { ref, onMounted, onBeforeUnmount } from "vue";
 import { useRouter } from "vue-router";
 import { useToast } from "vue-toastification";
-import { login } from "../services/api.js";
+import { login, getPlayer } from "../services/api.js";
 
 const username = ref("");
 const password = ref("");
@@ -143,15 +143,18 @@ async function handleLogin() {
 
     toast.success("ورود با موفقیت انجام شد! در حال انتقال...");
 
-    setTimeout(() => {
-      router.push({ name: 'UserPage' });
-    }, 1500);
+    const playerData = await getPlayer();
+    if (playerData && playerData.atTerritory) {
+      router.push({ name: 'Territory', params: { id: playerData.atTerritory } });
+    } else {
+      throw new Error("اطلاعات تریتوری از سرور دریافت نشد.");
+    }
 
   } catch (err) {
     if (err.message && err.message.includes("invalid credentials")) {
       toast.error("نام کاربری یا رمز عبور اشتباه است.");
     } else {
-      toast.error("خطایی در ارتباط با سرور رخ داد. لطفا دوباره تلاش کنید.");
+      toast.error(err.message || "خطایی در ارتباط با سرور رخ داد. لطفا دوباره تلاش کنید.");
     }
   } finally {
     isLoading.value = false;
