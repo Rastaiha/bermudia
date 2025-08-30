@@ -1,10 +1,10 @@
 <template>
     <Transition name="popup-fade">
-        <div v-if="hoveredNode" :style="infoBoxStyle"
+        <div v-if="hoveredIsland" :style="infoBoxStyle"
             class="bg-[rgb(121,200,237,0.8)] text-[#310f0f] p-4 rounded-xl font-vazir text-base z-[10000] flex flex-col items-center pointer-events-auto w-60"
             @pointerdown.stop>
 
-            <h3 class="text-lg font-bold text-center shrink-0">{{ hoveredNode.name }}</h3>
+            <h3 class="text-lg font-bold text-center shrink-0">{{ hoveredIslandName }}</h3>
 
             <div class="w-full grid transition-[grid-template-rows] duration-300 ease-smooth-expand"
                 :class="loading ? 'grid-rows-[0fr]' : 'grid-rows-[1fr]'">
@@ -33,7 +33,7 @@
 
                         <div v-else-if="isCurrentIsland && !isFuelStation" class="w-full space-y-3">
                             <p class="text-center text-sm text-gray-800">شما در این جزیره قرار دارید.</p>
-                            <button @pointerdown.stop="$emit('navigateToIsland', player.atIsland.id)"
+                            <button @pointerdown.stop="$emit('navigateToIsland', player.atIsland)"
                                 class="btn-hover w-full p-2 rounded-lg bg-sky-600 text-white">
                                 ورود به جزیره
                             </button>
@@ -49,7 +49,7 @@
                             </div>
                             <button
                                 :disabled="loading || !isAdjacent || !!travelError || (travel && player.fuel < travel.fuelCost)"
-                                @pointerdown.stop="$emit('travelToIsland', hoveredNode.id)"
+                                @pointerdown.stop="$emit('travelToIsland', hoveredIsland)"
                                 class="btn-hover w-full p-2 rounded-lg bg-green-600 text-white disabled:opacity-50 disabled:cursor-not-allowed text-xs">
                                 <span v-if="!isAdjacent">مسیر مستقیمی وجود ندارد</span>
                                 <span v-else-if="travel && player.fuel < travel.fuelCost">سوخت کافی نیست</span>
@@ -71,7 +71,8 @@
 import { ref, computed, watch, nextTick } from 'vue';
 
 const props = defineProps({
-    hoveredNode: Object,
+    hoveredIsland: String,
+    hoveredIslandName: String,
     player: Object,
     refuel: Object,
     travel: Object,
@@ -87,7 +88,7 @@ const emit = defineEmits(['buyFuel', 'navigateToIsland', 'travelToIsland']);
 const fuelInput = ref(null);
 const fuelCount = ref(0);
 
-const isCurrentIsland = computed(() => props.hoveredNode && props.player && props.hoveredNode.id === props.player.atIsland.id);
+const isCurrentIsland = computed(() => props.hoveredIsland && props.player && props.hoveredIsland === props.player.atIsland);
 
 const fuelPriceText = computed(() => {
     if (!props.refuel || !fuelCount.value || fuelCount.value <= 0) return "خرید سوخت";
@@ -107,7 +108,7 @@ const buyFuel = () => {
     }
 };
 
-watch(() => props.hoveredNode, () => {
+watch(() => props.hoveredIsland, () => {
     fuelCount.value = 0;
 });
 

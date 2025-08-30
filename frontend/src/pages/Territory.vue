@@ -11,9 +11,10 @@
       <PlayerInfo :player="player" :username="username" v-if="player" />
 
       <Transition name="popup-fade">
-        <IslandInfoBox v-if="hoveredNode" :key="hoveredNode.id" :hoveredNode="hoveredNode" :player="player"
-          :refuel="refuel" :travel="travel" :infoBoxStyle="infoBoxStyle" :isFuelStation="isHoveredNodeFuelStation"
-          :isAdjacent="isHoveredNodeAdjacent" :loading="isInfoBoxLoading" @navigateToIsland="navigateToIsland"
+        <IslandInfoBox v-if="hoveredIsland" :key="hoveredIsland" :hoveredIsland="hoveredIsland" :hoveredIslandName="getIslandById(hoveredIsland).name"
+        :player="player"
+          :refuel="refuel" :travel="travel" :infoBoxStyle="infoBoxStyle" :isFuelStation="ishoveredIslandFuelStation"
+          :isAdjacent="ishoveredIslandAdjacent" :loading="isInfoBoxLoading" @navigateToIsland="navigateToIsland"
           @travelToIsland="travelToIsland" @buyFuel="buyFuelFromIsland" />
       </Transition>
 
@@ -49,32 +50,35 @@ const travel = ref(null);
 const travelError = ref(null);
 const refuel = ref(null);
 const backgroundImage = ref('');
-const hoveredNode = ref(null);
+const hoveredIsland = ref(null);
 const dynamicViewBox = ref('0 0 1 1');
 const loadingMessage = ref('Loading map data...');
 const isLoading = ref(true);
 
 // --- Computed Properties ---
-const isHoveredNodeFuelStation = computed(() => {
-  if (!hoveredNode.value) return false;
-  return refuelIslands.value.some(station => station.id === hoveredNode.value.id);
+const ishoveredIslandFuelStation = computed(() => {
+  if (!hoveredIsland.value) return false;
+  console.log(refuelIslands.value);
+  console.log(hoveredIsland.value);
+  return refuelIslands.value.some(station => station.id === hoveredIsland.value);
 });
 
-const isHoveredNodeAdjacent = computed(() => {
-  if (!hoveredNode.value || !player.value) return false;
+const ishoveredIslandAdjacent = computed(() => {
+  if (!hoveredIsland.value || !player.value) return false;
   return edges.value.some(edge =>
-    (edge.from === player.value.atIsland.id && edge.to === hoveredNode.value.id) ||
-    (edge.to === player.value.atIsland.id && edge.from === hoveredNode.value.id)
+    (edge.from === player.value.atIsland && edge.to === hoveredIsland.value) ||
+    (edge.to === player.value.atIsland && edge.from === hoveredIsland.value)
   );
 });
 
 const infoBoxStyle = computed(() => {
   const _ = transformCounter.value;
   const svgElement = mapViewComponentRef.value?.svgRef;
-  if (!hoveredNode.value || !svgElement) return { display: 'none' };
+  if (!hoveredIsland.value || !svgElement) return { display: 'none' };
+  const island = getIslandById(hoveredIsland.value);
   const pt = svgElement.createSVGPoint();
-  pt.x = hoveredNode.value.x;
-  pt.y = hoveredNode.value.y;
+  pt.x = island.x;
+  pt.y = island.y;
   const screenPoint = pt.matrixTransform(svgElement.getScreenCTM());
   return {
     position: 'fixed',
@@ -98,7 +102,7 @@ const navigateToIsland = (islandId) => {
 const travelToIsland = async (dest) => {
   try {
     travelError.value = null;
-    await travelTo(player.value.atIsland.id, dest);
+    await travelTo(player.value.atIsland, dest);
   } catch (error) {
     travelError.value = error.message;
   }
@@ -154,17 +158,13 @@ const setupPlayerAndUserData = (playerAndUserData) => {
   const { playerData, meData } = playerAndUserData;
   username.value = meData.username;
   
-  const island = getIslandById(playerData.atIsland);
-  player.value = {
-    ...playerData,
-    atIsland: island,
-  };
+  player.value = playerData;
 };
 
 const updateTravel = async () => {
-  if (!player.value || !hoveredNode.value) return;
+  if (!player.value || !hoveredIsland.value) return;
   try {
-    travel.value = await checkTravel(player.value.atIsland.id, hoveredNode.value.id);
+    travel.value = await checkTravel(player.value.atIsland, hoveredIsland.value.id);
   } catch (err) {
     travelError.value = err.message;
   }
@@ -181,21 +181,21 @@ const updateRefuel = async () => {
 // --- Event Handlers from Child Components ---
 const showInfoBox = async (island) => {
   if (!player.value) return;
-  if (hoveredNode.value && hoveredNode.value.id === island.id) {
+  if (hoveredIsland.value && hoveredIsland.value === island.id) {
     hideInfoBox();
     return;
   }
 
   isInfoBoxLoading.value = true;
-  hoveredNode.value = island;
+  hoveredIsland.value = island.id;
   travel.value = null;
   refuel.value = null;
   travelError.value = null;
 
   try {
-    const isCurrent = island.id === player.value.atIsland.id;
+    const isCurrent = island.id === player.value.atIsland;
     if (isCurrent) {
-      if (isHoveredNodeFuelStation.value) {
+      if (ishoveredIslandFuelStation.value) {
         await updateRefuel();
       } else {
         await nextTick();
@@ -209,7 +209,7 @@ const showInfoBox = async (island) => {
 };
 
 const hideInfoBox = () => {
-  hoveredNode.value = null;
+  hoveredIsland.value = null;
   travel.value = null;
   refuel.value = null;
   travelError.value = null;
@@ -236,11 +236,11 @@ onMounted(async () => {
   }
 });
 // --- WebSocket ---
-usePlayerWebSocket(player, islands);
+usePlayerWebSocket(player);
 
 // --- Watcher to update infobox on arrival ---
 watch(() => player.value?.atIsland, (newIsland, oldIsland) => {
-  if (newIsland && oldIsland && newIsland.id !== oldIsland.id) {
+  if (newIsland && oldIsland && newIsland !== oldIsland) {
     hideInfoBox();
   }
 }, { deep: true });

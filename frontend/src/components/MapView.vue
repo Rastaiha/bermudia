@@ -48,29 +48,31 @@ let potentialClickNode = null;
 // --- Ship animation state ---
 const shipTransform = ref('');
 const shipTransition = ref('none');
-const previousIsland = ref(null);
+const previousAtIsland = ref(null);
 
 
 const BOAT_WIDTH = 0.16;
 const BOAT_HEIGHT = 0.22;
 
-const getShipPosition = (island) => {
-  const x = island.x; // center X
-  const y = island.y - island.height / 2; // top edge
-  return { x, y };
+const getShipPosition = (atIsland) => {
+    const island = props.islands.find(island => island.id === atIsland);
+    if (!island) return { x: 0, y: 0 }; // safe fallback
+    const x = island.x;
+    const y = island.y - island.height / 2;
+    return { x, y };
 };
 
 // --- Watch for player's island changes to animate the ship ---
-watch(() => props.player?.atIsland, (newIsland) => {
-    if (!newIsland) return;
+watch(() => props.player?.atIsland, (newAtIsland) => {
+    if (!newAtIsland) return;
 
-    const startIsland = previousIsland.value;
-    const endIsland = newIsland;
+    const startIsland = previousAtIsland.value;
+    const endIsland = newAtIsland;
     if (!startIsland) {
         const { x, y } = getShipPosition(endIsland);
         shipTransition.value = 'none';
         shipTransform.value = `translate(${x} ${y})`;
-    } else if (startIsland.id !== endIsland.id) {
+    } else {
         const { x: startX, y: startY } = getShipPosition(startIsland);
         const { x: endX, y: endY } = getShipPosition(endIsland);
 
@@ -82,7 +84,7 @@ watch(() => props.player?.atIsland, (newIsland) => {
             shipTransform.value = `translate(${endX} ${endY})`;
         });
     }
-    previousIsland.value = endIsland;
+    previousAtIsland.value = endIsland;
 }, { deep: true, immediate: true });
 
 
