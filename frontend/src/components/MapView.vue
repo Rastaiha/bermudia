@@ -140,7 +140,8 @@ const initializePanzoom = () => {
         maxZoom: 4,
         minZoom: 1,
         friction: 1,
-        smoothScroll: false
+        smoothScroll: false,
+        zoomDoubleClickSpeed: 0,
     });
 
     panzoomInstance.on('panstart', () => {
