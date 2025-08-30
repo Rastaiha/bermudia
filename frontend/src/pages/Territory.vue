@@ -13,8 +13,8 @@
       <Transition name="popup-fade">
         <IslandInfoBox v-if="selectedIsland" :key="selectedIsland" :selectedIsland="selectedIsland" :selectedIslandName="getIslandById(selectedIsland).name"
         :player="player"
-          :refuel="refuel" :travel="travel" :infoBoxStyle="infoBoxStyle" :isRefuelIsland="isselectedIslandRefuelIsland"
-          :isAdjacent="isselectedIslandAdjacent" :loading="isInfoBoxLoading" @navigateToIsland="navigateToIsland"
+          :refuel="refuel" :travel="travel" :infoBoxStyle="infoBoxStyle" :isRefuelIsland="isSelectedIslandRefuelIsland"
+          :isAdjacent="isSelectedIslandAdjacent" :loading="isInfoBoxLoading" @navigateToIsland="navigateToIsland"
           @travelToIsland="travelToIsland" @buyFuel="buyFuelFromIsland" />
       </Transition>
 
@@ -56,14 +56,14 @@ const loadingMessage = ref('Loading map data...');
 const isLoading = ref(true);
 
 // --- Computed Properties ---
-const isselectedIslandRefuelIsland = computed(() => {
+const isSelectedIslandRefuelIsland = computed(() => {
   if (!selectedIsland.value) return false;
   console.log(refuelIslands.value);
   console.log(selectedIsland.value);
   return refuelIslands.value.some(island => island.id === selectedIsland.value);
 });
 
-const isselectedIslandAdjacent = computed(() => {
+const isSelectedIslandAdjacent = computed(() => {
   if (!selectedIsland.value || !player.value) return false;
   return edges.value.some(edge =>
     (edge.from === player.value.atIsland && edge.to === selectedIsland.value) ||
@@ -195,7 +195,7 @@ const showInfoBox = async (island) => {
   try {
     const isCurrent = island.id === player.value.atIsland;
     if (isCurrent) {
-      if (isselectedIslandRefuelIsland.value) {
+      if (isSelectedIslandRefuelIsland.value) {
         await updateRefuel();
       } else {
         await nextTick();
