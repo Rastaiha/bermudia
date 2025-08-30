@@ -12,7 +12,7 @@
                 <div class="overflow-hidden">
                     <div v-if="!loading" class="w-full mt-3 space-y-3">
 
-                        <div v-if="isCurrentIsland && isFuelStation && refuel" class="w-full space-y-2">
+                        <div v-if="isCurrentIsland && isRefuelIsland && refuel" class="w-full space-y-2">
                             <div class="flex justify-between items-center text-sm">
                                 <span>قیمت هر واحد:</span>
                                 <span class="font-semibold">{{ refuel.coinCostPerUnit }}</span>
@@ -31,7 +31,7 @@
                             </button>
                         </div>
 
-                        <div v-else-if="isCurrentIsland && !isFuelStation" class="w-full space-y-3">
+                        <div v-else-if="isCurrentIsland && !isRefuelIsland" class="w-full space-y-3">
                             <p class="text-center text-sm text-gray-800">شما در این جزیره قرار دارید.</p>
                             <button @pointerdown.stop="$emit('navigateToIsland', player.atIsland)"
                                 class="btn-hover w-full p-2 rounded-lg bg-sky-600 text-white">
@@ -77,7 +77,7 @@ const props = defineProps({
     refuel: Object,
     travel: Object,
     infoBoxStyle: Object,
-    isFuelStation: Boolean,
+    isRefuelIsland: Boolean,
     isAdjacent: Boolean,
     loading: Boolean,
     travelError: String,
