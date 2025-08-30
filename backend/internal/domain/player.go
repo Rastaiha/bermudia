@@ -123,11 +123,11 @@ func TravelCheck(player Player, fromIsland, toIsland string, territory *Territor
 		return (edge.From == fromIsland && edge.To == toIsland) ||
 			(edge.From == toIsland && edge.To == fromIsland)
 	}) {
-		result.Reason = "مسیری بین جزیره کنونی و جزیره مقصد وجود ندارد."
+		result.Reason = "مسیری مستقیمی وجود ندارد."
 		return
 	}
 	if !canAfford(player, result.TravelCost) {
-		result.Reason = "سوخت شما برای سفر کافی نیست."
+		result.Reason = "سوخت کافی نیست."
 		return
 	}
 	result.Feasible = true
