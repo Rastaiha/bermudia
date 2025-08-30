@@ -1,10 +1,10 @@
 <template>
-  <div class="relative min-h-screen flex items-center justify-center bg-sky-400 overflow-hidden font-vazirmatn">
+  <div class="relative min-h-screen flex items-center justify-center bg-sky-200 overflow-hidden font-vazirmatn">
     <div class="waves back">
       <svg viewBox="0 24 150 28" preserveAspectRatio="none" class="w-full h-full">
         <defs>
-          <path id="gentle-wave" d="M-160 44c30 0 58-18 88-18s 58 18 88 18
-                 58-18 88-18 58 18 88 18 v44h-352z" />
+          <path id="gentle-wave" d="M-160 44c30 0 58-8 88-8s 58 8 88 8
+                                  58-8 88-8 58 8 88 8 v44h-352z" />
         </defs>
         <use href="#gentle-wave" x="48" y="5" />
         <use href="#gentle-wave" x="48" y="7" />
@@ -64,14 +64,14 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                       d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.477 0 8.268 2.943 9.542 7-1.274 
-                           4.057-5.065 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                4.057-5.065 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                   </svg>
                   <svg v-else xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-cyan-400" fill="none"
                     viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.477 0-8.268-2.943-9.542-7
-                           a9.956 9.956 0 012.783-4.419M6.228 6.228A9.956 9.956 0 0112 5c4.477 0
-                           8.268 2.943 9.542 7a9.96 9.96 0 01-4.132 5.411M15 12a3 3 0 
-                           11-6 0 3 3 0 016 0z" />
+                                a9.956 9.956 0 012.783-4.419M6.228 6.228A9.956 9.956 0 0112 5c4.477 0
+                                8.268 2.943 9.542 7a9.96 9.96 0 01-4.132 5.411M15 12a3 3 0 
+                                11-6 0 3 3 0 016 0z" />
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3l18 18" />
                   </svg>
                 </div>
@@ -248,7 +248,7 @@ onBeforeUnmount(() => {
 }
 
 .waves use {
-  animation: wavewave 5s cubic-bezier(.55, .5, .45, .5) infinite;
+  animation: wavewave 8s ease-in-out infinite alternate;
   fill: dodgerblue;
   opacity: 0.7;
 }
