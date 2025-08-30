@@ -25,12 +25,6 @@ const routes = [
     name: 'Login',
     component: () => import('../pages/Login.vue'),
   },
-  {
-    path: '/user_page',
-    name: 'UserPage',
-    component: () => import('../pages/UserPage.vue'),
-    meta: { requiresAuth: true }, // This route requires login
-  },
 ];
 
 const router = createRouter({
