@@ -67,14 +67,9 @@ const handleChallengeSubmit = async ({ inputId, data }) => {
   formData.append('data', data);
 
   try {
-    const submissionState = await submitAnswer(inputId, formData);
-
-    const componentIndex = components.value.findIndex(c => c.input && c.input.id === inputId);
-    if (componentIndex !== -1) {
-      components.value[componentIndex].input.submissionState = submissionState;
-    }
-
+    await submitAnswer(inputId, formData);
     toast.success(`پاسخ شما با موفقیت ثبت شد.`);
+    await fetchIslandData(props.islandId);
   } catch (error) {
     console.error('Error submitting answer:', error);
     toast.error(error.message || 'خطا در ارسال پاسخ!');
