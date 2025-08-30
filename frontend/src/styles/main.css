@@ -1,24 +1,29 @@
 @import "tailwindcss";
 
 @font-face {
-  font-family: Vazir;
-  src: url('./src/assets/fonts/Vazirmatn-Regular.ttf') format('truetype');
+  font-family: Vazirmatn;
+  src: url('../assets/fonts/Vazirmatn-Regular.ttf') format('truetype');
   font-weight: 400;
   font-style: normal;
   font-display: swap;
 }
 
 @font-face {
-  font-family: Vazir;
-  src: url('./src/assets/fonts/Vazirmatn-Bold.ttf') format('truetype');
+  font-family: Vazirmatn;
+  src: url('../assets/fonts/Vazirmatn-Bold.ttf') format('truetype');
   font-weight: 700;
   font-style: normal;
   font-display: swap;
 }
 
 @theme {
-  --font-vazir: Vazir;
-  --color-rasta-green:  #008A00;
-  --color-rasta-yellow: #F9D104; 
+  --font-vazir: Vazirmatn;
+  --color-rasta-green: #008A00;
+  --color-rasta-yellow: #F9D104;
 }
 
+.Vue-Toastification__toast-body {
+  font-family: Vazirmatn, sans-serif !important;
+  text-align: right;
+  direction: rtl;
+}

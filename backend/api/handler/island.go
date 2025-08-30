@@ -7,6 +7,7 @@ import (
 	"io"
 	"log/slog"
 	"net/http"
+	"strings"
 )
 
 func (h *Handler) GetIsland(w http.ResponseWriter, r *http.Request) {
@@ -53,29 +54,49 @@ func (h *Handler) SubmitAnswer(w http.ResponseWriter, r *http.Request) {
 		sendError(w, http.StatusBadRequest, "Error parsing multipart form")
 		return
 	}
-	data, ok := r.MultipartForm.File["data"]
-	if !ok {
+
+	var file io.ReadCloser
+	var filename string
+	var textContent string
+
+	if data, ok := r.MultipartForm.File["data"]; ok {
+		if len(data) != 1 {
+			sendError(w, http.StatusBadRequest, "Incorrect number of files in 'data' field in multipart form")
+			return
+		}
+		if data[0].Size <= 0 {
+			sendError(w, http.StatusBadRequest, "Empty file in 'data' field in multipart form")
+			return
+		}
+		f, err := data[0].Open()
+		if err != nil {
+			handleError(w, err)
+			return
+		}
+		defer func() {
+			if err := f.Close(); err != nil {
+				slog.Error("Error closing multipart file", err)
+			}
+		}()
+		file = &tempReadCloser{f}
+		filename = data[0].Filename
+	} else if data, ok := r.MultipartForm.Value["data"]; ok {
+		if len(data) == 0 {
+			sendError(w, http.StatusBadRequest, "Incorrect number of values in 'data' field in multipart form")
+			return
+		}
+		textContent = strings.Join(data, "\n")
+	} else {
 		sendError(w, http.StatusBadRequest, "Missing 'data' part in multipart form")
 		return
 	}
-	if len(data) != 1 {
-		sendError(w, http.StatusBadRequest, "Incorrect number of files in 'data' field in multipart form")
-		return
-	}
-	filename := data[0].Filename
-	file, err := data[0].Open()
-	if err != nil {
-		handleError(w, err)
-		return
-	}
-	defer func() {
-		if err := file.Close(); err != nil {
-			slog.Error("Error closing multipart file", err)
-		}
-	}()
 
-	result, err := h.islandService.SubmitAnswer(r.Context(), user.ID, id, &tempReadCloser{file}, filename)
+	result, err := h.islandService.SubmitAnswer(r.Context(), user.ID, id, file, filename, textContent)
 	if err != nil {
+		if errors.Is(err, domain.ErrResourceNotRelatedToIsland) {
+			sendError(w, http.StatusForbidden, "answer not related to player's current island")
+			return
+		}
 		handleError(w, err)
 		return
 	}

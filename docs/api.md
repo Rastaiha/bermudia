@@ -84,6 +84,8 @@ Retrieves the content of the island.
 
 Returns a [IslandContent](#islandcontent) in response.
 
+**Preconditions:** The player must be at the island and also must have anchored.
+
 **Endpoint:** `GET /islands/{islandID}`
 
 **Parameters:**
@@ -99,6 +101,8 @@ _This endpoint **is authenticated** and needs an auth token for access._
 Receives the input that the user enters into a [IslandInput](#islandinput) component.
 
 Returns the updated [SubmissionState](#submissionstate) field of the [IslandInput](#islandinput) component in response.
+
+**Preconditions:** The player must be at the corresponding island and also must have anchored.
 
 **Endpoint:** `POST /answer/{inputID}`
 
@@ -227,6 +231,50 @@ curl --request POST \
 
 ---
 
+### Anchor Check
+
+_This endpoint **is authenticated** and needs an auth token for access._
+
+Checks whether anchoring on the specified island is possible.
+
+Receives a [AnchorCheckRequest](#anchorcheckrequest) in body.
+
+Returns [AnchorCheckResult](#anchorcheckresult) in response.
+
+**Endpoint:** `POST /anchor_check`
+
+```shell
+curl --request POST \
+  --url http://97590f57-b983-48f8-bb0a-c098bed1e658.hsvc.ir:30254/api/v1/anchor_check \
+  --header 'Authorization: TOKEN' \
+  --header 'Content-Type: application/json' \
+  --data '{"island": "island_final"}'
+```
+
+---
+
+### Anchor
+
+_This endpoint **is authenticated** and needs an auth token for access._
+
+Anchors the player on the specified island.
+
+Receives a [AnchorRequest](#anchorrequest) in body.
+
+Returns an empty object in response.
+
+**Endpoint:** `POST /anchor`
+
+```shell
+curl --request POST \
+  --url http://97590f57-b983-48f8-bb0a-c098bed1e658.hsvc.ir:30254/api/v1/anchor \
+  --header 'Authorization: TOKEN' \
+  --header 'Content-Type: application/json' \
+  --data '{"island": "island_final"}'
+```
+
+---
+
 ## Data Models
 
 ### LoginRequest
@@ -265,6 +313,21 @@ curl --request POST \
 |--------|--------|------------------------------------------------------------------------------------------------------------------------------|
 | amount | int    | Amount of fuel to buy. Must be positive and not bigger that _maxAvailableAmount_ in [RefuelCheckResult](#refuelcheckresult). |
 
+
+### AnchorCheckRequest
+
+| Field  | Type   | Description                            |
+|--------|--------|----------------------------------------|
+| island | string | The id of island you want to anchor on |
+
+
+### AnchorRequest
+
+| Field  | Type   | Description                            |
+|--------|--------|----------------------------------------|
+| island | string | The id of island you want to anchor on |
+
+
 ### Me
 
 | Field    | Type   | Description                 |
@@ -275,12 +338,15 @@ curl --request POST \
 
 ### Player
 
-| Field       | Type   | Description                               |
-|-------------|--------|-------------------------------------------|
-| atTerritory | string | Current territory of player               |
-| atIsland    | string | Current island of player                  |
-| fuel        | string | Current fuel level of player's vehicle    |
-| fuelCap     | int    | Current fuel capacity of player's vehicle |
+| Field         | Type                            | Description                                                    |
+|---------------|---------------------------------|----------------------------------------------------------------|
+| atTerritory   | string                          | Current territory of player                                    |
+| atIsland      | string                          | Current island of player                                       |
+| anchored      | boolean                         | `true` if player has anchored at _atIsland_, `false` otherwise |
+| fuel          | string                          | Current fuel level of player's vehicle                         |
+| fuelCap       | int                             | Current fuel capacity of player's vehicle                      |
+| coins         | int                             | Current number of coins of player                              |
+| knowledgeBars | [KnowledgeBar](#knowledgebar)[] | Current state of player's knowledge in each territory          |
 
 ### Territory
 
@@ -356,12 +422,22 @@ curl --request POST \
 
 ### SubmissionState
 
-| Field       | Type    | Description                                                                                     |
-|-------------|---------|-------------------------------------------------------------------------------------------------|
-| submittable | boolean | True if the a new answer can be submitted, false otherwise.                                     |
-| status      | string  | The status of answer; one of `empty`, `pending` (in process of correction) , `correct`, `wrong` |
-| filename    | string? | If _status_ is not `empty`, the name of the last submitted file.                                |
-| submittedAt | string? | If _status_ is not `empty`, the time of last submission in Unix milliseconds.                   |
+| Field       | Type    | Description                                                                                                          |
+|-------------|---------|----------------------------------------------------------------------------------------------------------------------|
+| submittable | boolean | True if the a new answer can be submitted, false otherwise.                                                          |
+| status      | string  | The status of answer; one of `empty`, `pending` (in process of correction) , `correct`, `wrong`                      |
+| filename    | string? | If _status_ is not `empty` and [IslandInput](#islandinput) _type_ is `file`, the name of the last submitted file.    |
+| value       | string? | If _status_ is not `empty` and [IslandInput](#islandinput) _type_ is not `file`, the last submitted plain text value |
+| submittedAt | string? | If _status_ is not `empty`, the time of last submission in Unix milliseconds.                                        |
+
+
+### KnowledgeBar
+
+| Field       | Type   | Description                                            |
+|-------------|--------|--------------------------------------------------------|
+| territoryId | string | ID of territory this knowledge bar belongs to          |
+| value       | int    | Player's knowledge in the territory                    |
+| total       | int    | Total amount of knowledge that exists in the territory |
 
 ### Event
 
@@ -370,13 +446,29 @@ curl --request POST \
 | playerUpdate | [PlayerUpdateEvent](#playerupdateevent) | If event is a player update event, this field is present.                            |
 | timestamp    | string                                  | Time of event emission in Unix milliseconds. Can be used to discard very old events. |
 
+
+### Cost
+
+| Field | Type                    | Description                                                    |
+|-------|-------------------------|----------------------------------------------------------------|
+| items | [CostItem](#costitem)[] | An array of [CostItem](#costitem) determining the needed items |
+
+
+### CostItem
+
+| Field  | Type   | Description                                    |
+|--------|--------|------------------------------------------------|
+| type   | string | Type of the needed item. One of `fuel`, `coin` |
+| amount | int    | The number of items needed of this type        |
+
+
 ### TravelCheckResult
 
-| Field    | Type    | Description                                                    |
-|----------|---------|----------------------------------------------------------------|
-| feasible | boolean | True if the travel can be done, false otherwise.               |
-| fuelCost | int     | The fuel cost of this travel                                   |
-| reason   | string? | If _feasible_ is false, this field is presents and reports why |
+| Field      | Type          | Description                                                    |
+|------------|---------------|----------------------------------------------------------------|
+| feasible   | boolean       | True if the travel can be done, false otherwise.               |
+| travelCost | [Cost](#cost) | An object representing the needed items for the travel         |
+| reason     | string?       | If _feasible_ is false, this field is presents and reports why |
 
 
 ### RefuelCheckResult
@@ -387,10 +479,20 @@ curl --request POST \
 | coinCostPerUnit    | int    | The number of coins needed to buy a unit of fuel.                               |
 | maxReason          | string | A description for the cause of _maxAvailableAmount_                             |
 
+
+### AnchorCheckResult
+
+| Field         | Type          | Description                                                    |
+|---------------|---------------|----------------------------------------------------------------|
+| feasible      | boolean       | True if the travel can be done, false otherwise                |
+| anchoringCost | [Cost](#cost) | An object representing the needed items for anchoring          |
+| reason        | string?       | If _feasible_ is false, this field is presents and reports why |
+
+
 ### PlayerUpdateEvent
 
-| Field  | Type              | Description                                                      |
-|--------|-------------------|------------------------------------------------------------------|
-| reason | string            | The reason for change in player state. One of `travel`, `refuel` |
-| player | [Player](#player) | The new value of player object.                                  |
+| Field  | Type              | Description                                                                                         |
+|--------|-------------------|-----------------------------------------------------------------------------------------------------|
+| reason | string            | The reason for change in player state. One of `initial`, `travel`, `refuel`, `correction`, `anchor` |
+| player | [Player](#player) | The new value of player object.                                                                     |
 

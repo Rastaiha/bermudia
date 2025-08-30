@@ -78,20 +78,21 @@ func (s sqlIslandRepository) ReserveIDForTerritory(ctx context.Context, territor
 	return nil
 }
 
-func (s sqlIslandRepository) GetByID(ctx context.Context, id string) (*domain.IslandRawContent, error) {
+func (s sqlIslandRepository) GetByID(ctx context.Context, id string) (*domain.IslandRawContent, string, error) {
+	var territoryId string
 	var content []byte
-	err := s.db.QueryRowContext(ctx, `SELECT content FROM islands WHERE id = $1`, id).Scan(&content)
+	err := s.db.QueryRowContext(ctx, `SELECT territory_id, content FROM islands WHERE id = $1`, id).Scan(&territoryId, &content)
 	if errors.Is(err, sql.ErrNoRows) {
-		return nil, domain.ErrIslandNotFound
+		return nil, "", domain.ErrIslandNotFound
 	}
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
 	var result domain.IslandRawContent
 	if err := json.Unmarshal(content, &result); err != nil {
-		return nil, err
+		return nil, "", err
 	}
-	return &result, nil
+	return &result, territoryId, nil
 }
 
 func (s sqlIslandRepository) GetTerritory(ctx context.Context, id string) (string, error) {
@@ -124,4 +125,20 @@ func (s sqlIslandRepository) GetOrCreateUserComponent(ctx context.Context, islan
 	}
 
 	return component, nil
+}
+
+func (s sqlIslandRepository) ResourceIsRelatedToIsland(ctx context.Context, userId int32, islandId string, resourceId string) error {
+	var exists bool
+	err := s.db.QueryRowContext(ctx, `SELECT TRUE FROM user_components WHERE user_id = $1 AND island_id = $2 and resource_id = $3 LIMIT 1 ;`,
+		userId, islandId, resourceId).Scan(&exists)
+	if errors.Is(err, sql.ErrNoRows) {
+		return domain.ErrResourceNotRelatedToIsland
+	}
+	if err != nil {
+		return err
+	}
+	if !exists {
+		return domain.ErrResourceNotRelatedToIsland
+	}
+	return nil
 }

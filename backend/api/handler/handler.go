@@ -11,6 +11,8 @@ import (
 	"log"
 	"log/slog"
 	"net/http"
+	"os"
+	"regexp"
 	"time"
 )
 
@@ -37,7 +39,7 @@ func New(authService *service.Auth, territoryService *service.Territory, islandS
 func (h *Handler) Start() {
 	r := chi.NewRouter()
 
-	r.Use(middleware.Logger)
+	r.Use(logger())
 	r.Use(corsMiddleware)
 	r.Use(middleware.Recoverer)
 	r.Use(middleware.Timeout(30 * time.Second))
@@ -66,6 +68,8 @@ func (h *Handler) Start() {
 			r.Post("/travel", h.Travel)
 			r.Post("/refuel_check", h.RefuelCheck)
 			r.Post("/refuel", h.Refuel)
+			r.Post("/anchor_check", h.AnchorCheck)
+			r.Post("/anchor", h.Anchor)
 		})
 	})
 
@@ -113,5 +117,28 @@ func corsMiddleware(next http.Handler) http.Handler {
 		}
 
 		next.ServeHTTP(w, r)
+	})
+}
+
+var tokenPattern = regexp.MustCompile(`token?=(\S+) `)
+
+func logger() func(http.Handler) http.Handler {
+	return middleware.RequestLogger(&middleware.DefaultLogFormatter{
+		Logger: slog.NewLogLogger(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+			ReplaceAttr: func(_ []string, a slog.Attr) slog.Attr {
+				if a.Key != slog.MessageKey {
+					return a
+				}
+				msg := []byte(a.Value.String())
+				submatch := tokenPattern.FindSubmatchIndex(msg)
+				if len(submatch) < 4 {
+					return a
+				}
+				tokenRemoved := append(make([]byte, 0, len(msg)), msg[:submatch[2]]...)
+				tokenRemoved = append(tokenRemoved, []byte("***")...)
+				tokenRemoved = append(tokenRemoved, msg[submatch[3]:]...)
+				return slog.String(a.Key, string(tokenRemoved))
+			},
+		}), slog.LevelInfo),
 	})
 }

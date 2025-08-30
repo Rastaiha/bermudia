@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"errors"
 	"github.com/Rastaiha/bermudia/internal/domain"
 	"log/slog"
 	"net/http"
@@ -8,8 +9,8 @@ import (
 )
 
 type event struct {
-	PlayerUpdate *domain.PlayerUpdateEvent `json:"playerUpdate"`
-	Timestamp    int64                     `json:"timestamp,string"`
+	PlayerUpdate *domain.FullPlayerUpdateEvent `json:"playerUpdate"`
+	Timestamp    int64                         `json:"timestamp,string"`
 }
 
 func (h *Handler) sendEvent(userId int32, e event) {
@@ -31,5 +32,9 @@ func (h *Handler) StreamEvents(w http.ResponseWriter, r *http.Request) {
 		slog.Error("websocket upgrade failed", err)
 		return
 	}
-	h.connectionHub.Register(user.ID, conn)
+	connection := h.connectionHub.Register(user.ID, conn)
+	if err := h.playerService.SendInitialEvents(r.Context(), user.ID); err != nil {
+		slog.Error("send initial events failed", slog.String("error", err.Error()))
+		h.connectionHub.RemoveConnection(user.ID, connection, errors.New("failed to send initial events"))
+	}
 }

@@ -93,12 +93,15 @@ func (s sqlTerritoryRepository) GetTerritoryByID(ctx context.Context, territoryI
 }
 
 // ListTerritories returns all available territories from embedded files
-func (s sqlTerritoryRepository) ListTerritories(ctx context.Context) ([]domain.Territory, error) {
-	var result []domain.Territory
+func (s sqlTerritoryRepository) ListTerritories(ctx context.Context) (result []domain.Territory, err error) {
 	rows, err := s.db.QueryContext(ctx, s.columns())
 	if err != nil {
 		return nil, err
 	}
+	defer func() {
+		closeErr := rows.Close()
+		err = errors.Join(err, closeErr)
+	}()
 	for rows.Next() {
 		var t domain.Territory
 		if err := s.scan(rows, &t); err != nil {
@@ -106,5 +109,5 @@ func (s sqlTerritoryRepository) ListTerritories(ctx context.Context) ([]domain.T
 		}
 		result = append(result, t)
 	}
-	return result, rows.Close()
+	return result, nil
 }

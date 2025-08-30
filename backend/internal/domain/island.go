@@ -16,9 +16,14 @@ type IslandInputContent struct {
 }
 
 type IslandInputComponent struct {
-	ID       string        `json:"id,omitempty"`
-	IFrame   *IslandIFrame `json:"iframe,omitempty"`
-	Question *Question     `json:"question,omitempty"`
+	ID       string               `json:"id,omitempty"`
+	IFrame   *IslandIFrame        `json:"iframe,omitempty"`
+	Question *IslandInputQuestion `json:"question,omitempty"`
+}
+
+type IslandInputQuestion struct {
+	Question
+	KnowledgeAmount int32 `json:"knowledgeAmount"`
 }
 
 type IslandRawContent struct {
@@ -60,6 +65,7 @@ type SubmissionState struct {
 	Submittable bool   `json:"submittable"`
 	Status      string `json:"status"`
 	Filename    string `json:"filename,omitempty"`
+	Value       string `json:"value,omitempty"`
 	SubmittedAt int64  `json:"submittedAt,omitempty,string"`
 }
 
@@ -68,4 +74,14 @@ type UserComponent struct {
 	UserID      int32
 	ComponentID string
 	ResourceID  string
+}
+
+func PlayerHasAccessToIsland(player Player, islandID string) error {
+	if player.AtIsland == islandID && player.Anchored {
+		return nil
+	}
+	return Error{
+		reason: ErrorReasonRuleViolation,
+		text:   "شما باید در این جزیره لنگر بیندازید تا بتوانید وارد آن شوید.",
+	}
 }

@@ -1,25 +1,28 @@
 package domain
 
-import "time"
+import (
+	"database/sql"
+	"time"
+)
 
 type Question struct {
-	ID              string   `json:"id"`
-	Text            string   `json:"text"`
-	KnowledgeAmount int32    `json:"knowledgeAmount"`
-	RewardSources   []int    `json:"reward_sources"`
-	InputType       string   `json:"inputType"`
-	InputAccept     []string `json:"inputAccept"`
+	ID            string   `json:"id"`
+	Text          string   `json:"text"`
+	RewardSources []int    `json:"reward_sources"`
+	InputType     string   `json:"inputType"`
+	InputAccept   []string `json:"inputAccept"`
 }
 
 type Answer struct {
-	ID         string
-	UserID     int32
-	QuestionID string
-	Status     AnswerStatus
-	FileID     string
-	Filename   string
-	CreatedAt  time.Time
-	UpdatedAt  time.Time
+	ID          string
+	UserID      int32
+	QuestionID  string
+	Status      AnswerStatus
+	FileID      sql.NullString
+	Filename    sql.NullString
+	TextContent sql.NullString
+	CreatedAt   time.Time
+	UpdatedAt   time.Time
 }
 
 type AnswerStatus int
@@ -50,7 +53,8 @@ func GetSubmissionStateFromAnswer(answer Answer) SubmissionState {
 	return SubmissionState{
 		Submittable: answer.Status == AnswerStatusEmpty || answer.Status == AnswerStatusWrong,
 		Status:      status,
-		Filename:    answer.Filename,
+		Filename:    answer.Filename.String,
+		Value:       answer.TextContent.String,
 		SubmittedAt: submittedAt,
 	}
 }
@@ -70,7 +74,14 @@ var (
 	}
 )
 
-type QueuedCorrection struct {
+type KnowledgeBar struct {
+	TerritoryID string `json:"territoryId"`
+	Value       int32  `json:"value"`
+	Total       int32  `json:"total"`
+}
+
+type Correction struct {
+	ID        string
 	AnswerID  string
 	IsCorrect bool
 	CreatedAt time.Time
