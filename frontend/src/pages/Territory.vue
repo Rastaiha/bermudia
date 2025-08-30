@@ -11,8 +11,7 @@
       <PlayerInfo :player="player" :username="username" v-if="player" />
 
       <Transition name="popup-fade">
-        <IslandInfoBox v-if="selectedIsland" :key="selectedIsland" :selectedIsland="selectedIsland" :selectedIslandName="getIslandById(selectedIsland).name"
-        :player="player"
+        <IslandInfoBox v-if="selectedIsland" :key="selectedIsland" :selectedIsland="selectedIsland" :player="player"
           :refuel="refuel" :travel="travel" :infoBoxStyle="infoBoxStyle" :isRefuelIsland="isSelectedIslandRefuelIsland"
           :isAdjacent="isSelectedIslandAdjacent" :loading="isInfoBoxLoading" @navigateToIsland="navigateToIsland"
           @travelToIsland="travelToIsland" @buyFuel="buyFuelFromIsland" />
@@ -66,16 +65,16 @@ const isSelectedIslandRefuelIsland = computed(() => {
 const isSelectedIslandAdjacent = computed(() => {
   if (!selectedIsland.value || !player.value) return false;
   return edges.value.some(edge =>
-    (edge.from === player.value.atIsland && edge.to === selectedIsland.value) ||
-    (edge.to === player.value.atIsland && edge.from === selectedIsland.value)
+    (edge.from === player.value.atIsland && edge.to === hoveredIsland.value.id) ||
+    (edge.to === player.value.atIsland && edge.from === hoveredIsland.value.id)
   );
 });
 
 const infoBoxStyle = computed(() => {
   const _ = transformCounter.value;
   const svgElement = mapViewComponentRef.value?.svgRef;
-  if (!selectedIsland.value || !svgElement) return { display: 'none' };
-  const island = getIslandById(selectedIsland.value);
+  if (!hoveredIsland.value || !svgElement) return { display: 'none' };
+  const island = hoveredIsland.value;
   const pt = svgElement.createSVGPoint();
   pt.x = island.x;
   pt.y = island.y;
@@ -92,8 +91,6 @@ const infoBoxStyle = computed(() => {
 const updateInfoBoxPosition = () => {
   transformCounter.value++;
 };
-
-const getIslandById = (id) => islands.value.find(island => island.id === id);
 
 const navigateToIsland = (islandId) => {
   router.push({ name: 'Island', params: { id: territoryId.value, islandId: islandId } });
@@ -181,13 +178,13 @@ const updateRefuel = async () => {
 // --- Event Handlers from Child Components ---
 const showInfoBox = async (island) => {
   if (!player.value) return;
-  if (selectedIsland.value && selectedIsland.value === island.id) {
+  if (hoveredIsland.value && hoveredIsland.value.id === island.id) {
     hideInfoBox();
     return;
   }
 
   isInfoBoxLoading.value = true;
-  selectedIsland.value = island.id;
+  hoveredIsland.value = island;
   travel.value = null;
   refuel.value = null;
   travelError.value = null;
