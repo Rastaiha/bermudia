@@ -4,7 +4,7 @@
             class="bg-[rgb(121,200,237,0.8)] text-[#310f0f] p-4 rounded-xl font-vazir text-base z-[10000] flex flex-col items-center pointer-events-auto w-60"
             @pointerdown.stop>
 
-            <h3 class="text-lg font-bold text-center shrink-0">{{ hoveredIsland.name }}</h3>
+            <h3 class="text-lg font-bold text-center shrink-0">{{ selectedIsland.name }}</h3>
 
             <div class="w-full grid transition-[grid-template-rows] duration-300 ease-smooth-expand"
                 :class="loading ? 'grid-rows-[0fr]' : 'grid-rows-[1fr]'">
@@ -49,7 +49,7 @@
                             </div>
                             <button
                                 :disabled="loading || !isAdjacent || !!travelError || (travel && player.fuel < travel.fuelCost)"
-                                @pointerdown.stop="$emit('travelToIsland', hoveredIsland.id)"
+                                @pointerdown.stop="$emit('travelToIsland', selectedIsland.id)"
                                 class="btn-hover w-full p-2 rounded-lg bg-green-600 text-white disabled:opacity-50 disabled:cursor-not-allowed text-xs">
                                 <span v-if="!isAdjacent">مسیر مستقیمی وجود ندارد</span>
                                 <span v-else-if="travel && player.fuel < travel.fuelCost">سوخت کافی نیست</span>
@@ -71,7 +71,7 @@
 import { ref, computed, watch, nextTick } from 'vue';
 
 const props = defineProps({
-    hoveredIsland: Object,
+    selectedIsland: Object,
     player: Object,
     refuel: Object,
     travel: Object,
@@ -87,7 +87,7 @@ const emit = defineEmits(['buyFuel', 'navigateToIsland', 'travelToIsland']);
 const fuelInput = ref(null);
 const fuelCount = ref(0);
 
-const isCurrentIsland = computed(() => props.hoveredIsland.id && props.player && props.hoveredIsland.id === props.player.atIsland);
+const isCurrentIsland = computed(() => props.selectedIsland.id && props.player && props.selectedIsland.id === props.player.atIsland);
 
 const fuelPriceText = computed(() => {
     if (!props.refuel || !fuelCount.value || fuelCount.value <= 0) return "خرید سوخت";
