@@ -11,8 +11,7 @@
       <PlayerInfo :player="player" :username="username" v-if="player" />
 
       <Transition name="popup-fade">
-        <IslandInfoBox v-if="hoveredIsland" :key="hoveredIsland" :hoveredIsland="hoveredIsland" :hoveredIslandName="getIslandById(hoveredIsland).name"
-        :player="player"
+        <IslandInfoBox v-if="hoveredIsland" :key="hoveredIsland" :hoveredIsland="hoveredIsland" :player="player"
           :refuel="refuel" :travel="travel" :infoBoxStyle="infoBoxStyle" :isRefuelIsland="ishoveredIslandRefuelIsland"
           :isAdjacent="ishoveredIslandAdjacent" :loading="isInfoBoxLoading" @navigateToIsland="navigateToIsland"
           @travelToIsland="travelToIsland" @buyFuel="buyFuelFromIsland" />
@@ -66,8 +65,8 @@ const ishoveredIslandRefuelIsland = computed(() => {
 const ishoveredIslandAdjacent = computed(() => {
   if (!hoveredIsland.value || !player.value) return false;
   return edges.value.some(edge =>
-    (edge.from === player.value.atIsland && edge.to === hoveredIsland.value) ||
-    (edge.to === player.value.atIsland && edge.from === hoveredIsland.value)
+    (edge.from === player.value.atIsland && edge.to === hoveredIsland.value.id) ||
+    (edge.to === player.value.atIsland && edge.from === hoveredIsland.value.id)
   );
 });
 
@@ -75,7 +74,7 @@ const infoBoxStyle = computed(() => {
   const _ = transformCounter.value;
   const svgElement = mapViewComponentRef.value?.svgRef;
   if (!hoveredIsland.value || !svgElement) return { display: 'none' };
-  const island = getIslandById(hoveredIsland.value);
+  const island = hoveredIsland.value;
   const pt = svgElement.createSVGPoint();
   pt.x = island.x;
   pt.y = island.y;
@@ -92,8 +91,6 @@ const infoBoxStyle = computed(() => {
 const updateInfoBoxPosition = () => {
   transformCounter.value++;
 };
-
-const getIslandById = (id) => islands.value.find(island => island.id === id);
 
 const navigateToIsland = (islandId) => {
   router.push({ name: 'Island', params: { id: territoryId.value, islandId: islandId } });
@@ -181,13 +178,13 @@ const updateRefuel = async () => {
 // --- Event Handlers from Child Components ---
 const showInfoBox = async (island) => {
   if (!player.value) return;
-  if (hoveredIsland.value && hoveredIsland.value === island.id) {
+  if (hoveredIsland.value && hoveredIsland.value.id === island.id) {
     hideInfoBox();
     return;
   }
 
   isInfoBoxLoading.value = true;
-  hoveredIsland.value = island.id;
+  hoveredIsland.value = island;
   travel.value = null;
   refuel.value = null;
   travelError.value = null;
