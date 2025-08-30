@@ -65,16 +65,16 @@ const isSelectedIslandRefuelIsland = computed(() => {
 const isSelectedIslandAdjacent = computed(() => {
   if (!selectedIsland.value || !player.value) return false;
   return edges.value.some(edge =>
-    (edge.from === player.value.atIsland && edge.to === hoveredIsland.value.id) ||
-    (edge.to === player.value.atIsland && edge.from === hoveredIsland.value.id)
+    (edge.from === player.value.atIsland && edge.to === selectedIsland.value.id) ||
+    (edge.to === player.value.atIsland && edge.from === selectedIsland.value.id)
   );
 });
 
 const infoBoxStyle = computed(() => {
   const _ = transformCounter.value;
   const svgElement = mapViewComponentRef.value?.svgRef;
-  if (!hoveredIsland.value || !svgElement) return { display: 'none' };
-  const island = hoveredIsland.value;
+  if (!selectedIsland.value || !svgElement) return { display: 'none' };
+  const island = selectedIsland.value;
   const pt = svgElement.createSVGPoint();
   pt.x = island.x;
   pt.y = island.y;
@@ -178,13 +178,13 @@ const updateRefuel = async () => {
 // --- Event Handlers from Child Components ---
 const showInfoBox = async (island) => {
   if (!player.value) return;
-  if (hoveredIsland.value && hoveredIsland.value.id === island.id) {
+  if (selectedIsland.value && selectedIsland.value.id === island.id) {
     hideInfoBox();
     return;
   }
 
   isInfoBoxLoading.value = true;
-  hoveredIsland.value = island;
+  selectedIsland.value = island;
   travel.value = null;
   refuel.value = null;
   travelError.value = null;
