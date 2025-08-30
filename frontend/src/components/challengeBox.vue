@@ -1,24 +1,74 @@
 <template>
-    <div class="relative bg-slate-900/80 border border-sky-500/40 rounded-3xl shadow-lg overflow-hidden transition-all duration-300 ease-linear p-10 flex flex-col gap-6 items-center text-center"
-        :class="`challenge-${challenge.submissionState.status}`">
-        <p class="text-2xl font-medium leading-relaxed">{{ challenge.description }}</p>
-        <div class="flex w-full max-w-lg mt-4 flex-row-reverse">
-            <input v-if="challenge.type !== 'file'" :type="challenge.type" v-model="inputValue"
-                class="flex-grow border border-sky-500/40 bg-black/20 text-gray-200 px-4 py-3 rounded-l-xl text-base outline-none transition-shadow duration-200 focus:ring-2 focus:ring-sky-500/60"
-                placeholder="پاسخ خود را اینجا وارد کنید..." :disabled="!challenge.submissionState.submittable" />
-            <input v-else :type="challenge.type" :accept="challenge.accept?.join(',')" @change="handleFileChange"
-                class="flex-grow border border-sky-500/40 bg-black/20 text-gray-200 px-4 py-3 rounded-l-xl text-base outline-none transition-shadow duration-200 focus:ring-2 focus:ring-sky-500/60"
-                :disabled="!challenge.submissionState.submittable" />
-            <button v-if="challenge.submissionState.submittable" @click="submit"
-                class="border-none bg-blue-500 text-white px-6 py-3 text-base font-semibold rounded-r-xl cursor-pointer transition-colors duration-200 hover:bg-blue-600">
-                ارسال
-            </button>
+    <div class="relative bg-slate-900/90 border border-slate-700 rounded-2xl shadow-xl p-8 transition-all duration-500">
+
+        <div class="text-center">
+            <p class="text-xl md:text-2xl font-light text-gray-200 leading-relaxed">{{ challenge.description }}</p>
+        </div>
+
+        <div class="mt-8 flex items-center justify-center" style="min-height: 100px;">
+            <transition name="popup-fade" mode="out-in">
+
+                <div v-if="challenge.submissionState.status === 'empty' || challenge.submissionState.status === 'wrong'"
+                    class="w-full max-w-lg" key="form">
+                    <p v-if="challenge.submissionState.status === 'wrong'" class="text-center text-red-400 mb-4">
+                        پاسخ اشتباه بود، دوباره تلاش کنید.
+                    </p>
+
+                    <div v-if="challenge.type !== 'file'" class="flex items-center gap-3">
+                        <input v-model="inputValue" :type="challenge.type" placeholder="پاسخ..."
+                            class="w-full p-3 text-lg text-center text-gray-100 bg-slate-800/70 rounded-lg border-2 border-slate-600 focus:border-cyan-500 focus:ring-0 outline-none transition-colors"
+                            :disabled="!challenge.submissionState.submittable" @keyup.enter="submit" />
+                        <button @click="submit" :disabled="!challenge.submissionState.submittable"
+                            class="btn-hover px-6 py-3 text-lg font-semibold text-white bg-[#07458bb5] rounded-lg shrink-0">
+                            ارسال
+                        </button>
+                    </div>
+
+                    <div v-else class="flex items-center justify-center gap-3">
+                        <label for="file-upload"
+                            class="btn-hover flex-grow text-center px-5 py-3 text-lg font-medium text-gray-200 bg-slate-700/80 rounded-lg border-2 border-transparent hover:border-cyan-500 cursor-pointer">
+                            <span v-if="!selectedFileName">انتخاب فایل</span>
+                            <span v-else class="text-cyan-400">{{ selectedFileName }}</span>
+                        </label>
+                        <input id="file-upload" type="file" class="hidden" :accept="challenge.accept?.join(',')"
+                            @change="handleFileChange" :disabled="!challenge.submissionState.submittable" />
+                        <button @click="submit" :disabled="!challenge.submissionState.submittable || !inputValue"
+                            class="btn-hover px-6 py-3 text-lg font-semibold text-white bg-green-600 rounded-lg disabled:bg-gray-600 disabled:opacity-50 disabled:transform-none disabled:filter-none shrink-0">
+                            ارسال
+                        </button>
+                    </div>
+
+                </div>
+
+                <div v-else-if="challenge.submissionState.status === 'pending'" key="pending"
+                    class="flex flex-col items-center justify-center text-gray-400">
+                    <svg class="animate-spin h-10 w-10 text-cyan-500" xmlns="http://www.w3.org/2000/svg" fill="none"
+                        viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4">
+                        </circle>
+                        <path class="opacity-75" fill="currentColor"
+                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                        </path>
+                    </svg>
+                    <p class="mt-4 text-lg">در حال بررسی پاسخ...</p>
+                </div>
+
+                <div v-else-if="challenge.submissionState.status === 'correct'" key="correct"
+                    class="flex flex-col items-center justify-center text-green-400">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12" fill="none" viewBox="0 0 24 24"
+                        stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <p class="mt-4 text-xl font-semibold">پاسخ شما صحیح است!</p>
+                </div>
+            </transition>
         </div>
     </div>
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 
 const props = defineProps({
     challenge: {
@@ -29,7 +79,14 @@ const props = defineProps({
 
 const emit = defineEmits(['submit']);
 
-const inputValue = ref(props.challenge.type === 'file' ? null : '');
+const inputValue = ref(props.challenge.type === 'file' ? null : (props.challenge.type === 'number' ? null : ''));
+
+const selectedFileName = computed(() => {
+    if (inputValue.value instanceof File) {
+        return inputValue.value.name;
+    }
+    return '';
+});
 
 const handleFileChange = (event) => {
     const file = event.target.files[0];
@@ -39,19 +96,33 @@ const handleFileChange = (event) => {
 };
 
 const submit = () => {
-    emit('submit', {
-        inputId: props.challenge.id,
-        value: inputValue.value,
-    });
+    if (props.challenge.submissionState.submittable) {
+        emit('submit', {
+            inputId: props.challenge.id,
+            data: inputValue.value,
+        });
+    }
 };
 </script>
 
 <style scoped>
-.challenge-correct {
-    border-color: #22c55e;
+.popup-fade-enter-active,
+.popup-fade-leave-active {
+    transition: opacity 0.3s ease, transform 0.3s ease;
 }
 
-.challenge-incorrect {
-    border-color: #ef4444;
+.popup-fade-enter-from,
+.popup-fade-leave-to {
+    opacity: 0;
+    transform: translateY(10px);
+}
+
+.btn-hover {
+    transition: transform 0.2s ease, filter 0.2s ease;
+}
+
+.btn-hover:hover:not(:disabled) {
+    transform: scale(1.05);
+    filter: brightness(1.1);
 }
 </style>

@@ -3,7 +3,7 @@
     class="w-full min-h-screen p-8 box-border flex justify-center items-center bg-cover bg-fixed bg-center font-sans text-gray-200"
     :style="{ backgroundImage: `url(${backgroundImage})` }" @mousemove="updateMousePosition">
 
-    <FloatingUI :chipBoxText="chipBox" :tooltipText="tooltipText" :mousePosition="mousePosition" />
+    <FloatingUI :tooltipText="tooltipText" :mousePosition="mousePosition" />
     <BackButton :territoryId="id" @showTooltip="showTooltip" @hideTooltip="hideTooltip" v-if="isLoaded" />
 
     <div v-if="isLoaded" class="w-full max-w-4xl flex flex-col gap-10">
@@ -22,8 +22,9 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue';
-import { useTimeout } from '@/components/service/ChainedTimeout';
+import { ref, onMounted } from 'vue';
+// این خط تغییر کرد 👇
+import { useToast } from 'vue-toastification';
 import { getIsland, submitAnswer } from "@/services/api";
 
 import Iframe from '@/components/Iframe.vue';
@@ -38,12 +39,11 @@ const props = defineProps({
 
 const isLoaded = ref(false);
 const backgroundImage = ref('');
-const chipBox = ref('');
 const tooltipText = ref('');
 const mousePosition = ref({ x: 0, y: 0 });
 const loadingMessage = ref('درحال بارگذاری اطلاعات جزیره...');
 const components = ref([]);
-const { startTimeout, clear } = useTimeout();
+const toast = useToast();
 
 const fetchIslandData = async (id) => {
   try {
@@ -54,31 +54,32 @@ const fetchIslandData = async (id) => {
   } catch (error) {
     console.error('Failed to load island data from API:', error);
     loadingMessage.value = `خطا در بارگذاری جزیره: ${error.message}`;
+    toast.error(error.message || 'خطا در دریافت اطلاعات جزیره');
   }
 };
 
-const handleChallengeSubmit = async ({ inputId, value }) => {
-  if (!value) {
-    chipBox.value = `چیزی برای ارسال وارد نشده‌است!`;
-    startTimeout(() => { chipBox.value = ''; }, 5000);
+const handleChallengeSubmit = async ({ inputId, data }) => {
+  if (data === '' || data === null || data === undefined) {
+    toast.error(`چیزی برای ارسال وارد نشده‌است!`);
     return;
   }
 
   const formData = new FormData();
-  formData.append('data', value);
+  formData.append('data', data);
 
   try {
     const submissionState = await submitAnswer(inputId, formData);
+
     const componentIndex = components.value.findIndex(c => c.input && c.input.id === inputId);
     if (componentIndex !== -1) {
       components.value[componentIndex].input.submissionState = submissionState;
     }
-    chipBox.value = `پاسخ ثبت شد. پس از بررسی نمره آن ثبت می‌شود.`;
+
+    toast.success(`پاسخ شما با موفقیت ثبت شد.`);
   } catch (error) {
     console.error('Error submitting answer:', error);
-    chipBox.value = 'خطا در ارسال پاسخ!';
+    toast.error(error.message || 'خطا در ارسال پاسخ!');
   }
-  startTimeout(() => { chipBox.value = ''; }, 5000);
 };
 
 const updateMousePosition = (event) => {
@@ -90,10 +91,6 @@ const hideTooltip = () => { tooltipText.value = ''; };
 
 onMounted(() => {
   fetchIslandData(props.islandId);
-});
-
-onUnmounted(() => {
-  clear();
 });
 </script>
 
