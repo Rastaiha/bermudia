@@ -57,9 +57,7 @@ const isLoading = ref(true);
 // --- Computed Properties ---
 const isSelectedIslandRefuelIsland = computed(() => {
   if (!selectedIsland.value) return false;
-  console.log(refuelIslands.value);
-  console.log(selectedIsland.value);
-  return refuelIslands.value.some(island => island.id === selectedIsland.value);
+  return refuelIslands.value.some(island => island.id === selectedIsland.value.id);
 });
 
 const isSelectedIslandAdjacent = computed(() => {
