@@ -24,7 +24,7 @@
 <script setup>
 import { ref, onMounted, computed, nextTick, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { getPlayer, getMe, getToken, checkTravel, travelTo, refuelCheck, buyFuel, logout, getTerritory } from "@/services/api.js";
+import { getPlayer, getMe, getToken, travelCheck, travelTo, refuelCheck, buyFuel, logout, getTerritory } from "@/services/api.js";
 import { usePlayerWebSocket } from '@/components/service/WebSocket.js';
 
 import MapView from '@/components/MapView.vue';
@@ -159,7 +159,7 @@ const setupPlayerAndUserData = (playerAndUserData) => {
 const updateTravel = async () => {
   if (!player.value || !selectedIsland.value) return;
   try {
-    travel.value = await checkTravel(player.value.atIsland, selectedIsland.value.id);
+    travel.value = await travelCheck(player.value.atIsland, selectedIsland.value.id);
   } catch (err) {
     travelError.value = err.message;
   }
