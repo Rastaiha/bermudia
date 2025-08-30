@@ -13,7 +13,7 @@
       <Transition name="popup-fade">
         <IslandInfoBox v-if="hoveredIsland" :key="hoveredIsland" :hoveredIsland="hoveredIsland" :hoveredIslandName="getIslandById(hoveredIsland).name"
         :player="player"
-          :refuel="refuel" :travel="travel" :infoBoxStyle="infoBoxStyle" :isFuelStation="ishoveredIslandFuelStation"
+          :refuel="refuel" :travel="travel" :infoBoxStyle="infoBoxStyle" :isRefuelIsland="ishoveredIslandRefuelIsland"
           :isAdjacent="ishoveredIslandAdjacent" :loading="isInfoBoxLoading" @navigateToIsland="navigateToIsland"
           @travelToIsland="travelToIsland" @buyFuel="buyFuelFromIsland" />
       </Transition>
@@ -56,11 +56,11 @@ const loadingMessage = ref('Loading map data...');
 const isLoading = ref(true);
 
 // --- Computed Properties ---
-const ishoveredIslandFuelStation = computed(() => {
+const ishoveredIslandRefuelIsland = computed(() => {
   if (!hoveredIsland.value) return false;
   console.log(refuelIslands.value);
   console.log(hoveredIsland.value);
-  return refuelIslands.value.some(station => station.id === hoveredIsland.value);
+  return refuelIslands.value.some(island => island.id === hoveredIsland.value);
 });
 
 const ishoveredIslandAdjacent = computed(() => {
@@ -195,7 +195,7 @@ const showInfoBox = async (island) => {
   try {
     const isCurrent = island.id === player.value.atIsland;
     if (isCurrent) {
-      if (ishoveredIslandFuelStation.value) {
+      if (ishoveredIslandRefuelIsland.value) {
         await updateRefuel();
       } else {
         await nextTick();
