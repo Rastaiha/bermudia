@@ -13,7 +13,7 @@
         <div class="mb-3">
             <div class="flex justify-between px-1 mb-1 text-xs text-gray-300 drop-shadow-md">
                 <span>دانش</span>
-                <span>{{ knowledge.total }} / {{ Math.floor(knowledge.value) }}</span>
+                <span>{{ knowledge.total }} / {{ knowledge.value }}</span>
             </div>
             <div class="relative flex items-center w-full h-8 rounded-md overflow-hidden bg-black/30 shadow-inner">
                 <img src="/images/icons/knowledge.png" alt="Knowledge Icon"
@@ -26,7 +26,7 @@
         <div>
             <div class="flex justify-between px-1 mb-1 text-xs text-gray-300 drop-shadow-md">
                 <span>سوخت</span>
-                <span>{{ player.fuelCap }} / {{ Math.floor(player.fuel) }}</span>
+                <span>{{ player.fuelCap }} / {{ player.fuel }}</span>
             </div>
             <div class="relative flex items-center w-full h-8 rounded-md overflow-hidden bg-black/30 shadow-inner">
                 <img src="/images/icons/fuel.png" alt="Fuel Icon"
@@ -66,12 +66,12 @@ const knowledge = computed(() => {
 
 const fuelPercentage = computed(() => {
     if (!props.player || props.player.fuelCap === 0) return 0;
-    return Math.min((props.player.fuel / props.player.fuelCap) * 100, 100);
+    return (props.player.fuel / props.player.fuelCap) * 100;
 });
 
 const knowledgePercentage = computed(() => {
     if (!knowledge.value || knowledge.value.total === 0) return 0;
-    return Math.min((knowledge.value.value / knowledge.value.total) * 100, 100);
+    return (knowledge.value.value / knowledge.value.total) * 100;
 });
 
 function logout() {
