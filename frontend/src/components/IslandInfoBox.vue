@@ -1,6 +1,6 @@
 <template>
     <Transition name="popup-fade">
-        <div v-if="hoveredIsland" :style="infoBoxStyle"
+        <div v-if="selectedIsland" :style="infoBoxStyle"
             class="bg-[rgb(121,200,237,0.8)] text-[#310f0f] p-4 rounded-xl font-vazir text-base z-[10000] flex flex-col items-center pointer-events-auto w-60"
             @pointerdown.stop>
 
@@ -107,7 +107,7 @@ const buyFuel = () => {
     }
 };
 
-watch(() => props.hoveredIsland, () => {
+watch(() => props.selectedIsland, () => {
     fuelCount.value = 0;
 });
 
