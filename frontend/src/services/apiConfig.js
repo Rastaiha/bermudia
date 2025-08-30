@@ -10,7 +10,7 @@ export const API_ENDPOINTS = {
 
   // Player & Travel
   getPlayer: `${API_BASE_URL}/player`,
-  checkTravel: `${API_BASE_URL}/travel_check`,
+  travelCheck: `${API_BASE_URL}/travel_check`,
   travelTo: `${API_BASE_URL}/travel`,
   refuelCheck: `${API_BASE_URL}/refuel_check`,
   buyFuel: `${API_BASE_URL}/refuel`,
