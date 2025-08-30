@@ -23,7 +23,6 @@
 
 <script setup>
 import { ref, onMounted } from 'vue';
-// این خط تغییر کرد 👇
 import { useToast } from 'vue-toastification';
 import { getIsland, submitAnswer } from "@/services/api";
 
