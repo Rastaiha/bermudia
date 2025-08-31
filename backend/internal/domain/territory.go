@@ -8,14 +8,15 @@ type Edge struct {
 
 // Territory represents a complete territory with islands and their connections
 type Territory struct {
-	ID              string           `json:"id"`
-	Name            string           `json:"name"`
-	BackgroundAsset string           `json:"backgroundAsset"`
-	StartIsland     string           `json:"startIsland"`
-	Islands         []Island         `json:"islands"`
-	Edges           []Edge           `json:"edges"`
-	RefuelIslands   []RefuelIsland   `json:"refuelIslands"`
-	TerminalIslands []TerminalIsland `json:"terminalIslands"`
+	ID                  string              `json:"id"`
+	Name                string              `json:"name"`
+	BackgroundAsset     string              `json:"backgroundAsset"`
+	StartIsland         string              `json:"startIsland"`
+	Islands             []Island            `json:"islands"`
+	Edges               []Edge              `json:"edges"`
+	RefuelIslands       []RefuelIsland      `json:"refuelIslands"`
+	TerminalIslands     []TerminalIsland    `json:"terminalIslands"`
+	IslandPrerequisites IslandPrerequisites `json:"islandPrerequisites"`
 }
 
 type RefuelIsland struct {
@@ -25,3 +26,5 @@ type RefuelIsland struct {
 type TerminalIsland struct {
 	ID string `json:"id"`
 }
+
+type IslandPrerequisites map[string][]string

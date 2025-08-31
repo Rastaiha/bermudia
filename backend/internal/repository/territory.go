@@ -37,12 +37,13 @@ func NewSqlTerritoryRepository(db *sql.DB) (domain.TerritoryStore, error) {
 }
 
 type territoryContent struct {
-	Name            string                  `json:"name"`
-	BackgroundAsset string                  `json:"backgroundAsset"`
-	Islands         []domain.Island         `json:"islands"`
-	Edges           []domain.Edge           `json:"edges"`
-	RefuelIslands   []domain.RefuelIsland   `json:"refuelIslands"`
-	TerminalIslands []domain.TerminalIsland `json:"terminalIslands"`
+	Name                string                     `json:"name"`
+	BackgroundAsset     string                     `json:"backgroundAsset"`
+	Islands             []domain.Island            `json:"islands"`
+	Edges               []domain.Edge              `json:"edges"`
+	RefuelIslands       []domain.RefuelIsland      `json:"refuelIslands"`
+	TerminalIslands     []domain.TerminalIsland    `json:"terminalIslands"`
+	IslandPrerequisites domain.IslandPrerequisites `json:"islandPrerequisites"`
 }
 
 func (s sqlTerritoryRepository) columns() string {
@@ -69,23 +70,28 @@ func (s sqlTerritoryRepository) scan(row scannable, territory *domain.Territory)
 	territory.Edges = tc.Edges
 	territory.RefuelIslands = tc.RefuelIslands
 	territory.TerminalIslands = tc.TerminalIslands
+	territory.IslandPrerequisites = tc.IslandPrerequisites
 	return nil
 }
 
-func (s sqlTerritoryRepository) CreateTerritory(ctx context.Context, territory *domain.Territory) error {
+func (s sqlTerritoryRepository) SetTerritory(ctx context.Context, territory *domain.Territory) error {
 	tc := territoryContent{
-		Name:            territory.Name,
-		BackgroundAsset: territory.BackgroundAsset,
-		Islands:         territory.Islands,
-		Edges:           territory.Edges,
-		RefuelIslands:   territory.RefuelIslands,
-		TerminalIslands: territory.TerminalIslands,
+		Name:                territory.Name,
+		BackgroundAsset:     territory.BackgroundAsset,
+		Islands:             territory.Islands,
+		Edges:               territory.Edges,
+		RefuelIslands:       territory.RefuelIslands,
+		TerminalIslands:     territory.TerminalIslands,
+		IslandPrerequisites: territory.IslandPrerequisites,
 	}
 	content, err := json.Marshal(tc)
 	if err != nil {
 		return err
 	}
-	_, err = s.db.ExecContext(ctx, `INSERT INTO territories (id, start_island, content, updated_at) VALUES ($1, $2, $3, $4)`, n(territory.ID), n(territory.StartIsland), content, time.Now().UTC())
+	_, err = s.db.ExecContext(ctx, `INSERT INTO territories (id, start_island, content, updated_at) VALUES ($1, $2, $3, $4)
+ON CONFLICT DO UPDATE SET start_island = EXCLUDED.start_island, content = EXCLUDED.content, updated_at = EXCLUDED.updated_at`,
+		n(territory.ID), n(territory.StartIsland), content, time.Now().UTC(),
+	)
 	return err
 }
 

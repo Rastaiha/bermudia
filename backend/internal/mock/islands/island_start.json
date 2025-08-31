@@ -2,32 +2,6 @@
   "components": [
     {
       "question": {
-        "inputType": "file",
-        "inputAccept": [
-          "image/png",
-          "image/jpeg"
-        ],
-        "knowledgeAmount": 50,
-        "text": "از جوابت عکس بگیر بفرست:"
-      }
-    },
-    {
-      "question": {
-        "inputType": "file",
-        "knowledgeAmount": 50,
-        "inputAccept": ["application/pdf"],
-        "text": "یه فایل pdf بفرست:"
-      }
-    },
-    {
-      "question": {
-        "inputType": "number",
-        "knowledgeAmount": 10,
-        "text": "جواب سؤال معروف 2x2 رو بفرست:"
-      }
-    },
-    {
-      "question": {
         "inputType": "text",
         "knowledgeAmount": 10,
         "text": "قاتل بروسلی کیه؟"

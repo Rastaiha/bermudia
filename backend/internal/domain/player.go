@@ -115,11 +115,15 @@ type TravelCheckResult struct {
 	Reason     string `json:"reason,omitempty"`
 }
 
-func TravelCheck(player Player, fromIsland, toIsland string, territory *Territory) (result TravelCheckResult) {
+func TravelCheck(player Player, fromIsland, toIsland string, territory *Territory, isDestinationIslandUnlocked bool) (result TravelCheckResult) {
 	result = TravelCheckResult{
 		Feasible:   false,
 		FuelCost:   travelFuelConsumption,
 		TravelCost: Cost{Items: []CostItem{{Type: CostItemTypeFuel, Amount: travelFuelConsumption}}},
+	}
+	if !isDestinationIslandUnlocked {
+		result.Reason = "باید قبل از سفر به این جزیره، سؤالات جزایر قبلی آن را پاسخ دهید."
+		return
 	}
 	if player.AtIsland != fromIsland {
 		result.Reason = "شما در جزیره اعلامی قرار ندارید."
@@ -129,7 +133,7 @@ func TravelCheck(player Player, fromIsland, toIsland string, territory *Territor
 		return (edge.From == fromIsland && edge.To == toIsland) ||
 			(edge.From == toIsland && edge.To == fromIsland)
 	}) {
-		result.Reason = "مسیری مستقیمی وجود ندارد."
+		result.Reason = "مسیر مستقیمی وجود ندارد."
 		return
 	}
 	if !canAfford(player, result.TravelCost) {
@@ -140,8 +144,8 @@ func TravelCheck(player Player, fromIsland, toIsland string, territory *Territor
 	return
 }
 
-func Travel(player Player, fromIsland, toIsland string, territory *Territory) (*PlayerUpdateEvent, error) {
-	check := TravelCheck(player, fromIsland, toIsland, territory)
+func Travel(player Player, fromIsland, toIsland string, territory *Territory, isDestinationIslandUnlocked bool) (*PlayerUpdateEvent, error) {
+	check := TravelCheck(player, fromIsland, toIsland, territory, isDestinationIslandUnlocked)
 	if !check.Feasible {
 		return nil, Error{
 			reason: ErrorReasonRuleViolation,
@@ -398,7 +402,7 @@ func Migrate(player Player, knowledgeBars []KnowledgeBar, currentTerritory Terri
 	if !slices.Contains(player.VisitedTerritories, toTerritory) {
 		player.VisitedTerritories = append(player.VisitedTerritories, destinationTerritory.ID)
 	}
-	player.Anchored = true
+	player.Anchored = false
 
 	return &PlayerUpdateEvent{
 		Reason: PlayerUpdateEventMigration,
