@@ -66,11 +66,29 @@ export const travelCheck = async (from, dest) => {
   return handleResponse(response);
 };
 
+export const anchorCheck = async (island) => {
+  const response = await fetch(API_ENDPOINTS.anchorCheck, {
+    method: 'POST',
+    headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
+    body: JSON.stringify({ fromIsland: island}),
+  });
+  return handleResponse(response);
+};
+
 export const travelTo = async (from, dest) => {
   const response = await fetch(API_ENDPOINTS.travelTo, {
     method: 'POST',
     headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
     body: JSON.stringify({ fromIsland: from, toIsland: dest }),
+  });
+  return handleResponse(response);
+};
+
+export const dropAnchorAtIsland = async (currentIsland) => {
+  const response = await fetch(API_ENDPOINTS.dropAnchor, {
+    method: 'POST',
+    headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
+    body: JSON.stringify({ island: currentIsland}),
   });
   return handleResponse(response);
 };
