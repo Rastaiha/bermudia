@@ -24,13 +24,13 @@
                             </button>
                         </div>
                         <div v-else class="w-full space-y-3">
-                            <div v-if="isAdjacent && travel" class="flex justify-between items-center text-sm">
-                                <span class="text-gray-800">هزینه سفر:</span>
-                                <div class="flex items-center gap-x-1">
-                                    <span class="text-gray-900 font-bold">{{
-                                        travel.fuelCost
-                                        }}</span>
-                                    <img src="/images/icons/fuel.png" alt="Fuel Icon" class="w-5 h-5" />
+                            <div v-if="isAdjacent && travel" class="text-sm">
+                                <div class="text-gray-800 mb-1">هزینه سفر:</div>
+                                <div v-for="(costItem, index) in travel.travelCost.items" :key="index" class="flex justify-between items-center flex-row-reverse">
+                                    <div class="flex items-center gap-x-1">
+                                        <span class="text-gray-900 font-bold">{{ costItem.amount }}</span>
+                                        <img :src="getIconByType(costItem.type)" :alt="costItem.type + ' Icon'" class="w-5 h-5" />
+                                    </div>
                                 </div>
                             </div>
                             <button :disabled="loading ||
@@ -77,12 +77,56 @@ const props = defineProps({
 
 const emit = defineEmits(["buyFuel", "navigateToIsland", "travelToIsland"]);
 
-const isCurrentIsland = computed(
-    () =>
-        props.selectedIsland.id &&
-        props.player &&
-        props.selectedIsland.id === props.player.atIsland
-);
+const fuelInput = ref(null);
+const fuelCount = ref(0);
+
+const isCurrentIsland = computed(() => props.selectedIsland.id && props.player && props.selectedIsland.id === props.player.atIsland);
+
+const fuelPriceText = computed(() => {
+    if (!props.refuel || !fuelCount.value || fuelCount.value <= 0) return "خرید سوخت";
+    const totalCost = props.refuel.coinCostPerUnit * fuelCount.value;
+    return `خرید (${totalCost} سکه)`;
+});
+
+const focusFuelInput = () => {
+    nextTick(() => {
+        fuelInput.value?.focus();
+    });
+};
+
+const buyFuel = () => {
+    if (fuelCount.value > 0) {
+        emit('buyFuel', fuelCount.value);
+    }
+};
+
+const getIconByType = (type) => {
+    switch(type) {
+        case "fuel":
+            return "/images/icons/fuel.png";
+        case "coin":
+            return "/images/icons/coin.png"
+    }
+    return null;
+}
+
+watch(() => props.selectedIsland, () => {
+    fuelCount.value = 0;
+});
+
+watch(fuelCount, (newValue) => {
+    if (!props.refuel) return;
+    let correctedValue = newValue;
+    if (newValue > props.refuel.maxAvailableAmount) {
+        correctedValue = props.refuel.maxAvailableAmount;
+    } else if (newValue < 0) {
+        correctedValue = 0;
+    }
+    if (correctedValue !== fuelCount.value) {
+        fuelCount.value = correctedValue;
+    }
+});
+
 </script>
 
 <style scoped>
