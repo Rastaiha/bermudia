@@ -399,15 +399,16 @@ curl --request POST \
 
 ### Territory
 
-| Field           | Type                                | Description                                                                                |
-|-----------------|-------------------------------------|--------------------------------------------------------------------------------------------|
-| id              | string                              | Unique identifier for the territory                                                        |
-| name            | string                              | Display name of the territory                                                              |
-| backgroundAsset | string                              | Asset file name for background                                                             |
-| islands         | [Island](#island)[]                 | Array of islands in this territory                                                         |
-| edges           | [Edge](#edge)[]                     | Array of connections between islands                                                       |
-| refuelIslands   | [RefuelIsland](#refuelisland)[]     | Array of refuel islands                                                                    |
-| terminalIslands | [TerminalIsland](#terminalisland)[] | Array of terminal islands. To call [Migrate](#migrate) you must be in one of these islands |
+| Field               | Type                                | Description                                                                                                                                                       |
+|---------------------|-------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| id                  | string                              | Unique identifier for the territory                                                                                                                               |
+| name                | string                              | Display name of the territory                                                                                                                                     |
+| backgroundAsset     | string                              | Asset file name for background                                                                                                                                    |
+| islands             | [Island](#island)[]                 | Array of islands in this territory                                                                                                                                |
+| edges               | [Edge](#edge)[]                     | Array of connections between islands                                                                                                                              |
+| refuelIslands       | [RefuelIsland](#refuelisland)[]     | Array of refuel islands                                                                                                                                           |
+| terminalIslands     | [TerminalIsland](#terminalisland)[] | Array of terminal islands. To call [Migrate](#migrate) you must be in one of these islands                                                                        |
+| islandPrerequisites | Map<string, string[]>               | Map of island id to a list of prerequisite island ids.<br />Player can't travel to an island if they have not answered all questions in the prerequisite islands. |
 
 
 ### Island
