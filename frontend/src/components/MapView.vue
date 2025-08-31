@@ -9,11 +9,10 @@
         <g class="islands">
             <g v-for="island in islands" :key="island.id" class="cursor-pointer group"
                 @pointerdown.stop="handlePointerDown(island)" @pointerup.stop="handlePointerUp(island)">
-                <ellipse :cx="island.x" :cy="island.y" :rx="island.width / 2" :ry="island.height / 2" fill="transparent" />
-                <image :href="`/images/islands/${island.iconAsset}`"
-                    :x="island.x - island.width / 2"
-                    :y="island.y - island.height / 2"
-                    :width="island.width" :height="island.height"
+                <ellipse :cx="island.x" :cy="island.y" :rx="island.width / 2" :ry="island.height / 2"
+                    fill="transparent" />
+                <image :href="`/images/islands/${island.iconAsset}`" :x="island.x - island.width / 2"
+                    :y="island.y - island.height / 2" :width="island.width" :height="island.height"
                     style="transform-box: fill-box"
                     class="transition-transform duration-200 ease-in-out origin-center group-hover:scale-105 pointer-events-none" />
             </g>
@@ -168,9 +167,17 @@ defineExpose({
 
 <style scoped>
 @keyframes boat-bobbing {
-  0%   { transform: translateY(0); }
-  50%  { transform: translateY(-3%); }
-  100% { transform: translateY(0); }
+    0% {
+        transform: translateY(0);
+    }
+
+    50% {
+        transform: translateY(-3%);
+    }
+
+    100% {
+        transform: translateY(0);
+    }
 }
 
 .animate-boat {

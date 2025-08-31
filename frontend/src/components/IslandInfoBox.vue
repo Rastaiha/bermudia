@@ -26,10 +26,12 @@
                         <div v-else class="w-full space-y-3">
                             <div v-if="isAdjacent && travel" class="text-sm">
                                 <div class="text-gray-800 mb-1">هزینه سفر:</div>
-                                <div v-for="(costItem, index) in travel.travelCost.items" :key="index" class="flex justify-between items-center flex-row-reverse">
+                                <div v-for="(costItem, index) in travel.travelCost.items" :key="index"
+                                    class="flex justify-between items-center flex-row-reverse">
                                     <div class="flex items-center gap-x-1">
                                         <span class="text-gray-900 font-bold">{{ costItem.amount }}</span>
-                                        <img :src="getIconByType(costItem.type)" :alt="costItem.type + ' Icon'" class="w-5 h-5" />
+                                        <img :src="getIconByType(costItem.type)" :alt="costItem.type + ' Icon'"
+                                            class="w-5 h-5" />
                                     </div>
                                 </div>
                             </div>
@@ -101,7 +103,7 @@ const buyFuel = () => {
 };
 
 const getIconByType = (type) => {
-    switch(type) {
+    switch (type) {
         case "fuel":
             return "/images/icons/fuel.png";
         case "coin":

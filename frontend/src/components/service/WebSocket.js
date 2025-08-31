@@ -15,7 +15,6 @@ function connectWebSocket(player, reconnectCallback) {
 
   socket.onopen = () => {
     console.log("WebSocket connection established.");
-    // Reset reconnect attempts on successful connection
     if (reconnectCallback) {
       reconnectCallback.resetAttempts();
     }
@@ -36,7 +35,6 @@ function connectWebSocket(player, reconnectCallback) {
 
   socket.onclose = (event) => {
     console.log("WebSocket connection closed:", event.reason, "Code:", event.code);
-    // Attempt to reconnect unless it was a clean close (1000) or manual close
     if (event.code !== 1000 && reconnectCallback) {
       reconnectCallback.scheduleReconnect();
     }
@@ -54,7 +52,7 @@ export function usePlayerWebSocket(player) {
   let reconnectTimeoutId = null;
   let reconnectAttempts = 0;
   const maxReconnectAttempts = 10;
-  const baseReconnectDelay = 1000; // 1 second
+  const baseReconnectDelay = 1000;
 
   const cleanup = () => {
     if (reconnectTimeoutId) {
@@ -62,7 +60,6 @@ export function usePlayerWebSocket(player) {
       reconnectTimeoutId = null;
     }
     if (socket) {
-      // Close with code 1000 (normal closure) to prevent reconnection
       socket.close(1000, "Manual close");
       socket = null;
     }
@@ -74,12 +71,11 @@ export function usePlayerWebSocket(player) {
       return;
     }
 
-    // Exponential backoff: 1s, 2s, 4s, 8s, 16s, 32s, then cap at 32s
     const delay = Math.min(baseReconnectDelay * Math.pow(2, reconnectAttempts), 32000);
     reconnectAttempts++;
 
     console.log(`Scheduling WebSocket reconnection attempt ${reconnectAttempts} in ${delay}ms`);
-    
+
     reconnectTimeoutId = setTimeout(() => {
       setupWebSocket();
     }, delay);
@@ -93,7 +89,7 @@ export function usePlayerWebSocket(player) {
     if (socket) {
       cleanup();
     }
-    
+
     socket = connectWebSocket(player, {
       scheduleReconnect,
       resetAttempts

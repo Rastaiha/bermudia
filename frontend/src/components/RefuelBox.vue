@@ -8,23 +8,12 @@
             <span>حداکثر واحد:</span>
             <span class="font-semibold">{{ refuel.maxAvailableAmount }}</span>
         </div>
-        <input
-            type="number"
-            ref="fuelInput"
-            :max="
-                refuel
-                    ? refuel.maxAvailableAmount
-                    : player.fuelCap - player.fuel
-            "
-            v-model.number="fuelCount"
-            @pointerdown.stop="focusFuelInput"
-            @dblclick.stop
-            class="w-full mt-1 rounded-lg border border-[#07458bb5] text-center bg-transparent py-1.5"
-        />
-        <button
-            @pointerdown.stop="buyFuel"
-            class="btn-hover w-full p-2 rounded-lg bg-[#07458bb5] text-white"
-        >
+        <input type="number" ref="fuelInput" :max="refuel
+                ? refuel.maxAvailableAmount
+                : player.fuelCap - player.fuel
+            " v-model.number="fuelCount" @pointerdown.stop="focusFuelInput" @dblclick.stop
+            class="w-full mt-1 rounded-lg border border-[#07458bb5] text-center bg-transparent py-1.5" />
+        <button @pointerdown.stop="buyFuel" class="btn-hover w-full p-2 rounded-lg bg-[#07458bb5] text-white">
             {{ fuelPriceText }}
         </button>
     </div>

@@ -19,7 +19,7 @@ export const API_ENDPOINTS = {
   getTerritory: (id) => `${API_BASE_URL}/territories/${id}`,
   getIsland: (id) => `${API_BASE_URL}/islands/${id}`,
   submitAnswer: (id) => `${API_BASE_URL}/answer/${id}`,
-  
+
   // WebSocket - Assuming it must also go through the /api/v1 proxy path
   events: `${WS_BASE_URL}/events`,
 };

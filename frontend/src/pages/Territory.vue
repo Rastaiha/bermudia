@@ -5,8 +5,9 @@
     <LoadingIndicator v-if="isLoading" :message="loadingMessage" />
 
     <template v-else>
-      <MapView ref="mapViewComponentRef" :islands="islands" :edges="edges" :player="player" :dynamicViewBox="dynamicViewBox"
-        :territoryId="territoryId" @nodeClick="showInfoBox" @mapTransformed="updateInfoBoxPosition" />
+      <MapView ref="mapViewComponentRef" :islands="islands" :edges="edges" :player="player"
+        :dynamicViewBox="dynamicViewBox" :territoryId="territoryId" @nodeClick="showInfoBox"
+        @mapTransformed="updateInfoBoxPosition" />
 
       <PlayerInfo :player="player" :username="username" v-if="player" />
 
@@ -149,10 +150,10 @@ const setupTerritoryData = (territoryData) => {
 
 const setupPlayerAndUserData = (playerAndUserData) => {
   if (!playerAndUserData) return;
-  
+
   const { playerData, meData } = playerAndUserData;
   username.value = meData.username;
-  
+
   player.value = playerData;
 };
 
@@ -220,12 +221,12 @@ onMounted(async () => {
       fetchTerritoryData(territoryId.value),
       fetchPlayerAndUserData()
     ]);
-    
+
     loadingMessage.value = 'Setting up data...';
-    
+
     setupTerritoryData(territoryData);
     setupPlayerAndUserData(playerAndUserData);
-    
+
   } finally {
     isLoading.value = false;
   }

@@ -34,13 +34,11 @@ const router = createRouter({
 
 // Navigation Guard to protect routes
 router.beforeEach((to, from, next) => {
-  const isLoggedIn = !!getToken(); // Check if user token exists
+  const isLoggedIn = !!getToken();
 
   if (to.meta.requiresAuth && !isLoggedIn) {
-    // If the route requires auth and user is not logged in, redirect to login page
     next({ name: 'Login' });
   } else {
-    // Otherwise, allow navigation
     next();
   }
 });
