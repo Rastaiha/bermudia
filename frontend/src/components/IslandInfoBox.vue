@@ -60,7 +60,7 @@
 </template>
 
 <script setup>
-import { computed } from "vue";
+import { computed, ref, watch, nextTick } from "vue";
 import RefuelIslandInfoBox from "./RefuelBox.vue";
 
 const props = defineProps({
