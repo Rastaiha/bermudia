@@ -5,18 +5,21 @@
             <span></span>
             <span :style="{visibility: barData.total == -1 ? 'hidden' : 'visible'}">ظرفیت: {{ barData.total }}</span>
         </div>
-        <div class="relative flex items-center w-full h-8 rounded-md bg-black/30 shadow-inner">
-            <div class="absolute inset-0 flex items-center justify-center w-full h-full">
-                <div class="w-6 h-6 z-11 text-white font-bold drop-shadow-md">{{ barData.value }}</div>
+        <div class="relative flex items-center h-6 rounded-md bg-black/30 shadow-inner"
+            :class="barData.total == -1 ? 'w-3/4' : 'w-full'"
+        >
+            <div class="absolute inset-0 flex items-center justify-end w-full h-full z-11 gap-2 flex-row-reverse pr-2">
+                <div class="h-4 text-white text-xs font-bold drop-shadow-md text-right">
+                {{ barData.value }}
+                </div>
+                <img :src="barData.icon" :alt="barData.englishName + ' Icon'" class="w-12 h-12">
             </div>
-            <div class="absolute right-1 top-1/2 transform -translate-y-1/2 z-10">
-                <img :src="barData.icon" :alt="barData.englishName + ' Icon'" class="w-14 h-14">
-            </div>
-            <div class="absolute top-0 right-0 h-full rounded-md transition-[width] duration-500 ease-in-out bar-shadow"
+            <div
+                class="absolute top-0 right-0 h-full rounded-md transition-[width] duration-500 ease-in-out bar-shadow"
                 :style="{ 
-                    width: barPercentage + '%',
-                    backgroundImage: 'linear-gradient(to left, ' + barData.gradientFrom + ', ' + barData.gradientTo + ')',
-                    filter: 'drop-shadow(0 0px 3px ' + barData.shadowColor + ')'
+                width: barPercentage + '%',
+                backgroundImage: 'linear-gradient(to left, ' + barData.gradientFrom + ', ' + barData.gradientTo + ')',
+                filter: 'drop-shadow(0 0px 3px ' + barData.shadowColor + ')'
                 }"
             ></div>
         </div>
