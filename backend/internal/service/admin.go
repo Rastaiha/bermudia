@@ -62,6 +62,13 @@ func (a *Admin) SetTerritory(ctx context.Context, territory domain.Territory) er
 			return fmt.Errorf("refuelIsland %q not found in island list", r.ID)
 		}
 	}
+	for _, t := range territory.TerminalIslands {
+		if !slices.ContainsFunc(territory.Islands, func(island domain.Island) bool {
+			return island.ID == t.ID
+		}) {
+			return fmt.Errorf("terminalIsland %q not found in island list", t.ID)
+		}
+	}
 
 	for _, island := range territory.Islands {
 		if err := a.islandStore.ReserveIDForTerritory(ctx, territory.ID, island.ID); err != nil {

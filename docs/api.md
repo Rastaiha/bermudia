@@ -171,7 +171,7 @@ curl --request POST \
 
 _This endpoint **is authenticated** and needs an auth token for access._
 
-Makes the player travel from the current island to another island. 
+Makes the player travel from the current island to another island.
 
 Receives a [TravelRequest](#travelrequest) in body.
 
@@ -275,6 +275,48 @@ curl --request POST \
 
 ---
 
+### Migrate Check
+
+_This endpoint **is authenticated** and needs an auth token for access._
+
+Checks migration requirements for all available territories. Shows which territories the player can migrate to and what conditions must be met.
+
+Does not receive anything.
+
+Returns [MigrateCheckResult](#migratecheckresult) in response.
+
+**Endpoint:** `POST /migrate_check`
+
+```shell
+curl --request POST \
+  --url http://97590f57-b983-48f8-bb0a-c098bed1e658.hsvc.ir:30254/api/v1/migrate_check \
+  --header 'Authorization: TOKEN'
+```
+
+---
+
+### Migrate
+
+_This endpoint **is authenticated** and needs an auth token for access._
+
+Migrates the player to a different territory.
+
+Receives a [MigrateRequest](#migraterequest) in body.
+
+Returns an empty object in response.
+
+**Endpoint:** `POST /migrate`
+
+```shell
+curl --request POST \
+  --url http://97590f57-b983-48f8-bb0a-c098bed1e658.hsvc.ir:30254/api/v1/migrate \
+  --header 'Authorization: TOKEN' \
+  --header 'Content-Type: application/json' \
+  --data '{"toTerritory": "territory_math"}'
+```
+
+---
+
 ## Data Models
 
 ### LoginRequest
@@ -326,6 +368,13 @@ curl --request POST \
 | Field  | Type   | Description                            |
 |--------|--------|----------------------------------------|
 | island | string | The id of island you want to anchor on |
+
+
+### MigrateRequest
+
+| Field       | Type   | Description                           |
+|-------------|--------|---------------------------------------|
+| toTerritory | string | The ID of the territory to migrate to |
 
 
 ### Me
@@ -489,10 +538,32 @@ curl --request POST \
 | reason        | string?       | If _feasible_ is false, this field is presents and reports why |
 
 
+### MigrateCheckResult
+
+| Field                      | Type                                                    | Description                                                               |
+|----------------------------|---------------------------------------------------------|---------------------------------------------------------------------------|
+| knowledgeCriteriaTerritory | string                                                  | The territory used as criteria for knowledge-based migration requirements |
+| knowledgeValue             | int                                                     | Player's current knowledge value in the criteria territory                |
+| territoryMigrationOptions  | [TerritoryMigrationOption](#territorymigrationoption)[] | Array of migration options for all territories                            |
+
+
+### TerritoryMigrationOption
+
+| Field                  | Type          | Description                                                                         |
+|------------------------|---------------|-------------------------------------------------------------------------------------|
+| territoryId            | string        | ID of the territory                                                                 |
+| territoryName          | string        | Name of the territory                                                               |
+| status                 | string        | Migration status: `resident` (current), `visited` (previously visited), `untouched` |
+| minAcceptableKnowledge | int           | Minimum knowledge required for free migration to this territory                     |
+| migrationCost          | [Cost](#cost) | Cost required for migration (when mustPayCost is true)                              |
+| mustPayCost            | boolean       | Whether the player must pay the migration cost                                      |
+| feasible               | boolean       | Whether migration to this territory is possible                                     |
+| reason                 | string?       | If _feasible_ is false, explanation of why migration is not possible                |
+
+
 ### PlayerUpdateEvent
 
-| Field  | Type              | Description                                                                                         |
-|--------|-------------------|-----------------------------------------------------------------------------------------------------|
-| reason | string            | The reason for change in player state. One of `initial`, `travel`, `refuel`, `correction`, `anchor` |
-| player | [Player](#player) | The new value of player object.                                                                     |
-
+| Field  | Type              | Description                                                                                                      |
+|--------|-------------------|------------------------------------------------------------------------------------------------------------------|
+| reason | string            | The reason for change in player state. One of `initial`, `travel`, `refuel`, `correction`, `anchor`, `migration` |
+| player | [Player](#player) | The new value of player object.                                                                                  |

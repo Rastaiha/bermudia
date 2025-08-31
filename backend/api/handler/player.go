@@ -168,3 +168,45 @@ func (h *Handler) Anchor(w http.ResponseWriter, r *http.Request) {
 
 	sendResult(w, struct{}{})
 }
+
+func (h *Handler) MigrateCheck(w http.ResponseWriter, r *http.Request) {
+	user, err := getUser(r.Context())
+	if err != nil {
+		handleError(w, err)
+		return
+	}
+
+	result, err := h.playerService.MigrateCheck(r.Context(), user.ID)
+	if err != nil {
+		handleError(w, err)
+		return
+	}
+
+	sendResult(w, result)
+}
+
+type migrateRequest struct {
+	ToTerritory string `json:"toTerritory"`
+}
+
+func (h *Handler) Migrate(w http.ResponseWriter, r *http.Request) {
+	user, err := getUser(r.Context())
+	if err != nil {
+		handleError(w, err)
+		return
+	}
+
+	var req migrateRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		sendDecodeError(w)
+		return
+	}
+
+	err = h.playerService.Migrate(r.Context(), user.ID, req.ToTerritory)
+	if err != nil {
+		handleError(w, err)
+		return
+	}
+
+	sendResult(w, struct{}{})
+}
