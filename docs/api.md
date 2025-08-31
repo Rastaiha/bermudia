@@ -406,7 +406,9 @@ curl --request POST \
 | backgroundAsset | string                          | Asset file name for background       |
 | islands         | [Island](#island)[]             | Array of islands in this territory   |
 | edges           | [Edge](#edge)[]                 | Array of connections between islands |
-| refuelIslands   | [RefuelIsland](#refuelIsland)[] | Array of refuel islands              |
+| refuelIslands   | [RefuelIsland](#refuelisland)[] | Array of refuel islands              |
+| terminalIslands   | [TerminalIsland](#terminalisland)[] | Array of terminal islands. To call [Migrate](#migrate) you must be in one of these islands              |
+
 
 ### Island
 
@@ -434,6 +436,13 @@ curl --request POST \
 | Field | Type   | Description  |
 |-------|--------|--------------|
 | id    | string | ID of island |
+
+### TerminalIsland
+
+| Field | Type   | Description  |
+|-------|--------|--------------|
+| id    | string | ID of island |
+
 
 ### IslandContent
 
