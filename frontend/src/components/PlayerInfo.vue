@@ -9,11 +9,9 @@
                 خروج
             </button>
         </div>
-
         <PlayerInventoryBar v-if="knowledgeBar" :barData="knowledgeBar"></PlayerInventoryBar>
         <PlayerInventoryBar v-if="fuelBar" :barData="fuelBar"></PlayerInventoryBar>
         <PlayerInventoryBar v-if="coinBar" :barData="coinBar"></PlayerInventoryBar>
-
     </div>
 </template>
 
