@@ -398,7 +398,7 @@ func Migrate(player Player, knowledgeBars []KnowledgeBar, currentTerritory Terri
 	if !slices.Contains(player.VisitedTerritories, toTerritory) {
 		player.VisitedTerritories = append(player.VisitedTerritories, destinationTerritory.ID)
 	}
-	player.Anchored = true
+	player.Anchored = false
 
 	return &PlayerUpdateEvent{
 		Reason: PlayerUpdateEventMigration,
