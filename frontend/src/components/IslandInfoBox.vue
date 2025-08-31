@@ -3,42 +3,26 @@
         <div v-if="selectedIsland" :style="infoBoxStyle"
             class="bg-[rgb(121,200,237,0.8)] text-[#310f0f] p-4 rounded-xl font-vazir text-base z-[10000] flex flex-col items-center pointer-events-auto w-60"
             @pointerdown.stop>
-
-            <h3 class="text-lg font-bold text-center shrink-0">{{ selectedIsland.name }}</h3>
+            <h3 class="text-lg font-bold text-center shrink-0">
+                {{ selectedIsland.name }}
+            </h3>
 
             <div class="w-full grid transition-[grid-template-rows] duration-300 ease-smooth-expand"
                 :class="loading ? 'grid-rows-[0fr]' : 'grid-rows-[1fr]'">
-
                 <div class="overflow-hidden">
                     <div v-if="!loading" class="w-full mt-3 space-y-3">
-
-                        <div v-if="isCurrentIsland && isRefuelIsland && refuel" class="w-full space-y-2">
-                            <div class="flex justify-between items-center text-sm">
-                                <span>قیمت هر واحد:</span>
-                                <span class="font-semibold">{{ refuel.coinCostPerUnit }}</span>
-                            </div>
-                            <div class="flex justify-between items-center text-sm">
-                                <span>حداکثر واحد:</span>
-                                <span class="font-semibold">{{ refuel.maxAvailableAmount }}</span>
-                            </div>
-                            <input type="number" ref="fuelInput"
-                                :max="refuel ? refuel.maxAvailableAmount : player.fuelCap - player.fuel"
-                                v-model.number="fuelCount" @pointerdown.stop="focusFuelInput" @dblclick.stop
-                                class="w-full mt-1 rounded-lg border border-[#07458bb5] text-center bg-transparent py-1.5" />
-                            <button @pointerdown.stop="buyFuel"
-                                class="btn-hover w-full p-2 rounded-lg bg-[#07458bb5] text-white">
-                                {{ fuelPriceText }}
-                            </button>
-                        </div>
-
+                        <RefuelIslandInfoBox v-if="isCurrentIsland && isRefuelIsland && refuel" :refuel="refuel"
+                            :player="player" @buyFuel="$emit('buyFuel', $event)" />
                         <div v-else-if="isCurrentIsland && !isRefuelIsland" class="w-full space-y-3">
-                            <p class="text-center text-sm text-gray-800">شما در این جزیره قرار دارید.</p>
-                            <button @pointerdown.stop="$emit('navigateToIsland', player.atIsland)"
-                                class="btn-hover w-full p-2 rounded-lg bg-sky-600 text-white">
+                            <p class="text-center text-sm text-gray-800">
+                                شما در این جزیره قرار دارید.
+                            </p>
+                            <button @pointerdown.stop="
+                                $emit('navigateToIsland', player.atIsland)
+                                " class="btn-hover w-full p-2 rounded-lg bg-sky-600 text-white">
                                 ورود به جزیره
                             </button>
                         </div>
-
                         <div v-else class="w-full space-y-3">
                             <div v-if="isAdjacent && travel" class="text-sm">
                                 <div class="text-gray-800 mb-1">هزینه سفر:</div>
@@ -49,12 +33,18 @@
                                     </div>
                                 </div>
                             </div>
-                            <button
-                                :disabled="loading || !isAdjacent || !!travelError || (travel && player.fuel < travel.fuelCost)"
-                                @pointerdown.stop="$emit('travelToIsland', selectedIsland.id)"
+                            <button :disabled="loading ||
+                                !isAdjacent ||
+                                !!travelError ||
+                                (travel && player.fuel < travel.fuelCost)
+                                " @pointerdown.stop="
+                                    $emit('travelToIsland', selectedIsland.id)
+                                    "
                                 class="btn-hover w-full p-2 rounded-lg bg-green-600 text-white disabled:opacity-50 disabled:cursor-not-allowed text-xs">
                                 <span v-if="!isAdjacent">مسیر مستقیمی وجود ندارد</span>
-                                <span v-else-if="travel && player.fuel < travel.fuelCost">سوخت کافی نیست</span>
+                                <span v-else-if="
+                                    travel && player.fuel < travel.fuelCost
+                                ">سوخت کافی نیست</span>
                                 <span v-else>سفر به این جزیره</span>
                             </button>
                             <p v-if="travelError"
@@ -70,7 +60,8 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, nextTick } from 'vue';
+import { computed } from "vue";
+import RefuelIslandInfoBox from "./RefuelBox.vue";
 
 const props = defineProps({
     selectedIsland: Object,
@@ -84,7 +75,7 @@ const props = defineProps({
     travelError: String,
 });
 
-const emit = defineEmits(['buyFuel', 'navigateToIsland', 'travelToIsland']);
+const emit = defineEmits(["buyFuel", "navigateToIsland", "travelToIsland"]);
 
 const fuelInput = ref(null);
 const fuelCount = ref(0);
@@ -135,6 +126,7 @@ watch(fuelCount, (newValue) => {
         fuelCount.value = correctedValue;
     }
 });
+
 </script>
 
 <style scoped>
