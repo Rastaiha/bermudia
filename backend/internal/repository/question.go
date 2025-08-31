@@ -137,23 +137,40 @@ func (s sqlQuestionRepository) GetQuestion(ctx context.Context, id string) (doma
 	return q, nil
 }
 
-func (s sqlQuestionRepository) GetOrCreateAnswer(ctx context.Context, userId int32, answerID string, questionID string, territoryID string) (domain.Answer, error) {
+func (s sqlQuestionRepository) answerColumnsToSelect() string {
+	return `id, user_id, question_id, status, file_id, filename, text_content, created_at, updated_at`
+}
+
+func (s sqlQuestionRepository) scanAnswer(row scannable, answer *domain.Answer) error {
+	return row.Scan(&answer.ID, &answer.UserID, &answer.QuestionID, &answer.Status, &answer.FileID, &answer.Filename, &answer.TextContent, &answer.CreatedAt, &answer.UpdatedAt)
+}
+
+func (s sqlQuestionRepository) GetOrCreateAnswer(ctx context.Context, userId int32, answerID string, questionID string) (domain.Answer, error) {
 	var answer domain.Answer
 	now := time.Now().UTC()
 
-	err := s.db.QueryRowContext(ctx,
+	err := s.scanAnswer(s.db.QueryRowContext(ctx,
 		`INSERT INTO answers (id, user_id, question_id, status, created_at, updated_at) 
 		 VALUES ($1, $2, $3, $4, $5, $5)
 		 ON CONFLICT (id) DO UPDATE SET id = EXCLUDED.id
-		 RETURNING id, user_id, question_id, status, file_id, filename, text_content, created_at, updated_at`,
+		 RETURNING `+s.answerColumnsToSelect(),
 		n(answerID), n(userId), n(questionID), domain.AnswerStatusEmpty, now,
-	).Scan(&answer.ID, &answer.UserID, &answer.QuestionID, &answer.Status, &answer.FileID, &answer.Filename, &answer.TextContent, &answer.CreatedAt, &answer.UpdatedAt)
+	), &answer)
 
 	if err != nil {
 		return domain.Answer{}, fmt.Errorf("failed to get or create answer: %w", err)
 	}
 
 	return answer, nil
+}
+
+func (s sqlQuestionRepository) GetAnswer(ctx context.Context, id string) (domain.Answer, error) {
+	var answer domain.Answer
+	err := s.scanAnswer(s.db.QueryRowContext(ctx, `SELECT `+s.answerColumnsToSelect()+` FROM answers WHERE id = $1`, id), &answer)
+	if errors.Is(err, sql.ErrNoRows) {
+		return answer, domain.ErrAnswerNotFound
+	}
+	return answer, err
 }
 
 func (s sqlQuestionRepository) SubmitAnswer(ctx context.Context, answerId string, userId int32, fileID, filename, textContent string) (domain.Answer, error) {

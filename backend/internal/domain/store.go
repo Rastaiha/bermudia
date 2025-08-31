@@ -13,10 +13,11 @@ var (
 	ErrPlayerConflict             = errors.New("player update conflict")
 	ErrAnswerNotPending           = errors.New("answer not in pending state")
 	ErrResourceNotRelatedToIsland = errors.New("resource not related to island")
+	ErrAnswerNotFound             = errors.New("answer not found")
 )
 
 type TerritoryStore interface {
-	CreateTerritory(ctx context.Context, territory *Territory) error
+	SetTerritory(ctx context.Context, territory *Territory) error
 	GetTerritoryByID(ctx context.Context, territoryID string) (*Territory, error)
 	ListTerritories(ctx context.Context) ([]Territory, error)
 }
@@ -30,6 +31,7 @@ type IslandStore interface {
 	// If the IdHasType returns false for the exiting ResourceID, it returns an error.
 	GetOrCreateUserComponent(ctx context.Context, islandId string, userId int32, componentId string, resourceType ResourceType) (UserComponent, error)
 	ResourceIsRelatedToIsland(ctx context.Context, userId int32, islandId string, resourceId string) error
+	GetUserAnswerComponents(ctx context.Context, userId int32, islandId string) ([]string, int, error)
 }
 
 type UserStore interface {
@@ -51,7 +53,8 @@ type QuestionStore interface {
 	GetQuestion(ctx context.Context, id string) (Question, error)
 	// GetOrCreateAnswer gets the Answer if it exists
 	// otherwise creates an Answer with the given ID and zero value for other fields (except timestamps).
-	GetOrCreateAnswer(ctx context.Context, userId int32, answerID string, questionID string, territoryID string) (Answer, error)
+	GetOrCreateAnswer(ctx context.Context, userId int32, answerID string, questionID string) (Answer, error)
+	GetAnswer(ctx context.Context, id string) (Answer, error)
 	// SubmitAnswer updates the existing Answer with the given args and sets the answer status to AnswerStatusPending.
 	// If the answer is in AnswerStatusCorrect status, it returns ErrSubmitToCorrectAnswer error.
 	// If the answer is in AnswerStatusPending status, it returns ErrSubmitToPendingAnswer error.

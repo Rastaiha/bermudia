@@ -85,5 +85,8 @@
     {
       "id": "island_gallops"
     }
-  ]
+  ],
+  "islandPrerequisites": {
+    "island_spectacle": ["island_thompson"]
+  }
 }

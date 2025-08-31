@@ -17,16 +17,18 @@ type Player struct {
 	playerStore              domain.PlayerStore
 	territoryStore           domain.TerritoryStore
 	questionStore            domain.QuestionStore
+	islandStore              domain.IslandStore
 	playerUpdateEventHandler func(event *domain.FullPlayerUpdateEvent)
 	cron                     gocron.Scheduler
 }
 
-func NewPlayer(cfg config.Config, playerStore domain.PlayerStore, territoryStore domain.TerritoryStore, questionStore domain.QuestionStore) *Player {
+func NewPlayer(cfg config.Config, playerStore domain.PlayerStore, territoryStore domain.TerritoryStore, questionStore domain.QuestionStore, islandStore domain.IslandStore) *Player {
 	return &Player{
 		cfg:            cfg,
 		playerStore:    playerStore,
 		territoryStore: territoryStore,
 		questionStore:  questionStore,
+		islandStore:    islandStore,
 	}
 }
 
@@ -66,9 +68,36 @@ func (p *Player) TravelCheck(ctx context.Context, user *domain.User, fromIsland,
 	if err != nil {
 		return nil, err
 	}
+	isDestinationIslandUnlocked, err := p.isIslandUnlocked(ctx, user.ID, *territory, toIsland)
+	if err != nil {
+		return nil, err
+	}
 
-	checkResult := domain.TravelCheck(player, fromIsland, toIsland, territory)
+	checkResult := domain.TravelCheck(player, fromIsland, toIsland, territory, isDestinationIslandUnlocked)
 	return &checkResult, nil
+}
+
+func (p *Player) isIslandUnlocked(ctx context.Context, userId int32, territory domain.Territory, islandId string) (bool, error) {
+	prerequisites := territory.IslandPrerequisites[islandId]
+	for _, pre := range prerequisites {
+		answers, questionsCount, err := p.islandStore.GetUserAnswerComponents(ctx, userId, pre)
+		if err != nil {
+			return false, err
+		}
+		if len(answers) < questionsCount {
+			return false, nil
+		}
+		for _, answerId := range answers {
+			answer, err := p.questionStore.GetAnswer(ctx, answerId)
+			if err != nil {
+				return false, fmt.Errorf("failed to get answer while checking isIslandUnlocked: %w", err)
+			}
+			if answer.Status != domain.AnswerStatusCorrect {
+				return false, nil
+			}
+		}
+	}
+	return true, nil
 }
 
 func (p *Player) Travel(ctx context.Context, user *domain.User, fromIsland string, toIsland string) error {
@@ -80,8 +109,12 @@ func (p *Player) Travel(ctx context.Context, user *domain.User, fromIsland strin
 	if err != nil {
 		return err
 	}
+	isDestinationIslandUnlocked, err := p.isIslandUnlocked(ctx, user.ID, *territory, toIsland)
+	if err != nil {
+		return err
+	}
 
-	event, err := domain.Travel(player, fromIsland, toIsland, territory)
+	event, err := domain.Travel(player, fromIsland, toIsland, territory, isDestinationIslandUnlocked)
 	if err != nil {
 		return err
 	}

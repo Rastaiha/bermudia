@@ -35,38 +35,43 @@ func (a *Admin) SetTerritory(ctx context.Context, territory domain.Territory) er
 	if territory.StartIsland == "" {
 		return errors.New("invalid territory startIsland")
 	}
-	if !slices.ContainsFunc(territory.Islands, func(island domain.Island) bool {
-		return island.ID == territory.StartIsland
-	}) {
+	isInIslands := func(id string) bool {
+		return slices.ContainsFunc(territory.Islands, func(island domain.Island) bool {
+			return island.ID == id
+		})
+	}
+	if !isInIslands(territory.StartIsland) {
 		return fmt.Errorf("startIsland %q not found in island list", territory.StartIsland)
 	}
 	for _, e := range territory.Edges {
 		if e.From == "" || e.To == "" {
 			return fmt.Errorf("empty edge.from or edge.to: %v", e)
 		}
-		if !slices.ContainsFunc(territory.Islands, func(island domain.Island) bool {
-			return island.ID == e.From
-		}) {
+		if !isInIslands(e.From) {
 			return fmt.Errorf("edge.from %q is not in island list", e.From)
 		}
-		if !slices.ContainsFunc(territory.Islands, func(island domain.Island) bool {
-			return island.ID == e.To
-		}) {
+		if !isInIslands(e.To) {
 			return fmt.Errorf("edge.to %q is not in island list", e.To)
 		}
 	}
 	for _, r := range territory.RefuelIslands {
-		if !slices.ContainsFunc(territory.Islands, func(island domain.Island) bool {
-			return island.ID == r.ID
-		}) {
+		if !isInIslands(r.ID) {
 			return fmt.Errorf("refuelIsland %q not found in island list", r.ID)
 		}
 	}
 	for _, t := range territory.TerminalIslands {
-		if !slices.ContainsFunc(territory.Islands, func(island domain.Island) bool {
-			return island.ID == t.ID
-		}) {
+		if !isInIslands(t.ID) {
 			return fmt.Errorf("terminalIsland %q not found in island list", t.ID)
+		}
+	}
+	for islandID, prerequisites := range territory.IslandPrerequisites {
+		if !isInIslands(islandID) {
+			return fmt.Errorf("island %q in prerequisites not found in island list", islandID)
+		}
+		for _, p := range prerequisites {
+			if !isInIslands(p) {
+				return fmt.Errorf("prerequisite %q not found in island list", p)
+			}
 		}
 	}
 
@@ -76,7 +81,7 @@ func (a *Admin) SetTerritory(ctx context.Context, territory domain.Territory) er
 		}
 	}
 
-	return a.territoryStore.CreateTerritory(ctx, &territory)
+	return a.territoryStore.SetTerritory(ctx, &territory)
 }
 
 func (a *Admin) SetIsland(ctx context.Context, id string, input domain.IslandInputContent) (domain.IslandInputContent, error) {

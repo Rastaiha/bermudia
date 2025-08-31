@@ -74,7 +74,7 @@
       "to": "island_math1"
     },
     {
-      "from": "island_start",
+      "from": "island_math1",
       "to": "island_science1"
     },
     {
@@ -111,5 +111,8 @@
     {
       "id": "island_terminal"
     }
-  ]
+  ],
+  "islandPrerequisites": {
+    "island_math1": ["island_start"]
+  }
 }

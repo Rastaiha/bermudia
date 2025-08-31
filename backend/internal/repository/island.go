@@ -142,3 +142,35 @@ func (s sqlIslandRepository) ResourceIsRelatedToIsland(ctx context.Context, user
 	}
 	return nil
 }
+
+func (s sqlIslandRepository) GetUserAnswerComponents(ctx context.Context, userId int32, islandId string) (answers []string, questionsCount int, err error) {
+	islandContent, _, err := s.GetByID(ctx, islandId)
+	if err != nil {
+		return nil, 0, err
+	}
+	for _, c := range islandContent.Components {
+		if c.Question != nil {
+			questionsCount++
+		}
+	}
+	if questionsCount == 0 {
+		return
+	}
+	rows, err := s.db.QueryContext(ctx, `SELECT resource_id FROM user_components WHERE user_id = $1 AND island_id = $2 ; `, userId, islandId)
+	if err != nil {
+		return nil, 0, err
+	}
+	defer func() {
+		err = rows.Close()
+	}()
+	for rows.Next() {
+		var resourceId string
+		if err := rows.Scan(&resourceId); err != nil {
+			return nil, 0, err
+		}
+		if domain.IdHasType(resourceId, domain.ResourceTypeAnswer) {
+			answers = append(answers, resourceId)
+		}
+	}
+	return
+}
