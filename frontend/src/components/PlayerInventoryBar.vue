@@ -33,7 +33,7 @@ const props = defineProps({
 
 const barPercentage = computed(() => {
     if (!props.barData.value || props.barData.total === 0) return 0;
-    if (props.barData.total === -1) return 100;
+    if (props.barData.total === -1) return 0;
     return (props.barData.value / props.barData.total) * 100;
 });
 </script>

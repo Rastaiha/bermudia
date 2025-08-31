@@ -40,11 +40,13 @@
                         </div>
 
                         <div v-else class="w-full space-y-3">
-                            <div v-if="isAdjacent && travel" class="flex justify-between items-center text-sm">
-                                <span class="text-gray-800">هزینه سفر:</span>
-                                <div class="flex items-center gap-x-1">
-                                    <span class="text-gray-900 font-bold">{{ travel.fuelCost }}</span>
-                                    <img src="/images/icons/fuel.png" alt="Fuel Icon" class="w-5 h-5" />
+                            <div v-if="isAdjacent && travel" class="text-sm">
+                                <div class="text-gray-800 mb-1">هزینه سفر:</div>
+                                <div v-for="(costItem, index) in travel.travelCost.items" :key="index" class="flex justify-between items-center flex-row-reverse">
+                                    <div class="flex items-center gap-x-1">
+                                        <span class="text-gray-900 font-bold">{{ costItem.amount }}</span>
+                                        <img :src="getIconByType(costItem.type)" :alt="costItem.type + ' Icon'" class="w-5 h-5" />
+                                    </div>
                                 </div>
                             </div>
                             <button
@@ -106,6 +108,16 @@ const buyFuel = () => {
         emit('buyFuel', fuelCount.value);
     }
 };
+
+const getIconByType = (type) => {
+    switch(type) {
+        case "fuel":
+            return "/images/icons/fuel.png";
+        case "coin":
+            return "/images/icons/coin.png"
+    }
+    return null;
+}
 
 watch(() => props.selectedIsland, () => {
     fuelCount.value = 0;

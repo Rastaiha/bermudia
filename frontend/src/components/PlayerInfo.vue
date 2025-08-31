@@ -50,7 +50,7 @@ const knowledgeBar = computed(() => {
         value: fetchedKnowledgeBar.value,
         icon: "/images/icons/knowledge.png",
         shadowColor: "#ff7e5f",
-        gradientFrom: "#ff7e5f",
+        gradientFrom: "#b65f69",
         gradientTo: "#feb47b"
     }
 })
