@@ -26,10 +26,12 @@
                         <div v-else class="w-full space-y-3">
                             <div v-if="isAdjacent && travel" class="text-sm">
                                 <div class="text-gray-800 mb-1">هزینه سفر:</div>
-                                <div v-for="(costItem, index) in travel.travelCost.items" :key="index" class="flex justify-between items-center flex-row-reverse">
+                                <div v-for="(costItem, index) in travel.travelCost.items" :key="index"
+                                    class="flex justify-between items-center flex-row-reverse">
                                     <div class="flex items-center gap-x-1">
                                         <span class="text-gray-900 font-bold">{{ costItem.amount }}</span>
-                                        <img :src="getIconByType(costItem.type)" :alt="costItem.type + ' Icon'" class="w-5 h-5" />
+                                        <img :src="getIconByType(costItem.type)" :alt="costItem.type + ' Icon'"
+                                            class="w-5 h-5" />
                                     </div>
                                 </div>
                             </div>
@@ -60,7 +62,7 @@
 </template>
 
 <script setup>
-import { computed } from "vue";
+import { computed, ref, watch, nextTick } from "vue";
 import RefuelIslandInfoBox from "./RefuelBox.vue";
 
 const props = defineProps({
@@ -80,7 +82,9 @@ const emit = defineEmits(["buyFuel", "navigateToIsland", "travelToIsland"]);
 const fuelInput = ref(null);
 const fuelCount = ref(0);
 
-const isCurrentIsland = computed(() => props.selectedIsland.id && props.player && props.selectedIsland.id === props.player.atIsland);
+const isCurrentIsland = computed(() => {
+    return props.selectedIsland && props.player && props.selectedIsland.id === props.player.atIsland;
+});
 
 const fuelPriceText = computed(() => {
     if (!props.refuel || !fuelCount.value || fuelCount.value <= 0) return "خرید سوخت";
@@ -101,7 +105,7 @@ const buyFuel = () => {
 };
 
 const getIconByType = (type) => {
-    switch(type) {
+    switch (type) {
         case "fuel":
             return "/images/icons/fuel.png";
         case "coin":
