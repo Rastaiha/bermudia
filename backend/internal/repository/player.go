@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"github.com/Rastaiha/bermudia/internal/domain"
 	"time"
@@ -17,6 +18,7 @@ CREATE TABLE IF NOT EXISTS players (
 	fuel INT4 NOT NULL,
     fuel_cap INT4 NOT NULL,
     coins INT4 NOT NULL,
+    visited_territories TEXT NOT NULL,
     updated_at TIMESTAMP NOT NULL
 );
 `
@@ -34,22 +36,30 @@ func NewSqlPlayerRepository(db *sql.DB) (domain.PlayerStore, error) {
 }
 
 func (s sqlPlayerRepository) Create(ctx context.Context, player domain.Player) error {
-	_, err := s.db.ExecContext(ctx,
-		`INSERT INTO players (user_id, at_territory, at_island, anchored, fuel, fuel_cap, coins, updated_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
-		n(player.UserId), n(player.AtTerritory), n(player.AtIsland), player.Anchored, n(player.Fuel), n(player.FuelCap), player.Coins, time.Now().UTC(),
+	visitedTerritories, err := json.Marshal(player.VisitedTerritories)
+	if err != nil {
+		return fmt.Errorf("failed to marshal visited territories: %w", err)
+	}
+	_, err = s.db.ExecContext(ctx,
+		`INSERT INTO players (user_id, at_territory, at_island, anchored, fuel, fuel_cap, coins, visited_territories, updated_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+		n(player.UserId), n(player.AtTerritory), n(player.AtIsland), player.Anchored, n(player.Fuel), n(player.FuelCap), player.Coins, visitedTerritories, time.Now().UTC(),
 	)
 	return err
 }
 
 func (s sqlPlayerRepository) Get(ctx context.Context, userId int32) (domain.Player, error) {
+	var visitedTerritories []byte
 	var p domain.Player
 	err := s.db.QueryRowContext(ctx,
-		`SELECT user_id, at_territory, at_island, anchored, fuel, fuel_cap, coins, updated_at FROM players WHERE user_id = $1`,
+		`SELECT user_id, at_territory, at_island, anchored, fuel, fuel_cap, coins, visited_territories, updated_at FROM players WHERE user_id = $1`,
 		userId,
-	).Scan(&p.UserId, &p.AtTerritory, &p.AtIsland, &p.Anchored, &p.Fuel, &p.FuelCap, &p.Coins, &p.UpdatedAt)
+	).Scan(&p.UserId, &p.AtTerritory, &p.AtIsland, &p.Anchored, &p.Fuel, &p.FuelCap, &p.Coins, &visitedTerritories, &p.UpdatedAt)
 
 	if err != nil {
 		return domain.Player{}, fmt.Errorf("failed to get player from db: %w", err)
+	}
+	if err := json.Unmarshal(visitedTerritories, &p.VisitedTerritories); err != nil {
+		return domain.Player{}, fmt.Errorf("failed to unmarshal visited territories: %w", err)
 	}
 	return p, nil
 }
@@ -57,12 +67,16 @@ func (s sqlPlayerRepository) Get(ctx context.Context, userId int32) (domain.Play
 // Update updates a player row if and only if all fields match "old".
 // UserId is never updated.
 func (s sqlPlayerRepository) Update(ctx context.Context, old, updated domain.Player) error {
+	visitedTerritories, err := json.Marshal(updated.VisitedTerritories)
+	if err != nil {
+		return fmt.Errorf("failed to marshal visited territories: %w", err)
+	}
 	updated.UpdatedAt = time.Now().UTC()
 	cmd, err := s.db.ExecContext(ctx,
 		`UPDATE players
-		 SET at_territory = $1, at_island = $2, anchored = $3, fuel = $4, fuel_cap = $5, coins = $6, updated_at = $7
-		 WHERE user_id = $8 AND updated_at = $9`,
-		n(updated.AtTerritory), n(updated.AtIsland), updated.Anchored, updated.Fuel, n(updated.FuelCap), updated.Coins, updated.UpdatedAt,
+		 SET at_territory = $1, at_island = $2, anchored = $3, fuel = $4, fuel_cap = $5, coins = $6, visited_territories = $7, updated_at = $8
+		 WHERE user_id = $9 AND updated_at = $10`,
+		n(updated.AtTerritory), n(updated.AtIsland), updated.Anchored, updated.Fuel, n(updated.FuelCap), updated.Coins, visitedTerritories, updated.UpdatedAt,
 		old.UserId, old.UpdatedAt,
 	)
 	if err != nil {

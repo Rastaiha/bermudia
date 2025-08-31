@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"fmt"
 	"github.com/Rastaiha/bermudia/internal/config"
 	"github.com/Rastaiha/bermudia/internal/domain"
 	"github.com/go-co-op/gocron/v2"
@@ -148,7 +149,10 @@ func (p *Player) applyAndSendPlayerUpdateEvent(ctx context.Context, oldPlayer do
 		return err
 	}
 	if err := p.sendPlayerUpdateEventErr(ctx, event); err != nil {
-		slog.Error("failed to get the knowledge bars, missing event", err, "userId", event.Player.UserId)
+		slog.Error("failed to send event",
+			slog.String("error", err.Error()),
+			slog.Int("userId", int(event.Player.UserId)),
+		)
 	}
 	return nil
 }
@@ -181,7 +185,7 @@ func (p *Player) SendInitialEvents(ctx context.Context, userId int32) error {
 func (p *Player) getFullPlayer(ctx context.Context, player domain.Player) (domain.FullPlayer, error) {
 	knowledgeBars, err := p.questionStore.GetKnowledgeBars(ctx, player.UserId)
 	if err != nil {
-		return domain.FullPlayer{}, err
+		return domain.FullPlayer{}, fmt.Errorf("failed to get knowledge bars: %w", err)
 	}
 	return domain.FullPlayer{
 		Player:        player,
@@ -257,4 +261,51 @@ func (p *Player) applyCorrections(ctx context.Context) {
 	if appliedCorrections.Load() > 0 {
 		slog.Info("successfully applied corrections", slog.Int64("count", appliedCorrections.Load()))
 	}
+}
+
+func (p *Player) MigrateCheck(ctx context.Context, userId int32) (*domain.MigrateCheckResult, error) {
+	player, err := p.playerStore.Get(ctx, userId)
+	if err != nil {
+		return nil, err
+	}
+	territories, err := p.territoryStore.ListTerritories(ctx)
+	if err != nil {
+		return nil, err
+	}
+	currentTerritory, err := p.territoryStore.GetTerritoryByID(ctx, player.AtTerritory)
+	if err != nil {
+		return nil, err
+	}
+	knowledgeBars, err := p.questionStore.GetKnowledgeBars(ctx, userId)
+	if err != nil {
+		return nil, err
+	}
+
+	check := domain.MigrateCheck(player, knowledgeBars, *currentTerritory, territories)
+	return &check, nil
+}
+
+func (p *Player) Migrate(ctx context.Context, userId int32, toTerritory string) error {
+	player, err := p.playerStore.Get(ctx, userId)
+	if err != nil {
+		return err
+	}
+	territories, err := p.territoryStore.ListTerritories(ctx)
+	if err != nil {
+		return err
+	}
+	currentTerritory, err := p.territoryStore.GetTerritoryByID(ctx, player.AtTerritory)
+	if err != nil {
+		return err
+	}
+	knowledgeBars, err := p.questionStore.GetKnowledgeBars(ctx, userId)
+	if err != nil {
+		return err
+	}
+
+	event, err := domain.Migrate(player, knowledgeBars, *currentTerritory, territories, toTerritory)
+	if err != nil {
+		return err
+	}
+	return p.applyAndSendPlayerUpdateEvent(ctx, player, event)
 }

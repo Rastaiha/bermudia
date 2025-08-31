@@ -16,29 +16,38 @@
     {
       "id": "island_spectacle",
       "name": "جزیره تماشا",
-      "x": 0.20,
+      "x": 0.32,
       "y": 0.75,
       "width": 0.14,
-      "height": 0.16,
-      "iconAsset": "island4.png"
+      "height": 0.14,
+      "iconAsset": "island2.png"
     },
     {
       "id": "island_deer",
       "name": "جزیره آهو",
-      "x": 0.55,
-      "y": 0.30,
-      "width": 0.11,
-      "height": 0.11,
-      "iconAsset": "island3.png"
+      "x": 0.52,
+      "y": 0.40,
+      "width": 0.16,
+      "height": 0.22,
+      "iconAsset": "island6.png"
     },
     {
       "id": "island_long_refuel",
       "name": "جزیره طولانی (سوخت گیری)",
-      "x": 0.47,
-      "y": 0.75,
+      "x": 0.52,
+      "y": 0.70,
       "width": 0.16,
       "height": 0.22,
       "iconAsset": "island3.png"
+    },
+    {
+      "id": "island_gallops",
+      "name": "جزیره چهارنعل",
+      "x": 0.82,
+      "y": 0.65,
+      "width": 0.14,
+      "height": 0.16,
+      "iconAsset": "island4.png"
     }
   ],
   "edges": [
@@ -57,11 +66,24 @@
     {
       "from": "island_long_refuel",
       "to": "island_deer"
+    },
+    {
+      "from": "island_long_refuel",
+      "to": "island_gallops"
+    },
+    {
+      "from": "island_gallops",
+      "to": "island_deer"
     }
   ],
   "refuelIslands": [
     {
       "id": "island_long_refuel"
+    }
+  ],
+  "terminalIslands": [
+    {
+      "id": "island_gallops"
     }
   ]
 }

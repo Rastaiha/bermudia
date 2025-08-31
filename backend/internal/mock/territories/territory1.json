@@ -29,12 +29,12 @@
       "y": 0.25,
       "width": 0.13,
       "height": 0.20,
-      "iconAsset": "island3.png"
+      "iconAsset": "island2.png"
     },
     {
       "id": "island_science1",
       "name": "خلیج فیزیک",
-      "x": 0.52,
+      "x": 0.40,
       "y": 0.68,
       "width": 0.15,
       "height": 0.17,
@@ -50,13 +50,22 @@
       "iconAsset": "island7.png"
     },
     {
-      "id": "island_refuel1",
+      "id": "island_refuel",
       "name": "سوخت گیری",
       "x": 0.70,
       "y": 0.62,
       "width": 0.16,
       "height": 0.22,
       "iconAsset": "island3.png"
+    },
+    {
+      "id": "island_terminal",
+      "name": "جزیره شاهراه",
+      "x": 0.94,
+      "y": 0.38,
+      "width": 0.14,
+      "height": 0.16,
+      "iconAsset": "island4.png"
     }
   ],
   "edges": [
@@ -78,16 +87,29 @@
     },
     {
       "from": "island_science1",
-      "to": "island_refuel1"
+      "to": "island_refuel"
     },
     {
-      "from": "island_refuel1",
+      "from": "island_refuel",
+      "to": "island_final"
+    },
+    {
+      "from": "island_math2",
+      "to": "island_terminal"
+    },
+    {
+      "from": "island_terminal",
       "to": "island_final"
     }
   ],
   "refuelIslands": [
     {
-      "id": "island_refuel1"
+      "id": "island_refuel"
+    }
+  ],
+  "terminalIslands": [
+    {
+      "id": "island_terminal"
     }
   ]
 }

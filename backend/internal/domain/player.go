@@ -4,27 +4,31 @@ import (
 	"errors"
 	"math"
 	"slices"
+	"strings"
 	"time"
 )
 
 const (
-	fuelTankCapacity      = 15
-	initialFuelAmount     = fuelTankCapacity / 2
-	travelFuelConsumption = 1
-	initialCoinsAmount    = 100
-	refuelCoinCostPerUnit = 10
-	anchoringCoinCost     = 20
+	fuelTankCapacity                = 15
+	initialFuelAmount               = fuelTankCapacity / 2
+	travelFuelConsumption           = 1
+	initialCoinsAmount              = 100
+	refuelCoinCostPerUnit           = 10
+	anchoringCoinCost               = 20
+	migrationMinAcceptableKnowledge = 50
+	migrationCoinCost               = 80
 )
 
 type Player struct {
-	UserId      int32     `json:"-"`
-	AtTerritory string    `json:"atTerritory"`
-	AtIsland    string    `json:"atIsland"`
-	Anchored    bool      `json:"anchored"`
-	Fuel        int32     `json:"fuel"`
-	FuelCap     int32     `json:"fuelCap"`
-	Coins       int32     `json:"coins"`
-	UpdatedAt   time.Time `json:"-"`
+	UserId             int32     `json:"-"`
+	AtTerritory        string    `json:"atTerritory"`
+	AtIsland           string    `json:"atIsland"`
+	Anchored           bool      `json:"anchored"`
+	Fuel               int32     `json:"fuel"`
+	FuelCap            int32     `json:"fuelCap"`
+	Coins              int32     `json:"coins"`
+	VisitedTerritories []string  `json:"-"`
+	UpdatedAt          time.Time `json:"-"`
 }
 
 type FullPlayer struct {
@@ -38,6 +42,7 @@ const (
 	PlayerUpdateEventRefuel     = "refuel"
 	PlayerUpdateEventCorrection = "correction"
 	PlayerUpdateEventAnchor     = "anchor"
+	PlayerUpdateEventMigration  = "migration"
 )
 
 type PlayerUpdateEvent struct {
@@ -52,13 +57,14 @@ type FullPlayerUpdateEvent struct {
 
 func NewPlayer(userId int32, startingTerritory *Territory) Player {
 	return Player{
-		UserId:      userId,
-		AtTerritory: startingTerritory.ID,
-		AtIsland:    startingTerritory.StartIsland,
-		Anchored:    true,
-		Fuel:        initialFuelAmount,
-		FuelCap:     fuelTankCapacity,
-		Coins:       initialCoinsAmount,
+		UserId:             userId,
+		AtTerritory:        startingTerritory.ID,
+		AtIsland:           startingTerritory.StartIsland,
+		Anchored:           true,
+		Fuel:               initialFuelAmount,
+		FuelCap:            fuelTankCapacity,
+		Coins:              initialCoinsAmount,
+		VisitedTerritories: []string{startingTerritory.ID},
 	}
 }
 
@@ -246,6 +252,156 @@ func Anchor(player Player, islandID string) (*PlayerUpdateEvent, error) {
 	player.Anchored = true
 	return &PlayerUpdateEvent{
 		Reason: PlayerUpdateEventAnchor,
+		Player: &player,
+	}, nil
+}
+
+type MigrateCheckResult struct {
+	KnowledgeCriteriaTerritory string                     `json:"knowledgeCriteriaTerritory"`
+	KnowledgeValue             int32                      `json:"knowledgeValue"`
+	TerritoryMigrationOptions  []TerritoryMigrationOption `json:"territoryMigrationOptions"`
+}
+
+const (
+	TerritoryMigrationStatusResident  = "resident"
+	TerritoryMigrationStatusUntouched = "untouched"
+	TerritoryMigrationStatusVisited   = "visited"
+)
+
+type TerritoryMigrationOption struct {
+	TerritoryID            string `json:"territoryId"`
+	TerritoryName          string `json:"territoryName"`
+	Status                 string `json:"status"`
+	MinAcceptableKnowledge int32  `json:"minAcceptableKnowledge"`
+	MigrationCost          Cost   `json:"migrationCost"`
+	MustPayCost            bool   `json:"mustPayCost"`
+	Feasible               bool   `json:"feasible"`
+	Reason                 string `json:"reason,omitempty"`
+}
+
+func MigrateCheck(player Player, knowledgeBars []KnowledgeBar, currentTerritory Territory, territories []Territory) (result MigrateCheckResult) {
+	atTerminalIsland := slices.ContainsFunc(currentTerritory.TerminalIslands, func(t TerminalIsland) bool {
+		return t.ID == player.AtIsland
+	})
+
+	result.KnowledgeCriteriaTerritory = player.VisitedTerritories[len(player.VisitedTerritories)-1]
+	for _, b := range knowledgeBars {
+		if b.TerritoryID == result.KnowledgeCriteriaTerritory {
+			result.KnowledgeValue = b.Value
+			break
+		}
+	}
+
+	for _, t := range territories {
+		var knowledgeBar KnowledgeBar
+		for _, b := range knowledgeBars {
+			if t.ID == b.TerritoryID {
+				knowledgeBar = b
+				break
+			}
+		}
+		result.TerritoryMigrationOptions = append(result.TerritoryMigrationOptions,
+			getMigrationOption(player, result.KnowledgeValue, t, knowledgeBar, atTerminalIsland))
+	}
+
+	// order options based on state. break tie with territory id.
+	order := []string{TerritoryMigrationStatusVisited, TerritoryMigrationStatusResident, TerritoryMigrationStatusUntouched}
+	slices.SortFunc(result.TerritoryMigrationOptions, func(a, b TerritoryMigrationOption) int {
+		diff := slices.Index(order, a.Status) - slices.Index(order, b.Status)
+		if diff != 0 {
+			return diff
+		}
+		return strings.Compare(a.TerritoryID, b.TerritoryID)
+	})
+
+	return
+}
+
+func getMigrationOption(player Player, knowledgeValue int32, territory Territory, knowledgeBar KnowledgeBar, atTerminalIsland bool) (option TerritoryMigrationOption) {
+	option = TerritoryMigrationOption{
+		TerritoryID:            territory.ID,
+		TerritoryName:          territory.Name,
+		Status:                 TerritoryMigrationStatusUntouched,
+		MinAcceptableKnowledge: min(knowledgeBar.Total, migrationMinAcceptableKnowledge),
+	}
+	if player.AtTerritory == territory.ID {
+		option.Status = TerritoryMigrationStatusResident
+	} else if slices.Contains(player.VisitedTerritories, territory.ID) {
+		option.Status = TerritoryMigrationStatusVisited
+	}
+
+	option.MigrationCost = Cost{Items: []CostItem{{Type: CostItemTypeCoin, Amount: migrationCoinCost}}}
+	option.MustPayCost = option.Status == TerritoryMigrationStatusUntouched && knowledgeValue < option.MinAcceptableKnowledge
+
+	if option.Status == TerritoryMigrationStatusResident {
+		option.Reason = "شما در همین قلمرو قرار دارید."
+		return
+	}
+
+	if !atTerminalIsland {
+		option.Reason = "شما در جزیره شاهراه قرار ندارید."
+		return
+	}
+
+	if option.MustPayCost {
+		_, ok := deduceCost(player, option.MigrationCost)
+		if !ok {
+			option.Reason = "شما دانش یا سکه کافی برای مهاجرت ندارید."
+			return
+		}
+	}
+
+	option.Feasible = true
+	return
+}
+
+func Migrate(player Player, knowledgeBars []KnowledgeBar, currentTerritory Territory, territories []Territory, toTerritory string) (*PlayerUpdateEvent, error) {
+	check := MigrateCheck(player, knowledgeBars, currentTerritory, territories)
+	idx := slices.IndexFunc(check.TerritoryMigrationOptions, func(state TerritoryMigrationOption) bool {
+		return state.TerritoryID == toTerritory
+	})
+	if idx < 0 {
+		return nil, Error{
+			reason: ErrorReasonResourceNotFound,
+			text:   "destination territory not found",
+		}
+	}
+	chosenOption := check.TerritoryMigrationOptions[idx]
+	if !chosenOption.Feasible {
+		return nil, Error{
+			reason: ErrorReasonRuleViolation,
+			text:   chosenOption.Reason,
+		}
+	}
+
+	if chosenOption.MustPayCost {
+		var ok bool
+		player, ok = deduceCost(player, chosenOption.MigrationCost)
+		if !ok {
+			return nil, Error{
+				reason: ErrorReasonRuleViolation,
+				text:   "cannot not afford cost",
+			}
+		}
+	}
+
+	idx = slices.IndexFunc(territories, func(t Territory) bool {
+		return t.ID == toTerritory
+	})
+	if idx < 0 {
+		return nil, errors.New("did not find toTerritory in territories")
+	}
+	destinationTerritory := territories[idx]
+
+	player.AtTerritory = destinationTerritory.ID
+	player.AtIsland = destinationTerritory.StartIsland
+	if !slices.Contains(player.VisitedTerritories, toTerritory) {
+		player.VisitedTerritories = append(player.VisitedTerritories, destinationTerritory.ID)
+	}
+	player.Anchored = true
+
+	return &PlayerUpdateEvent{
+		Reason: PlayerUpdateEventMigration,
 		Player: &player,
 	}, nil
 }

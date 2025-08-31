@@ -70,6 +70,8 @@ func (h *Handler) Start() {
 			r.Post("/refuel", h.Refuel)
 			r.Post("/anchor_check", h.AnchorCheck)
 			r.Post("/anchor", h.Anchor)
+			r.Post("/migrate_check", h.MigrateCheck)
+			r.Post("/migrate", h.Migrate)
 		})
 	})
 
