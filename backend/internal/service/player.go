@@ -80,21 +80,12 @@ func (p *Player) TravelCheck(ctx context.Context, user *domain.User, fromIsland,
 func (p *Player) isIslandUnlocked(ctx context.Context, userId int32, territory domain.Territory, islandId string) (bool, error) {
 	prerequisites := territory.IslandPrerequisites[islandId]
 	for _, pre := range prerequisites {
-		answers, questionsCount, err := p.islandStore.GetUserAnswerComponents(ctx, userId, pre)
+		hasAnsweredIsland, err := p.questionStore.HasAnsweredIsland(ctx, userId, pre)
 		if err != nil {
-			return false, err
+			return false, fmt.Errorf("failed to check if user answered all island: %w", err)
 		}
-		if len(answers) < questionsCount {
+		if !hasAnsweredIsland {
 			return false, nil
-		}
-		for _, answerId := range answers {
-			answer, err := p.questionStore.GetAnswer(ctx, answerId)
-			if err != nil {
-				return false, fmt.Errorf("failed to get answer while checking isIslandUnlocked: %w", err)
-			}
-			if answer.Status != domain.AnswerStatusCorrect {
-				return false, nil
-			}
 		}
 	}
 	return true, nil

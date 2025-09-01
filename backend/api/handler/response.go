@@ -24,16 +24,20 @@ func handleError(w http.ResponseWriter, err error) {
 	if errors.As(err, &domainError) {
 		switch domainError.Reason() {
 		case domain.ErrorReasonResourceNotFound:
-			sendError(w, http.StatusNotFound, err.Error())
+			sendError(w, http.StatusNotFound, domainError.Error())
 		case domain.ErrorReasonRuleViolation:
-			sendError(w, http.StatusConflict, err.Error())
+			sendError(w, http.StatusConflict, domainError.Error())
 		default:
-			sendError(w, http.StatusInternalServerError, err.Error())
+			sendError(w, http.StatusInternalServerError, domainError.Error())
 		}
 		return
 	}
 
-	slog.Error("internal error", err)
+	errText := "<nil>"
+	if err != nil {
+		errText = err.Error()
+	}
+	slog.Error("internal error", slog.String("error", errText))
 	sendError(w, http.StatusInternalServerError, "Internal server error")
 }
 

@@ -29,10 +29,6 @@ func NewIsland(bot *bot.Bot, islandStore domain.IslandStore, questionStore domai
 }
 
 func (i *Island) GetIsland(ctx context.Context, userId int32, islandId string) (*domain.IslandContent, error) {
-	rawContent, _, err := i.islandStore.GetByID(ctx, islandId)
-	if err != nil {
-		return nil, err
-	}
 	player, err := i.playerStore.Get(ctx, userId)
 	if err != nil {
 		return nil, err
@@ -41,31 +37,28 @@ func (i *Island) GetIsland(ctx context.Context, userId int32, islandId string) (
 		return nil, err
 	}
 
+	book, err := i.islandStore.GetIslandContent(ctx, islandId, userId)
+	if err != nil {
+		return nil, err
+	}
+
 	content := &domain.IslandContent{}
-	for _, c := range rawContent.Components {
+	for _, c := range book.Components {
 		if c.IFrame != nil {
 			content.Components = append(content.Components, domain.IslandComponent{IFrame: c.IFrame})
 			continue
 		}
 		if c.Question != nil {
-			question, err := i.questionStore.GetQuestion(ctx, c.Question.QuestionID)
-			if err != nil {
-				return nil, err
-			}
-			userComponent, err := i.islandStore.GetOrCreateUserComponent(ctx, islandId, userId, c.ID, domain.ResourceTypeAnswer)
-			if err != nil {
-				return nil, err
-			}
-			answer, err := i.questionStore.GetOrCreateAnswer(ctx, userId, userComponent.ResourceID, question.ID)
+			answer, err := i.questionStore.GetOrCreateAnswer(ctx, userId, c.Question.ID)
 			if err != nil {
 				return nil, err
 			}
 			content.Components = append(content.Components, domain.IslandComponent{
 				Input: &domain.IslandInput{
-					ID:              answer.ID,
-					Type:            question.InputType,
-					Accept:          question.InputAccept,
-					Description:     question.Text,
+					ID:              c.Question.ID,
+					Type:            c.Question.InputType,
+					Accept:          c.Question.InputAccept,
+					Description:     c.Question.Text,
 					SubmissionState: domain.GetSubmissionStateFromAnswer(answer),
 				},
 			})
@@ -76,12 +69,12 @@ func (i *Island) GetIsland(ctx context.Context, userId int32, islandId string) (
 	return content, nil
 }
 
-func (i *Island) SubmitAnswer(ctx context.Context, userId int32, answerId string, file io.ReadCloser, filename string, textContent string) (*domain.SubmissionState, error) {
+func (i *Island) SubmitAnswer(ctx context.Context, userId int32, questionId string, file io.ReadCloser, filename string, textContent string) (*domain.SubmissionState, error) {
 	player, err := i.playerStore.Get(ctx, userId)
 	if err != nil {
 		return nil, err
 	}
-	if err := i.islandStore.ResourceIsRelatedToIsland(ctx, userId, player.AtIsland, answerId); err != nil {
+	if err := i.questionStore.QuestionIsRelatedToIsland(ctx, player.AtIsland, questionId); err != nil {
 		return nil, err
 	}
 	if err := domain.PlayerHasAccessToIsland(player, player.AtIsland); err != nil {
@@ -106,7 +99,7 @@ func (i *Island) SubmitAnswer(ctx context.Context, userId int32, answerId string
 		fileId = msg.Document.FileID
 	}
 
-	answer, err := i.questionStore.SubmitAnswer(ctx, answerId, userId, fileId, filename, textContent)
+	answer, err := i.questionStore.SubmitAnswer(ctx, userId, questionId, fileId, filename, textContent)
 	if err != nil {
 		return nil, err
 	}
@@ -114,10 +107,11 @@ func (i *Island) SubmitAnswer(ctx context.Context, userId int32, answerId string
 	// TODO: remove
 	func() {
 		correction := domain.Correction{
-			ID:        domain.NewID(domain.ResourceTypeCorrection),
-			AnswerID:  answer.ID,
-			IsCorrect: false,
-			CreatedAt: time.Now().UTC(),
+			ID:         domain.NewID(domain.ResourceTypeCorrection),
+			QuestionId: questionId,
+			UserId:     userId,
+			IsCorrect:  false,
+			CreatedAt:  time.Now().UTC(),
 		}
 		create := false
 		lowerFilename := strings.ToLower(filename)
@@ -130,7 +124,7 @@ func (i *Island) SubmitAnswer(ctx context.Context, userId int32, answerId string
 		}
 		if create {
 			if err := i.questionStore.CreateCorrection(ctx, correction); err != nil {
-				slog.Error("failed to create correction", err)
+				slog.Error("failed to create correction", slog.String("error", err.Error()))
 			}
 		}
 	}()

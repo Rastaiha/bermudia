@@ -3,30 +3,25 @@ package repository
 import (
 	"context"
 	"database/sql"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"log/slog"
-	"slices"
-	"strings"
 	"time"
 
 	"github.com/Rastaiha/bermudia/internal/domain"
 )
 
 const (
-	questionsSchema = `
-CREATE TABLE IF NOT EXISTS questions (
-    id VARCHAR(255) PRIMARY KEY,
-    text TEXT NOT NULL,
-    reward_sources TEXT NOT NULL,
-    input_type VARCHAR(255) NOT NULL,
-    input_accept TEXT NOT NULL
+	islandContentQuestionsSchema = `
+CREATE TABLE IF NOT EXISTS book_questions (
+    question_id VARCHAR(255) PRIMARY KEY,
+    book_id VARCHAR(255),
+    knowledge_amount INT4 NOT NULL
 );
+CREATE INDEX IF NOT EXISTS idx_book_questions_book_id ON book_questions (book_id);
 `
 	answersSchema = `
 CREATE TABLE IF NOT EXISTS answers (
-    id VARCHAR(255) PRIMARY KEY,
     user_id INT4 NOT NULL,
     question_id VARCHAR(255) NOT NULL,
     status INT4 NOT NULL,
@@ -34,23 +29,16 @@ CREATE TABLE IF NOT EXISTS answers (
     filename VARCHAR(255),
     text_content TEXT,
     created_at TIMESTAMP NOT NULL,
-    updated_at TIMESTAMP NOT NULL
+    updated_at TIMESTAMP NOT NULL,
+    PRIMARY KEY (question_id, user_id)
 );
-CREATE INDEX idx_answers_qid_user_status ON answers (question_id, user_id, status);
+CREATE INDEX IF NOT EXISTS idx_answers_user_question ON answers (user_id, question_id, status);
 `
-
-	territoryQuestionsSchema = `
-CREATE TABLE IF NOT EXISTS territory_questions (
-    question_id VARCHAR(255) PRIMARY KEY,
-    territory_id VARCHAR(255) NOT NULL,
-    knowledge_amount INT4 NOT NULL
-);
-`
-
 	correctionsSchema = `
 CREATE TABLE IF NOT EXISTS corrections (
     id VARCHAR(255) PRIMARY KEY,
-    answer_id VARCHAR(255),
+    user_id INT4 NOT NULL,
+    question_id VARCHAR(255) NOT NULL,
     is_correct BOOLEAN NOT NULL,
     applied BOOLEAN NOT NULL DEFAULT FALSE,
     created_at TIMESTAMP NOT NULL
@@ -63,17 +51,13 @@ type sqlQuestionRepository struct {
 }
 
 func NewSqlQuestionRepository(db *sql.DB) (domain.QuestionStore, error) {
-	_, err := db.Exec(questionsSchema)
+	_, err := db.Exec(islandContentQuestionsSchema)
 	if err != nil {
-		return nil, fmt.Errorf("create questions table: %w", err)
+		return nil, fmt.Errorf("create book_questions table: %w", err)
 	}
 	_, err = db.Exec(answersSchema)
 	if err != nil {
 		return nil, fmt.Errorf("create answers table: %w", err)
-	}
-	_, err = db.Exec(territoryQuestionsSchema)
-	if err != nil {
-		return nil, fmt.Errorf("create territory_questions table: %w", err)
 	}
 	_, err = db.Exec(correctionsSchema)
 	if err != nil {
@@ -84,77 +68,50 @@ func NewSqlQuestionRepository(db *sql.DB) (domain.QuestionStore, error) {
 	}, nil
 }
 
-func (s sqlQuestionRepository) SetQuestion(ctx context.Context, question domain.Question) error {
-	rewardSources, err := json.Marshal(question.RewardSources)
+func (s sqlQuestionRepository) BindQuestionsToBook(ctx context.Context, bookId string, questions []domain.BookQuestion) (err error) {
+	tx, err := s.db.BeginTx(ctx, nil)
 	if err != nil {
-		return err
+		return fmt.Errorf("start transaction: %w", err)
 	}
-	accept, err := json.Marshal(question.InputAccept)
+	defer func() {
+		if err != nil {
+			err2 := tx.Rollback()
+			err = errors.Join(err, err2)
+		}
+	}()
+	_, err = tx.ExecContext(ctx, `DELETE FROM book_questions WHERE book_id = $1`, bookId)
 	if err != nil {
-		return err
+		return fmt.Errorf("delete book_questions: %w", err)
 	}
-
-	_, err = s.db.ExecContext(ctx,
-		`INSERT INTO questions (id, text, reward_sources, input_type, input_accept) 
-		 VALUES ($1, $2, $3, $4, $5)
-		 ON CONFLICT (id) DO UPDATE SET 
-		 text = EXCLUDED.text,
-		 reward_sources = EXCLUDED.reward_sources,
-		 input_type = EXCLUDED.input_type,
-		 input_accept = EXCLUDED.input_accept`,
-		n(question.ID), n(question.Text), rewardSources, n(question.InputType), accept,
-	)
-	return err
-}
-
-func (s sqlQuestionRepository) BindQuestionToTerritory(ctx context.Context, questionId, territoryId string, knowledgeAmount int32) error {
-	_, err := s.db.ExecContext(ctx,
-		`INSERT INTO territory_questions (question_id, territory_id, knowledge_amount) VALUES ($1, $2, $3)
-				ON CONFLICT (question_id) DO UPDATE SET territory_id = EXCLUDED.territory_id, knowledge_amount = EXCLUDED.knowledge_amount`,
-		n(questionId), n(territoryId), knowledgeAmount)
-	return err
-}
-
-func (s sqlQuestionRepository) GetQuestion(ctx context.Context, id string) (domain.Question, error) {
-	var q domain.Question
-	var rewardSources, accept []byte
-	err := s.db.QueryRowContext(ctx,
-		`SELECT id, text, reward_sources, input_type, input_accept FROM questions WHERE id = $1`,
-		id,
-	).Scan(&q.ID, &q.Text, &rewardSources, &q.InputType, &accept)
-
-	if err != nil {
-		return domain.Question{}, fmt.Errorf("failed to get question from db: %w", err)
+	for _, q := range questions {
+		_, err = tx.ExecContext(ctx, `INSERT INTO book_questions (question_id, book_id, knowledge_amount) VALUES ($1, $2, $3) ;`,
+			q.QuestionID, bookId, q.KnowledgeAmount,
+		)
+		if err != nil {
+			return fmt.Errorf("insert book_questions: %w", err)
+		}
 	}
-
-	if err := json.Unmarshal(rewardSources, &q.RewardSources); err != nil {
-		return domain.Question{}, err
-	}
-	if err := json.Unmarshal(accept, &q.InputAccept); err != nil {
-		return domain.Question{}, err
-	}
-
-	return q, nil
+	return tx.Commit()
 }
 
 func (s sqlQuestionRepository) answerColumnsToSelect() string {
-	return `id, user_id, question_id, status, file_id, filename, text_content, created_at, updated_at`
+	return `user_id, question_id, status, file_id, filename, text_content, created_at, updated_at`
 }
 
 func (s sqlQuestionRepository) scanAnswer(row scannable, answer *domain.Answer) error {
-	return row.Scan(&answer.ID, &answer.UserID, &answer.QuestionID, &answer.Status, &answer.FileID, &answer.Filename, &answer.TextContent, &answer.CreatedAt, &answer.UpdatedAt)
+	return row.Scan(&answer.UserID, &answer.QuestionID, &answer.Status, &answer.FileID, &answer.Filename, &answer.TextContent, &answer.CreatedAt, &answer.UpdatedAt)
 }
 
-func (s sqlQuestionRepository) GetOrCreateAnswer(ctx context.Context, userId int32, answerID string, questionID string) (domain.Answer, error) {
+func (s sqlQuestionRepository) GetOrCreateAnswer(ctx context.Context, userId int32, questionID string) (domain.Answer, error) {
 	var answer domain.Answer
 	now := time.Now().UTC()
 
 	err := s.scanAnswer(s.db.QueryRowContext(ctx,
-		`INSERT INTO answers (id, user_id, question_id, status, created_at, updated_at) 
-		 VALUES ($1, $2, $3, $4, $5, $5)
-		 ON CONFLICT (id) DO UPDATE SET id = EXCLUDED.id
+		`INSERT INTO answers (user_id, question_id, status, created_at, updated_at) 
+		 VALUES ($1, $2, $3, $4, $4)
+		 ON CONFLICT DO UPDATE SET user_id = EXCLUDED.user_id
 		 RETURNING `+s.answerColumnsToSelect(),
-		n(answerID), n(userId), n(questionID), domain.AnswerStatusEmpty, now,
+		n(userId), n(questionID), domain.AnswerStatusEmpty, now, now,
 	), &answer)
 
 	if err != nil {
@@ -164,30 +121,21 @@ func (s sqlQuestionRepository) GetOrCreateAnswer(ctx context.Context, userId int
 	return answer, nil
 }
 
-func (s sqlQuestionRepository) GetAnswer(ctx context.Context, id string) (domain.Answer, error) {
-	var answer domain.Answer
-	err := s.scanAnswer(s.db.QueryRowContext(ctx, `SELECT `+s.answerColumnsToSelect()+` FROM answers WHERE id = $1`, id), &answer)
-	if errors.Is(err, sql.ErrNoRows) {
-		return answer, domain.ErrAnswerNotFound
-	}
-	return answer, err
-}
-
-func (s sqlQuestionRepository) SubmitAnswer(ctx context.Context, answerId string, userId int32, fileID, filename, textContent string) (domain.Answer, error) {
+func (s sqlQuestionRepository) SubmitAnswer(ctx context.Context, userId int32, questionId string, fileID, filename, textContent string) (domain.Answer, error) {
 	var answer domain.Answer
 	now := time.Now().UTC()
 
-	err := s.db.QueryRowContext(ctx,
+	err := s.scanAnswer(s.db.QueryRowContext(ctx,
 		`UPDATE answers 
 		 SET status = CASE WHEN status = $1 OR status = $2 THEN $3 ELSE status END,
 		     file_id = CASE WHEN status = $1 OR status = $2 THEN $4 ELSE file_id END,
 		     filename = CASE WHEN status = $1 OR status = $2 THEN $5 ELSE filename END,
 		     text_content = CASE WHEN status = $1 OR status = $2 THEN $6 ELSE text_content END,
 		     updated_at = CASE WHEN status = $1 OR status = $2 THEN $7 ELSE updated_at END
-		 WHERE id = $8 and user_id = $9
-		 RETURNING id, user_id, question_id, status, file_id, filename, text_content, created_at, updated_at`,
-		domain.AnswerStatusEmpty, domain.AnswerStatusWrong, domain.AnswerStatusPending, n(fileID), n(filename), n(textContent), now, answerId, userId,
-	).Scan(&answer.ID, &answer.UserID, &answer.QuestionID, &answer.Status, &answer.FileID, &answer.Filename, &answer.TextContent, &answer.CreatedAt, &answer.UpdatedAt)
+		 WHERE user_id = $8 AND question_id = $9
+		 RETURNING `+s.answerColumnsToSelect(),
+		domain.AnswerStatusEmpty, domain.AnswerStatusWrong, domain.AnswerStatusPending, n(fileID), n(filename), n(textContent), now, userId, questionId,
+	), &answer)
 
 	if errors.Is(err, sql.ErrNoRows) {
 		return domain.Answer{}, domain.ErrSubmitToNonExistingAnswer
@@ -208,40 +156,79 @@ func (s sqlQuestionRepository) SubmitAnswer(ctx context.Context, answerId string
 
 func (s sqlQuestionRepository) GetKnowledgeBars(ctx context.Context, userId int32) ([]domain.KnowledgeBar, error) {
 	const query = `
-SELECT t.territory_id,
-       SUM(CASE WHEN a.question_id IS NOT NULL THEN t.knowledge_amount ELSE 0 END) AS matched_amount,
-       SUM(t.knowledge_amount) AS total_amount
-FROM territory_questions t
-LEFT JOIN (
-    SELECT question_id
-    FROM answers
-    WHERE user_id = $1 AND status = $2
-) a ON t.question_id = a.question_id
-GROUP BY t.territory_id;`
+WITH territory_questions AS (
+    SELECT 
+        iq.territory_id,
+        q.question_id,
+        q.knowledge_amount
+    FROM book_questions q
+    JOIN islands iq ON q.book_id = iq.book_id
+)
+SELECT 
+    tq.territory_id,
+    SUM(tq.knowledge_amount) AS total_knowledge,
+	SUM(CASE WHEN a.status = $1 THEN tq.knowledge_amount ELSE 0 END) AS achieved_knowledge
+FROM territory_questions tq
+LEFT JOIN answers a 
+    ON tq.question_id = a.question_id
+   AND a.user_id = $2
+GROUP BY tq.territory_id
+ORDER BY tq.territory_id;
+`
 
-	rows, err := s.db.QueryContext(ctx, query, userId, domain.AnswerStatusCorrect)
+	rows, err := s.db.QueryContext(ctx, query, domain.AnswerStatusCorrect, userId)
 	if err != nil {
 		return nil, err
 	}
 	result := make([]domain.KnowledgeBar, 0, 4)
 	for rows.Next() {
 		var kb domain.KnowledgeBar
-		if err := rows.Scan(&kb.TerritoryID, &kb.Value, &kb.Total); err != nil {
+		if err := rows.Scan(&kb.TerritoryID, &kb.Total, &kb.Value); err != nil {
 			return nil, err
 		}
 		result = append(result, kb)
 	}
-	slices.SortFunc(result, func(a, b domain.KnowledgeBar) int {
-		return strings.Compare(a.TerritoryID, b.TerritoryID)
-	})
+
 	return result, nil
+}
+
+func (s sqlQuestionRepository) HasAnsweredIsland(ctx context.Context, userId int32, islandId string) (bool, error) {
+	const query = `
+SELECT 
+    CASE 
+        WHEN COUNT(DISTINCT q.question_id) = COUNT(DISTINCT a.question_id)
+        THEN TRUE
+        ELSE FALSE
+    END AS has_answered_all
+FROM islands i
+JOIN book_questions q 
+    ON i.book_id = q.book_id
+LEFT JOIN answers a
+    ON q.question_id = a.question_id
+   AND a.user_id = $1
+   AND a.status = $2
+WHERE i.id = $3 ;
+`
+	var result bool
+	err := s.db.QueryRowContext(ctx, query, userId, domain.AnswerStatusCorrect, islandId).Scan(&result)
+	return result, err
+}
+
+func (s sqlQuestionRepository) QuestionIsRelatedToIsland(ctx context.Context, islandId string, questionId string) error {
+	const query = `SELECT TRUE FROM book_questions b LEFT JOIN islands i ON b.book_id = i.book_id WHERE b.question_id = $1 AND i.id = $2 LIMIT 1 ;`
+	var result bool
+	err := s.db.QueryRowContext(ctx, query, questionId, islandId).Scan(&result)
+	if errors.Is(err, sql.ErrNoRows) {
+		return domain.ErrQuestionNotRelatedToIsland
+	}
+	return err
 }
 
 func (s sqlQuestionRepository) CreateCorrection(ctx context.Context, correction domain.Correction) error {
 	correction.CreatedAt = time.Now().UTC()
 	_, err := s.db.ExecContext(ctx,
-		`INSERT INTO corrections (id, answer_id, is_correct, created_at) VALUES ($1, $2, $3, $4)`,
-		correction.ID, correction.AnswerID, correction.IsCorrect, correction.CreatedAt,
+		`INSERT INTO corrections (id, question_id, user_id, is_correct, created_at) VALUES ($1, $2, $3, $4, $5)`,
+		correction.ID, correction.QuestionId, correction.UserId, correction.IsCorrect, correction.CreatedAt,
 	)
 	return err
 }
@@ -255,8 +242,8 @@ func (s sqlQuestionRepository) ApplyCorrection(ctx context.Context, correction d
 	var postApplyStatus domain.AnswerStatus
 	var userId int32
 	err := s.db.QueryRowContext(ctx,
-		`UPDATE answers SET status = CASE WHEN status = $1 THEN $2 ELSE status END WHERE id = $3 AND updated_at <= $4 RETURNING status, user_id`,
-		domain.AnswerStatusPending, newStatus, correction.AnswerID, ifBefore,
+		`UPDATE answers SET status = CASE WHEN status = $1 THEN $2 ELSE status END WHERE user_id = $3 AND question_id = $4 AND updated_at <= $5 RETURNING status, user_id`,
+		domain.AnswerStatusPending, newStatus, correction.UserId, correction.QuestionId, ifBefore,
 	).Scan(&postApplyStatus, &userId)
 	if errors.Is(err, sql.ErrNoRows) {
 		return 0, false, nil
@@ -275,7 +262,7 @@ func (s sqlQuestionRepository) ApplyCorrection(ctx context.Context, correction d
 
 func (s sqlQuestionRepository) GetUnappliedCorrections(ctx context.Context) (result []domain.Correction, err error) {
 	rows, err := s.db.QueryContext(ctx,
-		`SELECT id, answer_id, is_correct, created_at FROM corrections WHERE applied = FALSE `,
+		`SELECT id, question_id, user_id, is_correct, created_at FROM corrections WHERE applied = FALSE `,
 	)
 	if err != nil {
 		return nil, err
@@ -286,7 +273,7 @@ func (s sqlQuestionRepository) GetUnappliedCorrections(ctx context.Context) (res
 	}()
 	for rows.Next() {
 		var correction domain.Correction
-		err := rows.Scan(&correction.ID, &correction.AnswerID, &correction.IsCorrect, &correction.CreatedAt)
+		err := rows.Scan(&correction.ID, &correction.QuestionId, &correction.UserId, &correction.IsCorrect, &correction.CreatedAt)
 		if err != nil {
 			return nil, err
 		}

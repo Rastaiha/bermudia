@@ -6,15 +6,18 @@ import (
 )
 
 type Question struct {
-	ID            string   `json:"id"`
-	Text          string   `json:"text"`
-	RewardSources []int    `json:"reward_sources"`
-	InputType     string   `json:"inputType"`
-	InputAccept   []string `json:"inputAccept"`
+	ID          string   `json:"id"`
+	Text        string   `json:"text"`
+	InputType   string   `json:"inputType"`
+	InputAccept []string `json:"inputAccept"`
+}
+
+type BookQuestion struct {
+	QuestionID      string `json:"questionId"`
+	KnowledgeAmount int32  `json:"knowledgeAmount"`
 }
 
 type Answer struct {
-	ID          string
 	UserID      int32
 	QuestionID  string
 	Status      AnswerStatus
@@ -81,8 +84,9 @@ type KnowledgeBar struct {
 }
 
 type Correction struct {
-	ID        string
-	AnswerID  string
-	IsCorrect bool
-	CreatedAt time.Time
+	ID         string
+	QuestionId string
+	UserId     int32
+	IsCorrect  bool
+	CreatedAt  time.Time
 }
