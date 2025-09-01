@@ -70,7 +70,7 @@ export const anchorCheck = async (island) => {
   const response = await fetch(API_ENDPOINTS.anchorCheck, {
     method: 'POST',
     headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
-    body: JSON.stringify({ fromIsland: island}),
+    body: JSON.stringify({ island: island}),
   });
   return handleResponse(response);
 };

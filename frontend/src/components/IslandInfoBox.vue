@@ -23,16 +23,15 @@
                                     </div>
                                 </div>
                                 <button 
+                                    v-if="anchor && !anchorError"
+                                    :disabled="loading"
                                     @pointerdown.stop="$emit('dropAnchor')"
                                     class="btn-hover w-full p-2 rounded-lg bg-green-600 text-white disabled:opacity-50 disabled:cursor-not-allowed text-xs">
-                                    <span v-if="
-                                        anchor && player.coins < anchor.anchoringCost.items[0].amount
-                                    ">سکه کافی نیست</span>
-                                    <span v-else>لنگر بیندازید.</span>                                
+                                    لنگر بیندازید
                                 </button>
                             </div>
                             <div v-else>
-                                <p class="text-center text-sm text-gray-800">{{ anchor.reason }}</p>
+                                {{ anchorError ? anchorError : "خطا در دریافت اطلاعات" }}                          
                             </div>
                         </div>
                         <div v-else-if="isCurrentIsland && !isRefuelIsland" class="w-full space-y-3">
@@ -55,23 +54,15 @@
                                     </div>
                                 </div>
                             </div>
-                            <button :disabled="loading ||
-                                !isAdjacent ||
-                                !!travelError ||
-                                (travel && player.fuel < travel.fuelCost)
-                                " @pointerdown.stop="
-                                    $emit('travelToIsland', selectedIsland.id)
-                                    "
+                            <button 
+                                v-if="travel && !travelError"
+                                :disabled="loading"
+                                @pointerdown.stop="$emit('travelToIsland', selectedIsland.id)"
                                 class="btn-hover w-full p-2 rounded-lg bg-green-600 text-white disabled:opacity-50 disabled:cursor-not-allowed text-xs">
-                                <span v-if="!isAdjacent">مسیر مستقیمی وجود ندارد</span>
-                                <span v-else-if="
-                                    travel && player.fuel < travel.fuelCost
-                                ">سوخت کافی نیست</span>
-                                <span v-else>سفر به این جزیره</span>
+                                سفر به این جزیره   
                             </button>
-                            <p v-if="travelError"
-                                class="text-center text-sm text-red-700 font-semibold bg-red-200 p-2 rounded-md">
-                                {{ travelError }}
+                            <p v-else class="text-center text-sm text-red-700 font-semibold bg-red-200 p-2 rounded-md">
+                                {{ travelError ? travelError : "خطا در دریافت اطلاعات" }}     
                             </p>
                         </div>
                     </div>
@@ -96,6 +87,7 @@ const props = defineProps({
     isAdjacent: Boolean,
     loading: Boolean,
     travelError: String,
+    anchorError: String
 });
 
 const emit = defineEmits(["buyFuel", "navigateToIsland", "travelToIsland", "dropAnchor"]);
