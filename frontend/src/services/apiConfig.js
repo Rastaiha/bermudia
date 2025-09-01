@@ -12,6 +12,8 @@ export const API_ENDPOINTS = {
   getPlayer: `${API_BASE_URL}/player`,
   travelCheck: `${API_BASE_URL}/travel_check`,
   travelTo: `${API_BASE_URL}/travel`,
+  anchorCheck: `${API_BASE_URL}/anchor_check`,
+  dropAnchor:  `${API_BASE_URL}/anchor`,
   refuelCheck: `${API_BASE_URL}/refuel_check`,
   buyFuel: `${API_BASE_URL}/refuel`,
 

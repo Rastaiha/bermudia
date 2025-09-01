@@ -13,6 +13,28 @@
                     <div v-if="!loading" class="w-full mt-3 space-y-3">
                         <RefuelIslandInfoBox v-if="isCurrentIsland && isRefuelIsland && refuel" :refuel="refuel"
                             :player="player" @buyFuel="$emit('buyFuel', $event)" />
+                        <div v-else-if="isCurrentIsland && !isRefuelIsland && !player.anchored" class="w-full space-y-3">
+                            <div v-if="anchor" class="text-sm">
+                                <div class="text-gray-800 mb-1">هزینه لنگر انداختن:</div>
+                                <div v-for="(costItem, index) in anchor.anchoringCost.items" :key="index" class="flex justify-between items-center flex-row-reverse">
+                                    <div class="flex items-center gap-x-1">
+                                        <span class="text-gray-900 font-bold">{{ costItem.amount }}</span>
+                                        <img :src="getIconByType(costItem.type)" :alt="costItem.type + ' Icon'" class="w-5 h-5" />
+                                    </div>
+                                </div>
+                                <button 
+                                    @pointerdown.stop="$emit('dropAnchor')"
+                                    class="btn-hover w-full p-2 rounded-lg bg-green-600 text-white disabled:opacity-50 disabled:cursor-not-allowed text-xs">
+                                    <span v-if="
+                                        anchor && player.coins < anchor.anchoringCost.items[0].amount
+                                    ">سکه کافی نیست</span>
+                                    <span v-else>لنگر بیندازید.</span>                                
+                                </button>
+                            </div>
+                            <div v-else>
+                                <p class="text-center text-sm text-gray-800">{{ anchor.reason }}</p>
+                            </div>
+                        </div>
                         <div v-else-if="isCurrentIsland && !isRefuelIsland" class="w-full space-y-3">
                             <p class="text-center text-sm text-gray-800">
                                 شما در این جزیره قرار دارید.
@@ -68,6 +90,7 @@ const props = defineProps({
     player: Object,
     refuel: Object,
     travel: Object,
+    anchor: Object,
     infoBoxStyle: Object,
     isRefuelIsland: Boolean,
     isAdjacent: Boolean,
@@ -75,7 +98,7 @@ const props = defineProps({
     travelError: String,
 });
 
-const emit = defineEmits(["buyFuel", "navigateToIsland", "travelToIsland"]);
+const emit = defineEmits(["buyFuel", "navigateToIsland", "travelToIsland", "dropAnchor"]);
 
 const fuelInput = ref(null);
 const fuelCount = ref(0);

@@ -12,9 +12,9 @@
 
       <Transition name="popup-fade">
         <IslandInfoBox v-if="selectedIsland" :key="selectedIsland" :selectedIsland="selectedIsland" :player="player"
-          :refuel="refuel" :travel="travel" :infoBoxStyle="infoBoxStyle" :isRefuelIsland="isSelectedIslandRefuelIsland"
+          :refuel="refuel" :travel="travel" :anchor="anchor" :infoBoxStyle="infoBoxStyle" :isRefuelIsland="isSelectedIslandRefuelIsland"
           :isAdjacent="isSelectedIslandAdjacent" :loading="isInfoBoxLoading" @navigateToIsland="navigateToIsland"
-          @travelToIsland="travelToIsland" @buyFuel="buyFuelFromIsland" />
+          @travelToIsland="travelToIsland" @buyFuel="buyFuelFromIsland" @dropAnchor="dropAnchor"/>
       </Transition>
 
     </template>
@@ -24,7 +24,7 @@
 <script setup>
 import { ref, onMounted, computed, nextTick, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { getPlayer, getMe, getToken, travelCheck, travelTo, refuelCheck, buyFuel, logout, getTerritory } from "@/services/api.js";
+import { getPlayer, getMe, getToken, travelCheck, travelTo, refuelCheck, buyFuel, anchorCheck, dropAnchorAtIsland, logout, getTerritory } from "@/services/api.js";
 import { usePlayerWebSocket } from '@/components/service/WebSocket.js';
 
 import MapView from '@/components/MapView.vue';
@@ -46,7 +46,9 @@ const edges = ref([]);
 const player = ref(null);
 const username = ref('...');
 const travel = ref(null);
+const anchor = ref(null);
 const travelError = ref(null);
+const anchorError = ref(null);
 const refuel = ref(null);
 const backgroundImage = ref('');
 const selectedIsland = ref(null);
@@ -100,6 +102,15 @@ const travelToIsland = async (dest) => {
     await travelTo(player.value.atIsland, dest);
   } catch (error) {
     travelError.value = error.message;
+  }
+};
+
+const dropAnchor = async () => {
+  try {
+    anchorError.value = null;
+    await dropAnchorAtIsland(player.value.atIsland);
+  } catch (error) {
+    anchorError.value = error.message;
   }
 };
 
@@ -165,6 +176,15 @@ const updateTravel = async () => {
   }
 };
 
+const updateAnchor = async () => {
+  if (!player.value || !selectedIsland.value) return;
+  try {
+    anchor.value = await anchorCheck(player.value.atIsland);
+  } catch (err) {
+    anchorError.value = err.message;
+  }
+};
+
 const updateRefuel = async () => {
   try {
     refuel.value = await refuelCheck();
@@ -186,12 +206,15 @@ const showInfoBox = async (island) => {
   travel.value = null;
   refuel.value = null;
   travelError.value = null;
+  anchorError.value = null;
 
   try {
     const isCurrent = island.id === player.value.atIsland;
     if (isCurrent) {
       if (isSelectedIslandRefuelIsland.value) {
         await updateRefuel();
+      } else if (!player.value.anchored) {
+        await updateAnchor();
       } else {
         await nextTick();
       }
@@ -208,6 +231,7 @@ const hideInfoBox = () => {
   travel.value = null;
   refuel.value = null;
   travelError.value = null;
+  anchorError.value = null;
   isInfoBoxLoading.value = false;
 };
 
