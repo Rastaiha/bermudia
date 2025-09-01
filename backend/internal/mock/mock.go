@@ -85,7 +85,7 @@ func createMockIslands(adminService *service.Admin) error {
 		if err != nil {
 			return err
 		}
-		var islandContent domain.IslandInputContent
+		var islandContent service.BookInput
 		if err := json.Unmarshal(content, &islandContent); err != nil {
 			return err
 		}

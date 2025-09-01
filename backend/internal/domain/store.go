@@ -12,8 +12,7 @@ var (
 	ErrUserNotFound               = errors.New("user not found")
 	ErrPlayerConflict             = errors.New("player update conflict")
 	ErrAnswerNotPending           = errors.New("answer not in pending state")
-	ErrResourceNotRelatedToIsland = errors.New("resource not related to island")
-	ErrAnswerNotFound             = errors.New("answer not found")
+	ErrQuestionNotRelatedToIsland = errors.New("question not related to island")
 )
 
 type TerritoryStore interface {
@@ -23,15 +22,11 @@ type TerritoryStore interface {
 }
 
 type IslandStore interface {
-	SetContent(ctx context.Context, id string, content *IslandRawContent) error
+	SetBook(ctx context.Context, book Book) error
+	BindBookToIsland(ctx context.Context, islandId string, bookId string) error
 	ReserveIDForTerritory(ctx context.Context, territoryId, islandId string) error
-	GetByID(ctx context.Context, id string) (*IslandRawContent, string, error)
+	GetIslandContent(ctx context.Context, islandId string, userId int32) (*Book, error)
 	GetTerritory(ctx context.Context, id string) (string, error)
-	// GetOrCreateUserComponent gets the component if it exists, otherwise it creates a new component by generating a NewID for the resource type.
-	// If the IdHasType returns false for the exiting ResourceID, it returns an error.
-	GetOrCreateUserComponent(ctx context.Context, islandId string, userId int32, componentId string, resourceType ResourceType) (UserComponent, error)
-	ResourceIsRelatedToIsland(ctx context.Context, userId int32, islandId string, resourceId string) error
-	GetUserAnswerComponents(ctx context.Context, userId int32, islandId string) ([]string, int, error)
 }
 
 type UserStore interface {
@@ -47,19 +42,17 @@ type PlayerStore interface {
 }
 
 type QuestionStore interface {
-	// SetQuestion creates the question if it does not exist, otherwise updates all fields based on id
-	SetQuestion(ctx context.Context, question Question) error
-	BindQuestionToTerritory(ctx context.Context, questionId, territoryId string, knowledgeAmount int32) error
-	GetQuestion(ctx context.Context, id string) (Question, error)
+	BindQuestionsToBook(ctx context.Context, bookId string, questions []BookQuestion) error
 	// GetOrCreateAnswer gets the Answer if it exists
 	// otherwise creates an Answer with the given ID and zero value for other fields (except timestamps).
-	GetOrCreateAnswer(ctx context.Context, userId int32, answerID string, questionID string) (Answer, error)
-	GetAnswer(ctx context.Context, id string) (Answer, error)
+	GetOrCreateAnswer(ctx context.Context, userId int32, questionID string) (Answer, error)
 	// SubmitAnswer updates the existing Answer with the given args and sets the answer status to AnswerStatusPending.
 	// If the answer is in AnswerStatusCorrect status, it returns ErrSubmitToCorrectAnswer error.
 	// If the answer is in AnswerStatusPending status, it returns ErrSubmitToPendingAnswer error.
-	SubmitAnswer(ctx context.Context, answerId string, userId int32, fileID, filename, textContent string) (Answer, error)
+	SubmitAnswer(ctx context.Context, userId int32, questionId string, fileID, filename, textContent string) (Answer, error)
 	GetKnowledgeBars(ctx context.Context, userId int32) ([]KnowledgeBar, error)
+	HasAnsweredIsland(ctx context.Context, userId int32, islandId string) (bool, error)
+	QuestionIsRelatedToIsland(ctx context.Context, islandId string, questionId string) error
 	CreateCorrection(ctx context.Context, Correction Correction) error
 	ApplyCorrection(ctx context.Context, correction Correction, ifBefore time.Time) (int32, bool, error)
 	GetUnappliedCorrections(ctx context.Context) ([]Correction, error)

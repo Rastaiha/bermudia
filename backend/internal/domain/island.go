@@ -11,33 +11,14 @@ type Island struct {
 	IconAsset string  `json:"iconAsset"`
 }
 
-type IslandInputContent struct {
-	Components []*IslandInputComponent `json:"components"`
+type Book struct {
+	ID         string          `json:"id"`
+	Components []BookComponent `json:"components"`
 }
 
-type IslandInputComponent struct {
-	ID       string               `json:"id,omitempty"`
-	IFrame   *IslandIFrame        `json:"iframe,omitempty"`
-	Question *IslandInputQuestion `json:"question,omitempty"`
-}
-
-type IslandInputQuestion struct {
-	Question
-	KnowledgeAmount int32 `json:"knowledgeAmount"`
-}
-
-type IslandRawContent struct {
-	Components []IslandRawComponent `json:"components"`
-}
-
-type IslandRawComponent struct {
-	ID       string             `json:"id,omitempty"`
-	IFrame   *IslandIFrame      `json:"iframe,omitempty"`
-	Question *QuestionComponent `json:"question,omitempty"`
-}
-
-type QuestionComponent struct {
-	QuestionID string `json:"questionId"`
+type BookComponent struct {
+	IFrame   *IslandIFrame `json:"iframe,omitempty"`
+	Question *Question     `json:"question,omitempty"`
 }
 
 type IslandContent struct {
@@ -67,13 +48,6 @@ type SubmissionState struct {
 	Filename    string `json:"filename,omitempty"`
 	Value       string `json:"value,omitempty"`
 	SubmittedAt int64  `json:"submittedAt,omitempty,string"`
-}
-
-type UserComponent struct {
-	IslandID    string
-	UserID      int32
-	ComponentID string
-	ResourceID  string
 }
 
 func PlayerHasAccessToIsland(player Player, islandID string) error {

@@ -9,10 +9,9 @@ import (
 type ResourceType string
 
 const (
+	ResourceTypeBook       ResourceType = "bok"
 	ResourceTypeQuestion   ResourceType = "qst"
 	ResourceTypeChest      ResourceType = "cst"
-	ResourceTypeComponent  ResourceType = "cmp"
-	ResourceTypeAnswer     ResourceType = "ans"
 	ResourceTypeCorrection ResourceType = "crt"
 )
 

@@ -84,59 +84,75 @@ func (a *Admin) SetTerritory(ctx context.Context, territory domain.Territory) er
 	return a.territoryStore.SetTerritory(ctx, &territory)
 }
 
-func (a *Admin) SetIsland(ctx context.Context, id string, input domain.IslandInputContent) (domain.IslandInputContent, error) {
-	territoryId, err := a.islandStore.GetTerritory(ctx, id)
+type BookInput struct {
+	BookId     string                `json:"bookId"`
+	Components []*BookInputComponent `json:"components"`
+}
+
+type BookInputComponent struct {
+	IFrame   *domain.IslandIFrame `json:"iframe,omitempty"`
+	Question *IslandInputQuestion `json:"question,omitempty"`
+}
+
+type IslandInputQuestion struct {
+	domain.Question
+	KnowledgeAmount int32 `json:"knowledgeAmount"`
+}
+
+func (a *Admin) SetIsland(ctx context.Context, islandId string, input BookInput) (BookInput, error) {
+	_, err := a.islandStore.GetTerritory(ctx, islandId)
 	if err != nil {
-		return input, fmt.Errorf("island %q does not have territory", id)
+		return input, fmt.Errorf("island %q does not have territory", islandId)
 	}
-	raw := &domain.IslandRawContent{Components: make([]domain.IslandRawComponent, 0)}
-	var questions []domain.IslandInputQuestion
+	if input.BookId == "" || domain.IdHasType(input.BookId, domain.ResourceTypeBook) {
+		input.BookId = domain.NewID(domain.ResourceTypeBook)
+	}
+	book := domain.Book{ID: input.BookId, Components: make([]domain.BookComponent, 0)}
+	var questions []domain.BookQuestion
 	for i, c := range input.Components {
-		if c.ID == "" || !domain.IdHasType(c.ID, domain.ResourceTypeComponent) {
-			c.ID = domain.NewID(domain.ResourceTypeComponent)
-		}
 		if c.IFrame != nil {
 			if c.IFrame.Url == "" {
-				return input, fmt.Errorf("empty url for island %q iframe component at index %d", id, i)
+				return input, fmt.Errorf("empty url for island %q iframe component at index %d", islandId, i)
 			}
-			raw.Components = append(raw.Components, domain.IslandRawComponent{ID: c.ID, IFrame: c.IFrame})
+			book.Components = append(book.Components, domain.BookComponent{IFrame: c.IFrame})
 			continue
 		}
 		if c.Question != nil {
 			if c.Question.InputType == "" {
-				return input, fmt.Errorf("empty inputType for island %q question at index %d", id, i)
+				return input, fmt.Errorf("empty inputType for island %q question at index %d", islandId, i)
 			}
 			if c.Question.InputType == "file" && len(c.Question.InputAccept) == 0 {
-				return input, fmt.Errorf("empty inputAccept for island %q question at index %d", id, i)
+				return input, fmt.Errorf("empty inputAccept for island %q question at index %d", islandId, i)
 			}
 			if c.Question.KnowledgeAmount <= 0 {
-				return input, fmt.Errorf("non-positive knowledgeAmount for island %q question at index %d", id, i)
+				return input, fmt.Errorf("non-positive knowledgeAmount for island %q question at index %d", islandId, i)
 			}
 			if c.Question.Text == "" {
-				return input, fmt.Errorf("empty text for island %q question at index %d", id, i)
+				return input, fmt.Errorf("empty text for island %q question at index %d", islandId, i)
 			}
 			if c.Question.ID == "" || !domain.IdHasType(c.Question.ID, domain.ResourceTypeQuestion) {
 				c.Question.ID = domain.NewID(domain.ResourceTypeQuestion)
 			}
-			questions = append(questions, *c.Question)
-			raw.Components = append(raw.Components, domain.IslandRawComponent{ID: c.ID, Question: &domain.QuestionComponent{QuestionID: c.Question.ID}})
+			questions = append(questions, domain.BookQuestion{
+				QuestionID:      c.Question.ID,
+				KnowledgeAmount: c.Question.KnowledgeAmount,
+			})
+			book.Components = append(book.Components, domain.BookComponent{Question: &c.Question.Question})
 			continue
 		}
-		return input, fmt.Errorf("unknown component for island %q at index %d", id, i)
+		return input, fmt.Errorf("unknown component for island %q at index %d", islandId, i)
 	}
-	for _, q := range questions {
-		err := a.questionStore.SetQuestion(ctx, q.Question)
-		if err != nil {
-			return input, err
-		}
-		err = a.questionStore.BindQuestionToTerritory(ctx, q.Question.ID, territoryId, q.KnowledgeAmount)
-		if err != nil {
-			return input, err
-		}
-	}
-	err = a.islandStore.SetContent(ctx, id, raw)
+	err = a.islandStore.SetBook(ctx, book)
 	if err != nil {
-		return input, err
+		return input, fmt.Errorf("failed to set book: %w", err)
+	}
+	err = a.questionStore.BindQuestionsToBook(ctx, book.ID, questions)
+	if err != nil {
+		return input, fmt.Errorf("failed to bind questions to book: %w", err)
+	}
+	err = a.islandStore.BindBookToIsland(ctx, islandId, book.ID)
+	if err != nil {
+		return input, fmt.Errorf("failed to bind island: %w", err)
 	}
 	return input, nil
 }
