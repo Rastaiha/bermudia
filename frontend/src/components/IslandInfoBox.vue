@@ -14,7 +14,6 @@
                         <RefuelIslandInfoBox v-if="isCurrentIsland && isRefuelIsland && refuel" :refuel="refuel"
                             :player="player" @buyFuel="$emit('buyFuel', $event)" />
                         <div v-else-if="isCurrentIsland && !isRefuelIsland && !player.anchored" class="w-full space-y-3">
-                            <!-- <div v-if="anchor && anchor.feasible" class="text-sm"> -->
                             <div v-if="anchor" class="text-sm">
                                 <div class="text-gray-800 mb-1">هزینه لنگر انداختن:</div>
                                 <div v-for="(costItem, index) in anchor.anchoringCost.items" :key="index" class="flex justify-between items-center flex-row-reverse">
@@ -23,8 +22,6 @@
                                         <img :src="getIconByType(costItem.type)" :alt="costItem.type + ' Icon'" class="w-5 h-5" />
                                     </div>
                                 </div>
-                                <!-- <button 
-                                    :disabled="loading || anchor || player.coins < anchor.anchoringCost.items[0].amount"  -->
                                 <button 
                                     @pointerdown.stop="$emit('dropAnchor')"
                                     class="btn-hover w-full p-2 rounded-lg bg-green-600 text-white disabled:opacity-50 disabled:cursor-not-allowed text-xs">
@@ -34,7 +31,7 @@
                                     <span v-else>لنگر بیندازید.</span>                                
                                 </button>
                             </div>
-                            <div v-else-if="anchor">
+                            <div v-else>
                                 <p class="text-center text-sm text-gray-800">{{ anchor.reason }}</p>
                             </div>
                         </div>
