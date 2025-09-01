@@ -14,6 +14,7 @@
         <IslandInfoBox v-if="selectedIsland" :key="selectedIsland" :selectedIsland="selectedIsland" :player="player"
           :refuel="refuel" :travel="travel" :anchor="anchor" :infoBoxStyle="infoBoxStyle" :isRefuelIsland="isSelectedIslandRefuelIsland"
           :isAdjacent="isSelectedIslandAdjacent" :loading="isInfoBoxLoading" @navigateToIsland="navigateToIsland"
+          :travelError="travelError" :anchorError="anchorError"
           @travelToIsland="travelToIsland" @buyFuel="buyFuelFromIsland" @dropAnchor="dropAnchor"/>
       </Transition>
 
@@ -171,6 +172,11 @@ const updateTravel = async () => {
   if (!player.value || !selectedIsland.value) return;
   try {
     travel.value = await travelCheck(player.value.atIsland, selectedIsland.value.id);
+    if (!travel.feasible) {
+      travelError.value = travel.value.reason;
+    } else {
+      travelError.value = null;
+    }
   } catch (err) {
     travelError.value = err.message;
   }
@@ -180,6 +186,11 @@ const updateAnchor = async () => {
   if (!player.value || !selectedIsland.value) return;
   try {
     anchor.value = await anchorCheck(player.value.atIsland);
+    if (!anchor.feasible) {
+      anchorError.value = anchor.value.reason;
+    } else {
+      anchorError.value = null;
+    }
   } catch (err) {
     anchorError.value = err.message;
   }
