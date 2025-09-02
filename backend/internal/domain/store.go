@@ -14,6 +14,10 @@ var (
 	ErrAnswerNotPending           = errors.New("answer not in pending state")
 	ErrQuestionNotRelatedToIsland = errors.New("question not related to island")
 	ErrInvalidIslandHeader        = errors.New("invalid island header")
+	ErrPoolSettingExhausted       = errors.New("pool setting exhausted")
+	ErrBookPoolExhausted          = errors.New("book pool exhausted")
+	ErrNoBookAssignedFromPool     = errors.New("no book assigned from pool")
+	ErrEmptyIsland                = errors.New("empty island")
 )
 
 type TerritoryStore interface {
@@ -24,14 +28,16 @@ type TerritoryStore interface {
 
 type IslandStore interface {
 	SetBook(ctx context.Context, book Book) error
+	GetBook(ctx context.Context, bookId string) (*Book, error)
 	SetIslandHeader(ctx context.Context, territoryId string, header IslandHeader) error
 	ReserveIDForTerritory(ctx context.Context, territoryId, islandId string) error
-	GetIslandContent(ctx context.Context, islandId string, userId int32) (*Book, error)
+	GetBookOfIsland(ctx context.Context, islandId string, userId int32) (string, error)
 	GetTerritory(ctx context.Context, id string) (string, error)
 	GetIslandHeadersByTerritory(ctx context.Context, territoryId string) ([]IslandHeader, error)
 	SetTerritoryPoolSettings(ctx context.Context, territoryId string, settings TerritoryPoolSettings) error
 	GetTerritoryPoolSettings(ctx context.Context, territoryId string) (TerritoryPoolSettings, error)
 	AddBookToPool(ctx context.Context, poolId string, bookId string) error
+	AssignBookToIslandFromPool(ctx context.Context, territoryId string, islandId string, userId int32) (bookId string, err error)
 }
 
 type UserStore interface {
@@ -57,7 +63,7 @@ type QuestionStore interface {
 	SubmitAnswer(ctx context.Context, userId int32, questionId string, fileID, filename, textContent string) (Answer, error)
 	GetKnowledgeBars(ctx context.Context, userId int32) ([]KnowledgeBar, error)
 	HasAnsweredIsland(ctx context.Context, userId int32, islandId string) (bool, error)
-	QuestionIsRelatedToIsland(ctx context.Context, islandId string, questionId string) error
+	GetBookOfQuestion(ctx context.Context, questionId string) (string, error)
 	CreateCorrection(ctx context.Context, Correction Correction) error
 	ApplyCorrection(ctx context.Context, correction Correction, ifBefore time.Time) (int32, bool, error)
 	GetUnappliedCorrections(ctx context.Context) ([]Correction, error)

@@ -63,6 +63,10 @@ func GetSubmissionStateFromAnswer(answer Answer) SubmissionState {
 }
 
 var (
+	ErrQuestionNotFound = Error{
+		text:   "question not found",
+		reason: ErrorReasonResourceNotFound,
+	}
 	ErrSubmitToNonExistingAnswer = Error{
 		text:   "answer id does not exist",
 		reason: ErrorReasonResourceNotFound,

@@ -214,14 +214,13 @@ WHERE i.id = $3 ;
 	return result, err
 }
 
-func (s sqlQuestionRepository) QuestionIsRelatedToIsland(ctx context.Context, islandId string, questionId string) error {
-	const query = `SELECT TRUE FROM questions b LEFT JOIN islands i ON b.book_id = i.book_id WHERE b.question_id = $1 AND i.id = $2 LIMIT 1 ;`
-	var result bool
-	err := s.db.QueryRowContext(ctx, query, questionId, islandId).Scan(&result)
+func (s sqlQuestionRepository) GetBookOfQuestion(ctx context.Context, questionId string) (string, error) {
+	var bookId string
+	err := s.db.QueryRowContext(ctx, `SELECT book_id FROM questions WHERE question_id = $1 ;`, questionId).Scan(&bookId)
 	if errors.Is(err, sql.ErrNoRows) {
-		return domain.ErrQuestionNotRelatedToIsland
+		return bookId, domain.ErrQuestionNotFound
 	}
-	return err
+	return bookId, err
 }
 
 func (s sqlQuestionRepository) CreateCorrection(ctx context.Context, correction domain.Correction) error {

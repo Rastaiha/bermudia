@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"github.com/Rastaiha/bermudia/internal/domain"
 	"github.com/go-telegram/bot"
@@ -36,8 +37,19 @@ func (i *Island) GetIsland(ctx context.Context, userId int32, islandId string) (
 	if err := domain.PlayerHasAccessToIsland(player, islandId); err != nil {
 		return nil, err
 	}
+	territoryId, err := i.islandStore.GetTerritory(ctx, islandId)
+	if err != nil {
+		return nil, err
+	}
 
-	book, err := i.islandStore.GetIslandContent(ctx, islandId, userId)
+	bookId, err := i.islandStore.GetBookOfIsland(ctx, islandId, userId)
+	if errors.Is(err, domain.ErrNoBookAssignedFromPool) {
+		bookId, err = i.islandStore.AssignBookToIslandFromPool(ctx, territoryId, islandId, userId)
+	}
+	if err != nil {
+		return nil, err
+	}
+	book, err := i.islandStore.GetBook(ctx, bookId)
 	if err != nil {
 		return nil, err
 	}
@@ -74,8 +86,16 @@ func (i *Island) SubmitAnswer(ctx context.Context, userId int32, questionId stri
 	if err != nil {
 		return nil, err
 	}
-	if err := i.questionStore.QuestionIsRelatedToIsland(ctx, player.AtIsland, questionId); err != nil {
+	accessedBook, err := i.questionStore.GetBookOfQuestion(ctx, questionId)
+	if err != nil {
 		return nil, err
+	}
+	accessibleBook, err := i.islandStore.GetBookOfIsland(ctx, player.AtIsland, userId)
+	if err != nil {
+		return nil, err
+	}
+	if accessedBook != accessibleBook {
+		return nil, domain.ErrQuestionNotRelatedToIsland
 	}
 	if err := domain.PlayerHasAccessToIsland(player, player.AtIsland); err != nil {
 		return nil, err
