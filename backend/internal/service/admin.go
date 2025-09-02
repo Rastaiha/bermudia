@@ -99,11 +99,42 @@ type IslandInputQuestion struct {
 	KnowledgeAmount int32 `json:"knowledgeAmount"`
 }
 
-func (a *Admin) SetIsland(ctx context.Context, islandId string, input BookInput) (BookInput, error) {
-	_, err := a.islandStore.GetTerritory(ctx, islandId)
+func (a *Admin) SetBookAndBindToIsland(ctx context.Context, islandId string, input BookInput) (BookInput, error) {
+	territoryId, err := a.islandStore.GetTerritory(ctx, islandId)
 	if err != nil {
 		return input, fmt.Errorf("island %q does not have territory", islandId)
 	}
+	input, err = a.setBook(ctx, input)
+	if err != nil {
+		return input, err
+	}
+	err = a.islandStore.SetIslandHeader(ctx, territoryId, domain.IslandHeader{
+		ID:       islandId,
+		BookID:   input.BookId,
+		FromPool: false,
+	})
+	if err != nil {
+		return input, fmt.Errorf("failed to set island header: %w", err)
+	}
+	return input, nil
+}
+
+func (a *Admin) SetBookAndBindToPool(ctx context.Context, poolId string, input BookInput) (BookInput, error) {
+	if !domain.IsPoolIdValid(poolId) {
+		return input, fmt.Errorf("invalid poolId %q", poolId)
+	}
+	input, err := a.setBook(ctx, input)
+	if err != nil {
+		return input, err
+	}
+	err = a.islandStore.AddBookToPool(ctx, poolId, input.BookId)
+	if err != nil {
+		return input, fmt.Errorf("failed to add book to pool: %w", err)
+	}
+	return input, nil
+}
+
+func (a *Admin) setBook(ctx context.Context, input BookInput) (BookInput, error) {
 	if input.BookId == "" || domain.IdHasType(input.BookId, domain.ResourceTypeBook) {
 		input.BookId = domain.NewID(domain.ResourceTypeBook)
 	}
@@ -112,23 +143,23 @@ func (a *Admin) SetIsland(ctx context.Context, islandId string, input BookInput)
 	for i, c := range input.Components {
 		if c.IFrame != nil {
 			if c.IFrame.Url == "" {
-				return input, fmt.Errorf("empty url for island %q iframe component at index %d", islandId, i)
+				return input, fmt.Errorf("empty url for book %q iframe component at index %d", book.ID, i)
 			}
 			book.Components = append(book.Components, domain.BookComponent{IFrame: c.IFrame})
 			continue
 		}
 		if c.Question != nil {
 			if c.Question.InputType == "" {
-				return input, fmt.Errorf("empty inputType for island %q question at index %d", islandId, i)
+				return input, fmt.Errorf("empty inputType for book %q question at index %d", book.ID, i)
 			}
 			if c.Question.InputType == "file" && len(c.Question.InputAccept) == 0 {
-				return input, fmt.Errorf("empty inputAccept for island %q question at index %d", islandId, i)
+				return input, fmt.Errorf("empty inputAccept for book %q question at index %d", book.ID, i)
 			}
 			if c.Question.KnowledgeAmount <= 0 {
-				return input, fmt.Errorf("non-positive knowledgeAmount for island %q question at index %d", islandId, i)
+				return input, fmt.Errorf("non-positive knowledgeAmount for book %q question at index %d", book.ID, i)
 			}
 			if c.Question.Text == "" {
-				return input, fmt.Errorf("empty text for island %q question at index %d", islandId, i)
+				return input, fmt.Errorf("empty text for book %q question at index %d", book.ID, i)
 			}
 			if c.Question.ID == "" || !domain.IdHasType(c.Question.ID, domain.ResourceTypeQuestion) {
 				c.Question.ID = domain.NewID(domain.ResourceTypeQuestion)
@@ -140,9 +171,9 @@ func (a *Admin) SetIsland(ctx context.Context, islandId string, input BookInput)
 			book.Components = append(book.Components, domain.BookComponent{Question: &c.Question.Question})
 			continue
 		}
-		return input, fmt.Errorf("unknown component for island %q at index %d", islandId, i)
+		return input, fmt.Errorf("unknown component for book %q at index %d", book.ID, i)
 	}
-	err = a.islandStore.SetBook(ctx, book)
+	err := a.islandStore.SetBook(ctx, book)
 	if err != nil {
 		return input, fmt.Errorf("failed to set book: %w", err)
 	}
@@ -150,11 +181,70 @@ func (a *Admin) SetIsland(ctx context.Context, islandId string, input BookInput)
 	if err != nil {
 		return input, fmt.Errorf("failed to bind questions to book: %w", err)
 	}
-	err = a.islandStore.BindBookToIsland(ctx, islandId, book.ID)
-	if err != nil {
-		return input, fmt.Errorf("failed to bind island: %w", err)
-	}
 	return input, nil
+}
+
+type TerritoryIslandBindings struct {
+	TerritoryId   string                       `json:"territoryId"`
+	EmptyIslands  []string                     `json:"emptyIslands"`
+	PooledIslands []string                     `json:"pooledIslands"`
+	PoolSettings  domain.TerritoryPoolSettings `json:"poolSettings"`
+}
+
+func (a *Admin) GetTerritoryIslandBindings(ctx context.Context, territoryId string) (TerritoryIslandBindings, error) {
+	binding := TerritoryIslandBindings{
+		TerritoryId: territoryId,
+	}
+	islands, err := a.islandStore.GetIslandHeadersByTerritory(ctx, territoryId)
+	if err != nil {
+		return binding, fmt.Errorf("failed to get island headers by territory %q: %w", territoryId, err)
+	}
+	for _, h := range islands {
+		if h.FromPool {
+			binding.PooledIslands = append(binding.PooledIslands, h.ID)
+		}
+		if !h.FromPool && h.BookID == "" {
+			binding.PooledIslands = append(binding.EmptyIslands, h.ID)
+		}
+	}
+	settings, err := a.islandStore.GetTerritoryPoolSettings(ctx, territoryId)
+	if err != nil {
+		return binding, err
+	}
+	binding.PoolSettings = settings
+	return binding, nil
+}
+
+func (a *Admin) SetTerritoryIslandBindings(ctx context.Context, bindings TerritoryIslandBindings) (TerritoryIslandBindings, error) {
+	pooledCount := int32(len(bindings.PooledIslands))
+	if pooledCount != bindings.PoolSettings.TotalCount() {
+		return bindings, fmt.Errorf("number of pooled islands don't match pool settings: %d vs %d", pooledCount, bindings.PoolSettings.TotalCount())
+	}
+	err := a.islandStore.SetTerritoryPoolSettings(ctx, bindings.TerritoryId, bindings.PoolSettings)
+	if err != nil {
+		return bindings, err
+	}
+	for _, id := range bindings.EmptyIslands {
+		err := a.islandStore.SetIslandHeader(ctx, bindings.TerritoryId, domain.IslandHeader{
+			ID:       id,
+			FromPool: false,
+			BookID:   "",
+		})
+		if err != nil {
+			return bindings, fmt.Errorf("failed to set header for island %q: %w", id, err)
+		}
+	}
+	for _, id := range bindings.PooledIslands {
+		err := a.islandStore.SetIslandHeader(ctx, bindings.TerritoryId, domain.IslandHeader{
+			ID:       id,
+			FromPool: true,
+			BookID:   "",
+		})
+		if err != nil {
+			return bindings, fmt.Errorf("failed to set header for island %q: %w", id, err)
+		}
+	}
+	return bindings, nil
 }
 
 func (a *Admin) CreateUser(ctx context.Context, id int32, username, password string) error {

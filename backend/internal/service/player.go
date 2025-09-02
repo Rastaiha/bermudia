@@ -17,18 +17,16 @@ type Player struct {
 	playerStore              domain.PlayerStore
 	territoryStore           domain.TerritoryStore
 	questionStore            domain.QuestionStore
-	islandStore              domain.IslandStore
 	playerUpdateEventHandler func(event *domain.FullPlayerUpdateEvent)
 	cron                     gocron.Scheduler
 }
 
-func NewPlayer(cfg config.Config, playerStore domain.PlayerStore, territoryStore domain.TerritoryStore, questionStore domain.QuestionStore, islandStore domain.IslandStore) *Player {
+func NewPlayer(cfg config.Config, playerStore domain.PlayerStore, territoryStore domain.TerritoryStore, questionStore domain.QuestionStore) *Player {
 	return &Player{
 		cfg:            cfg,
 		playerStore:    playerStore,
 		territoryStore: territoryStore,
 		questionStore:  questionStore,
-		islandStore:    islandStore,
 	}
 }
 

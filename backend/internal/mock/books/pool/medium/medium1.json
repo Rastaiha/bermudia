@@ -1,0 +1,16 @@
+{
+  "components": [
+    {
+      "iframe": {
+        "url": "https://platform.kamva.academy/article/713"
+      }
+    },
+    {
+      "question": {
+        "inputType": "text",
+        "knowledgeAmount": 10,
+        "text": "سؤال متوسط ۱"
+      }
+    }
+  ]
+}

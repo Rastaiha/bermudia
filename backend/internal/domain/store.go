@@ -13,6 +13,7 @@ var (
 	ErrPlayerConflict             = errors.New("player update conflict")
 	ErrAnswerNotPending           = errors.New("answer not in pending state")
 	ErrQuestionNotRelatedToIsland = errors.New("question not related to island")
+	ErrInvalidIslandHeader        = errors.New("invalid island header")
 )
 
 type TerritoryStore interface {
@@ -23,10 +24,14 @@ type TerritoryStore interface {
 
 type IslandStore interface {
 	SetBook(ctx context.Context, book Book) error
-	BindBookToIsland(ctx context.Context, islandId string, bookId string) error
+	SetIslandHeader(ctx context.Context, territoryId string, header IslandHeader) error
 	ReserveIDForTerritory(ctx context.Context, territoryId, islandId string) error
 	GetIslandContent(ctx context.Context, islandId string, userId int32) (*Book, error)
 	GetTerritory(ctx context.Context, id string) (string, error)
+	GetIslandHeadersByTerritory(ctx context.Context, territoryId string) ([]IslandHeader, error)
+	SetTerritoryPoolSettings(ctx context.Context, territoryId string, settings TerritoryPoolSettings) error
+	GetTerritoryPoolSettings(ctx context.Context, territoryId string) (TerritoryPoolSettings, error)
+	AddBookToPool(ctx context.Context, poolId string, bookId string) error
 }
 
 type UserStore interface {

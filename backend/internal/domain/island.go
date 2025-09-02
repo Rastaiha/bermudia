@@ -1,6 +1,11 @@
 package domain
 
-// Island represents a single island in a territory
+type IslandHeader struct {
+	ID       string `json:"id"`
+	BookID   string `json:"bookId"`
+	FromPool bool   `json:"fromPool"`
+}
+
 type Island struct {
 	ID        string  `json:"id"`
 	Name      string  `json:"name"`
@@ -58,4 +63,24 @@ func PlayerHasAccessToIsland(player Player, islandID string) error {
 		reason: ErrorReasonRuleViolation,
 		text:   "شما باید در این جزیره لنگر بیندازید تا بتوانید وارد آن شوید.",
 	}
+}
+
+const (
+	PoolEasy   = "easy"
+	PoolMedium = "medium"
+	PoolHard   = "hard"
+)
+
+func IsPoolIdValid(poolId string) bool {
+	return poolId == PoolEasy || poolId == PoolMedium || poolId == PoolHard
+}
+
+type TerritoryPoolSettings struct {
+	Easy   int32 `json:"easy"`
+	Medium int32 `json:"medium"`
+	Hard   int32 `json:"hard"`
+}
+
+func (t TerritoryPoolSettings) TotalCount() int32 {
+	return t.Easy + t.Medium + t.Hard
 }

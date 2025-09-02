@@ -12,13 +12,13 @@ import (
 )
 
 const (
-	islandContentQuestionsSchema = `
-CREATE TABLE IF NOT EXISTS book_questions (
+	questionsSchema = `
+CREATE TABLE IF NOT EXISTS questions (
     question_id VARCHAR(255) PRIMARY KEY,
     book_id VARCHAR(255),
     knowledge_amount INT4 NOT NULL
 );
-CREATE INDEX IF NOT EXISTS idx_book_questions_book_id ON book_questions (book_id);
+CREATE INDEX IF NOT EXISTS idx_questions_book_id ON questions (book_id);
 `
 	answersSchema = `
 CREATE TABLE IF NOT EXISTS answers (
@@ -51,9 +51,9 @@ type sqlQuestionRepository struct {
 }
 
 func NewSqlQuestionRepository(db *sql.DB) (domain.QuestionStore, error) {
-	_, err := db.Exec(islandContentQuestionsSchema)
+	_, err := db.Exec(questionsSchema)
 	if err != nil {
-		return nil, fmt.Errorf("create book_questions table: %w", err)
+		return nil, fmt.Errorf("create questions table: %w", err)
 	}
 	_, err = db.Exec(answersSchema)
 	if err != nil {
@@ -79,16 +79,16 @@ func (s sqlQuestionRepository) BindQuestionsToBook(ctx context.Context, bookId s
 			err = errors.Join(err, err2)
 		}
 	}()
-	_, err = tx.ExecContext(ctx, `DELETE FROM book_questions WHERE book_id = $1`, bookId)
+	_, err = tx.ExecContext(ctx, `DELETE FROM questions WHERE book_id = $1`, bookId)
 	if err != nil {
-		return fmt.Errorf("delete book_questions: %w", err)
+		return fmt.Errorf("delete questions: %w", err)
 	}
 	for _, q := range questions {
-		_, err = tx.ExecContext(ctx, `INSERT INTO book_questions (question_id, book_id, knowledge_amount) VALUES ($1, $2, $3) ;`,
+		_, err = tx.ExecContext(ctx, `INSERT INTO questions (question_id, book_id, knowledge_amount) VALUES ($1, $2, $3) ;`,
 			q.QuestionID, bookId, q.KnowledgeAmount,
 		)
 		if err != nil {
-			return fmt.Errorf("insert book_questions: %w", err)
+			return fmt.Errorf("insert questions: %w", err)
 		}
 	}
 	return tx.Commit()
@@ -161,7 +161,7 @@ WITH territory_questions AS (
         iq.territory_id,
         q.question_id,
         q.knowledge_amount
-    FROM book_questions q
+    FROM questions q
     JOIN islands iq ON q.book_id = iq.book_id
 )
 SELECT 
@@ -201,7 +201,7 @@ SELECT
         ELSE FALSE
     END AS has_answered_all
 FROM islands i
-JOIN book_questions q 
+JOIN questions q 
     ON i.book_id = q.book_id
 LEFT JOIN answers a
     ON q.question_id = a.question_id
@@ -215,7 +215,7 @@ WHERE i.id = $3 ;
 }
 
 func (s sqlQuestionRepository) QuestionIsRelatedToIsland(ctx context.Context, islandId string, questionId string) error {
-	const query = `SELECT TRUE FROM book_questions b LEFT JOIN islands i ON b.book_id = i.book_id WHERE b.question_id = $1 AND i.id = $2 LIMIT 1 ;`
+	const query = `SELECT TRUE FROM questions b LEFT JOIN islands i ON b.book_id = i.book_id WHERE b.question_id = $1 AND i.id = $2 LIMIT 1 ;`
 	var result bool
 	err := s.db.QueryRowContext(ctx, query, questionId, islandId).Scan(&result)
 	if errors.Is(err, sql.ErrNoRows) {

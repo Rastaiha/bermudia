@@ -1,0 +1,9 @@
+{
+  "territoryId": "territory1",
+  "pooledIslands": ["island_math2", "island_science1", "island_final"],
+  "poolSettings": {
+    "easy": 1,
+    "medium": 1,
+    "hard": 1
+  }
+}
