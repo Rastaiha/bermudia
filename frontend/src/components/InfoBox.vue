@@ -14,21 +14,17 @@
         >
             <div class="overflow-hidden">
                 <div v-if="!loading" class="w-full mt-3 space-y-3">
-                    <div v-if="button && !error" class="text-sm">
+                    <div v-if="!error" class="text-sm">
                         <slot></slot>
-                        <button
-                            :disabled="loading"
-                            class="btn-hover w-full p-2 rounded-lg bg-green-600 text-white disabled:opacity-50 disabled:cursor-not-allowed text-xs"
-                            @pointerdown.stop="$emit('action')"
+                        <CostlyButton
+                            :on-click="() => $emit('action')"
+                            :cost="cost"
+                            :label="button"
+                            :loading="loading"
                         >
-                            {{ button }}
-                        </button>
+                        </CostlyButton>
                     </div>
-                    <div v-else>
-                        {{
-                            anchorError ? anchorError : 'خطا در دریافت اطلاعات'
-                        }}
-                    </div>
+                    <div v-else-if="error">{{ error }}</div>
                 </div>
             </div>
         </div>
@@ -36,25 +32,16 @@
 </template>
 
 <script setup>
+import CostlyButton from './CostlyButton.vue';
+
 defineProps({
+    infoBoxStyle: Object,
     title: String,
     button: String,
     error: String,
+    cost: Object,
     loading: Boolean,
 });
 
 defineEmits(['action']);
 </script>
-
-<style scoped>
-.btn-hover {
-    transition:
-        transform 0.2s ease,
-        filter 0.2s ease;
-}
-
-.btn-hover:hover:not(:disabled) {
-    transform: scale(1.05);
-    filter: brightness(1.1);
-}
-</style>
