@@ -24,7 +24,12 @@
                         >
                         </CostlyButton>
                     </div>
-                    <div v-else-if="error">{{ error }}</div>
+                    <div
+                        v-if="error"
+                        class="text-center text-sm text-red-700 font-semibold bg-red-200 p-2 rounded-md"
+                    >
+                        {{ error }}
+                    </div>
                 </div>
             </div>
         </div>

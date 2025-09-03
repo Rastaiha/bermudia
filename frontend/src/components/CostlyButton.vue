@@ -4,13 +4,17 @@
         class="btn-hover w-full p-2 rounded-lg bg-green-600 text-white disabled:opacity-50 disabled:cursor-not-allowed text-xs"
         @pointerdown.stop="onClick"
     >
-        <div v-if="!loading">
+        <div
+            v-if="!loading"
+            class="w-full h-full flex items-center"
+            :class="cost && label ? 'justify-between' : 'justify-evenly'"
+        >
             <div v-if="label">{{ label }}</div>
             <div v-if="cost">
                 <div
                     v-for="(costItem, index) in cost.items"
                     :key="index"
-                    class="flex justify-between items-center flex-row-reverse"
+                    class="flex justify-between items-center flex-col"
                 >
                     <div class="flex items-center gap-x-1">
                         <span class="text-gray-900 font-bold">{{
