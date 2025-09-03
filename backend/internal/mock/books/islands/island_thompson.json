@@ -2,9 +2,10 @@
   "components": [
     {
       "question": {
-        "inputType": "text",
-        "knowledgeAmount": 10,
-        "text": "قاتل بروسلی کیه؟"
+        "inputType": "number",
+        "knowledgeAmount": 30,
+        "rewardSource": "edu5",
+        "text": "what year is it?"
       }
     },
     {

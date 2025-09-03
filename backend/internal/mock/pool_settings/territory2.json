@@ -1,0 +1,7 @@
+{
+  "territoryId": "territory2",
+  "pooledIslands": ["island_spectacle"],
+  "poolSettings": {
+    "hard": 1
+  }
+}

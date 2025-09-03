@@ -13,8 +13,10 @@ type Question struct {
 }
 
 type BookQuestion struct {
-	QuestionID      string `json:"questionId"`
-	KnowledgeAmount int32  `json:"knowledgeAmount"`
+	QuestionID      string
+	BookID          string
+	KnowledgeAmount int32
+	RewardSource    string
 }
 
 type Answer struct {
@@ -63,6 +65,10 @@ func GetSubmissionStateFromAnswer(answer Answer) SubmissionState {
 }
 
 var (
+	ErrQuestionNotFound = Error{
+		text:   "question not found",
+		reason: ErrorReasonResourceNotFound,
+	}
 	ErrSubmitToNonExistingAnswer = Error{
 		text:   "answer id does not exist",
 		reason: ErrorReasonResourceNotFound,

@@ -4,6 +4,7 @@
       "question": {
         "inputType": "number",
         "knowledgeAmount": 10,
+        "rewardSource": "edu2",
         "text": "جواب سؤال معروف 2x2 رو بفرست:"
       }
     },
@@ -15,6 +16,7 @@
           "image/jpeg"
         ],
         "knowledgeAmount": 50,
+        "rewardSource": "edu4",
         "text": "از جوابت عکس بگیر بفرست:"
       }
     },
@@ -22,6 +24,7 @@
       "question": {
         "inputType": "file",
         "knowledgeAmount": 50,
+        "rewardSource": "edu6",
         "inputAccept": ["application/pdf"],
         "text": "یه فایل pdf بفرست:"
       }

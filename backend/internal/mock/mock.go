@@ -17,8 +17,11 @@ import (
 //go:embed territories
 var territoryFiles embed.FS
 
-//go:embed islands
-var islandFiles embed.FS
+//go:embed books
+var booksFiles embed.FS
+
+//go:embed pool_settings
+var poolSettingsFiles embed.FS
 
 func CreateMockData(adminService *service.Admin, mockUsersPassword string) error {
 	slog.Info("Creating mock data...")
@@ -28,8 +31,11 @@ func CreateMockData(adminService *service.Admin, mockUsersPassword string) error
 	if err := createMockTerritories(adminService); err != nil {
 		return fmt.Errorf("failed to create mock territories: %w", err)
 	}
-	if err := createMockIslands(adminService); err != nil {
+	if err := createMockBooks(adminService); err != nil {
 		return fmt.Errorf("failed to create mock islands: %w", err)
+	}
+	if err := createPoolSettings(adminService); err != nil {
+		return fmt.Errorf("failed to create mock pool settings: %w", err)
 	}
 	if err := createMockUsers(adminService, mockUsersPassword); err != nil {
 		return fmt.Errorf("failed to create mock users: %w", err)
@@ -71,25 +77,50 @@ func createMockTerritories(adminService *service.Admin) error {
 	})
 }
 
-func createMockIslands(adminService *service.Admin) error {
+func createMockBooks(adminService *service.Admin) error {
 	ctx := context.Background()
-	return fs.WalkDir(islandFiles, ".", func(path string, d fs.DirEntry, err error) error {
+	return fs.WalkDir(booksFiles, ".", func(path string, d fs.DirEntry, err error) error {
 		if d.IsDir() {
 			return nil
 		}
-		id := strings.TrimSuffix(filepath.Base(path), filepath.Ext(path))
-		if id == "" {
-			return errors.New("invalid island id")
-		}
-		content, err := islandFiles.ReadFile(path)
+		content, err := booksFiles.ReadFile(path)
 		if err != nil {
 			return err
 		}
-		var islandContent service.BookInput
-		if err := json.Unmarshal(content, &islandContent); err != nil {
+		var book service.BookInput
+		if err := json.Unmarshal(content, &book); err != nil {
 			return err
 		}
-		_, err = adminService.SetIsland(ctx, id, islandContent)
+		dir, file := filepath.Split(path)
+		if dir == "books/islands/" {
+			islandId := strings.TrimSuffix(file, filepath.Ext(file))
+			book, err = adminService.SetBookAndBindToIsland(ctx, islandId, book)
+			return err
+		}
+		if pool, ok := strings.CutPrefix(dir, "books/pool/"); ok {
+			pool = strings.Trim(pool, "/")
+			book, err = adminService.SetBookAndBindToPool(ctx, pool, book)
+			return err
+		}
+		return errors.New("unknown book with path " + path)
+	})
+}
+
+func createPoolSettings(adminService *service.Admin) error {
+	ctx := context.Background()
+	return fs.WalkDir(poolSettingsFiles, ".", func(path string, d fs.DirEntry, err error) error {
+		if d.IsDir() {
+			return nil
+		}
+		content, err := poolSettingsFiles.ReadFile(path)
+		if err != nil {
+			return err
+		}
+		var bindings service.TerritoryIslandBindings
+		if err := json.Unmarshal(content, &bindings); err != nil {
+			return err
+		}
+		_, err = adminService.SetTerritoryIslandBindings(ctx, bindings)
 		return err
 	})
 }

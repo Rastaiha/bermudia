@@ -27,6 +27,9 @@ type Player struct {
 	Fuel               int32     `json:"fuel"`
 	FuelCap            int32     `json:"fuelCap"`
 	Coins              int32     `json:"coins"`
+	BlueKeys           int32     `json:"blueKeys"`
+	RedKeys            int32     `json:"redKeys"`
+	GoldenKeys         int32     `json:"goldenKeys"`
 	VisitedTerritories []string  `json:"-"`
 	UpdatedAt          time.Time `json:"-"`
 }
@@ -73,8 +76,11 @@ type Cost struct {
 }
 
 const (
-	CostItemTypeFuel = "fuel"
-	CostItemTypeCoin = "coin"
+	CostItemTypeFuel      = "fuel"
+	CostItemTypeCoin      = "coin"
+	CostItemTypeBlueKey   = "blueKey"
+	CostItemTypeRedKey    = "redKey"
+	CostItemTypeGoldenKey = "goldenKey"
 )
 
 type CostItem struct {
