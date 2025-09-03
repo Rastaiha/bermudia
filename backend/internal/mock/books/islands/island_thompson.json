@@ -4,6 +4,7 @@
       "question": {
         "inputType": "number",
         "knowledgeAmount": 30,
+        "rewardSource": "edu5",
         "text": "what year is it?"
       }
     },

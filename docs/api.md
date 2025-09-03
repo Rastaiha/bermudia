@@ -395,6 +395,9 @@ curl --request POST \
 | fuel          | string                          | Current fuel level of player's vehicle                         |
 | fuelCap       | int                             | Current fuel capacity of player's vehicle                      |
 | coins         | int                             | Current number of coins of player                              |
+| blueKeys      | int                             | Current number of blue keys of player                          |
+| redKeys       | int                             | Current number of red keys of player                           |
+| goldenKeys    | int                             | Current number of golden keys of player                        |
 | knowledgeBars | [KnowledgeBar](#knowledgebar)[] | Current state of player's knowledge in each territory          |
 
 ### Territory

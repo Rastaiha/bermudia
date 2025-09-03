@@ -96,7 +96,8 @@ type BookInputComponent struct {
 
 type IslandInputQuestion struct {
 	domain.Question
-	KnowledgeAmount int32 `json:"knowledgeAmount"`
+	KnowledgeAmount int32  `json:"knowledgeAmount"`
+	RewardSource    string `json:"rewardSource,omitempty"`
 }
 
 func (a *Admin) SetBookAndBindToIsland(ctx context.Context, islandId string, input BookInput) (BookInput, error) {
@@ -158,6 +159,9 @@ func (a *Admin) setBook(ctx context.Context, input BookInput) (BookInput, error)
 			if c.Question.KnowledgeAmount <= 0 {
 				return input, fmt.Errorf("non-positive knowledgeAmount for book %q question at index %d", book.ID, i)
 			}
+			if !domain.IsValidRewardSource(c.Question.RewardSource) {
+				return input, fmt.Errorf("invalid reward source %q", c.Question.RewardSource)
+			}
 			if c.Question.Text == "" {
 				return input, fmt.Errorf("empty text for book %q question at index %d", book.ID, i)
 			}
@@ -166,7 +170,9 @@ func (a *Admin) setBook(ctx context.Context, input BookInput) (BookInput, error)
 			}
 			questions = append(questions, domain.BookQuestion{
 				QuestionID:      c.Question.ID,
+				BookID:          input.BookId,
 				KnowledgeAmount: c.Question.KnowledgeAmount,
+				RewardSource:    c.Question.RewardSource,
 			})
 			book.Components = append(book.Components, domain.BookComponent{Question: &c.Question.Question})
 			continue

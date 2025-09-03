@@ -9,6 +9,7 @@
       "question": {
         "inputType": "number",
         "text": "اگه ۵ تا سیب داشته باشم یکیش رو بخورم چندتا سیب میمونه برام؟",
+        "rewardSource": "edu2",
         "knowledgeAmount": 100
       }
     },
@@ -24,6 +25,7 @@
           "image/png",
           "image/jpeg"
         ],
+        "rewardSource": "edu4",
         "knowledgeAmount": 100,
         "text": "به کجا می رویم؟ به سوی پیروزی!"
       }

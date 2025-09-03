@@ -86,7 +86,7 @@ func (i *Island) SubmitAnswer(ctx context.Context, userId int32, questionId stri
 	if err != nil {
 		return nil, err
 	}
-	accessedBook, err := i.questionStore.GetBookOfQuestion(ctx, questionId)
+	question, err := i.questionStore.GetQuestion(ctx, questionId)
 	if err != nil {
 		return nil, err
 	}
@@ -94,7 +94,7 @@ func (i *Island) SubmitAnswer(ctx context.Context, userId int32, questionId stri
 	if err != nil {
 		return nil, err
 	}
-	if accessedBook != accessibleBook {
+	if question.BookID != accessibleBook {
 		return nil, domain.ErrQuestionNotRelatedToIsland
 	}
 	if err := domain.PlayerHasAccessToIsland(player, player.AtIsland); err != nil {

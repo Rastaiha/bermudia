@@ -4,6 +4,7 @@
       "question": {
         "inputType": "text",
         "knowledgeAmount": 10,
+        "rewardSource": "edu3",
         "text": "قاتل بروسلی کیه؟"
       }
     },

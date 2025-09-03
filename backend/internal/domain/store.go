@@ -37,6 +37,7 @@ type IslandStore interface {
 	SetTerritoryPoolSettings(ctx context.Context, territoryId string, settings TerritoryPoolSettings) error
 	GetTerritoryPoolSettings(ctx context.Context, territoryId string) (TerritoryPoolSettings, error)
 	AddBookToPool(ctx context.Context, poolId string, bookId string) error
+	GetPoolOfBook(ctx context.Context, bookId string) (poolId string, found bool, err error)
 	AssignBookToIslandFromPool(ctx context.Context, territoryId string, islandId string, userId int32) (bookId string, err error)
 }
 
@@ -63,8 +64,8 @@ type QuestionStore interface {
 	SubmitAnswer(ctx context.Context, userId int32, questionId string, fileID, filename, textContent string) (Answer, error)
 	GetKnowledgeBars(ctx context.Context, userId int32) ([]KnowledgeBar, error)
 	HasAnsweredIsland(ctx context.Context, userId int32, islandId string) (bool, error)
-	GetBookOfQuestion(ctx context.Context, questionId string) (string, error)
+	GetQuestion(ctx context.Context, questionId string) (BookQuestion, error)
 	CreateCorrection(ctx context.Context, Correction Correction) error
-	ApplyCorrection(ctx context.Context, correction Correction, ifBefore time.Time) (int32, bool, error)
+	ApplyCorrection(ctx context.Context, correction Correction, ifBefore time.Time) (bool, error)
 	GetUnappliedCorrections(ctx context.Context) ([]Correction, error)
 }

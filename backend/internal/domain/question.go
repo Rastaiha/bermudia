@@ -13,8 +13,10 @@ type Question struct {
 }
 
 type BookQuestion struct {
-	QuestionID      string `json:"questionId"`
-	KnowledgeAmount int32  `json:"knowledgeAmount"`
+	QuestionID      string
+	BookID          string
+	KnowledgeAmount int32
+	RewardSource    string
 }
 
 type Answer struct {

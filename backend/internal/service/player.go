@@ -17,16 +17,18 @@ type Player struct {
 	playerStore              domain.PlayerStore
 	territoryStore           domain.TerritoryStore
 	questionStore            domain.QuestionStore
+	islandStore              domain.IslandStore
 	playerUpdateEventHandler func(event *domain.FullPlayerUpdateEvent)
 	cron                     gocron.Scheduler
 }
 
-func NewPlayer(cfg config.Config, playerStore domain.PlayerStore, territoryStore domain.TerritoryStore, questionStore domain.QuestionStore) *Player {
+func NewPlayer(cfg config.Config, playerStore domain.PlayerStore, territoryStore domain.TerritoryStore, questionStore domain.QuestionStore, islandStore domain.IslandStore) *Player {
 	return &Player{
 		cfg:            cfg,
 		playerStore:    playerStore,
 		territoryStore: territoryStore,
 		questionStore:  questionStore,
+		islandStore:    islandStore,
 	}
 }
 
@@ -239,7 +241,7 @@ func (p *Player) applyCorrections(ctx context.Context) {
 				<-workerLimit
 				wg.Done()
 			}()
-			userId, ok, err := p.questionStore.ApplyCorrection(ctx, c, time.Now().Add(-p.cfg.MinCorrectionDelay).UTC())
+			ok, err := p.applyCorrection(ctx, c)
 			if err != nil {
 				slog.Error("failed to ApplyCorrection from db", err)
 				return
@@ -250,7 +252,7 @@ func (p *Player) applyCorrections(ctx context.Context) {
 			if ok && c.IsCorrect {
 				lock.Lock()
 				defer lock.Unlock()
-				updatedUserIDs[userId] = struct{}{}
+				updatedUserIDs[c.UserId] = struct{}{}
 			}
 		}()
 	}
@@ -283,6 +285,41 @@ func (p *Player) applyCorrections(ctx context.Context) {
 	if appliedCorrections.Load() > 0 {
 		slog.Info("successfully applied corrections", slog.Int64("count", appliedCorrections.Load()))
 	}
+}
+
+func (p *Player) applyCorrection(ctx context.Context, c domain.Correction) (bool, error) {
+	ok, err := p.questionStore.ApplyCorrection(ctx, c, time.Now().Add(-p.cfg.MinCorrectionDelay).UTC())
+	if err != nil {
+		return false, err
+	}
+	if !ok {
+		return false, nil
+	}
+
+	question, err := p.questionStore.GetQuestion(ctx, c.QuestionId)
+	if err != nil {
+		return false, err
+	}
+	pool, hasPool, err := p.islandStore.GetPoolOfBook(ctx, question.BookID)
+	if err != nil {
+		return false, err
+	}
+	currentPlayer, err := p.playerStore.Get(ctx, c.UserId)
+	if err != nil {
+		return false, err
+	}
+	newPlayer, rewarded := domain.GiveRewardOfSource(currentPlayer, question.RewardSource)
+	if hasPool {
+		var rewarded2 bool
+		newPlayer, rewarded2 = domain.GiveRewardOfPool(newPlayer, pool)
+		rewarded = rewarded || rewarded2
+	}
+	if rewarded {
+		if err := p.playerStore.Update(ctx, currentPlayer, newPlayer); err != nil {
+			return false, err
+		}
+	}
+	return true, nil
 }
 
 func (p *Player) MigrateCheck(ctx context.Context, userId int32) (*domain.MigrateCheckResult, error) {

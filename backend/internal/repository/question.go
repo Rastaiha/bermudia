@@ -15,8 +15,9 @@ const (
 	questionsSchema = `
 CREATE TABLE IF NOT EXISTS questions (
     question_id VARCHAR(255) PRIMARY KEY,
-    book_id VARCHAR(255),
-    knowledge_amount INT4 NOT NULL
+    book_id VARCHAR(255) NOT NULL,
+    knowledge_amount INT4 NOT NULL,
+    reward_source VARCHAR(255)
 );
 CREATE INDEX IF NOT EXISTS idx_questions_book_id ON questions (book_id);
 `
@@ -84,8 +85,8 @@ func (s sqlQuestionRepository) BindQuestionsToBook(ctx context.Context, bookId s
 		return fmt.Errorf("delete questions: %w", err)
 	}
 	for _, q := range questions {
-		_, err = tx.ExecContext(ctx, `INSERT INTO questions (question_id, book_id, knowledge_amount) VALUES ($1, $2, $3) ;`,
-			q.QuestionID, bookId, q.KnowledgeAmount,
+		_, err = tx.ExecContext(ctx, `INSERT INTO questions (question_id, book_id, knowledge_amount, reward_source) VALUES ($1, $2, $3, $4) ;`,
+			n(q.QuestionID), n(bookId), q.KnowledgeAmount, n(q.RewardSource),
 		)
 		if err != nil {
 			return fmt.Errorf("insert questions: %w", err)
@@ -214,13 +215,16 @@ WHERE i.id = $3 ;
 	return result, err
 }
 
-func (s sqlQuestionRepository) GetBookOfQuestion(ctx context.Context, questionId string) (string, error) {
-	var bookId string
-	err := s.db.QueryRowContext(ctx, `SELECT book_id FROM questions WHERE question_id = $1 ;`, questionId).Scan(&bookId)
+func (s sqlQuestionRepository) GetQuestion(ctx context.Context, questionId string) (domain.BookQuestion, error) {
+	var question domain.BookQuestion
+	var rewardSource sql.NullString
+	err := s.db.QueryRowContext(ctx, `SELECT question_id, book_id, knowledge_amount, reward_source FROM questions WHERE question_id = $1 ;`,
+		questionId).Scan(&question.QuestionID, &question.BookID, &question.KnowledgeAmount, &rewardSource)
+	question.RewardSource = rewardSource.String
 	if errors.Is(err, sql.ErrNoRows) {
-		return bookId, domain.ErrQuestionNotFound
+		return question, domain.ErrQuestionNotFound
 	}
-	return bookId, err
+	return question, err
 }
 
 func (s sqlQuestionRepository) CreateCorrection(ctx context.Context, correction domain.Correction) error {
@@ -232,23 +236,22 @@ func (s sqlQuestionRepository) CreateCorrection(ctx context.Context, correction 
 	return err
 }
 
-func (s sqlQuestionRepository) ApplyCorrection(ctx context.Context, correction domain.Correction, ifBefore time.Time) (int32, bool, error) {
+func (s sqlQuestionRepository) ApplyCorrection(ctx context.Context, correction domain.Correction, ifBefore time.Time) (bool, error) {
 	ifBefore = ifBefore.UTC()
 	newStatus := domain.AnswerStatusWrong
 	if correction.IsCorrect {
 		newStatus = domain.AnswerStatusCorrect
 	}
 	var postApplyStatus domain.AnswerStatus
-	var userId int32
 	err := s.db.QueryRowContext(ctx,
-		`UPDATE answers SET status = CASE WHEN status = $1 THEN $2 ELSE status END WHERE user_id = $3 AND question_id = $4 AND updated_at <= $5 RETURNING status, user_id`,
+		`UPDATE answers SET status = CASE WHEN status = $1 THEN $2 ELSE status END WHERE user_id = $3 AND question_id = $4 AND updated_at <= $5 RETURNING status ;`,
 		domain.AnswerStatusPending, newStatus, correction.UserId, correction.QuestionId, ifBefore,
-	).Scan(&postApplyStatus, &userId)
+	).Scan(&postApplyStatus)
 	if errors.Is(err, sql.ErrNoRows) {
-		return 0, false, nil
+		return false, nil
 	}
 	if err != nil {
-		return userId, false, err
+		return false, err
 	}
 	if _, err := s.db.ExecContext(ctx, `UPDATE corrections SET applied = TRUE WHERE id = $1 ;`, correction.ID); err != nil {
 		slog.Error("db: failed to set is_applied for correction to true", slog.Any("error", err), slog.String("correction_id", correction.ID))
@@ -256,7 +259,7 @@ func (s sqlQuestionRepository) ApplyCorrection(ctx context.Context, correction d
 	if postApplyStatus != newStatus {
 		err = domain.ErrAnswerNotPending
 	}
-	return userId, true, err
+	return true, err
 }
 
 func (s sqlQuestionRepository) GetUnappliedCorrections(ctx context.Context) (result []domain.Correction, err error) {

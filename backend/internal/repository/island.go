@@ -40,7 +40,7 @@ CREATE TABLE IF NOT EXISTS territory_pool_settings (
 
 	booksPoolsSchema = `
 CREATE TABLE IF NOT EXISTS book_pools (
-    pool_id VARCHAR(255),
+    pool_id VARCHAR(255) NOT NULL,
     book_id VARCHAR(255) REFERENCES books(id),
     PRIMARY KEY (book_id)
 );
@@ -220,8 +220,17 @@ func (s sqlIslandRepository) GetTerritoryPoolSettings(ctx context.Context, terri
 }
 
 func (s sqlIslandRepository) AddBookToPool(ctx context.Context, poolId string, bookId string) error {
-	_, err := s.db.ExecContext(ctx, `INSERT INTO book_pools (pool_id, book_id) VALUES ($1, $2) ;`, poolId, bookId)
+	_, err := s.db.ExecContext(ctx, `INSERT INTO book_pools (pool_id, book_id) VALUES ($1, $2) ;`, n(poolId), n(bookId))
 	return err
+}
+
+func (s sqlIslandRepository) GetPoolOfBook(ctx context.Context, bookId string) (poolId string, found bool, err error) {
+	err = s.db.QueryRowContext(ctx, `SELECT pool_id FROM book_pools WHERE book_id = $1`, bookId).Scan(&poolId)
+	found = err == nil
+	if errors.Is(err, sql.ErrNoRows) {
+		err = nil
+	}
+	return
 }
 
 func (s sqlIslandRepository) AssignBookToIslandFromPool(ctx context.Context, territoryId string, islandId string, userId int32) (bookId string, err error) {
