@@ -1,17 +1,36 @@
 <template>
-    <div v-if="player" dir="rtl" class="fixed top-4 right-4 z-50 font-sans text-white p-3 rounded-lg w-64">
-
+    <div
+        v-if="player"
+        dir="rtl"
+        class="fixed top-4 right-4 z-50 font-sans text-white p-3 rounded-lg w-64"
+    >
         <div class="flex justify-between items-center mb-3">
-            <h2 class="text-lg font-bold text-gray-200 drop-shadow-lg">{{ username }}</h2>
-            <button @click="logout"
-                class="text-sm font-bold text-gray-200 transition-colors duration-300 transform cursor-pointer hover:text-red-400 drop-shadow-lg"
-                title="خروج">
-                خروج
-            </button>
+            <h2 class="text-lg font-bold text-gray-200 drop-shadow-lg">
+                {{ username }}
+            </h2>
+            <div class="flex items-center gap-3">
+                <button
+                    class="text-sm font-bold text-gray-200 transition-colors duration-300 transform cursor-pointer hover:text-red-400 drop-shadow-lg"
+                    title="خروج"
+                    @click="logout"
+                >
+                    خروج
+                </button>
+            </div>
         </div>
-        <PlayerInventoryBar v-if="knowledgeBar" :barData="knowledgeBar"></PlayerInventoryBar>
-        <PlayerInventoryBar v-if="fuelBar" :barData="fuelBar"></PlayerInventoryBar>
-        <PlayerInventoryBar v-if="coinBar" :barData="coinBar"></PlayerInventoryBar>
+        <PlayerInventoryBar
+            v-if="knowledgeBar"
+            :bar-data="knowledgeBar"
+        ></PlayerInventoryBar>
+        <PlayerInventoryBar
+            v-if="fuelBar"
+            :bar-data="fuelBar"
+        ></PlayerInventoryBar>
+        <PlayerInventoryBar
+            v-if="coinBar"
+            :bar-data="coinBar"
+        ></PlayerInventoryBar>
+        <Dropdown title="کوله پشتی" :items="inventoryDropdownItems" />
     </div>
 </template>
 
@@ -20,6 +39,7 @@ import { computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { logout as apiLogout } from '@/services/api';
 import PlayerInventoryBar from './PlayerInventoryBar.vue';
+import Dropdown from './Dropdown.vue';
 
 const props = defineProps({
     player: {
@@ -29,57 +49,82 @@ const props = defineProps({
     username: {
         type: String,
         default: '...',
-    }
+    },
 });
 
 const router = useRouter();
 
+const inventoryItems = ['goldenKeys', 'redKeys', 'blueKeys'];
+const inventoryDropdownItems = computed(() => {
+    if (!props.player) return [];
+
+    return inventoryItems.map(key => ({
+        icon: `/images/icons/${key}.png`,
+        name: getKeyDisplayName(key),
+        quantity: props.player[key],
+    }));
+});
+
+function getKeyDisplayName(key) {
+    const displayNames = {
+        goldenKeys: 'کلید طلایی',
+        redKeys: 'کلید قرمز',
+        blueKeys: 'کلید آبی',
+    };
+    return displayNames[key] || key;
+}
 
 const knowledgeBar = computed(() => {
-    if (!props.player || !props.player.knowledgeBars || props.player.knowledgeBars.length === 0) {
+    if (
+        !props.player ||
+        !props.player.knowledgeBars ||
+        props.player.knowledgeBars.length === 0
+    ) {
         return null;
     }
-    const fetchedKnowledgeBar = props.player.knowledgeBars.find(bar => bar.territoryId === props.player.atTerritory) ||
-        props.player.knowledgeBars[0];
+    const fetchedKnowledgeBar =
+        props.player.knowledgeBars.find(
+            bar => bar.territoryId === props.player.atTerritory
+        ) || props.player.knowledgeBars[0];
     return {
-        name: "دانش",
-        englishName: "Knowledge",
+        name: 'دانش',
+        englishName: 'Knowledge',
         total: fetchedKnowledgeBar.total,
         value: fetchedKnowledgeBar.value,
-        icon: "/images/icons/knowledge.png",
-        shadowColor: "#ff7e5f",
-        gradientFrom: "#b65f69",
-        gradientTo: "#feb47b"
-    }
-})
+        icon: '/images/icons/knowledge.png',
+        shadowColor: '#ff7e5f',
+        gradientFrom: '#b65f69',
+        gradientTo: '#feb47b',
+    };
+});
 
 const fuelBar = computed(() => {
     if (!props.player) return null;
     return {
-        name: "سوخت",
-        englishName: "Fuel",
+        name: 'سوخت',
+        englishName: 'Fuel',
         total: props.player.fuelCap,
         value: props.player.fuel,
-        icon: "/images/icons/fuel.png",
-        shadowColor: "#6B7280",
-        gradientFrom: "#364153",
-        gradientTo: "#000"
-    }
-})
+        icon: '/images/icons/fuel.png',
+        shadowColor: '#6B7280',
+        gradientFrom: '#364153',
+        gradientTo: '#000',
+    };
+});
 
 const coinBar = computed(() => {
     if (!props.player) return null;
     return {
-        name: "سکه",
-        englishName: "Coin",
+        name: 'سکه',
+        englishName: 'Coin',
         total: -1,
         value: props.player.coins,
-        icon: "/images/icons/coin.png",
-        shadowColor: "#6B7280",
-        gradientFrom: "#364153",
-        gradientTo: "#000"
-    }
-})
+        icon: '/images/icons/coin.png',
+        shadowColor: '#6B7280',
+        gradientFrom: '#364153',
+        gradientTo: '#000',
+    };
+});
 
 function logout() {
     apiLogout();
