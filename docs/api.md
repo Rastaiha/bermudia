@@ -317,6 +317,52 @@ curl --request POST \
 
 ---
 
+### Unlock Treasure Check
+
+_This endpoint **is authenticated** and needs an auth token for access._
+
+Checks whether unlocking a specific treasure is possible.
+
+Receives a [UnlockTreasureCheckRequest](#unlocktreasurecheckrequest) in body.
+
+Returns [UnlockTreasureCheckResult](#unlocktreasurecheckresult) in response.
+
+**Endpoint:** `POST /unlock_treasure_check`
+
+```shell
+curl --request POST \
+  --url http://97590f57-b983-48f8-bb0a-c098bed1e658.hsvc.ir:30254/api/v1/unlock_treasure_check \
+  --header 'Authorization: TOKEN' \
+  --header 'Content-Type: application/json' \
+  --data '{"treasureID": "trs_C0B869257687459"}'
+```
+
+---
+
+### Unlock Treasure
+
+_This endpoint **is authenticated** and needs an auth token for access._
+
+Unlocks a treasure for the player.
+
+Receives a [UnlockTreasureRequest](#unlocktreasurerequest) in body.
+
+Returns an empty object in response.
+
+**Preconditions:** The player must be at the island where the treasure is located and also must have anchored.
+
+**Endpoint:** `POST /unlock_treasure`
+
+```shell
+curl --request POST \
+  --url http://97590f57-b983-48f8-bb0a-c098bed1e658.hsvc.ir:30254/api/v1/unlock_treasure \
+  --header 'Authorization: TOKEN' \
+  --header 'Content-Type: application/json' \
+  --data '{"treasureID": "trs_C0B869257687459"}'
+```
+
+---
+
 ## Data Models
 
 ### LoginRequest
@@ -375,6 +421,20 @@ curl --request POST \
 | Field       | Type   | Description                           |
 |-------------|--------|---------------------------------------|
 | toTerritory | string | The ID of the territory to migrate to |
+
+
+### UnlockTreasureCheckRequest
+
+| Field      | Type   | Description                 |
+|------------|--------|-----------------------------|
+| treasureID | string | The ID of the treasure      |
+
+
+### UnlockTreasureRequest
+
+| Field      | Type   | Description                 |
+|------------|--------|-----------------------------|
+| treasureID | string | The ID of the treasure      |
 
 
 ### Me
@@ -453,6 +513,7 @@ curl --request POST \
 | Field      | Type                                  | Description                                   |
 |------------|---------------------------------------|-----------------------------------------------|
 | components | [IslandComponent](#islandcomponent)[] | Array of components to be displayed in the UI |
+| treasures  | [IslandTreasure](#islandtreasure)[]   | Array of treasures available on the island    |
 
 
 ### IslandComponent
@@ -469,6 +530,14 @@ curl --request POST \
 | Field | Type   | Description                  |
 |-------|--------|------------------------------|
 | url   | string | The source url of the iframe |
+
+
+### IslandTreasure
+
+| Field    | Type   | Description                                          |
+|----------|--------|------------------------------------------------------|
+| id       | string | Unique identifier for the treasure                   |
+| unlocked | bool   | Whether the treasure has been unlocked by the player |
 
 
 ### IslandInput
@@ -518,19 +587,19 @@ curl --request POST \
 
 ### CostItem
 
-| Field  | Type   | Description                                    |
-|--------|--------|------------------------------------------------|
-| type   | string | Type of the needed item. One of `fuel`, `coin` |
-| amount | int    | The number of items needed of this type        |
+| Field  | Type   | Description                                                                      |
+|--------|--------|----------------------------------------------------------------------------------|
+| type   | string | Type of the needed item. One of `fuel`, `coin`, `blueKey`, `redKey`, `goldenKey` |
+| amount | int    | The number of items needed of this type                                          |
 
 
 ### TravelCheckResult
 
-| Field      | Type          | Description                                                    |
-|------------|---------------|----------------------------------------------------------------|
-| feasible   | boolean       | True if the travel can be done, false otherwise.               |
-| travelCost | [Cost](#cost) | An object representing the needed items for the travel         |
-| reason     | string?       | If _feasible_ is false, this field is presents and reports why |
+| Field      | Type          | Description                                                   |
+|------------|---------------|---------------------------------------------------------------|
+| feasible   | boolean       | True if the travel can be done, false otherwise.              |
+| travelCost | [Cost](#cost) | An object representing the needed items for the travel        |
+| reason     | string?       | If _feasible_ is false, this field is present and reports why |
 
 
 ### RefuelCheckResult
@@ -544,11 +613,20 @@ curl --request POST \
 
 ### AnchorCheckResult
 
-| Field         | Type          | Description                                                    |
-|---------------|---------------|----------------------------------------------------------------|
-| feasible      | boolean       | True if the travel can be done, false otherwise                |
-| anchoringCost | [Cost](#cost) | An object representing the needed items for anchoring          |
-| reason        | string?       | If _feasible_ is false, this field is presents and reports why |
+| Field         | Type          | Description                                                   |
+|---------------|---------------|---------------------------------------------------------------|
+| feasible      | boolean       | True if the travel can be done, false otherwise               |
+| anchoringCost | [Cost](#cost) | An object representing the needed items for anchoring         |
+| reason        | string?       | If _feasible_ is false, this field is present and reports why |
+
+
+### UnlockTreasureCheckResult
+
+| Field    | Type          | Description                                                   |
+|----------|---------------|---------------------------------------------------------------|
+| feasible | boolean       | True if the treasure can be unlocked, false otherwise         |
+| cost     | [Cost](#cost) | An object representing the needed items for unlocking         |
+| reason   | string?       | If _feasible_ is false, this field is present and reports why |
 
 
 ### MigrateCheckResult
@@ -576,7 +654,7 @@ curl --request POST \
 
 ### PlayerUpdateEvent
 
-| Field  | Type              | Description                                                                                                      |
-|--------|-------------------|------------------------------------------------------------------------------------------------------------------|
-| reason | string            | The reason for change in player state. One of `initial`, `travel`, `refuel`, `correction`, `anchor`, `migration` |
-| player | [Player](#player) | The new value of player object.                                                                                  |
+| Field  | Type              | Description                                                                                                                        |
+|--------|-------------------|------------------------------------------------------------------------------------------------------------------------------------|
+| reason | string            | The reason for change in player state. One of `initial`, `travel`, `refuel`, `correction`, `anchor`, `migration`, `unlockTreasure` |
+| player | [Player](#player) | The new value of player object.                                                                                                    |

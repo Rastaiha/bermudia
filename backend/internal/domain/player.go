@@ -40,12 +40,13 @@ type FullPlayer struct {
 }
 
 const (
-	PlayerUpdateEventInitial    = "initial"
-	PlayerUpdateEventTravel     = "travel"
-	PlayerUpdateEventRefuel     = "refuel"
-	PlayerUpdateEventCorrection = "correction"
-	PlayerUpdateEventAnchor     = "anchor"
-	PlayerUpdateEventMigration  = "migration"
+	PlayerUpdateEventInitial        = "initial"
+	PlayerUpdateEventTravel         = "travel"
+	PlayerUpdateEventRefuel         = "refuel"
+	PlayerUpdateEventCorrection     = "correction"
+	PlayerUpdateEventAnchor         = "anchor"
+	PlayerUpdateEventMigration      = "migration"
+	PlayerUpdateEventUnlockTreasure = "unlockTreasure"
 )
 
 type PlayerUpdateEvent struct {
@@ -67,6 +68,9 @@ func NewPlayer(userId int32, startingTerritory *Territory) Player {
 		Fuel:               initialFuelAmount,
 		FuelCap:            fuelTankCapacity,
 		Coins:              initialCoinsAmount,
+		BlueKeys:           5, // TODO: lower
+		RedKeys:            5, // TODO: lower
+		GoldenKeys:         5, // TODO: lower
 		VisitedTerritories: []string{startingTerritory.ID},
 	}
 }
@@ -106,6 +110,21 @@ func deduceCost(player Player, cost Cost) (Player, bool) {
 				return player, false
 			}
 			player.Coins -= o.Amount
+		case CostItemTypeBlueKey:
+			if player.BlueKeys < o.Amount {
+				return player, false
+			}
+			player.BlueKeys -= o.Amount
+		case CostItemTypeRedKey:
+			if player.RedKeys < o.Amount {
+				return player, false
+			}
+			player.RedKeys -= o.Amount
+		case CostItemTypeGoldenKey:
+			if player.GoldenKeys < o.Amount {
+				return player, false
+			}
+			player.GoldenKeys -= o.Amount
 		default:
 			return player, false
 		}

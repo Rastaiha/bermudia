@@ -2,6 +2,7 @@ package handler
 
 import (
 	"encoding/json"
+	"errors"
 	"github.com/Rastaiha/bermudia/internal/domain"
 	"net/http"
 )
@@ -209,4 +210,60 @@ func (h *Handler) Migrate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	sendResult(w, struct{}{})
+}
+
+type unlockTreasureCheckRequest struct {
+	TreasureID string `json:"treasureID"`
+}
+
+func (h *Handler) UnlockTreasureCheck(w http.ResponseWriter, r *http.Request) {
+	user, err := getUser(r.Context())
+	if err != nil {
+		handleError(w, err)
+		return
+	}
+
+	var req unlockTreasureCheckRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		sendDecodeError(w)
+		return
+	}
+
+	result, err := h.playerService.UnlockTreasureCheck(r.Context(), user.ID, req.TreasureID)
+	if err != nil {
+		handleError(w, err)
+		return
+	}
+
+	sendResult(w, result)
+}
+
+type unlockTreasureRequest struct {
+	TreasureID string `json:"treasureID"`
+}
+
+func (h *Handler) UnlockTreasure(w http.ResponseWriter, r *http.Request) {
+	user, err := getUser(r.Context())
+	if err != nil {
+		handleError(w, err)
+		return
+	}
+
+	var req unlockTreasureRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		sendDecodeError(w)
+		return
+	}
+
+	result, err := h.playerService.UnlockTreasure(r.Context(), user.ID, req.TreasureID)
+	if err != nil {
+		if errors.Is(err, domain.ErrTreasureNotRelatedToIsland) {
+			sendError(w, http.StatusForbidden, "treasure is not related to current island")
+			return
+		}
+		handleError(w, err)
+		return
+	}
+
+	sendResult(w, result)
 }

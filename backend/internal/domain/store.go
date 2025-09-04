@@ -18,6 +18,8 @@ var (
 	ErrBookPoolExhausted          = errors.New("book pool exhausted")
 	ErrNoBookAssignedFromPool     = errors.New("no book assigned from pool")
 	ErrEmptyIsland                = errors.New("empty island")
+	ErrTreasureNotRelatedToIsland = errors.New("treasure not related to island")
+	ErrUserTreasureConflict       = errors.New("user treasure update conflict")
 )
 
 type TerritoryStore interface {
@@ -68,4 +70,12 @@ type QuestionStore interface {
 	CreateCorrection(ctx context.Context, Correction Correction) error
 	ApplyCorrection(ctx context.Context, correction Correction, ifBefore time.Time) (bool, error)
 	GetUnappliedCorrections(ctx context.Context) ([]Correction, error)
+}
+
+type TreasureStore interface {
+	BindTreasuresToBook(ctx context.Context, bookId string, treasures []Treasure) error
+	GetOrCreateUserTreasure(ctx context.Context, userId int32, treasureId string) (UserTreasure, error)
+	GetTreasure(ctx context.Context, treasureId string) (Treasure, error)
+	GetUserTreasure(ctx context.Context, userId int32, treasureId string) (UserTreasure, error)
+	UpdateUserTreasure(ctx context.Context, old UserTreasure, updated UserTreasure) error
 }

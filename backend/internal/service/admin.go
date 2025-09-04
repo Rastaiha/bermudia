@@ -14,15 +14,17 @@ type Admin struct {
 	userStore      domain.UserStore
 	playerStore    domain.PlayerStore
 	questionStore  domain.QuestionStore
+	treasureStore  domain.TreasureStore
 }
 
-func NewAdmin(territoryStore domain.TerritoryStore, islandStore domain.IslandStore, userStore domain.UserStore, playerStore domain.PlayerStore, questionStore domain.QuestionStore) *Admin {
+func NewAdmin(territoryStore domain.TerritoryStore, islandStore domain.IslandStore, userStore domain.UserStore, playerStore domain.PlayerStore, questionStore domain.QuestionStore, treasureStore domain.TreasureStore) *Admin {
 	return &Admin{
 		territoryStore: territoryStore,
 		islandStore:    islandStore,
 		userStore:      userStore,
 		playerStore:    playerStore,
 		questionStore:  questionStore,
+		treasureStore:  treasureStore,
 	}
 }
 
@@ -85,8 +87,13 @@ func (a *Admin) SetTerritory(ctx context.Context, territory domain.Territory) er
 }
 
 type BookInput struct {
-	BookId     string                `json:"bookId"`
-	Components []*BookInputComponent `json:"components"`
+	BookId     string                   `json:"bookId"`
+	Components []*BookInputComponent    `json:"components"`
+	Treasures  []*BookTreasureComponent `json:"treasures"`
+}
+
+type BookTreasureComponent struct {
+	ID string `json:"id"`
 }
 
 type BookInputComponent struct {
@@ -179,6 +186,12 @@ func (a *Admin) setBook(ctx context.Context, input BookInput) (BookInput, error)
 		}
 		return input, fmt.Errorf("unknown component for book %q at index %d", book.ID, i)
 	}
+	for _, t := range input.Treasures {
+		if t.ID == "" || !domain.IdHasType(t.ID, domain.ResourceTypeTreasure) {
+			t.ID = domain.NewID(domain.ResourceTypeTreasure)
+		}
+		book.Treasures = append(book.Treasures, domain.Treasure{ID: t.ID, BookID: input.BookId})
+	}
 	err := a.islandStore.SetBook(ctx, book)
 	if err != nil {
 		return input, fmt.Errorf("failed to set book: %w", err)
@@ -186,6 +199,10 @@ func (a *Admin) setBook(ctx context.Context, input BookInput) (BookInput, error)
 	err = a.questionStore.BindQuestionsToBook(ctx, book.ID, questions)
 	if err != nil {
 		return input, fmt.Errorf("failed to bind questions to book: %w", err)
+	}
+	err = a.treasureStore.BindTreasuresToBook(ctx, book.ID, book.Treasures)
+	if err != nil {
+		return input, fmt.Errorf("failed to bind treasures to book: %w", err)
 	}
 	return input, nil
 }

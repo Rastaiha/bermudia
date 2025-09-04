@@ -46,12 +46,16 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	treasureRepo, err := repository.NewSqlTreasureRepository(db)
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	authService := service.NewAuth(cfg, userRepo)
 	territoryService := service.NewTerritory(territoryRepo)
-	islandService := service.NewIsland(theBot, islandRepo, questionStore, playerRepo)
-	playerService := service.NewPlayer(cfg, playerRepo, territoryRepo, questionStore, islandRepo)
-	adminService := service.NewAdmin(territoryRepo, islandRepo, userRepo, playerRepo, questionStore)
+	islandService := service.NewIsland(theBot, islandRepo, questionStore, playerRepo, treasureRepo)
+	playerService := service.NewPlayer(cfg, playerRepo, territoryRepo, questionStore, islandRepo, treasureRepo)
+	adminService := service.NewAdmin(territoryRepo, islandRepo, userRepo, playerRepo, questionStore, treasureRepo)
 
 	err = mock.CreateMockData(adminService, cfg.MockUsersPassword)
 	if err != nil {

@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"github.com/Rastaiha/bermudia/internal/config"
 	"github.com/Rastaiha/bermudia/internal/domain"
@@ -18,17 +19,19 @@ type Player struct {
 	territoryStore           domain.TerritoryStore
 	questionStore            domain.QuestionStore
 	islandStore              domain.IslandStore
+	treasureStore            domain.TreasureStore
 	playerUpdateEventHandler func(event *domain.FullPlayerUpdateEvent)
 	cron                     gocron.Scheduler
 }
 
-func NewPlayer(cfg config.Config, playerStore domain.PlayerStore, territoryStore domain.TerritoryStore, questionStore domain.QuestionStore, islandStore domain.IslandStore) *Player {
+func NewPlayer(cfg config.Config, playerStore domain.PlayerStore, territoryStore domain.TerritoryStore, questionStore domain.QuestionStore, islandStore domain.IslandStore, treasureStore domain.TreasureStore) *Player {
 	return &Player{
 		cfg:            cfg,
 		playerStore:    playerStore,
 		territoryStore: territoryStore,
 		questionStore:  questionStore,
 		islandStore:    islandStore,
+		treasureStore:  treasureStore,
 	}
 }
 
@@ -367,4 +370,52 @@ func (p *Player) Migrate(ctx context.Context, userId int32, toTerritory string) 
 		return err
 	}
 	return p.applyAndSendPlayerUpdateEvent(ctx, player, event)
+}
+
+func (p *Player) UnlockTreasureCheck(ctx context.Context, userId int32, treasureId string) (*domain.UnlockTreasureCheckResult, error) {
+	player, err := p.playerStore.Get(ctx, userId)
+	if err != nil {
+		return nil, err
+	}
+	userTreasure, err := p.treasureStore.GetUserTreasure(ctx, userId, treasureId)
+	if err != nil {
+		return nil, err
+	}
+	check := domain.UnlockTreasureCheck(player, userTreasure)
+	return &check, nil
+}
+
+func (p *Player) UnlockTreasure(ctx context.Context, userId int32, treasureId string) (*domain.IslandTreasure, error) {
+	player, err := p.playerStore.Get(ctx, userId)
+	if err != nil {
+		return nil, err
+	}
+	treasure, err := p.treasureStore.GetTreasure(ctx, treasureId)
+	if err != nil {
+		return nil, err
+	}
+	bookId, err := p.islandStore.GetBookOfIsland(ctx, player.AtIsland, userId)
+	if err != nil {
+		if errors.Is(err, domain.ErrNoBookAssignedFromPool) {
+			return nil, domain.ErrTreasureNotRelatedToIsland
+		}
+		return nil, err
+	}
+	if bookId != treasure.BookID {
+		return nil, domain.ErrTreasureNotRelatedToIsland
+	}
+	userTreasure, err := p.treasureStore.GetUserTreasure(ctx, userId, treasureId)
+	if err != nil {
+		return nil, err
+	}
+	event, updatedUserTreasure, err := domain.UnlockTreasure(player, userTreasure)
+	if err != nil {
+		return nil, err
+	}
+	err = p.treasureStore.UpdateUserTreasure(ctx, userTreasure, updatedUserTreasure)
+	if err != nil {
+		return nil, err
+	}
+	islandTreasure := domain.GetIslandTreasureOfUserTreasure(updatedUserTreasure)
+	return &islandTreasure, p.applyAndSendPlayerUpdateEvent(ctx, player, event)
 }
