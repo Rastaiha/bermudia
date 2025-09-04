@@ -17,14 +17,16 @@ type Island struct {
 	islandStore   domain.IslandStore
 	questionStore domain.QuestionStore
 	playerStore   domain.PlayerStore
+	treasureStore domain.TreasureStore
 	bot           *bot.Bot
 }
 
-func NewIsland(bot *bot.Bot, islandStore domain.IslandStore, questionStore domain.QuestionStore, playerStore domain.PlayerStore) *Island {
+func NewIsland(bot *bot.Bot, islandStore domain.IslandStore, questionStore domain.QuestionStore, playerStore domain.PlayerStore, treasureStore domain.TreasureStore) *Island {
 	return &Island{
 		islandStore:   islandStore,
 		questionStore: questionStore,
 		playerStore:   playerStore,
+		treasureStore: treasureStore,
 		bot:           bot,
 	}
 }
@@ -77,6 +79,13 @@ func (i *Island) GetIsland(ctx context.Context, userId int32, islandId string) (
 			continue
 		}
 	}
+	for _, t := range book.Treasures {
+		userTreasure, err := i.treasureStore.GetOrCreateUserTreasure(ctx, userId, t.ID)
+		if err != nil {
+			return nil, err
+		}
+		content.Treasures = append(content.Treasures, domain.GetIslandTreasureOfUserTreasure(userTreasure))
+	}
 
 	return content, nil
 }
@@ -92,6 +101,9 @@ func (i *Island) SubmitAnswer(ctx context.Context, userId int32, questionId stri
 	}
 	accessibleBook, err := i.islandStore.GetBookOfIsland(ctx, player.AtIsland, userId)
 	if err != nil {
+		if errors.Is(err, domain.ErrNoBookAssignedFromPool) {
+			return nil, domain.ErrQuestionNotRelatedToIsland
+		}
 		return nil, err
 	}
 	if question.BookID != accessibleBook {

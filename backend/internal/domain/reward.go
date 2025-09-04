@@ -2,6 +2,8 @@ package domain
 
 import (
 	"math/rand"
+	"slices"
+	"time"
 )
 
 var rewardSources = map[string]func(player Player) Player{
@@ -138,4 +140,52 @@ func GiveRewardOfPool(player Player, poolId string) (Player, bool) {
 		return giveWorthOfCoins(player, 80, true), true
 	}
 	return player, false
+}
+
+func giveRewardOfTreasure(player Player, treasure UserTreasure) Player {
+	worthOfCoins := int32(0)
+	for _, item := range treasure.Cost.Items {
+		idx := slices.IndexFunc(rewardTypes, func(r rewardType) bool {
+			return r.kind == item.Type
+		})
+		if idx < 0 {
+			continue
+		}
+		worthOfCoins += item.Amount * rewardTypes[idx].value
+	}
+	player.Coins += worthOfCoins
+	return player
+}
+
+func utc(blue, red, golden int32) Cost {
+	cost := Cost{}
+	if blue > 0 {
+		cost.Items = append(cost.Items, CostItem{Type: CostItemTypeBlueKey, Amount: blue})
+	}
+	if red > 0 {
+		cost.Items = append(cost.Items, CostItem{Type: CostItemTypeRedKey, Amount: red})
+	}
+	if golden > 0 {
+		cost.Items = append(cost.Items, CostItem{Type: CostItemTypeGoldenKey, Amount: golden})
+	}
+	return cost
+}
+
+func GenerateUserTreasure(userId int32, treasureId string) UserTreasure {
+	blueC := rand.Float64() * 0.3
+	redC := rand.Float64() * (1 - blueC)
+	goldenC := rand.Float64() * (1.2 - redC - blueC)
+
+	blue := int32(blueC * 10)
+	red := int32(redC * 6)
+	golden := int32(goldenC * 4)
+	cost := utc(blue, red, golden)
+
+	return UserTreasure{
+		UserId:     userId,
+		TreasureID: treasureId,
+		Unlocked:   len(cost.Items) == 0,
+		Cost:       cost,
+		UpdatedAt:  time.Now().UTC(),
+	}
 }

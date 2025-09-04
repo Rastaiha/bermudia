@@ -11,7 +11,7 @@ type ResourceType string
 const (
 	ResourceTypeBook       ResourceType = "bok"
 	ResourceTypeQuestion   ResourceType = "qst"
-	ResourceTypeChest      ResourceType = "cst"
+	ResourceTypeTreasure   ResourceType = "trs"
 	ResourceTypeCorrection ResourceType = "crt"
 )
 

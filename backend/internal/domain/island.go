@@ -19,6 +19,7 @@ type Island struct {
 type Book struct {
 	ID         string          `json:"id"`
 	Components []BookComponent `json:"components"`
+	Treasures  []Treasure      `json:"treasures"`
 }
 
 type BookComponent struct {
@@ -28,6 +29,7 @@ type BookComponent struct {
 
 type IslandContent struct {
 	Components []IslandComponent `json:"components"`
+	Treasures  []IslandTreasure  `json:"treasures"`
 }
 
 type IslandComponent struct {
@@ -37,6 +39,18 @@ type IslandComponent struct {
 
 type IslandIFrame struct {
 	Url string `json:"url"`
+}
+
+type IslandTreasure struct {
+	ID       string `json:"id"`
+	Unlocked bool   `json:"unlocked"`
+}
+
+func GetIslandTreasureOfUserTreasure(treasure UserTreasure) IslandTreasure {
+	return IslandTreasure{
+		ID:       treasure.TreasureID,
+		Unlocked: treasure.Unlocked,
+	}
 }
 
 type IslandInput struct {

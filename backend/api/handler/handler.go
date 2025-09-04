@@ -72,6 +72,8 @@ func (h *Handler) Start() {
 			r.Post("/anchor", h.Anchor)
 			r.Post("/migrate_check", h.MigrateCheck)
 			r.Post("/migrate", h.Migrate)
+			r.Post("/unlock_treasure_check", h.UnlockTreasureCheck)
+			r.Post("/unlock_treasure", h.UnlockTreasure)
 		})
 	})
 
