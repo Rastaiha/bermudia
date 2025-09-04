@@ -14,21 +14,21 @@
         >
             <div class="overflow-hidden">
                 <div v-if="!loading" class="w-full mt-3 space-y-3">
-                    <div v-if="!error" class="text-sm">
+                    <div v-if="!errorText" class="text-sm">
                         <slot></slot>
                         <CostlyButton
                             :on-click="() => $emit('action')"
                             :cost="cost"
-                            :label="button"
+                            :label="buttonText"
                             :loading="loading"
                         >
                         </CostlyButton>
                     </div>
                     <div
-                        v-if="error"
+                        v-if="errorText"
                         class="text-center text-sm text-red-700 font-semibold bg-red-200 p-2 rounded-md"
                     >
-                        {{ error }}
+                        {{ errorText }}
                     </div>
                 </div>
             </div>
@@ -42,8 +42,8 @@ import CostlyButton from './CostlyButton.vue';
 defineProps({
     infoBoxStyle: Object,
     title: String,
-    button: String,
-    error: String,
+    buttonText: String,
+    errorText: String,
     cost: Object,
     loading: Boolean,
 });

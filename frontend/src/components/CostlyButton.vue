@@ -41,13 +41,7 @@ defineProps({
 });
 
 const getIconByType = type => {
-    switch (type) {
-        case 'fuel':
-            return '/images/icons/fuel.png';
-        case 'coin':
-            return '/images/icons/coin.png';
-    }
-    return null;
+    return '/images/icons/' + type + '.png';
 };
 </script>
 <style>

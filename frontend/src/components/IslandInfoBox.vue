@@ -4,8 +4,8 @@
             :loading="loading"
             :info-box-style="infoBoxStyle"
             :title="selectedIsland.name"
-            :button="buttonText"
-            :error="errorText"
+            :button-text="buttonText"
+            :error-text="errorText"
             :cost="cost"
             @action="actionOnClick"
         >
@@ -76,7 +76,6 @@ const props = defineProps({
     territoryId: String,
     player: Object,
     infoBoxStyle: Object,
-    isAdjacent: Boolean,
     refuelIslands: Object,
 });
 
