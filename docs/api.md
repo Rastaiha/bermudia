@@ -347,7 +347,7 @@ Unlocks a treasure for the player.
 
 Receives a [UnlockTreasureRequest](#unlocktreasurerequest) in body.
 
-Returns an empty object in response.
+Returns the updated [IslandTreasure](#islandtreasure) in response.
 
 **Preconditions:** The player must be at the island where the treasure is located and also must have anchored.
 
