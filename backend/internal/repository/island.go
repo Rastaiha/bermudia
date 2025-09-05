@@ -63,13 +63,13 @@ type sqlIslandRepository struct {
 }
 
 func NewSqlIslandRepository(db *sql.DB) (domain.IslandStore, error) {
-	_, err := db.Exec(islandsSchema)
-	if err != nil {
-		return nil, fmt.Errorf("create islands table: %w", err)
-	}
-	_, err = db.Exec(booksSchema)
+	_, err := db.Exec(booksSchema)
 	if err != nil {
 		return nil, fmt.Errorf("create books table: %w", err)
+	}
+	_, err = db.Exec(islandsSchema)
+	if err != nil {
+		return nil, fmt.Errorf("create islands table: %w", err)
 	}
 	_, err = db.Exec(territoryPoolSettingsSchema)
 	if err != nil {
@@ -94,7 +94,7 @@ func (s sqlIslandRepository) SetBook(ctx context.Context, book domain.Book) erro
 		return err
 	}
 	_, err = s.db.ExecContext(ctx,
-		`INSERT INTO books (id, content) VALUES ($1, $2) ON CONFLICT DO UPDATE SET content = EXCLUDED.content`,
+		`INSERT INTO books (id, content) VALUES ($1, $2) ON CONFLICT (id) DO UPDATE SET content = EXCLUDED.content`,
 		n(book.ID), c)
 	if err != nil {
 		return fmt.Errorf("insert book: %w", err)
@@ -155,7 +155,7 @@ func (s sqlIslandRepository) GetIslandHeadersByTerritory(ctx context.Context, te
 func (s sqlIslandRepository) ReserveIDForTerritory(ctx context.Context, territoryId, islandId string) error {
 	var actualTerritoryId string
 	err := s.db.QueryRowContext(ctx,
-		`INSERT INTO islands (id, territory_id) VALUES ($1, $2) ON CONFLICT DO UPDATE SET id = EXCLUDED.id RETURNING territory_id ;`,
+		`INSERT INTO islands (id, territory_id) VALUES ($1, $2) ON CONFLICT (id) DO UPDATE SET id = EXCLUDED.id RETURNING territory_id ;`,
 		n(islandId), n(territoryId)).Scan(&actualTerritoryId)
 	if err != nil {
 		return err
@@ -293,7 +293,7 @@ WHERE user_id = $1 AND territory_id = $2 GROUP BY bp.pool_id`
 		return "", err
 	}
 
-	err = s.db.QueryRowContext(ctx, `INSERT INTO user_books (territory_id, island_id, user_id, book_id) VALUES ($1, $2, $3, $4) ON CONFLICT DO UPDATE SET user_id = EXCLUDED.user_id RETURNING book_id ;`,
+	err = s.db.QueryRowContext(ctx, `INSERT INTO user_books (territory_id, island_id, user_id, book_id) VALUES ($1, $2, $3, $4) ON CONFLICT (user_id, island_id) DO UPDATE SET user_id = EXCLUDED.user_id RETURNING book_id ;`,
 		n(territoryId), n(islandId), n(userId), n(chosenBookId)).Scan(&bookId)
 	return
 }

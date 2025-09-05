@@ -1,6 +1,7 @@
 package main
 
 import (
+	"database/sql"
 	"github.com/Rastaiha/bermudia/api/handler"
 	"github.com/Rastaiha/bermudia/internal/config"
 	"github.com/Rastaiha/bermudia/internal/mock"
@@ -22,9 +23,17 @@ func main() {
 		log.Fatal("failed to connect to bot api: ", err)
 	}
 
-	db, err := repository.ConnectToSqlite()
-	if err != nil {
-		log.Fatal("failed to connect to sqlite: ", err)
+	var db *sql.DB
+	if cfg.Postgres.Enable {
+		db, err = repository.ConnectToPostgres(cfg.Postgres)
+		if err != nil {
+			log.Fatal("failed to connect to postgres: ", err)
+		}
+	} else {
+		db, err = repository.ConnectToSqlite()
+		if err != nil {
+			log.Fatal("failed to connect to sqlite: ", err)
+		}
 	}
 	territoryRepo, err := repository.NewSqlTerritoryRepository(db)
 	if err != nil {
@@ -60,9 +69,11 @@ func main() {
 
 	islandService.OnNewAnswer(correctionService.HandleNewAnswer)
 
-	err = mock.CreateMockData(adminService, cfg.MockUsersPassword)
-	if err != nil {
-		log.Fatal("failed to create mock data: ", err)
+	if cfg.DevMode {
+		err = mock.CreateMockData(adminService, cfg.MockUsersPassword)
+		if err != nil {
+			log.Fatal("failed to create mock data: ", err)
+		}
 	}
 
 	h := handler.New(authService, territoryService, islandService, playerService)

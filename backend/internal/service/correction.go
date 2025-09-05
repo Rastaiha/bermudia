@@ -106,7 +106,7 @@ func (c *Correction) HandleNewAnswer(question domain.BookQuestion, answer domain
 		} else {
 			_, err = c.bot.SendMessage(ctx, &bot.SendMessageParams{
 				ChatID:      c.cfg.DefaultCorrectionGroup,
-				Text:        fmt.Sprintf("%s\n\nپاسخ کاربر\n%s", caption, answer.TextContent.String),
+				Text:        fmt.Sprintf("%s\n\nپاسخ کاربر:\n%s", caption, answer.TextContent.String),
 				ReplyMarkup: keyboard,
 			})
 		}
