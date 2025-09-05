@@ -22,7 +22,7 @@
                         :loading="false"
                         error-text="این صندوق قبلا باز شده‌است."
                     >
-                        <img src="../../images/island/opened_treasure.png" />
+                        <img src="/images/island/opened_treasure.png" />
                     </InfoBox>
                 </div>
                 <div
@@ -45,7 +45,7 @@
                         :cost="treasureFetchedInfo.cost"
                         @action="unlockTreasure"
                     >
-                        <img src="../../images/island/closed_treasure.png" />
+                        <img src="/images/island/closed_treasure.png" />
                     </InfoBox>
                 </div>
             </transition>
