@@ -635,6 +635,7 @@ curl --request POST \
 |----------------------------|---------------------------------------------------------|---------------------------------------------------------------------------|
 | knowledgeCriteriaTerritory | string                                                  | The territory used as criteria for knowledge-based migration requirements |
 | knowledgeValue             | int                                                     | Player's current knowledge value in the criteria territory                |
+| minAcceptableKnowledge     | int                                                     | Minimum knowledge required in the criteria territory for free migration   |
 | territoryMigrationOptions  | [TerritoryMigrationOption](#territorymigrationoption)[] | Array of migration options for all territories                            |
 
 
@@ -645,7 +646,6 @@ curl --request POST \
 | territoryId            | string        | ID of the territory                                                                 |
 | territoryName          | string        | Name of the territory                                                               |
 | status                 | string        | Migration status: `resident` (current), `visited` (previously visited), `untouched` |
-| minAcceptableKnowledge | int           | Minimum knowledge required for free migration to this territory                     |
 | migrationCost          | [Cost](#cost) | Cost required for migration (when mustPayCost is true)                              |
 | mustPayCost            | boolean       | Whether the player must pay the migration cost                                      |
 | feasible               | boolean       | Whether migration to this territory is possible                                     |

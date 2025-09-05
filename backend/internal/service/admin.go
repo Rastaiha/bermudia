@@ -163,8 +163,8 @@ func (a *Admin) setBook(ctx context.Context, input BookInput) (BookInput, error)
 			if c.Question.InputType == "file" && len(c.Question.InputAccept) == 0 {
 				return input, fmt.Errorf("empty inputAccept for book %q question at index %d", book.ID, i)
 			}
-			if c.Question.KnowledgeAmount <= 0 {
-				return input, fmt.Errorf("non-positive knowledgeAmount for book %q question at index %d", book.ID, i)
+			if c.Question.KnowledgeAmount < 0 {
+				return input, fmt.Errorf("negative knowledgeAmount for book %q question at index %d", book.ID, i)
 			}
 			if !domain.IsValidRewardSource(c.Question.RewardSource) {
 				return input, fmt.Errorf("invalid reward source %q", c.Question.RewardSource)

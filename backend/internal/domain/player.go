@@ -194,14 +194,17 @@ type RefuelCheckResult struct {
 }
 
 func RefuelCheck(player Player, territory *Territory) (result RefuelCheckResult) {
+	result.CoinCostPerUnit = refuelCoinCostPerUnit
+
 	idx := slices.IndexFunc(territory.RefuelIslands, func(ri RefuelIsland) bool {
 		return ri.ID == player.AtIsland
 	})
 	if idx < 0 {
+		result.MaxAvailableAmount = 0
 		result.MaxReason = "شما در حال حاضر در جزیره سوخت‌گیری قرار ندارید."
 		return
 	}
-	result.CoinCostPerUnit = refuelCoinCostPerUnit
+
 	fuelCapBound := player.FuelCap - player.Fuel
 	coinBound := int32(math.MaxInt32)
 	if result.CoinCostPerUnit > 0 {
@@ -288,6 +291,7 @@ func Anchor(player Player, islandID string) (*PlayerUpdateEvent, error) {
 type MigrateCheckResult struct {
 	KnowledgeCriteriaTerritory string                     `json:"knowledgeCriteriaTerritory"`
 	KnowledgeValue             int32                      `json:"knowledgeValue"`
+	MinAcceptableKnowledge     int32                      `json:"minAcceptableKnowledge"`
 	TerritoryMigrationOptions  []TerritoryMigrationOption `json:"territoryMigrationOptions"`
 }
 
@@ -298,14 +302,13 @@ const (
 )
 
 type TerritoryMigrationOption struct {
-	TerritoryID            string `json:"territoryId"`
-	TerritoryName          string `json:"territoryName"`
-	Status                 string `json:"status"`
-	MinAcceptableKnowledge int32  `json:"minAcceptableKnowledge"`
-	MigrationCost          Cost   `json:"migrationCost"`
-	MustPayCost            bool   `json:"mustPayCost"`
-	Feasible               bool   `json:"feasible"`
-	Reason                 string `json:"reason,omitempty"`
+	TerritoryID   string `json:"territoryId"`
+	TerritoryName string `json:"territoryName"`
+	Status        string `json:"status"`
+	MigrationCost Cost   `json:"migrationCost"`
+	MustPayCost   bool   `json:"mustPayCost"`
+	Feasible      bool   `json:"feasible"`
+	Reason        string `json:"reason,omitempty"`
 }
 
 func MigrateCheck(player Player, knowledgeBars []KnowledgeBar, currentTerritory Territory, territories []Territory) (result MigrateCheckResult) {
@@ -317,20 +320,16 @@ func MigrateCheck(player Player, knowledgeBars []KnowledgeBar, currentTerritory 
 	for _, b := range knowledgeBars {
 		if b.TerritoryID == result.KnowledgeCriteriaTerritory {
 			result.KnowledgeValue = b.Value
+			result.MinAcceptableKnowledge = min(b.Total, migrationMinAcceptableKnowledge)
 			break
 		}
 	}
 
+	knowledgeCriteriaPassed := result.KnowledgeValue >= result.MinAcceptableKnowledge
+
 	for _, t := range territories {
-		var knowledgeBar KnowledgeBar
-		for _, b := range knowledgeBars {
-			if t.ID == b.TerritoryID {
-				knowledgeBar = b
-				break
-			}
-		}
 		result.TerritoryMigrationOptions = append(result.TerritoryMigrationOptions,
-			getMigrationOption(player, result.KnowledgeValue, t, knowledgeBar, atTerminalIsland))
+			getMigrationOption(player, knowledgeCriteriaPassed, t, atTerminalIsland))
 	}
 
 	// order options based on state. break tie with territory id.
@@ -346,12 +345,11 @@ func MigrateCheck(player Player, knowledgeBars []KnowledgeBar, currentTerritory 
 	return
 }
 
-func getMigrationOption(player Player, knowledgeValue int32, territory Territory, knowledgeBar KnowledgeBar, atTerminalIsland bool) (option TerritoryMigrationOption) {
+func getMigrationOption(player Player, knowledgeCriteriaPassed bool, territory Territory, atTerminalIsland bool) (option TerritoryMigrationOption) {
 	option = TerritoryMigrationOption{
-		TerritoryID:            territory.ID,
-		TerritoryName:          territory.Name,
-		Status:                 TerritoryMigrationStatusUntouched,
-		MinAcceptableKnowledge: min(knowledgeBar.Total, migrationMinAcceptableKnowledge),
+		TerritoryID:   territory.ID,
+		TerritoryName: territory.Name,
+		Status:        TerritoryMigrationStatusUntouched,
 	}
 	if player.AtTerritory == territory.ID {
 		option.Status = TerritoryMigrationStatusResident
@@ -360,7 +358,7 @@ func getMigrationOption(player Player, knowledgeValue int32, territory Territory
 	}
 
 	option.MigrationCost = Cost{Items: []CostItem{{Type: CostItemTypeCoin, Amount: migrationCoinCost}}}
-	option.MustPayCost = option.Status == TerritoryMigrationStatusUntouched && knowledgeValue < option.MinAcceptableKnowledge
+	option.MustPayCost = option.Status == TerritoryMigrationStatusUntouched && !knowledgeCriteriaPassed
 
 	if option.Status == TerritoryMigrationStatusResident {
 		option.Reason = "شما در همین قلمرو قرار دارید."
