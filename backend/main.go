@@ -2,6 +2,7 @@ package main
 
 import (
 	"database/sql"
+	"fmt"
 	"github.com/Rastaiha/bermudia/api/handler"
 	"github.com/Rastaiha/bermudia/internal/config"
 	"github.com/Rastaiha/bermudia/internal/mock"
@@ -70,9 +71,19 @@ func main() {
 	islandService.OnNewAnswer(correctionService.HandleNewAnswer)
 
 	if cfg.DevMode {
-		err = mock.CreateMockData(adminService, cfg.MockUsersPassword)
+		err = mock.CreateMockData(adminService, cfg.MockUsersPassword, mock.DataFiles)
 		if err != nil {
 			log.Fatal("failed to create mock data: ", err)
+		}
+	}
+	if cfg.ContentFileID != "" {
+		contentFs, err := mock.FsFromURL(fmt.Sprintf("https://tapi.bale.ai/file/bot%s/%s", cfg.BotToken, cfg.ContentFileID))
+		if err != nil {
+			log.Fatal("failed to load content file: ", err)
+		}
+		err = mock.CreateMockData(adminService, cfg.MockUsersPassword, contentFs)
+		if err != nil {
+			log.Fatal("failed to create mock data from downloaded content: ", err)
 		}
 	}
 

@@ -1,0 +1,50 @@
+{
+  "components": [
+    {
+      "iframe": {
+        "url": "https://platform.kamva.academy/article/713"
+      }
+    },
+    {
+      "question": {
+        "inputType": "number",
+        "knowledgeAmount": 100,
+        "rewardSource": "edu2",
+        "text": "سوال اول"
+      }
+    },
+    {
+      "iframe": {
+        "url": "https://platform.kamva.academy/article/713"
+      }
+    },
+    {
+      "question": {
+        "inputType": "text",
+        "knowledgeAmount": 100,
+        "rewardSource": "edu4",
+        "text": "سوال دوم"
+      }
+    },
+    {
+      "iframe": {
+        "url": "https://platform.kamva.academy/article/713"
+      }
+    },
+    {
+      "question": {
+        "inputType": "file",
+        "inputAccept": [
+          "image/png",
+          "image/jpeg"
+        ],
+        "knowledgeAmount": 100,
+        "rewardSource": "edu6",
+        "text": "سوال سوم"
+      }
+    }
+  ],
+  "treasures": [
+    {}
+  ]
+}
