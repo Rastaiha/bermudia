@@ -1,6 +1,6 @@
 <template>
     <button
-        :disabled="loading"
+        :disabled="loading || !enabled"
         class="btn-hover w-full p-2 rounded-lg bg-green-600 text-white disabled:opacity-50 disabled:cursor-not-allowed text-xs"
         @pointerdown.stop="onClick"
     >
@@ -37,6 +37,7 @@ defineProps({
     onClick: Function,
     cost: Object,
     label: String,
+    enabled: Boolean,
     loading: Boolean,
 });
 

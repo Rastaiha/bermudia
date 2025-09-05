@@ -177,7 +177,7 @@ onMounted(async () => {
             fetchPlayerAndUserData(),
         ]);
 
-        loadingMessage.value = 'Setting up data...';
+        loadingMessage.value = 'در حال سفر...';
 
         setupTerritoryData(territoryData);
         setupPlayerAndUserData(playerAndUserData);

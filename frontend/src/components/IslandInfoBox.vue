@@ -10,6 +10,7 @@
             "
             :button-text="buttonText"
             :error-text="errorText"
+            :button-enabled="isButtonEnabled"
             :cost="cost"
             :box-width="calculateWidth()"
             @action="actionOnClick"
@@ -135,15 +136,14 @@ const init = async () => {
     try {
         if (!props.selectedIsland) {
             isRefuelIsland.value = false;
-            isTerminalIsland.value = false;
         } else {
             isRefuelIsland.value = props.refuelIslands.some(
                 island => island.id === props.selectedIsland.id
             );
-            isTerminalIsland.value = props.terminalIslands.some(
-                island => island.id === props.selectedIsland.id
-            );
         }
+        isTerminalIsland.value = props.terminalIslands.some(
+            island => island.id === props.selectedIsland.id
+        );
 
         const isCurrent = props.selectedIsland.id === props.player.atIsland;
         if (isCurrent) {
@@ -289,7 +289,7 @@ const checkTravel = () => {
     return travel.value && 1;
 };
 const checkMigrate = () => {
-    return isCurrentIsland.value && isTerminalIsland.value && migrate.value;
+    return isTerminalIsland.value && migrate.value;
 };
 const buttonText = computed(() => {
     if (checkSubMigration()) {
@@ -337,6 +337,14 @@ const errorText = computed(() => {
     else if (!(checkTravel() && !travelError.value))
         return travelError.value ? travelError.value : 'خطا در دریافت اطلاعات';
     return null;
+});
+
+const isButtonEnabled = computed(() => {
+    if (checkMigrate()) {
+        if (props.selectedIsland.id == props.player.atIsland) return true;
+        return false;
+    }
+    return true;
 });
 
 const cost = computed(() => {

@@ -27,6 +27,7 @@
                             :cost="cost"
                             :label="buttonText"
                             :loading="loading"
+                            :enabled="buttonEnabled"
                         >
                         </CostlyButton>
                     </div>
@@ -49,6 +50,7 @@ defineProps({
     infoBoxStyle: Object,
     title: String,
     buttonText: String,
+    buttonEnabled: Boolean,
     errorText: String,
     cost: Object,
     loading: Boolean,
