@@ -143,3 +143,21 @@ export const migrateTo = async territory => {
     });
     return handleResponse(response);
 };
+
+export const treasureCheck = async treasureId => {
+    const response = await fetch(API_ENDPOINTS.treasureCheck, {
+        method: 'POST',
+        headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
+        body: JSON.stringify({ treasureID: treasureId }),
+    });
+    return handleResponse(response);
+};
+
+export const treasureUnlock = async treasureId => {
+    const response = await fetch(API_ENDPOINTS.treasureUnlock, {
+        method: 'POST',
+        headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
+        body: JSON.stringify({ treasureID: treasureId }),
+    });
+    return handleResponse(response);
+};
