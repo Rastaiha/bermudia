@@ -10,9 +10,9 @@ import (
 
 const (
 	fuelTankCapacity                = 15
-	initialFuelAmount               = fuelTankCapacity / 2
+	initialFuelAmount               = fuelTankCapacity
 	travelFuelConsumption           = 1
-	initialCoinsAmount              = 100
+	initialCoinsAmount              = 400
 	refuelCoinCostPerUnit           = 10
 	anchoringCoinCost               = 20
 	migrationMinAcceptableKnowledge = 50
