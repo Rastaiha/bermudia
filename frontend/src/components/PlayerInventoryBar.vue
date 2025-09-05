@@ -14,14 +14,23 @@
         </div>
         <div
             v-if="barData.required"
-            class="border-l-4 border-dotted border-green-500 h-6 absolute z-20"
+            class="border-l-4 border-dotted h-6 absolute z-20"
+            :class="requiredLineClass"
             :style="{
-                right: 2.5 + (barData.required * 94.5) / barData.total + '%',
+                right:
+                    2.5 +
+                    ((barData.width ? barData.width : 1) *
+                        barData.required *
+                        94.5) /
+                        barData.total +
+                    '%',
             }"
         ></div>
         <div
             class="relative flex items-center h-6 rounded-md bg-black/30 shadow-inner"
-            :class="barData.total == -1 ? 'w-3/4' : 'w-full'"
+            :style="{
+                width: barData.width ? barData.width * 100 + '%' : '100%',
+            }"
         >
             <div
                 class="absolute inset-0 flex items-center justify-end w-full h-full z-11 gap-2 flex-row-reverse pr-2"
@@ -66,5 +75,13 @@ const barPercentage = computed(() => {
     if (!props.barData.value || props.barData.total === 0) return 0;
     if (props.barData.total === -1) return 0;
     return (props.barData.value / props.barData.total) * 100;
+});
+
+const requiredLineClass = computed(() => {
+    if (props.barData.required <= props.barData.value) {
+        return 'border-green-500';
+    } else {
+        return 'border-red-500';
+    }
 });
 </script>
