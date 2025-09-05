@@ -1,28 +1,61 @@
 <template>
-    <svg ref="svgRef" v-if="islands.length > 0" :viewBox="dynamicViewBox" preserveAspectRatio="xMidYMid meet"
-        class="w-full h-full block cursor-grab active:cursor-grabbing">
+    <svg
+        v-if="islands.length > 0"
+        ref="svgRef"
+        :viewBox="dynamicViewBox"
+        preserveAspectRatio="xMidYMid meet"
+        class="w-full h-full block cursor-grab active:cursor-grabbing"
+    >
         <g class="edges">
-            <path v-for="edge in wavyEdges" :key="`${edge.from}-${edge.to}`" :d="edge.pathD"
-                class="fill-none stroke-white" stroke-width="0.005" stroke-dasharray="0.01, 0.005" />
+            <path
+                v-for="edge in wavyEdges"
+                :key="`${edge.from}-${edge.to}`"
+                :d="edge.pathD"
+                class="fill-none stroke-white"
+                stroke-width="0.005"
+                stroke-dasharray="0.01, 0.005"
+            />
         </g>
 
         <g class="islands">
-            <g v-for="island in islands" :key="island.id" class="cursor-pointer group"
-                @pointerdown.stop="handlePointerDown(island)" @pointerup.stop="handlePointerUp(island)">
-                <ellipse :cx="island.x" :cy="island.y" :rx="island.width / 2" :ry="island.height / 2" fill="transparent" />
-                <image :href="`/images/islands/${island.iconAsset}`"
+            <g
+                v-for="island in islands"
+                :key="island.id"
+                class="cursor-pointer group"
+                @pointerdown.stop="handlePointerDown(island)"
+                @pointerup.stop="handlePointerUp(island)"
+            >
+                <ellipse
+                    :cx="island.x"
+                    :cy="island.y"
+                    :rx="island.width / 2"
+                    :ry="island.height / 2"
+                    fill="transparent"
+                />
+                <image
+                    :href="`/images/islands/${island.iconAsset}`"
                     :x="island.x - island.width / 2"
                     :y="island.y - island.height / 2"
-                    :width="island.width" :height="island.height"
+                    :width="island.width"
+                    :height="island.height"
                     style="transform-box: fill-box"
-                    class="transition-transform duration-200 ease-in-out origin-center group-hover:scale-105 pointer-events-none" />
+                    class="transition-transform duration-200 ease-in-out origin-center group-hover:scale-105 pointer-events-none"
+                />
             </g>
         </g>
 
-        <g v-if="player && player.atTerritory == territoryId" class="ship-container" :transform="shipTransform"
-            :style="{ transition: shipTransition }">
-            <image href="/images/ships/ship1.png" :width="BOAT_WIDTH" :height="BOAT_HEIGHT"
-                class="drop-shadow-lg animate-boat" />
+        <g
+            v-if="player && player.atTerritory == territoryId"
+            class="ship-container"
+            :transform="shipTransform"
+            :style="{ transition: shipTransition }"
+        >
+            <image
+                href="/images/ships/spaceship.png"
+                :width="BOAT_WIDTH"
+                :height="BOAT_HEIGHT"
+                class="animate-boat"
+            />
         </g>
     </svg>
 </template>
@@ -50,11 +83,10 @@ const shipTransform = ref('');
 const shipTransition = ref('none');
 const previousAtIsland = ref(null);
 
+const BOAT_WIDTH = 0.08;
+const BOAT_HEIGHT = 0.11;
 
-const BOAT_WIDTH = 0.16;
-const BOAT_HEIGHT = 0.22;
-
-const getShipPosition = (atIsland) => {
+const getShipPosition = atIsland => {
     const island = props.islands.find(island => island.id === atIsland);
     if (!island) return { x: 0, y: 0 }; // safe fallback
     const x = island.x;
@@ -63,46 +95,49 @@ const getShipPosition = (atIsland) => {
 };
 
 // --- Watch for player's island changes to animate the ship ---
-watch(() => props.player?.atIsland, (newAtIsland) => {
-    if (!newAtIsland) return;
+watch(
+    () => props.player?.atIsland,
+    newAtIsland => {
+        if (!newAtIsland) return;
 
-    const startIsland = previousAtIsland.value;
-    const endIsland = newAtIsland;
-    if (!startIsland) {
-        const { x, y } = getShipPosition(endIsland);
-        shipTransition.value = 'none';
-        shipTransform.value = `translate(${x} ${y})`;
-    } else {
-        const { x: startX, y: startY } = getShipPosition(startIsland);
-        const { x: endX, y: endY } = getShipPosition(endIsland);
+        const startIsland = previousAtIsland.value;
+        const endIsland = newAtIsland;
+        if (!startIsland) {
+            const { x, y } = getShipPosition(endIsland);
+            shipTransition.value = 'none';
+            shipTransform.value = `translate(${x} ${y})`;
+        } else {
+            const { x: startX, y: startY } = getShipPosition(startIsland);
+            const { x: endX, y: endY } = getShipPosition(endIsland);
 
-        shipTransition.value = 'none';
-        shipTransform.value = `translate(${startX} ${startY})`;
+            shipTransition.value = 'none';
+            shipTransform.value = `translate(${startX} ${startY})`;
 
-        nextTick(() => {
-            shipTransition.value = 'transform 2s ease-in-out';
-            shipTransform.value = `translate(${endX} ${endY})`;
-        });
-    }
-    previousAtIsland.value = endIsland;
-}, { deep: true, immediate: true });
+            nextTick(() => {
+                shipTransition.value = 'transform 2s ease-in-out';
+                shipTransform.value = `translate(${endX} ${endY})`;
+            });
+        }
+        previousAtIsland.value = endIsland;
+    },
+    { deep: true, immediate: true }
+);
 
-
-const handlePointerDown = (island) => {
+const handlePointerDown = island => {
     potentialClickNode = island;
 };
 
-const handlePointerUp = (island) => {
+const handlePointerUp = island => {
     if (potentialClickNode && potentialClickNode.id === island.id) {
         emit('nodeClick', island);
     }
     potentialClickNode = null;
 };
 
-const getIslandById = (id) => props.islands.find((island) => island.id === id);
+const getIslandById = id => props.islands.find(island => island.id === id);
 
 const wavyEdges = computed(() => {
-    return props.edges.map((edge) => {
+    return props.edges.map(edge => {
         const startNode = getIslandById(edge.from);
         const endNode = getIslandById(edge.to);
 
@@ -168,9 +203,15 @@ defineExpose({
 
 <style scoped>
 @keyframes boat-bobbing {
-  0%   { transform: translateY(0); }
-  50%  { transform: translateY(-3%); }
-  100% { transform: translateY(0); }
+    0% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(-3%);
+    }
+    100% {
+        transform: translateY(0);
+    }
 }
 
 .animate-boat {

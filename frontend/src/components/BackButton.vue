@@ -1,8 +1,11 @@
 <template>
-    <router-link :to="{ name: 'Territory', params: { id: territoryId } }"
-        @mouseover="$emit('showTooltip', 'بازگشت به نقشه')" @mouseleave="$emit('hideTooltip')">
+    <router-link
+        :to="{ name: 'Territory', params: { id: territoryId } }"
+        @mouseover="$emit('showTooltip', 'بازگشت به نقشه')"
+        @mouseleave="$emit('hideTooltip')"
+    >
         <div id="go-back">
-            <img src="/images/ships/ship1.svg" alt="Go to the territory" />
+            <img src="/images/ships/spaceship.png" alt="Go to the territory" />
         </div>
     </router-link>
 </template>
@@ -22,8 +25,8 @@ defineEmits(['showTooltip', 'hideTooltip']);
 #go-back {
     position: fixed;
     z-index: 20;
-    width: 15vw;
-    height: 15vw;
+    width: 10vw;
+    height: 10vw;
     bottom: 1.5rem;
     right: 1.5rem;
     filter: drop-shadow(0 5px 20px rgba(0, 0, 0, 0.5));
