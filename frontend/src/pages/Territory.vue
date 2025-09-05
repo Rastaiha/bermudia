@@ -28,6 +28,7 @@
                     :player="player"
                     :info-box-style="infoBoxStyle"
                     :refuel-islands="refuelIslands"
+                    :terminal-islands="terminalIslands"
                     :territory-id="territoryId"
                 />
             </Transition>
@@ -61,6 +62,7 @@ const transformCounter = ref(0);
 const territoryId = ref(route.params.id);
 const islands = ref([]);
 const refuelIslands = ref([]);
+const terminalIslands = ref([]);
 const edges = ref([]);
 const player = ref(null);
 const username = ref('...');
@@ -133,6 +135,7 @@ const setupTerritoryData = territoryData => {
     islands.value = territoryData.islands;
     edges.value = territoryData.edges;
     refuelIslands.value = territoryData.refuelIslands;
+    terminalIslands.value = territoryData.terminalIslands;
 };
 
 const setupPlayerAndUserData = playerAndUserData => {

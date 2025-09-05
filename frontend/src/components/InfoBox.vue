@@ -1,7 +1,10 @@
 <template>
     <div
-        :style="infoBoxStyle"
-        class="bg-[rgb(121,200,237,0.8)] text-[#310f0f] p-4 rounded-xl font-vazir text-base z-[10000] flex flex-col items-center pointer-events-auto w-60"
+        :style="{
+            width: `calc(var(--spacing) * ${boxWidth})`,
+            ...infoBoxStyle,
+        }"
+        class="bg-[rgb(121,200,237,0.8)] text-[#310f0f] p-4 rounded-xl font-vazir text-base z-[10000] flex flex-col items-center pointer-events-auto"
         @pointerdown.stop
     >
         <h3 class="text-lg font-bold text-center shrink-0">
@@ -14,8 +17,11 @@
         >
             <div class="overflow-hidden">
                 <div v-if="!loading" class="w-full mt-3 space-y-3">
-                    <div v-if="!errorText" class="text-sm">
-                        <slot></slot>
+                    <slot></slot>
+                    <div
+                        v-if="!errorText && (buttonText || cost)"
+                        class="text-sm"
+                    >
                         <CostlyButton
                             :on-click="() => $emit('action')"
                             :cost="cost"
@@ -46,6 +52,7 @@ defineProps({
     errorText: String,
     cost: Object,
     loading: Boolean,
+    boxWidth: Number,
 });
 
 defineEmits(['action']);
