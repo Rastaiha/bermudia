@@ -12,6 +12,7 @@ type Config struct {
 	CorrectionJobInterval  time.Duration `config:"correction_job_interval"`
 	DefaultCorrectionGroup int64         `config:"default_correction_group"`
 	CorrectionGroupsStr    string        `config:"correction_groups"`
+	ContentFileID          string        `config:"content_file_id"`
 	CorrectionGroups       map[string]int64
 }
 

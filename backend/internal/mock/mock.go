@@ -8,11 +8,43 @@ import (
 	"fmt"
 	"github.com/Rastaiha/bermudia/internal/domain"
 	"github.com/Rastaiha/bermudia/internal/service"
+	"io"
 	"io/fs"
 	"log/slog"
+	"net/http"
+	"os"
 	"path/filepath"
 	"strings"
 )
+
+func FsFromURL(url string) (fs.FS, error) {
+	resp, err := http.Get(url)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+	f, err := os.Create(filepath.Join(os.TempDir(), "content.zip"))
+	if err != nil {
+		return nil, err
+	}
+	defer f.Close()
+	_, err = io.Copy(f, resp.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	stat, err := f.Stat()
+	if err != nil {
+		return nil, err
+	}
+
+	err = ExtractZip(f, stat.Size(), "./content")
+	if err != nil {
+		return nil, err
+	}
+	root := os.DirFS("./content")
+	return root, nil
+}
 
 //go:embed data
 var DataFiles embed.FS
