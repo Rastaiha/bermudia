@@ -31,10 +31,7 @@ function connectWebSocket(player, reconnectCallback) {
 
             if (data.playerUpdate) {
                 player.value = data.playerUpdate.player;
-                if (
-                    !territoryId.value &&
-                    player.value.atTerritory != territoryId.value
-                ) {
+                if (player.value.atTerritory != territoryId.value) {
                     router.push({
                         name: 'Territory',
                         params: { id: player.value.atTerritory },
