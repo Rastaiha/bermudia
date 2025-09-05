@@ -8,26 +8,24 @@ import (
 	"github.com/go-telegram/bot"
 	"github.com/go-telegram/bot/models"
 	"io"
-	"log/slog"
-	"strings"
-	"time"
 )
 
 type Island struct {
+	bot           *bot.Bot
 	islandStore   domain.IslandStore
 	questionStore domain.QuestionStore
 	playerStore   domain.PlayerStore
 	treasureStore domain.TreasureStore
-	bot           *bot.Bot
+	onNewAnswer   func(question domain.BookQuestion, answer domain.Answer)
 }
 
 func NewIsland(bot *bot.Bot, islandStore domain.IslandStore, questionStore domain.QuestionStore, playerStore domain.PlayerStore, treasureStore domain.TreasureStore) *Island {
 	return &Island{
+		bot:           bot,
 		islandStore:   islandStore,
 		questionStore: questionStore,
 		playerStore:   playerStore,
 		treasureStore: treasureStore,
-		bot:           bot,
 	}
 }
 
@@ -135,32 +133,12 @@ func (i *Island) SubmitAnswer(ctx context.Context, userId int32, questionId stri
 	if err != nil {
 		return nil, err
 	}
-
-	// TODO: remove
-	func() {
-		correction := domain.Correction{
-			ID:         domain.NewID(domain.ResourceTypeCorrection),
-			QuestionId: questionId,
-			UserId:     userId,
-			IsCorrect:  false,
-			CreatedAt:  time.Now().UTC(),
-		}
-		create := false
-		lowerFilename := strings.ToLower(filename)
-		if strings.Contains(lowerFilename, "false") || strings.Contains(textContent, "false") || strings.Contains(textContent, "0") {
-			correction.IsCorrect = false
-			create = true
-		} else if strings.Contains(lowerFilename, "true") || strings.Contains(textContent, "true") || strings.Contains(textContent, "1") {
-			correction.IsCorrect = true
-			create = true
-		}
-		if create {
-			if err := i.questionStore.CreateCorrection(ctx, correction); err != nil {
-				slog.Error("failed to create correction", slog.String("error", err.Error()))
-			}
-		}
-	}()
+	i.onNewAnswer(question, answer)
 
 	r := domain.GetSubmissionStateFromAnswer(answer)
 	return &r, nil
+}
+
+func (i *Island) OnNewAnswer(f func(question domain.BookQuestion, answer domain.Answer)) {
+	i.onNewAnswer = f
 }
