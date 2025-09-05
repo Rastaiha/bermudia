@@ -73,10 +73,8 @@ func (c *Correction) HandleNewAnswer(question domain.BookQuestion, answer domain
 	go func() {
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()
-		if c.cfg.DevMode {
-			if c.autoCorrect(ctx, answer) {
-				return
-			}
+		if c.cfg.DevMode && c.autoCorrect(ctx, answer) {
+			return
 		}
 		keyboard := models.InlineKeyboardMarkup{
 			InlineKeyboard: [][]models.InlineKeyboardButton{{
