@@ -41,6 +41,14 @@ defineProps({
 });
 
 const getIconByType = type => {
+    switch (type) {
+        case 'blueKey':
+            return '/images/icons/blueKeys.png';
+        case 'goldenKey':
+            return '/images/icons/goldenKeys.png';
+        case 'redKey':
+            return '/images/icons/redKeys.png';
+    }
     return '/images/icons/' + type + '.png';
 };
 </script>
