@@ -14,27 +14,28 @@ import (
 	"strings"
 )
 
-//go:embed territories
-var territoryFiles embed.FS
+//go:embed data
+var DataFiles embed.FS
 
-//go:embed books
-var booksFiles embed.FS
-
-//go:embed pool_settings
-var poolSettingsFiles embed.FS
-
-func CreateMockData(adminService *service.Admin, mockUsersPassword string) error {
+func CreateMockData(adminService *service.Admin, mockUsersPassword string, root fs.FS) error {
 	slog.Info("Creating mock data...")
+	territoryFiles, err1 := fs.Sub(root, "data/territories")
+	booksFiles, err2 := fs.Sub(root, "data/books")
+	poolSettingsFiles, err3 := fs.Sub(root, "data/pool_settings")
+	err := errors.Join(err1, err2, err3)
+	if err != nil {
+		return fmt.Errorf("bad file structure: %w", err)
+	}
 	if mockUsersPassword == "" {
 		return errors.New("mock users password is empty")
 	}
-	if err := createMockTerritories(adminService); err != nil {
+	if err := createMockTerritories(adminService, territoryFiles); err != nil {
 		return fmt.Errorf("failed to create mock territories: %w", err)
 	}
-	if err := createMockBooks(adminService); err != nil {
+	if err := createMockBooks(adminService, booksFiles); err != nil {
 		return fmt.Errorf("failed to create mock islands: %w", err)
 	}
-	if err := createPoolSettings(adminService); err != nil {
+	if err := createPoolSettings(adminService, poolSettingsFiles); err != nil {
 		return fmt.Errorf("failed to create mock pool settings: %w", err)
 	}
 	if err := createMockUsers(adminService, mockUsersPassword); err != nil {
@@ -56,14 +57,14 @@ func createMockUsers(adminService *service.Admin, password string) error {
 	return nil
 }
 
-func createMockTerritories(adminService *service.Admin) error {
+func createMockTerritories(adminService *service.Admin, territoryFiles fs.FS) error {
 	ctx := context.Background()
 	return fs.WalkDir(territoryFiles, ".", func(path string, d fs.DirEntry, err error) error {
 		if d.IsDir() {
 			return nil
 		}
 
-		content, err := territoryFiles.ReadFile(path)
+		content, err := fs.ReadFile(territoryFiles, path)
 		if err != nil {
 			return err
 		}
@@ -77,13 +78,13 @@ func createMockTerritories(adminService *service.Admin) error {
 	})
 }
 
-func createMockBooks(adminService *service.Admin) error {
+func createMockBooks(adminService *service.Admin, booksFiles fs.FS) error {
 	ctx := context.Background()
 	return fs.WalkDir(booksFiles, ".", func(path string, d fs.DirEntry, err error) error {
 		if d.IsDir() {
 			return nil
 		}
-		content, err := booksFiles.ReadFile(path)
+		content, err := fs.ReadFile(booksFiles, path)
 		if err != nil {
 			return err
 		}
@@ -92,12 +93,12 @@ func createMockBooks(adminService *service.Admin) error {
 			return err
 		}
 		dir, file := filepath.Split(path)
-		if dir == "books/islands/" {
+		if dir == "islands/" {
 			islandId := strings.TrimSuffix(file, filepath.Ext(file))
 			book, err = adminService.SetBookAndBindToIsland(ctx, islandId, book)
 			return err
 		}
-		if pool, ok := strings.CutPrefix(dir, "books/pool/"); ok {
+		if pool, ok := strings.CutPrefix(dir, "pool/"); ok {
 			pool = strings.Trim(pool, "/")
 			book, err = adminService.SetBookAndBindToPool(ctx, pool, book)
 			return err
@@ -106,13 +107,13 @@ func createMockBooks(adminService *service.Admin) error {
 	})
 }
 
-func createPoolSettings(adminService *service.Admin) error {
+func createPoolSettings(adminService *service.Admin, poolSettingsFiles fs.FS) error {
 	ctx := context.Background()
 	return fs.WalkDir(poolSettingsFiles, ".", func(path string, d fs.DirEntry, err error) error {
 		if d.IsDir() {
 			return nil
 		}
-		content, err := poolSettingsFiles.ReadFile(path)
+		content, err := fs.ReadFile(poolSettingsFiles, path)
 		if err != nil {
 			return err
 		}

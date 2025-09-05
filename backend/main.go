@@ -70,7 +70,7 @@ func main() {
 	islandService.OnNewAnswer(correctionService.HandleNewAnswer)
 
 	if cfg.DevMode {
-		err = mock.CreateMockData(adminService, cfg.MockUsersPassword)
+		err = mock.CreateMockData(adminService, cfg.MockUsersPassword, mock.DataFiles)
 		if err != nil {
 			log.Fatal("failed to create mock data: ", err)
 		}
