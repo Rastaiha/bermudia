@@ -42,6 +42,11 @@ func Load() Config {
 		Tag: tag,
 		DecoderConfig: &mapstructure.DecoderConfig{
 			DecodeHook: mapstructure.ComposeDecodeHookFunc(
+				mapstructure.StringToBoolHookFunc(),
+				mapstructure.StringToFloat32HookFunc(),
+				mapstructure.StringToFloat64HookFunc(),
+				mapstructure.StringToIntHookFunc(),
+				mapstructure.StringToInt32HookFunc(),
 				mapstructure.StringToInt64HookFunc(),
 				mapstructure.StringToTimeDurationHookFunc(),
 				mapstructure.StringToSliceHookFunc(","),
