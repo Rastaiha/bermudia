@@ -16,10 +16,14 @@
         >
             <transition name="popup-fade" mode="out-in">
                 <div v-if="treasureData.unlocked">
-                    <img src="../../images/island/opened_treasure.png" />
-                    <div class="m-auto text-center">
-                        این صندوق قبلا باز شده‌است.
-                    </div>
+                    <InfoBox
+                        title="صندوق گنج"
+                        :info-box-style="infoBoxStyle"
+                        :loading="false"
+                        error-text="این صندوق قبلا باز شده‌است."
+                    >
+                        <img src="../../images/island/opened_treasure.png" />
+                    </InfoBox>
                 </div>
                 <div
                     v-else-if="treasureFetchedInfo"
