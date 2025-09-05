@@ -1,11 +1,34 @@
 {
   "components": [
     {
+      "iframe": {
+        "url": "https://platform.kamva.academy/article/713"
+      }
+    },
+    {
       "question": {
         "inputType": "number",
-        "knowledgeAmount": 10,
+        "knowledgeAmount": 100,
         "rewardSource": "edu2",
-        "text": "جواب سؤال معروف 2x2 رو بفرست:"
+        "text": "سوال اول"
+      }
+    },
+    {
+      "iframe": {
+        "url": "https://platform.kamva.academy/article/713"
+      }
+    },
+    {
+      "question": {
+        "inputType": "text",
+        "knowledgeAmount": 100,
+        "rewardSource": "edu4",
+        "text": "سوال دوم"
+      }
+    },
+    {
+      "iframe": {
+        "url": "https://platform.kamva.academy/article/713"
       }
     },
     {
@@ -15,18 +38,9 @@
           "image/png",
           "image/jpeg"
         ],
-        "knowledgeAmount": 50,
-        "rewardSource": "edu4",
-        "text": "از جوابت عکس بگیر بفرست:"
-      }
-    },
-    {
-      "question": {
-        "inputType": "file",
-        "knowledgeAmount": 50,
+        "knowledgeAmount": 100,
         "rewardSource": "edu6",
-        "inputAccept": ["application/pdf"],
-        "text": "یه فایل pdf بفرست:"
+        "text": "سوال سوم"
       }
     }
   ],

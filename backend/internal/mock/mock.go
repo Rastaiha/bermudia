@@ -22,7 +22,8 @@ func CreateMockData(adminService *service.Admin, mockUsersPassword string, root 
 	territoryFiles, err1 := fs.Sub(root, "data/territories")
 	booksFiles, err2 := fs.Sub(root, "data/books")
 	poolSettingsFiles, err3 := fs.Sub(root, "data/pool_settings")
-	err := errors.Join(err1, err2, err3)
+	usersFile, err4 := fs.ReadFile(root, "data/users.json")
+	err := errors.Join(err1, err2, err3, err4)
 	if err != nil {
 		return fmt.Errorf("bad file structure: %w", err)
 	}
@@ -38,18 +39,31 @@ func CreateMockData(adminService *service.Admin, mockUsersPassword string, root 
 	if err := createPoolSettings(adminService, poolSettingsFiles); err != nil {
 		return fmt.Errorf("failed to create mock pool settings: %w", err)
 	}
-	if err := createMockUsers(adminService, mockUsersPassword); err != nil {
+	if err := createMockUsers(adminService, usersFile, mockUsersPassword); err != nil {
 		return fmt.Errorf("failed to create mock users: %w", err)
 	}
 	return nil
 }
 
-func createMockUsers(adminService *service.Admin, password string) error {
+type mockUser struct {
+	Username string `json:"username"`
+	Password string `json:"password"`
+}
+
+func createMockUsers(adminService *service.Admin, usersJson []byte, defaultPass string) error {
+	var users []mockUser
+	err := json.Unmarshal(usersJson, &users)
+	if err != nil {
+		return err
+	}
 	ctx := context.Background()
-	errs := []error{adminService.CreateUser(ctx, 100, "alice", password)}
-	for i := range 100 {
-		i = i + 1
-		errs = append(errs, adminService.CreateUser(ctx, int32(100+i), fmt.Sprintf("test%d", i), password))
+	var errs []error
+	for i, u := range users {
+		password := u.Password
+		if password == "" {
+			password = defaultPass
+		}
+		errs = append(errs, adminService.CreateUser(ctx, int32(1001*(i+1)), u.Username, password))
 	}
 	if err := errors.Join(errs...); err != nil {
 		return fmt.Errorf("failed to create mock users: %w", err)
