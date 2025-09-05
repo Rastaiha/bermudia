@@ -89,7 +89,7 @@ func (s sqlTerritoryRepository) SetTerritory(ctx context.Context, territory *dom
 		return err
 	}
 	_, err = s.db.ExecContext(ctx, `INSERT INTO territories (id, start_island, content, updated_at) VALUES ($1, $2, $3, $4)
-ON CONFLICT DO UPDATE SET start_island = EXCLUDED.start_island, content = EXCLUDED.content, updated_at = EXCLUDED.updated_at`,
+ON CONFLICT (id) DO UPDATE SET start_island = EXCLUDED.start_island, content = EXCLUDED.content, updated_at = EXCLUDED.updated_at`,
 		n(territory.ID), n(territory.StartIsland), content, time.Now().UTC(),
 	)
 	return err

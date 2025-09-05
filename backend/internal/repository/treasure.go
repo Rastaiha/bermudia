@@ -105,7 +105,7 @@ func (s sqlTreasureRepository) GetOrCreateUserTreasure(ctx context.Context, user
 	err = s.scanUserTreasure(s.db.QueryRowContext(ctx,
 		`INSERT INTO user_treasures (user_id, treasure_id, unlocked, cost, updated_at) 
 		 VALUES ($1, $2, $3, $4, $5)
-		 ON CONFLICT DO UPDATE SET user_id = EXCLUDED.user_id
+		 ON CONFLICT (user_id, treasure_id) DO UPDATE SET user_id = EXCLUDED.user_id
 		 RETURNING `+s.userTreasureColumnsToSelect(),
 		n(userId), n(treasureId), generated.Unlocked, cost, now,
 	), &userTreasure)

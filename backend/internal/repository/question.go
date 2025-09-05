@@ -112,9 +112,9 @@ func (s sqlQuestionRepository) GetOrCreateAnswer(ctx context.Context, userId int
 	err := s.scanAnswer(s.db.QueryRowContext(ctx,
 		`INSERT INTO answers (user_id, question_id, status, created_at, updated_at) 
 		 VALUES ($1, $2, $3, $4, $4)
-		 ON CONFLICT DO UPDATE SET user_id = EXCLUDED.user_id
+		 ON CONFLICT (user_id, question_id) DO UPDATE SET user_id = EXCLUDED.user_id
 		 RETURNING `+s.answerColumnsToSelect(),
-		n(userId), n(questionID), domain.AnswerStatusEmpty, now, now,
+		n(userId), n(questionID), domain.AnswerStatusEmpty, now,
 	), &answer)
 
 	if err != nil {
@@ -150,7 +150,7 @@ func (s sqlQuestionRepository) SubmitAnswer(ctx context.Context, userId int32, q
 	if answer.Status == domain.AnswerStatusCorrect {
 		return domain.Answer{}, domain.ErrSubmitToCorrectAnswer
 	}
-	if answer.Status == domain.AnswerStatusPending && !answer.UpdatedAt.Equal(now) {
+	if answer.Status == domain.AnswerStatusPending && answer.UpdatedAt.UnixMilli() != now.UnixMilli() {
 		return domain.Answer{}, domain.ErrSubmitToPendingAnswer
 	}
 
