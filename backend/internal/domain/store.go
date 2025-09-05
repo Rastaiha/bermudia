@@ -20,6 +20,7 @@ var (
 	ErrEmptyIsland                = errors.New("empty island")
 	ErrTreasureNotRelatedToIsland = errors.New("treasure not related to island")
 	ErrUserTreasureConflict       = errors.New("user treasure update conflict")
+	ErrAlreadyApplied             = errors.New("already applied")
 )
 
 type TerritoryStore interface {
@@ -69,7 +70,8 @@ type QuestionStore interface {
 	GetQuestion(ctx context.Context, questionId string) (BookQuestion, error)
 	CreateCorrection(ctx context.Context, Correction Correction) error
 	ApplyCorrection(ctx context.Context, correction Correction, ifBefore time.Time) (bool, error)
-	GetUnappliedCorrections(ctx context.Context) ([]Correction, error)
+	GetUnappliedCorrections(ctx context.Context, before time.Time) ([]Correction, error)
+	UpdateCorrection(ctx context.Context, co string, newIsCorrect bool) error
 }
 
 type TreasureStore interface {

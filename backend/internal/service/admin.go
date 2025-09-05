@@ -178,6 +178,7 @@ func (a *Admin) setBook(ctx context.Context, input BookInput) (BookInput, error)
 			questions = append(questions, domain.BookQuestion{
 				QuestionID:      c.Question.ID,
 				BookID:          input.BookId,
+				Text:            c.Question.Text,
 				KnowledgeAmount: c.Question.KnowledgeAmount,
 				RewardSource:    c.Question.RewardSource,
 			})

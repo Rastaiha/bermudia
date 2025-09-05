@@ -16,6 +16,7 @@ const (
 CREATE TABLE IF NOT EXISTS questions (
     question_id VARCHAR(255) PRIMARY KEY,
     book_id VARCHAR(255) NOT NULL,
+    text TEXT NOT NULL,
     knowledge_amount INT4 NOT NULL,
     reward_source VARCHAR(255)
 );
@@ -44,6 +45,7 @@ CREATE TABLE IF NOT EXISTS corrections (
     applied BOOLEAN NOT NULL DEFAULT FALSE,
     created_at TIMESTAMP NOT NULL
 );
+CREATE INDEX IF NOT EXISTS idx_corrections_applied_created_at ON corrections (applied, created_at);
 `
 )
 
@@ -85,8 +87,8 @@ func (s sqlQuestionRepository) BindQuestionsToBook(ctx context.Context, bookId s
 		return fmt.Errorf("delete questions: %w", err)
 	}
 	for _, q := range questions {
-		_, err = tx.ExecContext(ctx, `INSERT INTO questions (question_id, book_id, knowledge_amount, reward_source) VALUES ($1, $2, $3, $4) ;`,
-			n(q.QuestionID), n(bookId), q.KnowledgeAmount, n(q.RewardSource),
+		_, err = tx.ExecContext(ctx, `INSERT INTO questions (question_id, book_id, text, knowledge_amount, reward_source) VALUES ($1, $2, $3, $4, $5) ;`,
+			n(q.QuestionID), n(bookId), n(q.Text), q.KnowledgeAmount, n(q.RewardSource),
 		)
 		if err != nil {
 			return fmt.Errorf("insert questions: %w", err)
@@ -218,8 +220,8 @@ WHERE i.id = $3 ;
 func (s sqlQuestionRepository) GetQuestion(ctx context.Context, questionId string) (domain.BookQuestion, error) {
 	var question domain.BookQuestion
 	var rewardSource sql.NullString
-	err := s.db.QueryRowContext(ctx, `SELECT question_id, book_id, knowledge_amount, reward_source FROM questions WHERE question_id = $1 ;`,
-		questionId).Scan(&question.QuestionID, &question.BookID, &question.KnowledgeAmount, &rewardSource)
+	err := s.db.QueryRowContext(ctx, `SELECT question_id, book_id, text, knowledge_amount, reward_source FROM questions WHERE question_id = $1 ;`,
+		questionId).Scan(&question.QuestionID, &question.BookID, &question.Text, &question.KnowledgeAmount, &rewardSource)
 	question.RewardSource = rewardSource.String
 	if errors.Is(err, sql.ErrNoRows) {
 		return question, domain.ErrQuestionNotFound
@@ -262,9 +264,11 @@ func (s sqlQuestionRepository) ApplyCorrection(ctx context.Context, correction d
 	return true, err
 }
 
-func (s sqlQuestionRepository) GetUnappliedCorrections(ctx context.Context) (result []domain.Correction, err error) {
+func (s sqlQuestionRepository) GetUnappliedCorrections(ctx context.Context, before time.Time) (result []domain.Correction, err error) {
+	before = before.UTC()
 	rows, err := s.db.QueryContext(ctx,
-		`SELECT id, question_id, user_id, is_correct, created_at FROM corrections WHERE applied = FALSE `,
+		`SELECT id, question_id, user_id, is_correct, created_at FROM corrections WHERE applied = FALSE AND created_at <= $1 ;`,
+		before,
 	)
 	if err != nil {
 		return nil, err
@@ -282,4 +286,19 @@ func (s sqlQuestionRepository) GetUnappliedCorrections(ctx context.Context) (res
 		result = append(result, correction)
 	}
 	return result, nil
+}
+
+func (s sqlQuestionRepository) UpdateCorrection(ctx context.Context, id string, newIsCorrect bool) error {
+	cmd, err := s.db.ExecContext(ctx, `UPDATE corrections SET is_correct = $1 WHERE id = $2 AND applied = FALSE ;`, newIsCorrect, id)
+	if err != nil {
+		return err
+	}
+	rowsAffected, err := cmd.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if rowsAffected == 0 {
+		return domain.ErrAlreadyApplied
+	}
+	return nil
 }

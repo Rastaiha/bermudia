@@ -15,6 +15,7 @@ type Question struct {
 type BookQuestion struct {
 	QuestionID      string
 	BookID          string
+	Text            string
 	KnowledgeAmount int32
 	RewardSource    string
 }

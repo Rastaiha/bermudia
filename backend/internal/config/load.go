@@ -2,6 +2,7 @@ package config
 
 import (
 	"encoding/base64"
+	"fmt"
 	"github.com/go-viper/mapstructure/v2"
 	"github.com/knadh/koanf/providers/env"
 	"github.com/knadh/koanf/providers/structs"
@@ -41,6 +42,7 @@ func Load() Config {
 		Tag: tag,
 		DecoderConfig: &mapstructure.DecoderConfig{
 			DecodeHook: mapstructure.ComposeDecodeHookFunc(
+				mapstructure.StringToInt64HookFunc(),
 				mapstructure.StringToTimeDurationHookFunc(),
 				mapstructure.StringToSliceHookFunc(","),
 				func(f reflect.Type, t reflect.Type, data any) (any, error) {
@@ -58,6 +60,18 @@ func Load() Config {
 
 	if err != nil {
 		log.Fatalf("could not unmarshal config: %v\n", err)
+	}
+
+	instance.CorrectionGroups = make(map[string]int64)
+	for _, s := range strings.Split(instance.CorrectionGroupsStr, ",") {
+		var chatId int64
+		var territory string
+		_, err := fmt.Sscanf(s, "%d:%s", &chatId, &territory)
+		if err != nil {
+			slog.Error("failed to parse correction groups", "error", err)
+		} else {
+			instance.CorrectionGroups[territory] = chatId
+		}
 	}
 
 	return instance

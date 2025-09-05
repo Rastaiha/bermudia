@@ -224,7 +224,7 @@ func (p *Player) applyCorrections(ctx context.Context) {
 	ctx, cancel := context.WithTimeout(ctx, 10*time.Minute)
 	defer cancel()
 
-	corrections, err := p.questionStore.GetUnappliedCorrections(ctx)
+	corrections, err := p.questionStore.GetUnappliedCorrections(ctx, time.Now().Add(-time.Second*5).UTC())
 	if err != nil {
 		slog.Error("failed to GetUnappliedCorrections from db", err)
 		return

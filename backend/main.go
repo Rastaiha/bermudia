@@ -55,7 +55,10 @@ func main() {
 	territoryService := service.NewTerritory(territoryRepo)
 	islandService := service.NewIsland(theBot, islandRepo, questionStore, playerRepo, treasureRepo)
 	playerService := service.NewPlayer(cfg, playerRepo, territoryRepo, questionStore, islandRepo, treasureRepo)
+	correctionService := service.NewCorrection(cfg, theBot, questionStore)
 	adminService := service.NewAdmin(territoryRepo, islandRepo, userRepo, playerRepo, questionStore, treasureRepo)
+
+	islandService.OnNewAnswer(correctionService.HandleNewAnswer)
 
 	err = mock.CreateMockData(adminService, cfg.MockUsersPassword)
 	if err != nil {
@@ -65,6 +68,7 @@ func main() {
 	h := handler.New(authService, territoryService, islandService, playerService)
 
 	playerService.Start()
+	correctionService.Start()
 	h.Start()
 
 	c := make(chan os.Signal, 1)
@@ -73,5 +77,6 @@ func main() {
 	slog.Info("Got signal, shutting down...")
 
 	h.Stop()
+	correctionService.Stop()
 	playerService.Stop()
 }
