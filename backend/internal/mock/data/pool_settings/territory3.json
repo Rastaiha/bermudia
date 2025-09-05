@@ -1,0 +1,7 @@
+{
+  "territoryId": "territory3",
+  "pooledIslands": ["asset_1757105018117", "asset_1757105027669", "asset_1757105036317"],
+  "poolSettings": {
+    "hard": 3
+  }
+}
