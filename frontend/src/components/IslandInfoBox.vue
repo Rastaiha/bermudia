@@ -15,7 +15,7 @@
             @action="actionOnClick"
         >
             <div v-if="checkSubMigration()" class="w-full">
-                <img src="/images/territories/territory1.jfif" />
+                <img src="../../public/images/territories/territory1.jfif" />
             </div>
             <div
                 v-else-if="checkRefuelIsland() && refuel"
@@ -47,25 +47,28 @@
                     @dblclick.stop
                 />
             </div>
-            <div
-                v-else-if="checkMigrate()"
-                class="w-full space-y-3 flex justify-around"
-            >
-                <div
-                    v-for="territory in migrate.territoryMigrationOptions"
-                    :key="territory.territoryId"
-                    style="margin-bottom: 0"
-                >
-                    <IslandInfoBox
-                        v-if="territory"
-                        :info-box-style="migrateBoxStyle"
-                        :selected-island="selectedIsland"
-                        :player="player"
-                        :refuel-islands="refuelIslands"
-                        :terminal-islands="terminalIslands"
-                        :territory-id="territory.territoryId"
-                        :migrate-info="territory"
-                    />
+            <div v-else-if="checkMigrate()" class="w-full space-y-3">
+                <PlayerInventoryBar
+                    v-if="knowledgeBar"
+                    :bar-data="knowledgeBar"
+                ></PlayerInventoryBar>
+                <div class="w-full flex justify-around">
+                    <div
+                        v-for="territory in migrate.territoryMigrationOptions"
+                        :key="territory.territoryId"
+                        style="margin-bottom: 0"
+                    >
+                        <IslandInfoBox
+                            v-if="territory"
+                            :info-box-style="migrateBoxStyle"
+                            :selected-island="selectedIsland"
+                            :player="player"
+                            :refuel-islands="refuelIslands"
+                            :terminal-islands="terminalIslands"
+                            :territory-id="territory.territoryId"
+                            :migrate-info="territory"
+                        />
+                    </div>
                 </div>
             </div>
             <div
@@ -96,6 +99,7 @@ import {
     migrateTo,
 } from '@/services/api.js';
 import InfoBox from './InfoBox.vue';
+import PlayerInventoryBar from './PlayerInventoryBar.vue';
 
 defineOptions({
     name: 'IslandInfoBox',
@@ -367,6 +371,7 @@ const cost = computed(() => {
 const actionOnClick = () => {
     if (checkSubMigration()) {
         migrateTo(props.migrateInfo.territoryId);
+        return;
     } else if (checkRefuelIsland()) {
         buyFuelFromIsland();
         return;
@@ -385,6 +390,22 @@ const actionOnClick = () => {
     debugger;
     return;
 };
+
+const knowledgeBar = computed(() => {
+    const fetchedKnowledgeBar = props.player.knowledgeBars.find(
+        bar => bar.territoryId === migrate.value.knowledgeCriteriaTerritory
+    );
+    return {
+        name: 'دانش',
+        englishName: 'Knowledge',
+        total: fetchedKnowledgeBar.total,
+        value: migrate.value.knowledgeValue,
+        icon: '/images/icons/knowledge.png',
+        shadowColor: '#ff7e5f',
+        gradientFrom: '#b65f69',
+        gradientTo: '#feb47b',
+    };
+});
 
 watch(
     () => props.selectedIsland,

@@ -145,6 +145,12 @@ const setupPlayerAndUserData = playerAndUserData => {
     username.value = meData.username;
 
     player.value = playerData;
+    if (player.value.atTerritory != territoryId.value) {
+        router.push({
+            name: 'Territory',
+            params: { id: player.value.atTerritory },
+        });
+    }
 };
 
 // --- Event Handlers from Child Components ---
@@ -180,7 +186,7 @@ onMounted(async () => {
     }
 });
 // --- WebSocket ---
-usePlayerWebSocket(player);
+usePlayerWebSocket(player, territoryId, router);
 
 // --- Watcher to update infobox on arrival ---
 watch(
@@ -191,6 +197,24 @@ watch(
         }
     },
     { deep: true }
+);
+
+watch(
+    () => route.params.id,
+    async newTerritoryId => {
+        territoryId.value = newTerritoryId;
+        isLoading.value = true;
+        try {
+            const territoryData = await fetchTerritoryData(newTerritoryId);
+            setupTerritoryData(territoryData);
+
+            const playerAndUserData = await fetchPlayerAndUserData();
+            setupPlayerAndUserData(playerAndUserData);
+        } finally {
+            isLoading.value = false;
+        }
+    },
+    { immediate: false }
 );
 </script>
 
