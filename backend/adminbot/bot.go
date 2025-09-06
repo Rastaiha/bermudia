@@ -18,18 +18,20 @@ import (
 type Bot struct {
 	cfg           config.Config
 	bot           *bot.Bot
+	islandService *service.Island
 	correction    *service.Correction
+	userStore     domain.UserStore
 	cancel        context.CancelFunc
 	wg            sync.WaitGroup
-	islandService *service.Island
 }
 
-func NewBot(cfg config.Config, b *bot.Bot, islandService *service.Island, correction *service.Correction) *Bot {
+func NewBot(cfg config.Config, b *bot.Bot, islandService *service.Island, correction *service.Correction, userStore domain.UserStore) *Bot {
 	m := &Bot{
 		cfg:           cfg,
 		bot:           b,
 		islandService: islandService,
 		correction:    correction,
+		userStore:     userStore,
 	}
 
 	return m
@@ -76,7 +78,7 @@ func (m *Bot) Stop() {
 	m.wg.Wait()
 }
 
-func (m *Bot) HandleNewAnswer(question domain.BookQuestion, answer domain.Answer) {
+func (m *Bot) HandleNewAnswer(username string, territory string, question domain.BookQuestion, answer domain.Answer) {
 	go func() {
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()
@@ -92,17 +94,24 @@ func (m *Bot) HandleNewAnswer(question domain.BookQuestion, answer domain.Answer
 			}},
 		}
 		var err error
-		caption := fmt.Sprintf("#%d #%s\n\nمتن سؤال:\n%s", answer.UserID, answer.QuestionID, question.Text)
+		if territory == "" {
+			territory = "challenge"
+		}
+		group := m.cfg.DefaultCorrectionGroup
+		if g, ok := m.cfg.CorrectionGroups[territory]; ok {
+			group = g
+		}
+		caption := fmt.Sprintf("#%s\nUser: #%s\nQuestion: #%s\n\nمتن سؤال:\n%s", territory, username, answer.QuestionID, question.Text)
 		if answer.FileID.Valid {
 			_, err = m.bot.SendDocument(ctx, &bot.SendDocumentParams{
-				ChatID:      m.cfg.DefaultCorrectionGroup,
+				ChatID:      group,
 				Document:    &models.InputFileString{Data: answer.FileID.String},
 				Caption:     caption,
 				ReplyMarkup: keyboard,
 			})
 		} else if utf8.RuneCount([]byte(answer.TextContent.String)) > 1024 {
 			_, err = m.bot.SendDocument(ctx, &bot.SendDocumentParams{
-				ChatID: m.cfg.DefaultCorrectionGroup,
+				ChatID: group,
 				Document: &models.InputFileUpload{
 					Filename: fmt.Sprintf("%d_%s.txt", answer.UserID, answer.QuestionID),
 					Data:     strings.NewReader(answer.TextContent.String),
@@ -112,7 +121,7 @@ func (m *Bot) HandleNewAnswer(question domain.BookQuestion, answer domain.Answer
 			})
 		} else {
 			_, err = m.bot.SendMessage(ctx, &bot.SendMessageParams{
-				ChatID:      m.cfg.DefaultCorrectionGroup,
+				ChatID:      group,
 				Text:        fmt.Sprintf("%s\n\nپاسخ کاربر:\n%s", caption, answer.TextContent.String),
 				ReplyMarkup: keyboard,
 			})

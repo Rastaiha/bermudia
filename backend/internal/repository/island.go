@@ -115,12 +115,12 @@ func (s sqlIslandRepository) GetBook(ctx context.Context, bookId string) (*domai
 	return &result, nil
 }
 
-func (s sqlIslandRepository) SetIslandHeader(ctx context.Context, territoryId string, header domain.IslandHeader) error {
+func (s sqlIslandRepository) SetIslandHeader(ctx context.Context, header domain.IslandHeader) error {
 	if header.BookID != "" && header.FromPool {
 		return domain.ErrInvalidIslandHeader
 	}
 	cmd, err := s.db.ExecContext(ctx,
-		`UPDATE islands SET book_id = $1, from_pool = $2 WHERE id = $3 AND territory_id = $4`, n(header.BookID), header.FromPool, header.ID, territoryId,
+		`UPDATE islands SET book_id = $1, from_pool = $2 WHERE id = $3 AND territory_id = $4`, n(header.BookID), header.FromPool, header.ID, header.TerritoryID,
 	)
 	if err != nil {
 		return fmt.Errorf("update island header: %w", err)
@@ -132,7 +132,7 @@ func (s sqlIslandRepository) SetIslandHeader(ctx context.Context, territoryId st
 }
 
 func (s sqlIslandRepository) GetIslandHeadersByTerritory(ctx context.Context, territoryId string) (result []domain.IslandHeader, err error) {
-	rows, err := s.db.QueryContext(ctx, `SELECT id, from_pool, book_id FROM islands WHERE territory_id = $1`, territoryId)
+	rows, err := s.db.QueryContext(ctx, `SELECT id, territory_id, from_pool, book_id FROM islands WHERE territory_id = $1`, territoryId)
 	if err != nil {
 		return nil, fmt.Errorf("get island headers by territory %q: %w", territoryId, err)
 	}
@@ -142,7 +142,7 @@ func (s sqlIslandRepository) GetIslandHeadersByTerritory(ctx context.Context, te
 	for rows.Next() {
 		var bookId sql.NullString
 		var h domain.IslandHeader
-		err := rows.Scan(&h.ID, &h.FromPool, &bookId)
+		err := rows.Scan(&h.ID, &h.TerritoryID, &h.FromPool, &bookId)
 		if err != nil {
 			return nil, fmt.Errorf("get island header by territory %q: %w", territoryId, err)
 		}
@@ -150,6 +150,30 @@ func (s sqlIslandRepository) GetIslandHeadersByTerritory(ctx context.Context, te
 		result = append(result, h)
 	}
 	return result, nil
+}
+
+func (s sqlIslandRepository) GetIslandHeader(ctx context.Context, islandId string) (domain.IslandHeader, error) {
+	var bookId sql.NullString
+	var header domain.IslandHeader
+	err := s.db.QueryRowContext(ctx, `SELECT id, territory_id, from_pool, book_id FROM islands WHERE id = $1`,
+		islandId).Scan(&header.ID, &header.TerritoryID, &header.FromPool, &bookId)
+	header.BookID = bookId.String
+	if errors.Is(err, sql.ErrNoRows) {
+		return header, domain.ErrIslandNotFound
+	}
+	return header, err
+}
+
+func (s sqlIslandRepository) GetIslandHeaderByBookId(ctx context.Context, bookId string) (domain.IslandHeader, error) {
+	var bId sql.NullString
+	var header domain.IslandHeader
+	err := s.db.QueryRowContext(ctx, `SELECT id, territory_id, from_pool, book_id FROM islands WHERE book_id = $1`,
+		bookId).Scan(&header.ID, &header.TerritoryID, &header.FromPool, &header.BookID)
+	header.BookID = bId.String
+	if errors.Is(err, sql.ErrNoRows) {
+		return header, domain.ErrIslandNotFound
+	}
+	return header, err
 }
 
 func (s sqlIslandRepository) ReserveIDForTerritory(ctx context.Context, territoryId, islandId string) error {
