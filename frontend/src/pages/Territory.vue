@@ -2,11 +2,11 @@
     <div
         class="w-full h-screen flex justify-center items-center p-4 box-border bg-cover bg-center bg-no-repeat overflow-hidden bg-[#0c2036]"
         :style="{ backgroundImage: `url(${backgroundImage})` }"
-        @pointerdown="hideInfoBox"
+        @pointerdown.self="hideInfoBox"
     >
         <LoadingIndicator v-if="isLoading" :message="loadingMessage" />
 
-        <template v-else>
+        <template v-else-if="player">
             <MapView
                 ref="mapViewComponentRef"
                 :islands="islands"
@@ -18,12 +18,12 @@
                 @map-transformed="updateInfoBoxPosition"
             />
 
-            <PlayerInfo v-if="player" :player="player" :username="username" />
+            <PlayerInfo :player="player" :username="username" />
 
             <Transition name="popup-fade">
                 <IslandInfoBox
                     v-if="selectedIsland"
-                    :key="selectedIsland"
+                    :key="selectedIsland.id"
                     :selected-island="selectedIsland"
                     :player="player"
                     :info-box-style="infoBoxStyle"
@@ -37,15 +37,9 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed, watch } from 'vue';
+import { ref, onMounted, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import {
-    getPlayer,
-    getMe,
-    getToken,
-    logout,
-    getTerritory,
-} from '@/services/api.js';
+import { getPlayer, getMe, getToken, getTerritory } from '@/services/api.js';
 import { usePlayerWebSocket } from '@/components/service/WebSocket.js';
 
 import MapView from '@/components/MapView.vue';
@@ -53,13 +47,12 @@ import IslandInfoBox from '@/components/IslandInfoBox.vue';
 import PlayerInfo from '@/components/PlayerInfo.vue';
 import LoadingIndicator from '@/components/LoadingIndicator.vue';
 
-// --- State ---
 const route = useRoute();
 const router = useRouter();
 const mapViewComponentRef = ref(null);
 const transformCounter = ref(0);
 
-const territoryId = ref(route.params.id);
+const territoryId = ref(null);
 const islands = ref([]);
 const refuelIslands = ref([]);
 const terminalIslands = ref([]);
@@ -69,32 +62,84 @@ const username = ref('...');
 const backgroundImage = ref('');
 const selectedIsland = ref(null);
 const dynamicViewBox = ref('0 0 1 1');
-const loadingMessage = ref('Loading map data...');
+const loadingMessage = ref('در حال بارگذاری نقشه...');
 const isLoading = ref(true);
+const infoBoxStyle = ref({ display: 'none' });
 
-// --- Computed Properties ---
-const infoBoxStyle = computed(() => {
+const calculateInfoBoxStyle = () => {
     const svgElement = mapViewComponentRef.value?.svgRef;
-    if (!selectedIsland.value || !svgElement) return { display: 'none' };
+    if (!selectedIsland.value || !svgElement) {
+        infoBoxStyle.value = { display: 'none' };
+        return;
+    }
+
     const island = selectedIsland.value;
     const pt = svgElement.createSVGPoint();
     pt.x = island.x;
     pt.y = island.y;
     const screenPoint = pt.matrixTransform(svgElement.getScreenCTM());
-    return {
+
+    infoBoxStyle.value = {
         position: 'fixed',
         top: `${screenPoint.y}px`,
         left: `${screenPoint.x}px`,
         transform: 'translate(-50%, -100%) translateY(-20px)',
     };
+};
+
+watch([selectedIsland, transformCounter], calculateInfoBoxStyle, {
+    flush: 'post',
 });
 
-// --- Methods ---
+const loadPageData = async id => {
+    if (!id) return;
+    isLoading.value = true;
+    hideInfoBox();
+
+    try {
+        if (!getToken()) {
+            router.push({ name: 'Login' });
+            return;
+        }
+
+        loadingMessage.value = 'در حال دریافت اطلاعات کاربری...';
+        const [playerData, meData] = await Promise.all([getPlayer(), getMe()]);
+
+        if (playerData.atTerritory.toString() !== id.toString()) {
+            router.push({
+                name: 'Territory',
+                params: { id: playerData.atTerritory },
+            });
+            return;
+        }
+
+        loadingMessage.value = 'در حال بارگذاری نقشه...';
+        const territoryData = await getTerritory(id);
+
+        player.value = playerData;
+        username.value = meData.username;
+        territoryId.value = id;
+
+        backgroundImage.value = `/images/${territoryData.backgroundAsset}`;
+        islands.value = territoryData.islands;
+        edges.value = territoryData.edges;
+        refuelIslands.value = territoryData.refuelIslands;
+        terminalIslands.value = territoryData.terminalIslands;
+        dynamicViewBox.value = calculateViewBox(territoryData.islands);
+    } catch (error) {
+        console.error('Failed to load territory data:', error);
+        router.push({ name: 'Login' });
+    } finally {
+        isLoading.value = false;
+    }
+};
+
 const updateInfoBoxPosition = () => {
     transformCounter.value++;
 };
 
 const calculateViewBox = (islands, padding = 0.1) => {
+    if (!islands || islands.length === 0) return '0 0 1 1';
     const bounds = islands.reduce(
         (acc, island) => ({
             minX: Math.min(acc.minX, island.x - island.width / 2),
@@ -108,87 +153,31 @@ const calculateViewBox = (islands, padding = 0.1) => {
     return `${minX - padding} ${minY - padding} ${maxX - minX + padding * 2} ${maxY - minY + padding * 2}`;
 };
 
-// --- API Calls & Data Fetching ---
-const fetchTerritoryData = async id => {
-    return await getTerritory(id);
-};
-
-const fetchPlayerAndUserData = async () => {
-    if (!getToken()) {
-        logout();
-        router.push({ name: 'Login' });
-        return null;
-    }
-    try {
-        const [playerData, meData] = await Promise.all([getPlayer(), getMe()]);
-        return { playerData, meData };
-    } catch (err) {
-        console.error('Failed to get player/user data:', err);
-        throw err;
-    }
-};
-
-// --- Setup Functions (Processing and state setting) ---
-const setupTerritoryData = territoryData => {
-    backgroundImage.value = `/images/${territoryData.backgroundAsset}`;
-    dynamicViewBox.value = calculateViewBox(territoryData.islands);
-    islands.value = territoryData.islands;
-    edges.value = territoryData.edges;
-    refuelIslands.value = territoryData.refuelIslands;
-    terminalIslands.value = territoryData.terminalIslands;
-};
-
-const setupPlayerAndUserData = playerAndUserData => {
-    if (!playerAndUserData) return;
-
-    const { playerData, meData } = playerAndUserData;
-    username.value = meData.username;
-
-    player.value = playerData;
-    if (player.value.atTerritory != territoryId.value) {
-        router.push({
-            name: 'Territory',
-            params: { id: player.value.atTerritory },
-        });
-    }
-};
-
-// --- Event Handlers from Child Components ---
-const showInfoBox = async island => {
-    if (!player.value) return;
+const showInfoBox = island => {
     if (selectedIsland.value && selectedIsland.value.id === island.id) {
         hideInfoBox();
-        return;
+    } else {
+        selectedIsland.value = island;
     }
-    selectedIsland.value = island;
 };
 
 const hideInfoBox = () => {
     selectedIsland.value = null;
 };
 
-// --- Lifecycle Hooks ---
-onMounted(async () => {
-    isLoading.value = true;
-    try {
-        loadingMessage.value = 'Fetching data...';
-        const [territoryData, playerAndUserData] = await Promise.all([
-            fetchTerritoryData(territoryId.value),
-            fetchPlayerAndUserData(),
-        ]);
-
-        loadingMessage.value = 'در حال سفر...';
-
-        setupTerritoryData(territoryData);
-        setupPlayerAndUserData(playerAndUserData);
-    } finally {
-        isLoading.value = false;
-    }
+onMounted(() => {
+    loadPageData(route.params.id);
 });
-// --- WebSocket ---
-usePlayerWebSocket(player, territoryId, router);
 
-// --- Watcher to update infobox on arrival ---
+watch(
+    () => route.params.id,
+    newId => {
+        if (newId && newId !== territoryId.value) {
+            loadPageData(newId);
+        }
+    }
+);
+
 watch(
     () => player.value?.atIsland,
     (newIsland, oldIsland) => {
@@ -199,23 +188,7 @@ watch(
     { deep: true }
 );
 
-watch(
-    () => route.params.id,
-    async newTerritoryId => {
-        territoryId.value = newTerritoryId;
-        isLoading.value = true;
-        try {
-            const territoryData = await fetchTerritoryData(newTerritoryId);
-            setupTerritoryData(territoryData);
-
-            const playerAndUserData = await fetchPlayerAndUserData();
-            setupPlayerAndUserData(playerAndUserData);
-        } finally {
-            isLoading.value = false;
-        }
-    },
-    { immediate: false }
-);
+usePlayerWebSocket(player, territoryId, router);
 </script>
 
 <style scoped>
