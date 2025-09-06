@@ -3,8 +3,7 @@
         <div
             class="flex justify-between px-1 mb-1 text-xs text-gray-300 drop-shadow-md"
         >
-            <!-- <span>{{ barData.name }}</span> -->
-            <span></span>
+            <span>{{ barData.name }}</span>
             <span
                 :style="{
                     visibility: barData.total == -1 ? 'hidden' : 'visible',
@@ -14,7 +13,7 @@
         </div>
         <div
             v-if="barData.required"
-            class="border-l-4 border-dotted h-6 absolute z-20"
+            class="border-l-6 h-8 absolute z-20 transform -translate-y-1"
             :class="requiredLineClass"
             :style="{
                 right:
@@ -81,7 +80,7 @@ const requiredLineClass = computed(() => {
     if (props.barData.required <= props.barData.value) {
         return 'border-green-500';
     } else {
-        return 'border-red-500';
+        return 'border-red-500 border-dotted';
     }
 });
 </script>
