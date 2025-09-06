@@ -1,13 +1,33 @@
 <!doctype html>
 <html lang="fa" dir="rtl">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/logo.png" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>رویداد تابستانه ۱۴۰۴ رستا</title>
-  </head>
-  <body>
-    <div id="app"></div>
-    <script type="module" src="/src/main.js"></script>
-  </body>
+    <head>
+        <meta charset="UTF-8" />
+        <link rel="icon" type="image/svg+xml" href="/logo.png" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>رویداد تابستانه ۱۴۰۴ رستا</title>
+        <script type="text/javascript">
+            !(function () {
+                var i = 'PhLmCZ',
+                    a = window,
+                    d = document;
+                function g() {
+                    var g = d.createElement('script'),
+                        s = 'https://www.goftino.com/widget/' + i,
+                        l = localStorage.getItem('goftino_' + i);
+                    ((g.async = !0),
+                        (g.src = l ? s + '?o=' + l : s),
+                        d.getElementsByTagName('head')[0].appendChild(g));
+                }
+                'complete' === d.readyState
+                    ? g()
+                    : a.attachEvent
+                      ? a.attachEvent('onload', g)
+                      : a.addEventListener('load', g, !1);
+            })();
+        </script>
+    </head>
+    <body>
+        <div id="app"></div>
+        <script type="module" src="/src/main.js"></script>
+    </body>
 </html>
