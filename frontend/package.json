@@ -20,6 +20,7 @@
         "panzoom": "^9.4.3",
         "vite-svg-loader": "^5.1.0",
         "vue": "^3.5.18",
+        "vue-final-modal": "^4.5.5",
         "vue-router": "^4.5.1",
         "vue-toastification": "^2.0.0-rc.5"
     },
