@@ -116,10 +116,11 @@ func (a *Admin) SetBookAndBindToIsland(ctx context.Context, islandId string, inp
 	if err != nil {
 		return input, err
 	}
-	err = a.islandStore.SetIslandHeader(ctx, territoryId, domain.IslandHeader{
-		ID:       islandId,
-		BookID:   input.BookId,
-		FromPool: false,
+	err = a.islandStore.SetIslandHeader(ctx, domain.IslandHeader{
+		ID:          islandId,
+		TerritoryID: territoryId,
+		BookID:      input.BookId,
+		FromPool:    false,
 	})
 	if err != nil {
 		return input, fmt.Errorf("failed to set island header: %w", err)
@@ -249,20 +250,22 @@ func (a *Admin) SetTerritoryIslandBindings(ctx context.Context, bindings Territo
 		return bindings, err
 	}
 	for _, id := range bindings.EmptyIslands {
-		err := a.islandStore.SetIslandHeader(ctx, bindings.TerritoryId, domain.IslandHeader{
-			ID:       id,
-			FromPool: false,
-			BookID:   "",
+		err := a.islandStore.SetIslandHeader(ctx, domain.IslandHeader{
+			ID:          id,
+			TerritoryID: bindings.TerritoryId,
+			FromPool:    false,
+			BookID:      "",
 		})
 		if err != nil {
 			return bindings, fmt.Errorf("failed to set header for island %q: %w", id, err)
 		}
 	}
 	for _, id := range bindings.PooledIslands {
-		err := a.islandStore.SetIslandHeader(ctx, bindings.TerritoryId, domain.IslandHeader{
-			ID:       id,
-			FromPool: true,
-			BookID:   "",
+		err := a.islandStore.SetIslandHeader(ctx, domain.IslandHeader{
+			ID:          id,
+			TerritoryID: bindings.TerritoryId,
+			FromPool:    true,
+			BookID:      "",
 		})
 		if err != nil {
 			return bindings, fmt.Errorf("failed to set header for island %q: %w", id, err)

@@ -91,7 +91,7 @@ func (h *Handler) SubmitAnswer(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	result, err := h.islandService.SubmitAnswer(r.Context(), user.ID, id, file, filename, textContent)
+	result, err := h.islandService.SubmitAnswer(r.Context(), user, id, file, filename, textContent)
 	if err != nil {
 		if errors.Is(err, domain.ErrQuestionNotRelatedToIsland) {
 			sendError(w, http.StatusForbidden, "answer not related to player's current island")

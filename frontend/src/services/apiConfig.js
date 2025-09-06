@@ -1,9 +1,9 @@
 // frontend/src/services/apiConfig.js
 
 const API_BASE_URL =
-    'https://bermudia-api-internal.darkube.app/api/v1';
+    'https://bermudia-api.darkube.app/api/v1';
 const WS_BASE_URL =
-    'wss://bermudia-api-internal.darkube.app/api/v1';
+    'wss://bermudia-api.darkube.app/api/v1';
 
 export const API_ENDPOINTS = {
     // Authentication

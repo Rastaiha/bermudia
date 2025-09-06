@@ -3,6 +3,7 @@ package main
 import (
 	"database/sql"
 	"fmt"
+	"github.com/Rastaiha/bermudia/adminbot"
 	"github.com/Rastaiha/bermudia/api/handler"
 	"github.com/Rastaiha/bermudia/internal/config"
 	"github.com/Rastaiha/bermudia/internal/mock"
@@ -65,10 +66,8 @@ func main() {
 	territoryService := service.NewTerritory(territoryRepo)
 	islandService := service.NewIsland(theBot, islandRepo, questionStore, playerRepo, treasureRepo)
 	playerService := service.NewPlayer(cfg, playerRepo, territoryRepo, questionStore, islandRepo, treasureRepo)
-	correctionService := service.NewCorrection(cfg, theBot, questionStore)
+	correctionService := service.NewCorrection(cfg, questionStore)
 	adminService := service.NewAdmin(territoryRepo, islandRepo, userRepo, playerRepo, questionStore, treasureRepo)
-
-	islandService.OnNewAnswer(correctionService.HandleNewAnswer)
 
 	if cfg.DevMode {
 		err = mock.CreateMockData(adminService, cfg.MockUsersPassword, mock.DataFiles)
@@ -87,10 +86,12 @@ func main() {
 		}
 	}
 
+	adminBot := adminbot.NewBot(cfg, theBot, islandService, correctionService, userRepo)
+
 	h := handler.New(authService, territoryService, islandService, playerService)
 
 	playerService.Start()
-	correctionService.Start()
+	adminBot.Start()
 	h.Start()
 
 	c := make(chan os.Signal, 1)
@@ -99,6 +100,6 @@ func main() {
 	slog.Info("Got signal, shutting down...")
 
 	h.Stop()
-	correctionService.Stop()
+	adminBot.Stop()
 	playerService.Stop()
 }
