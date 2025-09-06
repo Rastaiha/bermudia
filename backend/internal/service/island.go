@@ -16,8 +16,10 @@ type Island struct {
 	questionStore domain.QuestionStore
 	playerStore   domain.PlayerStore
 	treasureStore domain.TreasureStore
-	onNewAnswer   func(question domain.BookQuestion, answer domain.Answer)
+	onNewAnswer   NewAnswerCallback
 }
+
+type NewAnswerCallback func(username string, territory string, question domain.BookQuestion, answer domain.Answer)
 
 func NewIsland(bot *bot.Bot, islandStore domain.IslandStore, questionStore domain.QuestionStore, playerStore domain.PlayerStore, treasureStore domain.TreasureStore) *Island {
 	return &Island{
@@ -88,8 +90,8 @@ func (i *Island) GetIsland(ctx context.Context, userId int32, islandId string) (
 	return content, nil
 }
 
-func (i *Island) SubmitAnswer(ctx context.Context, userId int32, questionId string, file io.ReadCloser, filename string, textContent string) (*domain.SubmissionState, error) {
-	player, err := i.playerStore.Get(ctx, userId)
+func (i *Island) SubmitAnswer(ctx context.Context, user *domain.User, questionId string, file io.ReadCloser, filename string, textContent string) (*domain.SubmissionState, error) {
+	player, err := i.playerStore.Get(ctx, user.ID)
 	if err != nil {
 		return nil, err
 	}
@@ -97,7 +99,7 @@ func (i *Island) SubmitAnswer(ctx context.Context, userId int32, questionId stri
 	if err != nil {
 		return nil, err
 	}
-	accessibleBook, err := i.islandStore.GetBookOfIsland(ctx, player.AtIsland, userId)
+	accessibleBook, err := i.islandStore.GetBookOfIsland(ctx, player.AtIsland, user.ID)
 	if err != nil {
 		if errors.Is(err, domain.ErrNoBookAssignedFromPool) {
 			return nil, domain.ErrQuestionNotRelatedToIsland
@@ -129,16 +131,24 @@ func (i *Island) SubmitAnswer(ctx context.Context, userId int32, questionId stri
 		fileId = msg.Document.FileID
 	}
 
-	answer, err := i.questionStore.SubmitAnswer(ctx, userId, questionId, fileId, filename, textContent)
+	territory := ""
+	islandHeader, err := i.islandStore.GetIslandHeader(ctx, player.AtIsland)
 	if err != nil {
 		return nil, err
 	}
-	i.onNewAnswer(question, answer)
+	if !islandHeader.FromPool {
+		territory = islandHeader.TerritoryID
+	}
+	answer, err := i.questionStore.SubmitAnswer(ctx, user.ID, questionId, fileId, filename, textContent)
+	if err != nil {
+		return nil, err
+	}
+	i.onNewAnswer(user.Username, territory, question, answer)
 
 	r := domain.GetSubmissionStateFromAnswer(answer)
 	return &r, nil
 }
 
-func (i *Island) OnNewAnswer(f func(question domain.BookQuestion, answer domain.Answer)) {
+func (i *Island) OnNewAnswer(f NewAnswerCallback) {
 	i.onNewAnswer = f
 }

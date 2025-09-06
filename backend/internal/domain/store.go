@@ -32,11 +32,13 @@ type TerritoryStore interface {
 type IslandStore interface {
 	SetBook(ctx context.Context, book Book) error
 	GetBook(ctx context.Context, bookId string) (*Book, error)
-	SetIslandHeader(ctx context.Context, territoryId string, header IslandHeader) error
+	SetIslandHeader(ctx context.Context, header IslandHeader) error
 	ReserveIDForTerritory(ctx context.Context, territoryId, islandId string) error
 	GetBookOfIsland(ctx context.Context, islandId string, userId int32) (string, error)
 	GetTerritory(ctx context.Context, id string) (string, error)
+	GetIslandHeader(ctx context.Context, islandId string) (IslandHeader, error)
 	GetIslandHeadersByTerritory(ctx context.Context, territoryId string) ([]IslandHeader, error)
+	GetIslandHeaderByBookId(ctx context.Context, bookId string) (IslandHeader, error)
 	SetTerritoryPoolSettings(ctx context.Context, territoryId string, settings TerritoryPoolSettings) error
 	GetTerritoryPoolSettings(ctx context.Context, territoryId string) (TerritoryPoolSettings, error)
 	AddBookToPool(ctx context.Context, poolId string, bookId string) error
