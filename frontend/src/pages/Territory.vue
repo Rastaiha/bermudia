@@ -1,26 +1,43 @@
 <template>
-    <div class="w-full h-screen flex justify-center items-center p-4 box-border bg-cover bg-center bg-no-repeat overflow-hidden bg-[#0c2036]"
-        :style="{ backgroundImage: `url(${backgroundImage})` }" @pointerdown.self="hideInfoBox">
+    <div
+        class="w-full h-screen flex justify-center items-center p-4 box-border bg-cover bg-center bg-no-repeat overflow-hidden bg-[#0c2036]"
+        :style="{ backgroundImage: `url(${backgroundImage})` }"
+        @pointerdown.self="hideInfoBox"
+    >
         <LoadingIndicator v-if="isLoading" :message="loadingMessage" />
 
         <template v-else-if="player">
-            <MapView ref="mapViewComponentRef" :islands="islands" :edges="edges" :player="player"
-                :dynamic-view-box="dynamicViewBox" :territory-id="territoryId" @node-click="showInfoBox"
-                @map-transformed="updateInfoBoxPosition" />
+            <MapView
+                ref="mapViewComponentRef"
+                :islands="islands"
+                :edges="edges"
+                :player="player"
+                :dynamic-view-box="dynamicViewBox"
+                :territory-id="territoryId"
+                @node-click="showInfoBox"
+                @map-transformed="updateInfoBoxPosition"
+            />
 
             <PlayerInfo :player="player" :username="username" />
 
             <Transition name="popup-fade">
-                <IslandInfoBox v-if="selectedIsland" :key="selectedIsland.id" :selected-island="selectedIsland"
-                    :player="player" :info-box-style="infoBoxStyle" :refuel-islands="refuelIslands"
-                    :terminal-islands="terminalIslands" :territory-id="territoryId" />
+                <IslandInfoBox
+                    v-if="selectedIsland"
+                    :key="selectedIsland.id"
+                    :selected-island="selectedIsland"
+                    :player="player"
+                    :info-box-style="infoBoxStyle"
+                    :refuel-islands="refuelIslands"
+                    :terminal-islands="terminalIslands"
+                    :territory-id="territoryId"
+                />
             </Transition>
         </template>
     </div>
 </template>
 
 <script setup>
-import { ref, onMounted, computed, watch } from 'vue';
+import { ref, onMounted, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { getPlayer, getMe, getToken, getTerritory } from '@/services/api.js';
 import { usePlayerWebSocket } from '@/components/service/WebSocket.js';
@@ -47,13 +64,14 @@ const selectedIsland = ref(null);
 const dynamicViewBox = ref('0 0 1 1');
 const loadingMessage = ref('در حال بارگذاری نقشه...');
 const isLoading = ref(true);
+const infoBoxStyle = ref({ display: 'none' });
 
-const infoBoxStyle = computed(() => {
-    // Re-trigger computation when map transforms
-    const _ = transformCounter.value;
-
+const calculateInfoBoxStyle = () => {
     const svgElement = mapViewComponentRef.value?.svgRef;
-    if (!selectedIsland.value || !svgElement) return { display: 'none' };
+    if (!selectedIsland.value || !svgElement) {
+        infoBoxStyle.value = { display: 'none' };
+        return;
+    }
 
     const island = selectedIsland.value;
     const pt = svgElement.createSVGPoint();
@@ -61,12 +79,16 @@ const infoBoxStyle = computed(() => {
     pt.y = island.y;
     const screenPoint = pt.matrixTransform(svgElement.getScreenCTM());
 
-    return {
+    infoBoxStyle.value = {
         position: 'fixed',
         top: `${screenPoint.y}px`,
         left: `${screenPoint.x}px`,
         transform: 'translate(-50%, -100%) translateY(-20px)',
     };
+};
+
+watch([selectedIsland, transformCounter], calculateInfoBoxStyle, {
+    flush: 'post',
 });
 
 const loadPageData = async id => {
@@ -84,7 +106,10 @@ const loadPageData = async id => {
         const [playerData, meData] = await Promise.all([getPlayer(), getMe()]);
 
         if (playerData.atTerritory.toString() !== id.toString()) {
-            router.push({ name: 'Territory', params: { id: playerData.atTerritory } });
+            router.push({
+                name: 'Territory',
+                params: { id: playerData.atTerritory },
+            });
             return;
         }
 
@@ -101,10 +126,8 @@ const loadPageData = async id => {
         refuelIslands.value = territoryData.refuelIslands;
         terminalIslands.value = territoryData.terminalIslands;
         dynamicViewBox.value = calculateViewBox(territoryData.islands);
-
     } catch (error) {
         console.error('Failed to load territory data:', error);
-        // Consider redirecting to login or showing an error message
         router.push({ name: 'Login' });
     } finally {
         isLoading.value = false;
