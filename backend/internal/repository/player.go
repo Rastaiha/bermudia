@@ -69,13 +69,16 @@ func (s sqlPlayerRepository) Get(ctx context.Context, userId int32) (domain.Play
 
 // Update updates a player row if and only if all fields match "old".
 // UserId is never updated.
-func (s sqlPlayerRepository) Update(ctx context.Context, old, updated domain.Player) error {
+func (s sqlPlayerRepository) Update(ctx context.Context, tx domain.Tx, old, updated domain.Player) error {
+	if tx == nil {
+		tx = s.db
+	}
 	visitedTerritories, err := json.Marshal(updated.VisitedTerritories)
 	if err != nil {
 		return fmt.Errorf("failed to marshal visited territories: %w", err)
 	}
 	updated.UpdatedAt = time.Now().UTC()
-	cmd, err := s.db.ExecContext(ctx,
+	cmd, err := tx.ExecContext(ctx,
 		`UPDATE players
 		 SET at_territory = $1, at_island = $2, anchored = $3, fuel = $4, fuel_cap = $5, coins = $6, red_keys = $7, blue_keys = $8, golden_keys = $9, visited_territories = $10, updated_at = $11
 		 WHERE user_id = $12 AND updated_at = $13`,

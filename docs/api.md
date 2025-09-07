@@ -363,6 +363,95 @@ curl --request POST \
 
 ---
 
+### Make Trade Offer
+
+_This endpoint **is authenticated** and needs an auth token for access._
+
+Creates a new trade offer in the marketplace. The offered items are immediately deducted from the player's inventory and will be returned if the offer is deleted or accepted.
+
+Receives a [MakeOfferRequest](#makeofferrequest) in body.
+
+Returns an empty object in response.
+
+**Endpoint:** `POST /trade/make_offer`
+
+```shell
+curl --request POST \
+  --url https://bermudia-api-internal.darkube.app/api/v1/trade/make_offer \
+  --header 'Authorization: TOKEN' \
+  --header 'Content-Type: application/json' \
+  --data '{"offered": {"items": [{"type": "coin", "amount": 100}]}, "requested": {"items": [{"type": "blueKey", "amount": 1}]}}'
+```
+
+---
+
+### Accept Trade Offer
+
+_This endpoint **is authenticated** and needs an auth token for access._
+
+Accepts an existing trade offer from another player. The trade is completed immediately if the accepting player has the required items.
+
+Receives an [AcceptOfferRequest](#acceptofferrequest) in body.
+
+Returns an empty object in response.
+
+**Endpoint:** `POST /trade/accept_offer`
+
+```shell
+curl --request POST \
+  --url https://bermudia-api-internal.darkube.app/api/v1/trade/accept_offer \
+  --header 'Authorization: TOKEN' \
+  --header 'Content-Type: application/json' \
+  --data '{"offerID": "tof_C0B869257687459"}'
+```
+
+---
+
+### Delete Trade Offer
+
+_This endpoint **is authenticated** and needs an auth token for access._
+
+Deletes the player's own trade offer from the marketplace. The offered items are returned to the player's inventory.
+
+Receives a [DeleteOfferRequest](#deleteofferrequest) in body.
+
+Returns an empty object in response.
+
+**Endpoint:** `POST /trade/delete_offer`
+
+```shell
+curl --request POST \
+  --url https://bermudia-api-internal.darkube.app/api/v1/trade/delete_offer \
+  --header 'Authorization: TOKEN' \
+  --header 'Content-Type: application/json' \
+  --data '{"offerID": "tof_C0B869257687459"}'
+```
+
+---
+
+### Get Trade Offers
+
+_This endpoint **is authenticated** and needs an auth token for access._
+
+Retrieves a paginated list of active trade offers from the marketplace, showing which offers the current player can accept.
+
+**Parameters**:
+
+- `page` (int, query param): Page number for pagination (0-based, default: 0)
+- `limit` (int, query param): Number of offers per page (default: 5, max: 100)
+
+Returns an array of [TradeOfferView](#tradeofferview) in response.
+
+**Endpoint:** `GET /trade/offers`
+
+```shell
+curl --request POST \
+  --url https://bermudia-api-internal.darkube.app/api/v1/trade/offers?page=1&limit=20 \
+  --header 'Authorization: TOKEN'
+```
+
+---
+
 ## Data Models
 
 ### LoginRequest
@@ -435,6 +524,28 @@ curl --request POST \
 | Field      | Type   | Description                 |
 |------------|--------|-----------------------------|
 | treasureID | string | The ID of the treasure      |
+
+
+### MakeOfferRequest
+
+| Field     | Type          | Description                                                     |
+|-----------|---------------|-----------------------------------------------------------------|
+| offered   | [Cost](#cost) | The items the player is offering in the trade                   |
+| requested | [Cost](#cost) | The items the player is requesting in exchange for their offer  |
+
+
+### AcceptOfferRequest
+
+| Field   | Type   | Description                        |
+|---------|--------|------------------------------------|
+| offerID | string | The unique identifier of the offer |
+
+
+### DeleteOfferRequest
+
+| Field   | Type   | Description                        |
+|---------|--------|------------------------------------|
+| offerID | string | The unique identifier of the offer |
 
 
 ### Me
@@ -661,9 +772,21 @@ curl --request POST \
 | reason                 | string?       | If _feasible_ is false, explanation of why migration is not possible                |
 
 
+### TradeOfferView
+
+| Field      | Type          | Description                                         |
+|------------|---------------|-----------------------------------------------------|
+| id         | string        | Unique identifier of the trade offer                |
+| by         | string        | Name of the player who created the offer            |
+| offered    | [Cost](#cost) | The items being offered by the creator              |
+| requested  | [Cost](#cost) | The items being requested in exchange               |
+| createdAt  | string        | Time when the offer was created (Unix milliseconds) |
+| acceptable | boolean       | Whether the current player can accept this offer    |
+
+
 ### PlayerUpdateEvent
 
-| Field  | Type              | Description                                                                                                                                   |
-|--------|-------------------|-----------------------------------------------------------------------------------------------------------------------------------------------|
-| reason | string            | The reason for change in player state. One of `initial`, `travel`, `refuel`, `correction`, `anchor`, `migration`, `unlockTreasure`, `newBook` |
-| player | [Player](#player) | The new value of player object.                                                                                                               |
+| Field  | Type              | Description                                                                                                                                                                                                      |
+|--------|-------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| reason | string            | The reason for change in player state. One of `initial`, `travel`, `refuel`, `correction`, `anchor`, `migration`, `unlockTreasure`, `newBook`, `makeOffer`, `acceptOffer`, `ownOfferAccepted`, `ownOfferDeleted` |
+| player | [Player](#player) | The new value of player object.                                                                                                                                                                                  |

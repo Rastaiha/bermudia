@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"fmt"
 	"github.com/Rastaiha/bermudia/internal/config"
@@ -15,23 +16,29 @@ import (
 
 type Player struct {
 	cfg                      config.Config
+	db                       *sql.DB
+	userStore                domain.UserStore
 	playerStore              domain.PlayerStore
 	territoryStore           domain.TerritoryStore
 	questionStore            domain.QuestionStore
 	islandStore              domain.IslandStore
 	treasureStore            domain.TreasureStore
+	marketStore              domain.MarketStore
 	playerUpdateEventHandler func(event *domain.FullPlayerUpdateEvent)
 	cron                     gocron.Scheduler
 }
 
-func NewPlayer(cfg config.Config, playerStore domain.PlayerStore, territoryStore domain.TerritoryStore, questionStore domain.QuestionStore, islandStore domain.IslandStore, treasureStore domain.TreasureStore) *Player {
+func NewPlayer(cfg config.Config, db *sql.DB, userStore domain.UserStore, playerStore domain.PlayerStore, territoryStore domain.TerritoryStore, questionStore domain.QuestionStore, islandStore domain.IslandStore, treasureStore domain.TreasureStore, marketStore domain.MarketStore) *Player {
 	return &Player{
 		cfg:            cfg,
+		db:             db,
+		userStore:      userStore,
 		playerStore:    playerStore,
 		territoryStore: territoryStore,
 		questionStore:  questionStore,
 		islandStore:    islandStore,
 		treasureStore:  treasureStore,
+		marketStore:    marketStore,
 	}
 }
 
@@ -172,14 +179,11 @@ func (p *Player) OnPlayerUpdate(eventHandler func(event *domain.FullPlayerUpdate
 }
 
 func (p *Player) applyAndSendPlayerUpdateEvent(ctx context.Context, oldPlayer domain.Player, event *domain.PlayerUpdateEvent) error {
-	if err := p.playerStore.Update(ctx, oldPlayer, *event.Player); err != nil {
+	if err := p.playerStore.Update(ctx, nil, oldPlayer, *event.Player); err != nil {
 		return err
 	}
 	if err := p.sendPlayerUpdateEventErr(ctx, event); err != nil {
-		slog.Error("failed to send event",
-			slog.String("error", err.Error()),
-			slog.Int("userId", int(event.Player.UserId)),
-		)
+		return err
 	}
 	return nil
 }
@@ -188,7 +192,11 @@ func (p *Player) sendPlayerUpdateEventErr(ctx context.Context, event *domain.Pla
 	if p.playerUpdateEventHandler != nil {
 		fullPlayer, err := p.getFullPlayer(ctx, *event.Player)
 		if err != nil {
-			return err
+			slog.Error("failed to send player update event",
+				slog.String("error", err.Error()),
+				slog.Int("userId", int(event.Player.UserId)),
+			)
+			return fmt.Errorf("failed to send player update event: %w", err)
 		}
 		p.playerUpdateEventHandler(&domain.FullPlayerUpdateEvent{
 			Reason: event.Reason,
@@ -323,7 +331,7 @@ func (p *Player) applyCorrection(ctx context.Context, c domain.Correction) (bool
 		rewarded = rewarded || rewarded2
 	}
 	if rewarded {
-		if err := p.playerStore.Update(ctx, currentPlayer, newPlayer); err != nil {
+		if err := p.playerStore.Update(ctx, nil, currentPlayer, newPlayer); err != nil {
 			return false, err
 		}
 	}
@@ -450,4 +458,176 @@ func (p *Player) HandleNewPortableIsland(userId int32) {
 			slog.Error("failed to send new portable island update", "error", err.Error())
 		}
 	}()
+}
+
+func (p *Player) MakeOffer(ctx context.Context, userId int32, offered, requested domain.Cost) (err error) {
+	player, err := p.playerStore.Get(ctx, userId)
+	if err != nil {
+		return err
+	}
+	event, tradeOffer, err := domain.MakeOffer(player, offered, requested)
+	if err != nil {
+		return err
+	}
+
+	tx, err := p.db.BeginTx(ctx, nil)
+	if err != nil {
+		return fmt.Errorf("failed to start transaction: %w", err)
+	}
+	defer func() {
+		if err != nil {
+			err = errors.Join(err, tx.Rollback())
+		} else {
+			err = tx.Commit()
+		}
+	}()
+	err = p.marketStore.CreateOffer(ctx, tx, tradeOffer)
+	if err != nil {
+		return err
+	}
+	err = p.playerStore.Update(ctx, tx, player, *event.Player)
+	if err != nil {
+		return err
+	}
+	err = p.sendPlayerUpdateEventErr(ctx, event)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (p *Player) AcceptOffer(ctx context.Context, userId int32, tradeOfferId string) (err error) {
+	acceptor, err := p.playerStore.Get(ctx, userId)
+	if err != nil {
+		return err
+	}
+
+	offer, err := p.marketStore.GetOffer(ctx, tradeOfferId)
+	if err != nil {
+		return err
+	}
+
+	offerer, err := p.playerStore.Get(ctx, offer.By)
+	if err != nil {
+		return err
+	}
+
+	acceptorEvent, offererEvent, err := domain.AcceptOffer(acceptor, offerer, offer)
+	if err != nil {
+		return err
+	}
+
+	tx, err := p.db.BeginTx(ctx, nil)
+	if err != nil {
+		return fmt.Errorf("failed to start transaction: %w", err)
+	}
+	defer func() {
+		if err != nil {
+			err = errors.Join(err, tx.Rollback())
+		} else {
+			err = tx.Commit()
+		}
+	}()
+
+	err = p.marketStore.DeleteOffer(ctx, tx, tradeOfferId)
+	if err != nil {
+		return err
+	}
+
+	err = p.playerStore.Update(ctx, tx, acceptor, *acceptorEvent.Player)
+	if err != nil {
+		return err
+	}
+
+	err = p.playerStore.Update(ctx, tx, offerer, *offererEvent.Player)
+	if err != nil {
+		return err
+	}
+
+	err = p.sendPlayerUpdateEventErr(ctx, acceptorEvent)
+	if err != nil {
+		return err
+	}
+
+	err = p.sendPlayerUpdateEventErr(ctx, offererEvent)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (p *Player) DeleteOffer(ctx context.Context, userId int32, tradeOfferId string) (err error) {
+	player, err := p.playerStore.Get(ctx, userId)
+	if err != nil {
+		return err
+	}
+
+	offer, err := p.marketStore.GetOffer(ctx, tradeOfferId)
+	if err != nil {
+		return err
+	}
+
+	event, err := domain.DeleteOffer(player, offer)
+	if err != nil {
+		return err
+	}
+
+	tx, err := p.db.BeginTx(ctx, nil)
+	if err != nil {
+		return fmt.Errorf("failed to start transaction: %w", err)
+	}
+	defer func() {
+		if err != nil {
+			err = errors.Join(err, tx.Rollback())
+		} else {
+			err = tx.Commit()
+		}
+	}()
+
+	err = p.marketStore.DeleteOffer(ctx, tx, tradeOfferId)
+	if err != nil {
+		return err
+	}
+
+	err = p.playerStore.Update(ctx, tx, player, *event.Player)
+	if err != nil {
+		return err
+	}
+
+	err = p.sendPlayerUpdateEventErr(ctx, event)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (p *Player) GetTradeOffers(ctx context.Context, userId int32, page, limit int) ([]domain.TradeOfferView, error) {
+	page = max(0, page)
+	limit = min(max(5, limit), 100)
+	offset := page * limit
+	offers, err := p.marketStore.GetOffers(ctx, offset, limit)
+	if err != nil {
+		return nil, err
+	}
+
+	player, err := p.playerStore.Get(ctx, userId)
+	if err != nil {
+		return nil, err
+	}
+
+	result := make([]domain.TradeOfferView, 0)
+	for _, offer := range offers {
+		// Get the offerer's user to get their username
+		offererUser, err := p.userStore.Get(ctx, offer.By)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get offerer user: %w", err)
+		}
+
+		tradeOfferView := domain.TradeOfferViewForPlayer(player, offererUser.Username, offer)
+		result = append(result, tradeOfferView)
+	}
+
+	return result, nil
 }

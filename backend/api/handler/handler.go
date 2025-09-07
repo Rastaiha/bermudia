@@ -74,6 +74,10 @@ func (h *Handler) Start() {
 			r.Post("/migrate", h.Migrate)
 			r.Post("/unlock_treasure_check", h.UnlockTreasureCheck)
 			r.Post("/unlock_treasure", h.UnlockTreasure)
+			r.Post("/trade/make_offer", h.MakeOffer)
+			r.Post("/trade/accept_offer", h.AcceptOffer)
+			r.Post("/trade/delete_offer", h.DeleteOffer)
+			r.Get("/trade/offers", h.GetTradeOffers)
 		})
 	})
 

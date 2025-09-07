@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"github.com/Rastaiha/bermudia/internal/domain"
 	"net/http"
+	"strconv"
 )
 
 func (h *Handler) HandlePlayerUpdateEvent(e *domain.FullPlayerUpdateEvent) {
@@ -261,4 +262,102 @@ func (h *Handler) UnlockTreasure(w http.ResponseWriter, r *http.Request) {
 	}
 
 	sendResult(w, result)
+}
+
+type makeOfferRequest struct {
+	Offered   domain.Cost `json:"offered"`
+	Requested domain.Cost `json:"requested"`
+}
+
+func (h *Handler) MakeOffer(w http.ResponseWriter, r *http.Request) {
+	user, err := getUser(r.Context())
+	if err != nil {
+		handleError(w, err)
+		return
+	}
+
+	var req makeOfferRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		sendDecodeError(w)
+		return
+	}
+
+	err = h.playerService.MakeOffer(r.Context(), user.ID, req.Offered, req.Requested)
+	if err != nil {
+		handleError(w, err)
+		return
+	}
+
+	sendResult(w, struct{}{})
+}
+
+type acceptOfferRequest struct {
+	OfferID string `json:"offerID"`
+}
+
+func (h *Handler) AcceptOffer(w http.ResponseWriter, r *http.Request) {
+	user, err := getUser(r.Context())
+	if err != nil {
+		handleError(w, err)
+		return
+	}
+
+	var req acceptOfferRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		sendDecodeError(w)
+		return
+	}
+
+	err = h.playerService.AcceptOffer(r.Context(), user.ID, req.OfferID)
+	if err != nil {
+		handleError(w, err)
+		return
+	}
+
+	sendResult(w, struct{}{})
+}
+
+type deleteOfferRequest struct {
+	OfferID string `json:"offerID"`
+}
+
+func (h *Handler) DeleteOffer(w http.ResponseWriter, r *http.Request) {
+	user, err := getUser(r.Context())
+	if err != nil {
+		handleError(w, err)
+		return
+	}
+
+	var req deleteOfferRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		sendDecodeError(w)
+		return
+	}
+
+	err = h.playerService.DeleteOffer(r.Context(), user.ID, req.OfferID)
+	if err != nil {
+		handleError(w, err)
+		return
+	}
+
+	sendResult(w, struct{}{})
+}
+
+func (h *Handler) GetTradeOffers(w http.ResponseWriter, r *http.Request) {
+	user, err := getUser(r.Context())
+	if err != nil {
+		handleError(w, err)
+		return
+	}
+
+	page, _ := strconv.Atoi(r.URL.Query().Get("page"))
+	limit, _ := strconv.Atoi(r.URL.Query().Get("limit"))
+
+	offers, err := h.playerService.GetTradeOffers(r.Context(), user.ID, page, limit)
+	if err != nil {
+		handleError(w, err)
+		return
+	}
+
+	sendResult(w, offers)
 }

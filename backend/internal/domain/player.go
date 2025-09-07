@@ -42,14 +42,18 @@ type FullPlayer struct {
 }
 
 const (
-	PlayerUpdateEventInitial        = "initial"
-	PlayerUpdateEventTravel         = "travel"
-	PlayerUpdateEventRefuel         = "refuel"
-	PlayerUpdateEventCorrection     = "correction"
-	PlayerUpdateEventAnchor         = "anchor"
-	PlayerUpdateEventMigration      = "migration"
-	PlayerUpdateEventUnlockTreasure = "unlockTreasure"
-	PlayerUpdateEventNewBook        = "newBook"
+	PlayerUpdateEventInitial          = "initial"
+	PlayerUpdateEventTravel           = "travel"
+	PlayerUpdateEventRefuel           = "refuel"
+	PlayerUpdateEventCorrection       = "correction"
+	PlayerUpdateEventAnchor           = "anchor"
+	PlayerUpdateEventMigration        = "migration"
+	PlayerUpdateEventUnlockTreasure   = "unlockTreasure"
+	PlayerUpdateEventNewBook          = "newBook"
+	PlayerUpdateEventMakeOffer        = "makeOffer"
+	PlayerUpdateEventAcceptOffer      = "acceptOffer"
+	PlayerUpdateEventOwnOfferAccepted = "ownOfferAccepted"
+	PlayerUpdateEventOwnOfferDeleted  = "ownOfferDeleted"
 )
 
 type PlayerUpdateEvent struct {
@@ -93,11 +97,11 @@ type CostItem struct {
 }
 
 func canAfford(player Player, cost Cost) bool {
-	_, ok := deduceCost(player, cost)
+	_, ok := deductCost(player, cost)
 	return ok
 }
 
-func deduceCost(player Player, cost Cost) (Player, bool) {
+func deductCost(player Player, cost Cost) (Player, bool) {
 	for _, o := range cost.Items {
 		switch o.Type {
 		case CostItemTypeFuel:
@@ -130,6 +134,24 @@ func deduceCost(player Player, cost Cost) (Player, bool) {
 		}
 	}
 	return player, true
+}
+
+func inductCost(player Player, cost Cost) Player {
+	for _, o := range cost.Items {
+		switch o.Type {
+		case CostItemTypeFuel:
+			player.Fuel += o.Amount
+		case CostItemTypeCoin:
+			player.Coins += o.Amount
+		case CostItemTypeBlueKey:
+			player.BlueKeys += o.Amount
+		case CostItemTypeRedKey:
+			player.RedKeys += o.Amount
+		case CostItemTypeGoldenKey:
+			player.GoldenKeys += o.Amount
+		}
+	}
+	return player
 }
 
 type TravelCheckResult struct {
@@ -277,7 +299,7 @@ func Anchor(player Player, islandID string) (*PlayerUpdateEvent, error) {
 		}
 	}
 	var ok bool
-	player, ok = deduceCost(player, check.AnchoringCost)
+	player, ok = deductCost(player, check.AnchoringCost)
 	if !ok {
 		return nil, errors.New("logical error in anchor")
 	}
@@ -371,7 +393,7 @@ func getMigrationOption(player Player, knowledgeCriteriaPassed bool, territory T
 	}
 
 	if option.MustPayCost {
-		_, ok := deduceCost(player, option.MigrationCost)
+		_, ok := deductCost(player, option.MigrationCost)
 		if !ok {
 			option.Reason = "شما دانش یا سکه کافی برای مهاجرت ندارید."
 			return
@@ -403,7 +425,7 @@ func Migrate(player Player, knowledgeBars []KnowledgeBar, currentTerritory Terri
 
 	if chosenOption.MustPayCost {
 		var ok bool
-		player, ok = deduceCost(player, chosenOption.MigrationCost)
+		player, ok = deductCost(player, chosenOption.MigrationCost)
 		if !ok {
 			return nil, Error{
 				reason: ErrorReasonRuleViolation,

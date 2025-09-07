@@ -48,7 +48,7 @@ func UnlockTreasureCheck(player Player, treasure Treasure, userTreasure UserTrea
 		return
 	}
 
-	if _, ok := deduceCost(player, userTreasure.Cost); !ok {
+	if _, ok := deductCost(player, userTreasure.Cost); !ok {
 		result.Reason = "شما کلید کافی برای باز کردن این گنج ندارید. "
 		return
 	}
@@ -65,7 +65,7 @@ func UnlockTreasure(player Player, treasure Treasure, userTreasure UserTreasure,
 			reason: ErrorReasonRuleViolation,
 		}
 	}
-	player, ok := deduceCost(player, check.Cost)
+	player, ok := deductCost(player, check.Cost)
 	if !ok {
 		return nil, UserTreasure{}, Error{
 			text:   "شما دارایی کافی ندارید.",
