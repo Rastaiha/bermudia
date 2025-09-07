@@ -274,7 +274,7 @@ func (a *Admin) SetTerritoryIslandBindings(ctx context.Context, bindings Territo
 	return bindings, nil
 }
 
-func (a *Admin) CreateUser(ctx context.Context, id int32, username, password string) error {
+func (a *Admin) CreateUser(ctx context.Context, id int32, username, password, startingTerritoryID string) error {
 	territories, err := a.territoryStore.ListTerritories(ctx)
 	if err != nil {
 		return err
@@ -283,6 +283,14 @@ func (a *Admin) CreateUser(ctx context.Context, id int32, username, password str
 		return errors.New("no territory found")
 	}
 	startingTerritory := territories[int(id)%len(territories)]
+	if startingTerritory.ID != "" {
+		for _, t := range territories {
+			if t.ID == startingTerritoryID {
+				startingTerritory = t
+				break
+			}
+		}
+	}
 	hp, err := domain.HashPassword(password)
 	if err != nil {
 		return err
