@@ -1,10 +1,11 @@
 <template>
     <div
-        class="relative min-h-screen flex items-center justify-center overflow-hidden font-vazirmatn"
+        class="relative min-h-screen flex items-center justify-center font-vazirmatn"
     >
+        <NightSky />
         <div class="animate-fade-in-scale w-full max-w-md mx-4 relative z-10">
             <div
-                class="card-hover bg-white rounded-xl shadow-lg overflow-hidden border border-blue-100"
+                class="card-hover animate-fade-in-scale w-full max-w-md mx-4 relative z-10 bg-[rgba(20,20,30,0.85)] backdrop-blur-md border border-white/10 shadow-2xl rounded-2xl p-8 text-gray-100"
             >
                 <div class="p-6 sm:p-8">
                     <div class="flex justify-center mb-8">
@@ -181,6 +182,7 @@ import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useToast } from 'vue-toastification';
 import { login, getPlayer } from '../services/api.js';
+import NightSky from './NightSky.vue';
 
 const username = ref('');
 const password = ref('');
