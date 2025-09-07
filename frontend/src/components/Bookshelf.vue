@@ -1,7 +1,7 @@
 <template>
     <VueFinalModal
         class="flex justify-center items-center"
-        content-class="flex flex-col w-1/2 mx-4 p-6 
+        content-class="flex flex-col w-full md:w-1/2 mx-4 p-6 
                         bg-[#5C3A21] border-4 border-[#3E2A17] 
                         rounded-xl shadow-xl space-y-4"
         overlay-transition="vfm-fade"

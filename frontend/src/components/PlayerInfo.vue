@@ -12,7 +12,7 @@
                 <button
                     class="text-sm font-bold text-gray-200 transition-colors duration-300 transform cursor-pointer hover:text-red-400 drop-shadow-lg"
                     title="خروج"
-                    @click="open"
+                    @pointerdown="open"
                 >
                     خروج
                 </button>
@@ -30,14 +30,14 @@
             v-if="coinBar"
             :bar-data="coinBar"
         ></PlayerInventoryBar>
+        <Dropdown title="کوله پشتی" :items="inventoryDropdownItems" />
         <button
             class="text-sm font-bold text-gray-200 transition-colors duration-300 transform cursor-pointer hover:text-red-400 drop-shadow-lg"
             title="کتاب"
-            @click="checkBookshelf"
+            @pointerdown="checkBookshelf"
         >
             <img src="/images/icons/book.png" class="w-12 h-12" alt="کتاب‌ها" />
         </button>
-        <Dropdown title="کوله پشتی" :items="inventoryDropdownItems" />
     </div>
 </template>
 
