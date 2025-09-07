@@ -82,10 +82,13 @@ const { open, close } = useModal({
     },
 });
 
-const { open: checkBookshelf } = useModal({
+const { open: checkBookshelf, close: closeBookshelf } = useModal({
     component: Bookshelf,
     attrs: {
         books: props.player.books,
+        onClose() {
+            closeBookshelf();
+        },
     },
 });
 
