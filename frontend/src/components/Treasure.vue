@@ -34,6 +34,7 @@
                         title="صندوق گنج"
                         :info-box-style="infoBoxStyle"
                         :loading="false"
+                        :button-enabled="true"
                         :button-text="
                             treasureFetchedInfo.feasible ? 'بگشا' : null
                         "

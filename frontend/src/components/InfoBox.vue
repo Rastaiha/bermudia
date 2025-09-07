@@ -18,16 +18,13 @@
             <div class="overflow-hidden">
                 <div v-if="!loading" class="w-full mt-3 space-y-3">
                     <slot></slot>
-                    <div
-                        v-if="!errorText && (buttonText || cost)"
-                        class="text-sm"
-                    >
+                    <div v-if="buttonText || cost" class="text-sm">
                         <CostlyButton
                             :on-click="() => $emit('action')"
                             :cost="cost"
                             :label="buttonText"
                             :loading="loading"
-                            :enabled="buttonEnabled"
+                            :enabled="buttonEnabled && !errorText"
                         >
                         </CostlyButton>
                     </div>

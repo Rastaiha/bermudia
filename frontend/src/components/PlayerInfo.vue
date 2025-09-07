@@ -124,6 +124,7 @@ const coinBar = computed(() => {
         englishName: 'Coin',
         total: -1,
         value: props.player.coins,
+        width: 0.75,
         icon: '/images/icons/coin.png',
         shadowColor: '#6B7280',
         gradientFrom: '#364153',

@@ -404,9 +404,10 @@ const knowledgeBar = computed(() => {
         bar => bar.territoryId === migrate.value.knowledgeCriteriaTerritory
     );
     return {
-        name: 'دانش',
+        name: 'دانش مورد نیاز برای مهاجرت',
         englishName: 'Knowledge',
         total: fetchedKnowledgeBar.total,
+        required: migrate.value.minAcceptableKnowledge,
         value: migrate.value.knowledgeValue,
         icon: '/images/icons/knowledge.png',
         shadowColor: '#ff7e5f',
