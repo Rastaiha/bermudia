@@ -5,10 +5,10 @@
 ### Development
 
 ```
-{{protocol}}://bermudia-api-internal.darkube.app/api/v1
+{{protocol}}://97590f57-b983-48f8-bb0a-c098bed1e658.hsvc.ir:30254/api/v1
 ```
 
-protocols: `https`, `wss`
+protocols: `http`, `ws`
 
 ## Response Format
 
@@ -115,7 +115,7 @@ Returns the updated [SubmissionState](#submissionstate) field of the [IslandInpu
 
 ```shell
 curl --request POST \
-  --url https://bermudia-api-internal.darkube.app/api/v1/answer/ans_29C12F3C7D089666 \
+  --url http://97590f57-b983-48f8-bb0a-c098bed1e658.hsvc.ir:30254/api/v1/answer/ans_29C12F3C7D089666 \
   --header 'Authorization: TOKEN' \
   --header 'Content-Type: multipart/form-data' \
   --form data=@/path/to/file.txt
@@ -159,7 +159,7 @@ Returns [TravelCheckResult](#travelcheckresult) in response.
 
 ```shell
 curl --request POST \
-  --url https://bermudia-api-internal.darkube.app/api/v1/travel_check \
+  --url http://97590f57-b983-48f8-bb0a-c098bed1e658.hsvc.ir:30254/api/v1/travel_check \
   --header 'Authorization: TOKEN' \
   --header 'Content-Type: application/json' \
   --data '{"fromIsland": "island_final","toIsland": "island_math2"}'
@@ -181,7 +181,7 @@ Returns an empty object in response.
 
 ```shell
 curl --request POST \
-  --url https://bermudia-api-internal.darkube.app/api/v1/travel \
+  --url http://97590f57-b983-48f8-bb0a-c098bed1e658.hsvc.ir:30254/api/v1/travel \
   --header 'Authorization: TOKEN' \
   --header 'Content-Type: application/json' \
   --data '{"fromIsland": "island_final","toIsland": "island_math2"}'
@@ -203,7 +203,7 @@ Returns a [RefuelCheckResult](#refuelcheckresult) in response.
 
 ```shell
 curl --request POST \
-  --url https://bermudia-api-internal.darkube.app/api/v1/refuel_check \
+  --url http://97590f57-b983-48f8-bb0a-c098bed1e658.hsvc.ir:30254/api/v1/refuel_check \
   --header 'Authorization: TOKEN'
 ```
 
@@ -223,7 +223,7 @@ Returns an empty object in response.
 
 ```shell
 curl --request POST \
-  --url https://bermudia-api-internal.darkube.app/api/v1/refuel \
+  --url http://97590f57-b983-48f8-bb0a-c098bed1e658.hsvc.ir:30254/api/v1/refuel \
   --header 'Authorization: TOKEN' \
   --header 'Content-Type: application/json' \
   --data '{"amount": 5}'
@@ -245,7 +245,7 @@ Returns [AnchorCheckResult](#anchorcheckresult) in response.
 
 ```shell
 curl --request POST \
-  --url https://bermudia-api-internal.darkube.app/api/v1/anchor_check \
+  --url http://97590f57-b983-48f8-bb0a-c098bed1e658.hsvc.ir:30254/api/v1/anchor_check \
   --header 'Authorization: TOKEN' \
   --header 'Content-Type: application/json' \
   --data '{"island": "island_final"}'
@@ -267,7 +267,7 @@ Returns an empty object in response.
 
 ```shell
 curl --request POST \
-  --url https://bermudia-api-internal.darkube.app/api/v1/anchor \
+  --url http://97590f57-b983-48f8-bb0a-c098bed1e658.hsvc.ir:30254/api/v1/anchor \
   --header 'Authorization: TOKEN' \
   --header 'Content-Type: application/json' \
   --data '{"island": "island_final"}'
@@ -289,7 +289,7 @@ Returns [MigrateCheckResult](#migratecheckresult) in response.
 
 ```shell
 curl --request POST \
-  --url https://bermudia-api-internal.darkube.app/api/v1/migrate_check \
+  --url http://97590f57-b983-48f8-bb0a-c098bed1e658.hsvc.ir:30254/api/v1/migrate_check \
   --header 'Authorization: TOKEN'
 ```
 
@@ -309,7 +309,7 @@ Returns an empty object in response.
 
 ```shell
 curl --request POST \
-  --url https://bermudia-api-internal.darkube.app/api/v1/migrate \
+  --url http://97590f57-b983-48f8-bb0a-c098bed1e658.hsvc.ir:30254/api/v1/migrate \
   --header 'Authorization: TOKEN' \
   --header 'Content-Type: application/json' \
   --data '{"toTerritory": "territory_math"}'
@@ -331,7 +331,7 @@ Returns [UnlockTreasureCheckResult](#unlocktreasurecheckresult) in response.
 
 ```shell
 curl --request POST \
-  --url https://bermudia-api-internal.darkube.app/api/v1/unlock_treasure_check \
+  --url http://97590f57-b983-48f8-bb0a-c098bed1e658.hsvc.ir:30254/api/v1/unlock_treasure_check \
   --header 'Authorization: TOKEN' \
   --header 'Content-Type: application/json' \
   --data '{"treasureID": "trs_C0B869257687459"}'
@@ -355,7 +355,7 @@ Returns the updated [IslandTreasure](#islandtreasure) in response.
 
 ```shell
 curl --request POST \
-  --url https://bermudia-api-internal.darkube.app/api/v1/unlock_treasure \
+  --url http://97590f57-b983-48f8-bb0a-c098bed1e658.hsvc.ir:30254/api/v1/unlock_treasure \
   --header 'Authorization: TOKEN' \
   --header 'Content-Type: application/json' \
   --data '{"treasureID": "trs_C0B869257687459"}'
@@ -459,7 +459,6 @@ curl --request POST \
 | redKeys       | int                             | Current number of red keys of player                           |
 | goldenKeys    | int                             | Current number of golden keys of player                        |
 | knowledgeBars | [KnowledgeBar](#knowledgebar)[] | Current state of player's knowledge in each territory          |
-| books         | [Book](#book)[]                 | Player's books, sorted in the order they were achieved         |
 
 ### Territory
 
@@ -563,14 +562,6 @@ curl --request POST \
 | submittedAt | string? | If _status_ is not `empty`, the time of last submission in Unix milliseconds.                                        |
 
 
-### Book
-
-| Field       | Type   | Description                                            |
-|-------------|--------|--------------------------------------------------------|
-| territoryId | string | ID of territory this book belongs to                   |
-| islandId    | string | ID of island this book belongs to                      |
-
-
 ### KnowledgeBar
 
 | Field       | Type   | Description                                            |
@@ -663,7 +654,7 @@ curl --request POST \
 
 ### PlayerUpdateEvent
 
-| Field  | Type              | Description                                                                                                                                   |
-|--------|-------------------|-----------------------------------------------------------------------------------------------------------------------------------------------|
-| reason | string            | The reason for change in player state. One of `initial`, `travel`, `refuel`, `correction`, `anchor`, `migration`, `unlockTreasure`, `newBook` |
-| player | [Player](#player) | The new value of player object.                                                                                                               |
+| Field  | Type              | Description                                                                                                                        |
+|--------|-------------------|------------------------------------------------------------------------------------------------------------------------------------|
+| reason | string            | The reason for change in player state. One of `initial`, `travel`, `refuel`, `correction`, `anchor`, `migration`, `unlockTreasure` |
+| player | [Player](#player) | The new value of player object.                                                                                                    |

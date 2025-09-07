@@ -35,20 +35,14 @@ type UnlockTreasureCheckResult struct {
 	Reason   string `json:"reason,omitempty"`
 }
 
-func UnlockTreasureCheck(player Player, treasure Treasure, userTreasure UserTreasure, currentIslandBook string) (result UnlockTreasureCheckResult) {
-	result.Cost = userTreasure.Cost
-
-	if currentIslandBook == "" || treasure.BookID != currentIslandBook {
-		result.Reason = "شما باید وارد جزیره شوید تا بتوانید گنج را باز کنید."
-		return
-	}
-
-	if userTreasure.Unlocked {
+func UnlockTreasureCheck(player Player, treasure UserTreasure) (result UnlockTreasureCheckResult) {
+	result.Cost = treasure.Cost
+	if treasure.Unlocked {
 		result.Reason = "این گنج قبلاً باز شده است."
 		return
 	}
 
-	if _, ok := deduceCost(player, userTreasure.Cost); !ok {
+	if _, ok := deduceCost(player, treasure.Cost); !ok {
 		result.Reason = "شما کلید کافی برای باز کردن این گنج ندارید. "
 		return
 	}
@@ -57,8 +51,8 @@ func UnlockTreasureCheck(player Player, treasure Treasure, userTreasure UserTrea
 	return
 }
 
-func UnlockTreasure(player Player, treasure Treasure, userTreasure UserTreasure, currentIslandBook string) (*PlayerUpdateEvent, UserTreasure, error) {
-	check := UnlockTreasureCheck(player, treasure, userTreasure, currentIslandBook)
+func UnlockTreasure(player Player, treasure UserTreasure) (*PlayerUpdateEvent, UserTreasure, error) {
+	check := UnlockTreasureCheck(player, treasure)
 	if !check.Feasible {
 		return nil, UserTreasure{}, Error{
 			text:   check.Reason,
@@ -72,10 +66,10 @@ func UnlockTreasure(player Player, treasure Treasure, userTreasure UserTreasure,
 			reason: ErrorReasonRuleViolation,
 		}
 	}
-	player = giveRewardOfTreasure(player, userTreasure)
-	userTreasure.Unlocked = true
+	player = giveRewardOfTreasure(player, treasure)
+	treasure.Unlocked = true
 	return &PlayerUpdateEvent{
 		Reason: PlayerUpdateEventUnlockTreasure,
 		Player: &player,
-	}, userTreasure, nil
+	}, treasure, nil
 }

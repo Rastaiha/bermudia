@@ -11,18 +11,15 @@ import (
 )
 
 type Island struct {
-	bot                 *bot.Bot
-	islandStore         domain.IslandStore
-	questionStore       domain.QuestionStore
-	playerStore         domain.PlayerStore
-	treasureStore       domain.TreasureStore
-	onNewAnswer         NewAnswerCallback
-	onNewPortableIsland NewPortableIslandCallback
+	bot           *bot.Bot
+	islandStore   domain.IslandStore
+	questionStore domain.QuestionStore
+	playerStore   domain.PlayerStore
+	treasureStore domain.TreasureStore
+	onNewAnswer   NewAnswerCallback
 }
 
 type NewAnswerCallback func(username string, territory string, question domain.BookQuestion, answer domain.Answer)
-
-type NewPortableIslandCallback func(userId int32)
 
 func NewIsland(bot *bot.Bot, islandStore domain.IslandStore, questionStore domain.QuestionStore, playerStore domain.PlayerStore, treasureStore domain.TreasureStore) *Island {
 	return &Island{
@@ -39,35 +36,17 @@ func (i *Island) GetIsland(ctx context.Context, userId int32, islandId string) (
 	if err != nil {
 		return nil, err
 	}
-	isPortable, err := i.islandStore.IsIslandPortable(ctx, userId, islandId)
+	if err := domain.PlayerHasAccessToIsland(player, islandId); err != nil {
+		return nil, err
+	}
+	territoryId, err := i.islandStore.GetTerritory(ctx, islandId)
 	if err != nil {
 		return nil, err
-	}
-	if err := domain.CheckPlayerAccessToIslandContent(player, islandId, isPortable); err != nil {
-		return nil, err
-	}
-
-	islandHeader, err := i.islandStore.GetIslandHeader(ctx, islandId)
-	if err != nil {
-		return nil, err
-	}
-
-	if domain.ShouldBeMadePortableOnAccess(islandHeader) {
-		added, err := i.islandStore.AddPortableIsland(ctx, userId, domain.PortableIsland{
-			IslandID:    islandHeader.ID,
-			TerritoryID: islandHeader.TerritoryID,
-		})
-		if err != nil {
-			return nil, err
-		}
-		if added {
-			i.onNewPortableIsland(userId)
-		}
 	}
 
 	bookId, err := i.islandStore.GetBookOfIsland(ctx, islandId, userId)
 	if errors.Is(err, domain.ErrNoBookAssignedFromPool) {
-		bookId, err = i.islandStore.AssignBookToIslandFromPool(ctx, islandHeader.TerritoryID, islandId, userId)
+		bookId, err = i.islandStore.AssignBookToIslandFromPool(ctx, territoryId, islandId, userId)
 	}
 	if err != nil {
 		return nil, err
@@ -120,17 +99,17 @@ func (i *Island) SubmitAnswer(ctx context.Context, user *domain.User, questionId
 	if err != nil {
 		return nil, err
 	}
-	islandHeader, err := i.islandStore.GetIslandHeaderByBookId(ctx, question.BookID)
+	accessibleBook, err := i.islandStore.GetBookOfIsland(ctx, player.AtIsland, user.ID)
 	if err != nil {
-		if errors.Is(err, domain.ErrIslandNotFound) {
+		if errors.Is(err, domain.ErrNoBookAssignedFromPool) {
 			return nil, domain.ErrQuestionNotRelatedToIsland
 		}
-	}
-	isPortable, err := i.islandStore.IsIslandPortable(ctx, user.ID, islandHeader.ID)
-	if err != nil {
 		return nil, err
 	}
-	if err := domain.CheckPlayerAccessToIslandContent(player, islandHeader.ID, isPortable); err != nil {
+	if question.BookID != accessibleBook {
+		return nil, domain.ErrQuestionNotRelatedToIsland
+	}
+	if err := domain.PlayerHasAccessToIsland(player, player.AtIsland); err != nil {
 		return nil, err
 	}
 
@@ -152,14 +131,17 @@ func (i *Island) SubmitAnswer(ctx context.Context, user *domain.User, questionId
 		fileId = msg.Document.FileID
 	}
 
-	answer, err := i.questionStore.SubmitAnswer(ctx, user.ID, questionId, fileId, filename, textContent)
+	territory := ""
+	islandHeader, err := i.islandStore.GetIslandHeader(ctx, player.AtIsland)
 	if err != nil {
 		return nil, err
 	}
-
-	territory := ""
 	if !islandHeader.FromPool {
 		territory = islandHeader.TerritoryID
+	}
+	answer, err := i.questionStore.SubmitAnswer(ctx, user.ID, questionId, fileId, filename, textContent)
+	if err != nil {
+		return nil, err
 	}
 	i.onNewAnswer(user.Username, territory, question, answer)
 
@@ -169,8 +151,4 @@ func (i *Island) SubmitAnswer(ctx context.Context, user *domain.User, questionId
 
 func (i *Island) OnNewAnswer(f NewAnswerCallback) {
 	i.onNewAnswer = f
-}
-
-func (i *Island) OnNewPortableIsland(f NewPortableIslandCallback) {
-	i.onNewPortableIsland = f
 }

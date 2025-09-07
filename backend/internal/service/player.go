@@ -210,10 +210,6 @@ func (p *Player) SendInitialEvents(ctx context.Context, userId int32) error {
 }
 
 func (p *Player) getFullPlayer(ctx context.Context, player domain.Player) (domain.FullPlayer, error) {
-	portableIslands, err := p.islandStore.GetPortableIslands(ctx, player.UserId)
-	if err != nil {
-		return domain.FullPlayer{}, fmt.Errorf("failed to get portable islands: %w", err)
-	}
 	knowledgeBars, err := p.questionStore.GetKnowledgeBars(ctx, player.UserId)
 	if err != nil {
 		return domain.FullPlayer{}, fmt.Errorf("failed to get knowledge bars: %w", err)
@@ -221,7 +217,6 @@ func (p *Player) getFullPlayer(ctx context.Context, player domain.Player) (domai
 	return domain.FullPlayer{
 		Player:        player,
 		KnowledgeBars: knowledgeBars,
-		Books:         portableIslands,
 	}, nil
 }
 
@@ -382,22 +377,11 @@ func (p *Player) UnlockTreasureCheck(ctx context.Context, userId int32, treasure
 	if err != nil {
 		return nil, err
 	}
-	treasure, err := p.treasureStore.GetTreasure(ctx, treasureId)
-	if err != nil {
-		return nil, err
-	}
-	bookId, err := p.islandStore.GetBookOfIsland(ctx, player.AtIsland, userId)
-	if errors.Is(err, domain.ErrNoBookAssignedFromPool) {
-		err = nil
-		bookId = ""
-	} else if err != nil {
-		return nil, err
-	}
 	userTreasure, err := p.treasureStore.GetUserTreasure(ctx, userId, treasureId)
 	if err != nil {
 		return nil, err
 	}
-	check := domain.UnlockTreasureCheck(player, treasure, userTreasure, bookId)
+	check := domain.UnlockTreasureCheck(player, userTreasure)
 	return &check, nil
 }
 
@@ -411,17 +395,20 @@ func (p *Player) UnlockTreasure(ctx context.Context, userId int32, treasureId st
 		return nil, err
 	}
 	bookId, err := p.islandStore.GetBookOfIsland(ctx, player.AtIsland, userId)
-	if errors.Is(err, domain.ErrNoBookAssignedFromPool) {
-		err = nil
-		bookId = ""
-	} else if err != nil {
+	if err != nil {
+		if errors.Is(err, domain.ErrNoBookAssignedFromPool) {
+			return nil, domain.ErrTreasureNotRelatedToIsland
+		}
 		return nil, err
+	}
+	if bookId != treasure.BookID {
+		return nil, domain.ErrTreasureNotRelatedToIsland
 	}
 	userTreasure, err := p.treasureStore.GetUserTreasure(ctx, userId, treasureId)
 	if err != nil {
 		return nil, err
 	}
-	event, updatedUserTreasure, err := domain.UnlockTreasure(player, treasure, userTreasure, bookId)
+	event, updatedUserTreasure, err := domain.UnlockTreasure(player, userTreasure)
 	if err != nil {
 		return nil, err
 	}
@@ -431,23 +418,4 @@ func (p *Player) UnlockTreasure(ctx context.Context, userId int32, treasureId st
 	}
 	islandTreasure := domain.GetIslandTreasureOfUserTreasure(updatedUserTreasure)
 	return &islandTreasure, p.applyAndSendPlayerUpdateEvent(ctx, player, event)
-}
-
-func (p *Player) HandleNewPortableIsland(userId int32) {
-	go func() {
-		ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
-		defer cancel()
-		player, err := p.playerStore.Get(ctx, userId)
-		if err != nil {
-			slog.Error("failed to get player for sending new portable island update", "error", err.Error())
-			return
-		}
-		err = p.sendPlayerUpdateEventErr(ctx, &domain.PlayerUpdateEvent{
-			Reason: domain.PlayerUpdateEventNewBook,
-			Player: &player,
-		})
-		if err != nil {
-			slog.Error("failed to send new portable island update", "error", err.Error())
-		}
-	}()
 }
