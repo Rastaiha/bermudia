@@ -1,41 +1,38 @@
 <template>
     <div
-        class="relative w-full h-screen flex justify-center items-center p-4 box-border overflow-hidden bg-[#0c2036]"
+        class="w-full h-screen flex justify-center items-center p-4 box-border bg-cover bg-center bg-no-repeat overflow-hidden bg-[#0c2036]"
+        :style="{ backgroundImage: `url(${backgroundImage})` }"
         @pointerdown.self="hideInfoBox"
     >
-        <NightSky class="absolute inset-0 z-0" />
+        <LoadingIndicator v-if="isLoading" :message="loadingMessage" />
 
-        <div class="relative z-10 w-full h-full">
-            <LoadingIndicator v-if="isLoading" :message="loadingMessage" />
+        <template v-else-if="player">
+            <MapView
+                ref="mapViewComponentRef"
+                :islands="islands"
+                :edges="edges"
+                :player="player"
+                :dynamic-view-box="dynamicViewBox"
+                :territory-id="territoryId"
+                @node-click="showInfoBox"
+                @map-transformed="updateInfoBoxPosition"
+            />
 
-            <template v-else-if="player">
-                <MapView
-                    ref="mapViewComponentRef"
-                    :islands="islands"
-                    :edges="edges"
+            <PlayerInfo :player="player" :username="username" />
+
+            <Transition name="popup-fade">
+                <IslandInfoBox
+                    v-if="selectedIsland"
+                    :key="selectedIsland.id"
+                    :selected-island="selectedIsland"
                     :player="player"
-                    :dynamic-view-box="dynamicViewBox"
+                    :info-box-style="infoBoxStyle"
+                    :refuel-islands="refuelIslands"
+                    :terminal-islands="terminalIslands"
                     :territory-id="territoryId"
-                    @node-click="showInfoBox"
-                    @map-transformed="updateInfoBoxPosition"
                 />
-
-                <PlayerInfo :player="player" :username="username" />
-
-                <Transition name="popup-fade">
-                    <IslandInfoBox
-                        v-if="selectedIsland"
-                        :key="selectedIsland.id"
-                        :selected-island="selectedIsland"
-                        :player="player"
-                        :info-box-style="infoBoxStyle"
-                        :refuel-islands="refuelIslands"
-                        :terminal-islands="terminalIslands"
-                        :territory-id="territoryId"
-                    />
-                </Transition>
-            </template>
-        </div>
+            </Transition>
+        </template>
     </div>
 </template>
 
@@ -44,7 +41,6 @@ import { ref, onMounted, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { getPlayer, getMe, getToken, getTerritory } from '@/services/api.js';
 import { usePlayerWebSocket } from '@/components/service/WebSocket.js';
-import NightSky from '@/components/NightSky.vue';
 
 import MapView from '@/components/MapView.vue';
 import IslandInfoBox from '@/components/IslandInfoBox.vue';
