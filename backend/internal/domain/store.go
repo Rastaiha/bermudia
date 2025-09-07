@@ -18,6 +18,7 @@ var (
 	ErrBookPoolExhausted          = errors.New("book pool exhausted")
 	ErrNoBookAssignedFromPool     = errors.New("no book assigned from pool")
 	ErrEmptyIsland                = errors.New("empty island")
+	ErrTreasureNotRelatedToIsland = errors.New("treasure not related to island")
 	ErrUserTreasureConflict       = errors.New("user treasure update conflict")
 	ErrAlreadyApplied             = errors.New("already applied")
 )
@@ -43,9 +44,6 @@ type IslandStore interface {
 	AddBookToPool(ctx context.Context, poolId string, bookId string) error
 	GetPoolOfBook(ctx context.Context, bookId string) (poolId string, found bool, err error)
 	AssignBookToIslandFromPool(ctx context.Context, territoryId string, islandId string, userId int32) (bookId string, err error)
-	IsIslandPortable(ctx context.Context, userId int32, islandId string) (bool, error)
-	AddPortableIsland(ctx context.Context, userId int32, portable PortableIsland) (bool, error)
-	GetPortableIslands(ctx context.Context, userId int32) (result []PortableIsland, err error)
 }
 
 type UserStore interface {

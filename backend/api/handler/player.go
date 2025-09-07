@@ -2,6 +2,7 @@ package handler
 
 import (
 	"encoding/json"
+	"errors"
 	"github.com/Rastaiha/bermudia/internal/domain"
 	"net/http"
 )
@@ -256,6 +257,10 @@ func (h *Handler) UnlockTreasure(w http.ResponseWriter, r *http.Request) {
 
 	result, err := h.playerService.UnlockTreasure(r.Context(), user.ID, req.TreasureID)
 	if err != nil {
+		if errors.Is(err, domain.ErrTreasureNotRelatedToIsland) {
+			sendError(w, http.StatusForbidden, "treasure is not related to current island")
+			return
+		}
 		handleError(w, err)
 		return
 	}

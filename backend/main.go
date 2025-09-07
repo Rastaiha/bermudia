@@ -69,8 +69,6 @@ func main() {
 	correctionService := service.NewCorrection(cfg, questionStore)
 	adminService := service.NewAdmin(territoryRepo, islandRepo, userRepo, playerRepo, questionStore, treasureRepo)
 
-	islandService.OnNewPortableIsland(playerService.HandleNewPortableIsland)
-
 	if cfg.DevMode {
 		err = mock.CreateMockData(adminService, cfg.MockUsersPassword, mock.DataFiles)
 		if err != nil {
