@@ -19,7 +19,7 @@ onMounted(() => {
 
     const NUM_STARS = 600;
     const MILKY_WAY_STAR_COUNT = 500;
-    const SHOOTING_STAR_FREQ = Math.random() < 0.5 ? 0.01 : 0.03;
+    const SHOOTING_STAR_FREQ = Math.random() < 0.5 ? 0.005 : 0.01;
     const HOVER_RADIUS = 150;
     const MAX_FADE_OPACITY = 0.2;
 
