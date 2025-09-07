@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"github.com/Rastaiha/bermudia/internal/domain"
 	"math/rand"
+	"time"
 )
 
 const (
@@ -56,6 +57,16 @@ CREATE TABLE IF NOT EXISTS user_books (
     PRIMARY KEY (user_id, island_id)
 );
 `
+
+	userPortableIslandsSchema = `
+CREATE TABLE IF NOT EXISTS user_portable_islands (
+    territory_id VARCHAR(255) NOT NULL,
+    island_id VARCHAR(255) NOT NULL,
+    user_id INT4 NOT NULL,
+	created_at TIMESTAMP NOT NULL,
+    PRIMARY KEY (user_id, island_id)
+);
+`
 )
 
 type sqlIslandRepository struct {
@@ -82,6 +93,10 @@ func NewSqlIslandRepository(db *sql.DB) (domain.IslandStore, error) {
 	_, err = db.Exec(userBooksSchema)
 	if err != nil {
 		return nil, fmt.Errorf("create user_books table: %w", err)
+	}
+	_, err = db.Exec(userPortableIslandsSchema)
+	if err != nil {
+		return nil, fmt.Errorf("create user_portable_islands table: %w", err)
 	}
 	return sqlIslandRepository{
 		db: db,
@@ -320,4 +335,47 @@ WHERE user_id = $1 AND territory_id = $2 GROUP BY bp.pool_id`
 	err = s.db.QueryRowContext(ctx, `INSERT INTO user_books (territory_id, island_id, user_id, book_id) VALUES ($1, $2, $3, $4) ON CONFLICT (user_id, island_id) DO UPDATE SET user_id = EXCLUDED.user_id RETURNING book_id ;`,
 		n(territoryId), n(islandId), n(userId), n(chosenBookId)).Scan(&bookId)
 	return
+}
+
+func (s sqlIslandRepository) IsIslandPortable(ctx context.Context, userId int32, islandId string) (bool, error) {
+	var result bool
+	err := s.db.QueryRowContext(ctx, `SELECT TRUE FROM user_portable_islands WHERE user_id = $1 AND island_id = $2`,
+		userId, islandId).Scan(&result)
+	if errors.Is(err, sql.ErrNoRows) {
+		return false, nil
+	}
+	return result, err
+}
+
+func (s sqlIslandRepository) AddPortableIsland(ctx context.Context, userId int32, portable domain.PortableIsland) (bool, error) {
+	now := time.Now().UTC()
+	var actualCreatedAt time.Time
+	err := s.db.QueryRowContext(ctx,
+		`INSERT INTO user_portable_islands (user_id, island_id, territory_id, created_at) VALUES ($1, $2, $3, $4)
+ON CONFLICT (user_id, island_id) DO UPDATE SET user_id = EXCLUDED.user_id RETURNING created_at;`,
+		n(userId), n(portable.IslandID), n(portable.TerritoryID), now).Scan(&actualCreatedAt)
+	if err != nil {
+		return false, err
+	}
+	return actualCreatedAt.UnixMilli() == now.UnixMilli(), nil
+}
+
+func (s sqlIslandRepository) GetPortableIslands(ctx context.Context, userId int32) (result []domain.PortableIsland, err error) {
+	result = make([]domain.PortableIsland, 0)
+	rows, err := s.db.QueryContext(ctx, `SELECT island_id, territory_id FROM user_portable_islands WHERE user_id = $1 ORDER BY created_at;`, userId)
+	if err != nil {
+		return nil, err
+	}
+	defer func() {
+		err = rows.Close()
+	}()
+	for rows.Next() {
+		var p domain.PortableIsland
+		err = rows.Scan(&p.IslandID, &p.TerritoryID)
+		if err != nil {
+			return nil, err
+		}
+		result = append(result, p)
+	}
+	return result, rows.Err()
 }
