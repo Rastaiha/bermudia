@@ -2,6 +2,7 @@ package domain
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"time"
 )
@@ -20,7 +21,12 @@ var (
 	ErrEmptyIsland                = errors.New("empty island")
 	ErrUserTreasureConflict       = errors.New("user treasure update conflict")
 	ErrAlreadyApplied             = errors.New("already applied")
+	ErrOfferAlreadyDeleted        = errors.New("offer already deleted")
 )
+
+type Tx interface {
+	ExecContext(ctx context.Context, query string, args ...any) (sql.Result, error)
+}
 
 type TerritoryStore interface {
 	SetTerritory(ctx context.Context, territory *Territory) error
@@ -57,7 +63,7 @@ type UserStore interface {
 type PlayerStore interface {
 	Create(ctx context.Context, player Player) error
 	Get(ctx context.Context, userId int32) (Player, error)
-	Update(ctx context.Context, old, updated Player) error
+	Update(ctx context.Context, tx Tx, old, updated Player) error
 }
 
 type QuestionStore interface {
@@ -84,4 +90,12 @@ type TreasureStore interface {
 	GetTreasure(ctx context.Context, treasureId string) (Treasure, error)
 	GetUserTreasure(ctx context.Context, userId int32, treasureId string) (UserTreasure, error)
 	UpdateUserTreasure(ctx context.Context, old UserTreasure, updated UserTreasure) error
+}
+
+type MarketStore interface {
+	CreateOffer(ctx context.Context, tx Tx, offer TradeOffer) error
+	// DeleteOffer soft-deletes the offer
+	DeleteOffer(ctx context.Context, tx Tx, offerId string) error
+	GetOffer(ctx context.Context, offerId string) (TradeOffer, error)
+	GetOffers(ctx context.Context, offset int, limit int) ([]TradeOffer, error)
 }

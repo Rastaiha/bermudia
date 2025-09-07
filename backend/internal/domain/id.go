@@ -13,6 +13,7 @@ const (
 	ResourceTypeQuestion   ResourceType = "qst"
 	ResourceTypeTreasure   ResourceType = "trs"
 	ResourceTypeCorrection ResourceType = "crt"
+	ResourceTypeTradeOffer ResourceType = "tof"
 )
 
 func NewID(resourceType ResourceType) string {

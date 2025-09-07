@@ -61,11 +61,15 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	marketRepo, err := repository.NewSqlMarketRepository(db)
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	authService := service.NewAuth(cfg, userRepo)
 	territoryService := service.NewTerritory(territoryRepo)
 	islandService := service.NewIsland(theBot, islandRepo, questionStore, playerRepo, treasureRepo)
-	playerService := service.NewPlayer(cfg, playerRepo, territoryRepo, questionStore, islandRepo, treasureRepo)
+	playerService := service.NewPlayer(cfg, db, userRepo, playerRepo, territoryRepo, questionStore, islandRepo, treasureRepo, marketRepo)
 	correctionService := service.NewCorrection(cfg, questionStore)
 	adminService := service.NewAdmin(territoryRepo, islandRepo, userRepo, playerRepo, questionStore, treasureRepo)
 
