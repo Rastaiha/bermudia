@@ -37,6 +37,8 @@ type Player struct {
 type FullPlayer struct {
 	Player
 	KnowledgeBars []KnowledgeBar `json:"knowledgeBars"`
+	// Books is the term the client uses for portable islands :)
+	Books []PortableIsland `json:"books"`
 }
 
 const (
@@ -47,6 +49,7 @@ const (
 	PlayerUpdateEventAnchor         = "anchor"
 	PlayerUpdateEventMigration      = "migration"
 	PlayerUpdateEventUnlockTreasure = "unlockTreasure"
+	PlayerUpdateEventNewBook        = "newBook"
 )
 
 type PlayerUpdateEvent struct {
@@ -68,9 +71,6 @@ func NewPlayer(userId int32, startingTerritory *Territory) Player {
 		Fuel:               initialFuelAmount,
 		FuelCap:            fuelTankCapacity,
 		Coins:              initialCoinsAmount,
-		BlueKeys:           5, // TODO: lower
-		RedKeys:            5, // TODO: lower
-		GoldenKeys:         5, // TODO: lower
 		VisitedTerritories: []string{startingTerritory.ID},
 	}
 }

@@ -7,6 +7,25 @@ type IslandHeader struct {
 	FromPool    bool   `json:"fromPool"`
 }
 
+type PortableIsland struct {
+	IslandID    string `json:"islandId"`
+	TerritoryID string `json:"territoryId"`
+}
+
+func CheckPlayerAccessToIslandContent(player Player, islandID string, isPortable bool) error {
+	if (player.AtIsland == islandID && player.Anchored) || isPortable {
+		return nil
+	}
+	return Error{
+		reason: ErrorReasonRuleViolation,
+		text:   "شما باید در این جزیره لنگر بیندازید تا بتوانید وارد آن شوید.",
+	}
+}
+
+func ShouldBeMadePortableOnAccess(header IslandHeader) bool {
+	return header.BookID != "" && !header.FromPool
+}
+
 type Island struct {
 	ID        string  `json:"id"`
 	Name      string  `json:"name"`
@@ -68,16 +87,6 @@ type SubmissionState struct {
 	Filename    string `json:"filename,omitempty"`
 	Value       string `json:"value,omitempty"`
 	SubmittedAt int64  `json:"submittedAt,omitempty,string"`
-}
-
-func PlayerHasAccessToIsland(player Player, islandID string) error {
-	if player.AtIsland == islandID && player.Anchored {
-		return nil
-	}
-	return Error{
-		reason: ErrorReasonRuleViolation,
-		text:   "شما باید در این جزیره لنگر بیندازید تا بتوانید وارد آن شوید.",
-	}
 }
 
 const (
