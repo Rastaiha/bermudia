@@ -1,4 +1,6 @@
 <template>
+    <FloatingUI :tooltip-text="tooltipText" :mouse-position="mousePosition" />
+
     <div
         v-if="player"
         dir="rtl"
@@ -11,13 +13,13 @@
             <div class="flex items-center gap-3">
                 <button
                     class="text-sm font-bold text-gray-200 transition-colors duration-300 transform cursor-pointer hover:text-red-400 drop-shadow-lg"
-                    title="خروج"
-                    @pointerdown="open"
+                    @pointerdown="openLogoutModal"
                 >
                     خروج
                 </button>
             </div>
         </div>
+
         <PlayerInventoryBar
             v-if="knowledgeBar"
             :bar-data="knowledgeBar"
@@ -30,26 +32,48 @@
             v-if="coinBar"
             :bar-data="coinBar"
         ></PlayerInventoryBar>
-        <Dropdown title="کوله پشتی" :items="inventoryDropdownItems" />
-        <button
-            class="text-sm font-bold text-gray-200 transition-colors duration-300 transform cursor-pointer hover:text-red-400 drop-shadow-lg"
-            title="کتاب"
-            @pointerdown="checkBookshelf"
-        >
-            <img src="/images/icons/book.png" class="w-12 h-12" alt="کتاب‌ها" />
-        </button>
+
+        <div class="flex items-center gap-2 mt-2">
+            <button
+                class="transition-transform duration-200 hover:scale-110"
+                @pointerdown="openBookshelf"
+                @mouseenter="showTooltip('کتابخانه', $event)"
+                @mousemove="updateMousePosition"
+                @mouseleave="hideTooltip"
+            >
+                <img
+                    src="/images/icons/book.png"
+                    class="w-12 h-12 drop-shadow-lg"
+                    alt="کتاب‌ها"
+                />
+            </button>
+            <button
+                class="transition-transform duration-200 hover:scale-110"
+                @pointerdown="openBackpack"
+                @mouseenter="showTooltip('کوله پشتی', $event)"
+                @mousemove="updateMousePosition"
+                @mouseleave="hideTooltip"
+            >
+                <img
+                    src="/images/icons/backpack.png"
+                    class="w-12 h-12 drop-shadow-lg"
+                    alt="کوله پشتی"
+                />
+            </button>
+        </div>
     </div>
 </template>
 
 <script setup>
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { logout as apiLogout } from '@/services/api';
 import PlayerInventoryBar from './PlayerInventoryBar.vue';
-import Dropdown from './Dropdown.vue';
 import { useModal } from 'vue-final-modal';
 import ConfirmModal from './ConfirmModal.vue';
 import Bookshelf from './Bookshelf.vue';
+import Backpack from './Backpack.vue';
+import FloatingUI from './FloatingUI.vue';
 
 const props = defineProps({
     player: {
@@ -64,17 +88,35 @@ const props = defineProps({
 
 const router = useRouter();
 
-const { open, close } = useModal({
+const tooltipText = ref('');
+const mousePosition = ref({ x: 0, y: 0 });
+
+const showTooltip = (text, event) => {
+    tooltipText.value = text;
+    mousePosition.value = { x: event.clientX, y: event.clientY };
+};
+
+const updateMousePosition = event => {
+    if (tooltipText.value) {
+        mousePosition.value = { x: event.clientX, y: event.clientY };
+    }
+};
+
+const hideTooltip = () => {
+    tooltipText.value = '';
+};
+
+const { open: openLogoutModal, close: closeLogoutModal } = useModal({
     component: ConfirmModal,
     attrs: {
         title: 'خروج از حساب',
         onConfirm() {
             apiLogout();
             router.push({ name: 'Login' });
-            close();
+            closeLogoutModal();
         },
         onCancel() {
-            close();
+            closeLogoutModal();
         },
     },
     slots: {
@@ -82,7 +124,7 @@ const { open, close } = useModal({
     },
 });
 
-const { open: checkBookshelf, close: closeBookshelf } = useModal({
+const { open: openBookshelf, close: closeBookshelf } = useModal({
     component: Bookshelf,
     attrs: {
         books: props.player.books,
@@ -92,15 +134,22 @@ const { open: checkBookshelf, close: closeBookshelf } = useModal({
     },
 });
 
-const inventoryItems = ['goldenKeys', 'redKeys', 'blueKeys'];
-const inventoryDropdownItems = computed(() => {
-    if (!props.player) return [];
-
-    return inventoryItems.map(key => ({
-        icon: `/images/icons/${key}.png`,
-        name: getKeyDisplayName(key),
-        quantity: props.player[key],
-    }));
+const { open: openBackpack, close: closeBackpack } = useModal({
+    component: Backpack,
+    attrs: {
+        inventoryItems: computed(() => {
+            if (!props.player) return [];
+            const items = ['goldenKeys', 'redKeys', 'blueKeys'];
+            return items.map(key => ({
+                icon: `/images/icons/${key}.png`,
+                name: getKeyDisplayName(key),
+                quantity: props.player[key],
+            }));
+        }),
+        onClose() {
+            closeBackpack();
+        },
+    },
 });
 
 function getKeyDisplayName(key) {
