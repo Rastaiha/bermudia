@@ -39,7 +39,7 @@ func UnlockTreasureCheck(player Player, treasure Treasure, userTreasure UserTrea
 	result.Cost = userTreasure.Cost
 
 	if currentIslandBook == "" || treasure.BookID != currentIslandBook {
-		result.Reason = "شما باید وارد جزیره شوید تا بتوانید گنج را باز کنید."
+		result.Reason = "شما باید وارد سیاره شوید تا بتوانید گنج را باز کنید."
 		return
 	}
 

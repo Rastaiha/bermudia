@@ -147,11 +147,11 @@ func TravelCheck(player Player, fromIsland, toIsland string, territory *Territor
 		TravelCost: Cost{Items: []CostItem{{Type: CostItemTypeFuel, Amount: travelFuelConsumption}}},
 	}
 	if !isDestinationIslandUnlocked {
-		result.Reason = "باید قبل از سفر به این جزیره، سؤالات جزایر قبلی آن را پاسخ دهید."
+		result.Reason = "باید قبل از سفر به این سیاره، سؤالات جزایر قبلی آن را پاسخ دهید."
 		return
 	}
 	if player.AtIsland != fromIsland {
-		result.Reason = "شما در جزیره اعلامی قرار ندارید."
+		result.Reason = "شما در سیاره اعلامی قرار ندارید."
 		return
 	}
 	if !slices.ContainsFunc(territory.Edges, func(edge Edge) bool {
@@ -201,7 +201,7 @@ func RefuelCheck(player Player, territory *Territory) (result RefuelCheckResult)
 	})
 	if idx < 0 {
 		result.MaxAvailableAmount = 0
-		result.MaxReason = "شما در حال حاضر در جزیره سوخت‌گیری قرار ندارید."
+		result.MaxReason = "شما در حال حاضر در سیاره سوخت‌گیری قرار ندارید."
 		return
 	}
 
@@ -251,16 +251,16 @@ type AnchorCheckResult struct {
 func AnchorCheck(player Player, islandID string) (result AnchorCheckResult) {
 	result.AnchoringCost = Cost{Items: []CostItem{{Type: CostItemTypeCoin, Amount: anchoringCoinCost}}}
 	if player.AtIsland != islandID {
-		result.Reason = "باید به جزیره سفر کنید تا بتوانید در آن لنگر بیندازید."
+		result.Reason = "باید به سیاره سفر کنید تا بتوانید در آن فرود بیایید."
 		return
 	}
 	if player.Anchored {
-		result.Reason = "در حال حاضر در این جزیره لنگر انداخته اید."
+		result.Reason = "در حال حاضر در این سیاره فرود آمده‌اید."
 		return
 	}
 
 	if !canAfford(player, result.AnchoringCost) {
-		result.Reason = "دارایی شما برای لنگر انداختن کافی نیست."
+		result.Reason = "دارایی شما برای فرود آمدن کافی نیست."
 		return
 	}
 
@@ -361,12 +361,12 @@ func getMigrationOption(player Player, knowledgeCriteriaPassed bool, territory T
 	option.MustPayCost = option.Status == TerritoryMigrationStatusUntouched && !knowledgeCriteriaPassed
 
 	if option.Status == TerritoryMigrationStatusResident {
-		option.Reason = "شما در همین قلمرو قرار دارید."
+		option.Reason = "شما در همین منظومه قرار دارید."
 		return
 	}
 
 	if !atTerminalIsland {
-		option.Reason = "شما در جزیره شاهراه قرار ندارید."
+		option.Reason = "شما در سیاره شاهراه قرار ندارید."
 		return
 	}
 

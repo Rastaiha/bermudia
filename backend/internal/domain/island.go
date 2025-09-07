@@ -18,7 +18,7 @@ func CheckPlayerAccessToIslandContent(player Player, islandID string, isPortable
 	}
 	return Error{
 		reason: ErrorReasonRuleViolation,
-		text:   "شما باید در این جزیره لنگر بیندازید تا بتوانید وارد آن شوید.",
+		text:   "شما باید در این سیاره فرود بیایید تا بتوانید وارد آن شوید.",
 	}
 }
 

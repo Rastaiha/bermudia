@@ -78,7 +78,7 @@
             ></div>
             <div v-else-if="checkAnchoredIsland()" class="w-full space-y-3">
                 <p class="text-center text-sm text-gray-800">
-                    شما در این جزیره قرار دارید.
+                    شما در این سیاره قرار دارید.
                 </p>
             </div>
             <div v-else class="w-full space-y-3"></div>
@@ -299,9 +299,9 @@ const buttonText = computed(() => {
             }
             switch (props.migrateInfo.status) {
                 case 'visited':
-                    return 'سفر به قلمرو';
+                    return 'سفر به منظومه';
                 case 'resident':
-                    return 'قلمروی فعلی!';
+                    return 'منظومه‌ی فعلی!';
                 case 'untouched':
                     return 'مهاجرت علمی';
             }
@@ -311,9 +311,9 @@ const buttonText = computed(() => {
     } else if (checkRefuelIsland() && !refuelError.value) return 'خرید سوخت';
     else if (checkMigrate() && !migrateError.value) return null;
     else if (checkNonAnchoredIsland() && anchor.value && !anchorError.value)
-        return 'لنگر بیندازید';
-    else if (checkAnchoredIsland()) return 'ورود به جزیره';
-    else if (checkTravel() && !travelError.value) return 'سفر به جزیره';
+        return 'فرود آمدن';
+    else if (checkAnchoredIsland()) return 'ورود به سیاره';
+    else if (checkTravel() && !travelError.value) return 'سفر به سیاره';
     return null;
 });
 

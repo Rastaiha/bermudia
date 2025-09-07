@@ -71,7 +71,7 @@ const isLoaded = ref(false);
 const backgroundImage = ref('');
 const tooltipText = ref('');
 const mousePosition = ref({ x: 0, y: 0 });
-const loadingMessage = ref('درحال بارگذاری اطلاعات جزیره...');
+const loadingMessage = ref('درحال بارگذاری اطلاعات سیاره...');
 const components = ref([]);
 const treasures = ref([]);
 const toast = useToast();
@@ -85,8 +85,8 @@ const fetchIslandData = async id => {
         isLoaded.value = true;
     } catch (error) {
         console.error('Failed to load island data from API:', error);
-        loadingMessage.value = `خطا در بارگذاری جزیره: ${error.message}`;
-        toast.error(error.message || 'خطا در دریافت اطلاعات جزیره');
+        loadingMessage.value = `خطا در بارگذاری سیاره: ${error.message}`;
+        toast.error(error.message || 'خطا در دریافت اطلاعات سیاره');
     }
 };
 
