@@ -2,7 +2,6 @@
     <div
         class="w-full h-screen flex justify-center items-center p-4 box-border bg-cover bg-center bg-no-repeat overflow-hidden bg-[#0c2036]"
         :style="{ backgroundImage: `url(${backgroundImage})` }"
-        @pointerdown.self="hideInfoBox"
     >
         <LoadingIndicator v-if="isLoading" :message="loadingMessage" />
 
@@ -23,6 +22,7 @@
             <Transition name="popup-fade">
                 <IslandInfoBox
                     v-if="selectedIsland"
+                    ref="infoBoxRef"
                     :key="selectedIsland.id"
                     :selected-island="selectedIsland"
                     :player="player"
@@ -37,7 +37,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, watch } from 'vue';
+import { ref, onMounted, onUnmounted, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { getPlayer, getMe, getToken, getTerritory } from '@/services/api.js';
 import { usePlayerWebSocket } from '@/components/service/WebSocket.js';
@@ -50,6 +50,7 @@ import LoadingIndicator from '@/components/LoadingIndicator.vue';
 const route = useRoute();
 const router = useRouter();
 const mapViewComponentRef = ref(null);
+const infoBoxRef = ref(null);
 const transformCounter = ref(0);
 
 const territoryId = ref(null);
@@ -65,6 +66,13 @@ const dynamicViewBox = ref('0 0 1 1');
 const loadingMessage = ref('در حال بارگذاری نقشه...');
 const isLoading = ref(true);
 const infoBoxStyle = ref({ display: 'none' });
+
+const handleClickOutside = event => {
+    if (!selectedIsland.value || infoBoxRef.value?.$el.contains(event.target)) {
+        return;
+    }
+    hideInfoBox();
+};
 
 const calculateInfoBoxStyle = () => {
     const svgElement = mapViewComponentRef.value?.svgRef;
@@ -167,6 +175,11 @@ const hideInfoBox = () => {
 
 onMounted(() => {
     loadPageData(route.params.id);
+    document.addEventListener('pointerdown', handleClickOutside);
+});
+
+onUnmounted(() => {
+    document.removeEventListener('pointerdown', handleClickOutside);
 });
 
 watch(
