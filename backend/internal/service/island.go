@@ -120,17 +120,19 @@ func (i *Island) SubmitAnswer(ctx context.Context, user *domain.User, questionId
 	if err != nil {
 		return nil, err
 	}
-	islandHeader, err := i.islandStore.GetIslandHeaderByBookId(ctx, question.BookID)
-	if err != nil {
-		if errors.Is(err, domain.ErrIslandNotFound) {
-			return nil, domain.ErrQuestionNotRelatedToIsland
+
+	islandID := player.AtIsland
+	territoryID := ""
+	isPortable := false
+	if islandHeader, err := i.islandStore.GetIslandHeaderByBookId(ctx, question.BookID); err == nil {
+		islandID = islandHeader.ID
+		territoryID = islandHeader.TerritoryID
+		isPortable, err = i.islandStore.IsIslandPortable(ctx, user.ID, islandHeader.ID)
+		if err != nil {
+			return nil, err
 		}
 	}
-	isPortable, err := i.islandStore.IsIslandPortable(ctx, user.ID, islandHeader.ID)
-	if err != nil {
-		return nil, err
-	}
-	if err := domain.CheckPlayerAccessToIslandContent(player, islandHeader.ID, isPortable); err != nil {
+	if err := domain.CheckPlayerAccessToIslandContent(player, islandID, isPortable); err != nil {
 		return nil, err
 	}
 
@@ -157,11 +159,7 @@ func (i *Island) SubmitAnswer(ctx context.Context, user *domain.User, questionId
 		return nil, err
 	}
 
-	territory := ""
-	if !islandHeader.FromPool {
-		territory = islandHeader.TerritoryID
-	}
-	i.onNewAnswer(user.Username, territory, question, answer)
+	i.onNewAnswer(user.Username, territoryID, question, answer)
 
 	r := domain.GetSubmissionStateFromAnswer(answer)
 	return &r, nil
