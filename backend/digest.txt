@@ -1,0 +1,2142 @@
+Directory structure:
+└── backend/
+    ├── Dockerfile
+    ├── go.mod
+    ├── go.sum
+    ├── main.go
+    ├── api/
+    │   ├── handler/
+    │   │   ├── auth.go
+    │   │   ├── events.go
+    │   │   ├── handler.go
+    │   │   ├── island.go
+    │   │   ├── player.go
+    │   │   ├── response.go
+    │   │   └── territory.go
+    │   └── hub/
+    │       └── hub.go
+    └── internal/
+        ├── config/
+        │   ├── config.go
+        │   └── load.go
+        ├── domain/
+        │   ├── error.go
+        │   ├── island.go
+        │   ├── player.go
+        │   ├── store.go
+        │   ├── territory.go
+        │   └── user.go
+        ├── mock/
+        │   ├── mock.go
+        │   ├── islands/
+        │   │   ├── island_deer.json
+        │   │   ├── island_final.json
+        │   │   ├── island_math1.json
+        │   │   ├── island_math2.json
+        │   │   ├── island_science1.json
+        │   │   ├── island_spectacle.json
+        │   │   ├── island_start.json
+        │   │   └── island_thompson.json
+        │   └── territories/
+        │       ├── territory1.json
+        │       └── territory2.json
+        ├── repository/
+        │   ├── db.go
+        │   ├── island.go
+        │   ├── player.go
+        │   ├── territory.go
+        │   └── user.go
+        └── service/
+            ├── auth.go
+            ├── island.go
+            ├── player.go
+            └── territory.go
+
+================================================
+File: Dockerfile
+================================================
+FROM golang:1.24 AS build
+
+ENV CGO_ENABLED=1
+
+WORKDIR /app
+COPY ./ ./
+
+RUN go build -o main main.go
+
+FROM debian:12.11
+
+WORKDIR /app
+
+COPY --from=build /app/main .
+
+EXPOSE 8080
+
+CMD ["./main"]
+
+
+
+================================================
+File: go.mod
+================================================
+module github.com/Rastaiha/bermudia
+
+go 1.24.3
+
+require (
+	github.com/go-chi/chi/v5 v5.2.2
+	golang.org/x/crypto v0.41.0
+)
+
+require (
+	github.com/go-viper/mapstructure/v2 v2.3.0
+	github.com/golang-jwt/jwt/v5 v5.3.0
+	github.com/gorilla/websocket v1.5.3
+	github.com/knadh/koanf/providers/env v1.1.0
+	github.com/knadh/koanf/providers/structs v1.0.0
+	github.com/knadh/koanf/v2 v2.2.2
+	github.com/mattn/go-sqlite3 v1.14.32
+)
+
+require (
+	github.com/fatih/structs v1.1.0 // indirect
+	github.com/knadh/koanf/maps v0.1.2 // indirect
+	github.com/mitchellh/copystructure v1.2.0 // indirect
+	github.com/mitchellh/reflectwalk v1.0.2 // indirect
+)
+
+
+
+================================================
+File: go.sum
+================================================
+github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
+github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
+github.com/fatih/structs v1.1.0 h1:Q7juDM0QtcnhCpeyLGQKyg4TOIghuNXrkL32pHAUMxo=
+github.com/fatih/structs v1.1.0/go.mod h1:9NiDSp5zOcgEDl+j00MP/WkGVPOlPRLejGD8Ga6PJ7M=
+github.com/go-chi/chi/v5 v5.2.2 h1:CMwsvRVTbXVytCk1Wd72Zy1LAsAh9GxMmSNWLHCG618=
+github.com/go-chi/chi/v5 v5.2.2/go.mod h1:L2yAIGWB3H+phAw1NxKwWM+7eUH/lU8pOMm5hHcoops=
+github.com/go-viper/mapstructure/v2 v2.3.0 h1:27XbWsHIqhbdR5TIC911OfYvgSaW93HM+dX7970Q7jk=
+github.com/go-viper/mapstructure/v2 v2.3.0/go.mod h1:oJDH3BJKyqBA2TXFhDsKDGDTlndYOZ6rGS0BRZIxGhM=
+github.com/golang-jwt/jwt/v5 v5.3.0 h1:pv4AsKCKKZuqlgs5sUmn4x8UlGa0kEVt/puTpKx9vvo=
+github.com/golang-jwt/jwt/v5 v5.3.0/go.mod h1:fxCRLWMO43lRc8nhHWY6LGqRcf+1gQWArsqaEUEa5bE=
+github.com/gorilla/websocket v1.5.3 h1:saDtZ6Pbx/0u+bgYQ3q96pZgCzfhKXGPqt7kZ72aNNg=
+github.com/gorilla/websocket v1.5.3/go.mod h1:YR8l580nyteQvAITg2hZ9XVh4b55+EU/adAjf1fMHhE=
+github.com/knadh/koanf/maps v0.1.2 h1:RBfmAW5CnZT+PJ1CVc1QSJKf4Xu9kxfQgYVQSu8hpbo=
+github.com/knadh/koanf/maps v0.1.2/go.mod h1:npD/QZY3V6ghQDdcQzl1W4ICNVTkohC8E73eI2xW4yI=
+github.com/knadh/koanf/providers/env v1.1.0 h1:U2VXPY0f+CsNDkvdsG8GcsnK4ah85WwWyJgef9oQMSc=
+github.com/knadh/koanf/providers/env v1.1.0/go.mod h1:QhHHHZ87h9JxJAn2czdEl6pdkNnDh/JS1Vtsyt65hTY=
+github.com/knadh/koanf/providers/structs v1.0.0 h1:DznjB7NQykhqCar2LvNug3MuxEQsZ5KvfgMbio+23u4=
+github.com/knadh/koanf/providers/structs v1.0.0/go.mod h1:kjo5TFtgpaZORlpoJqcbeLowM2cINodv8kX+oFAeQ1w=
+github.com/knadh/koanf/v2 v2.2.2 h1:ghbduIkpFui3L587wavneC9e3WIliCgiCgdxYO/wd7A=
+github.com/knadh/koanf/v2 v2.2.2/go.mod h1:abWQc0cBXLSF/PSOMCB/SK+T13NXDsPvOksbpi5e/9Q=
+github.com/mattn/go-sqlite3 v1.14.32 h1:JD12Ag3oLy1zQA+BNn74xRgaBbdhbNIDYvQUEuuErjs=
+github.com/mattn/go-sqlite3 v1.14.32/go.mod h1:Uh1q+B4BYcTPb+yiD3kU8Ct7aC0hY9fxUwlHK0RXw+Y=
+github.com/mitchellh/copystructure v1.2.0 h1:vpKXTN4ewci03Vljg/q9QvCGUDttBOGBIa15WveJJGw=
+github.com/mitchellh/copystructure v1.2.0/go.mod h1:qLl+cE2AmVv+CoeAwDPye/v+N2HKCj9FbZEVFJRxO9s=
+github.com/mitchellh/reflectwalk v1.0.2 h1:G2LzWKi524PWgd3mLHV8Y5k7s6XUvT0Gef6zxSIeXaQ=
+github.com/mitchellh/reflectwalk v1.0.2/go.mod h1:mSTlrgnPZtwu0c4WaC2kGObEpuNDbx0jmZXqmk4esnw=
+github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=
+github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
+github.com/stretchr/testify v1.8.4 h1:CcVxjf3Q8PM0mHUKJCdn+eZZtm5yQwehR5yeSVQQcUk=
+github.com/stretchr/testify v1.8.4/go.mod h1:sz/lmYIOXD/1dqDmKjjqLyZ2RngseejIcXlSw2iwfAo=
+golang.org/x/crypto v0.41.0 h1:WKYxWedPGCTVVl5+WHSSrOBT0O8lx32+zxmHxijgXp4=
+golang.org/x/crypto v0.41.0/go.mod h1:pO5AFd7FA68rFak7rOAGVuygIISepHftHnr8dr6+sUc=
+gopkg.in/yaml.v3 v3.0.1 h1:fxVm/GzAzEWqLHuvctI91KS9hhNmmWOoWu0XTYJS7CA=
+gopkg.in/yaml.v3 v3.0.1/go.mod h1:K4uyk7z7BCEPqu6E+C64Yfv1cQ7kz7rIZviUmN+EgEM=
+
+
+
+================================================
+File: main.go
+================================================
+package main
+
+import (
+	"github.com/Rastaiha/bermudia/api/handler"
+	"github.com/Rastaiha/bermudia/internal/config"
+	"github.com/Rastaiha/bermudia/internal/mock"
+	"github.com/Rastaiha/bermudia/internal/repository"
+	"github.com/Rastaiha/bermudia/internal/service"
+	_ "github.com/mattn/go-sqlite3"
+	"log"
+	"log/slog"
+	"os"
+	"os/signal"
+	"syscall"
+)
+
+func main() {
+	cfg := config.Load()
+
+	db, err := repository.ConnectToSqlite()
+	if err != nil {
+		log.Fatal("failed to connect to sqlite", err)
+	}
+	territoryRepo, err := repository.NewSqlTerritoryRepository(db)
+	if err != nil {
+		log.Fatal(err)
+	}
+	islandRepo, err := repository.NewSqlIslandRepository(db)
+	if err != nil {
+		log.Fatal(err)
+	}
+	userRepo, err := repository.NewSqlUser(db)
+	if err != nil {
+		log.Fatal(err)
+	}
+	playerRepo, err := repository.NewSqlPlayerRepository(db)
+	if err != nil {
+		log.Fatal(err)
+	}
+	err = mock.CreateMockData(userRepo, playerRepo, territoryRepo, islandRepo, cfg.MockUsersPassword)
+	if err != nil {
+		log.Fatal("failed to create mock data: ", err)
+	}
+
+	authService := service.NewAuth(cfg, userRepo)
+	territoryService := service.NewTerritory(territoryRepo)
+	islandService := service.NewIsland(islandRepo)
+	playerService := service.NewPlayer(playerRepo, territoryRepo)
+
+	h := handler.New(authService, territoryService, islandService, playerService)
+
+	h.Start()
+
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, os.Interrupt, os.Kill, syscall.SIGTERM, syscall.SIGQUIT, syscall.SIGINT)
+	<-c
+	slog.Info("Got signal, shutting down...")
+	h.Stop()
+}
+
+
+
+================================================
+File: api/handler/auth.go
+================================================
+package handler
+
+import (
+	"context"
+	"encoding/json"
+	"errors"
+	"github.com/Rastaiha/bermudia/internal/domain"
+	"net/http"
+	"strings"
+)
+
+const (
+	userContextKey = "user"
+)
+
+func (h *Handler) authMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		tokenStr := strings.TrimPrefix(r.Header.Get("Authorization"), "Bearer ")
+		if tokenStr == "" {
+			sendError(w, http.StatusUnauthorized, "Missing auth token")
+			return
+		}
+		user, ok := h.authService.ValidateToken(r.Context(), tokenStr)
+		if !ok {
+			sendError(w, http.StatusUnauthorized, "Invalid auth token")
+			return
+		}
+
+		r = r.WithContext(context.WithValue(r.Context(), userContextKey, user))
+
+		next.ServeHTTP(w, r)
+	})
+}
+
+type loginRequest struct {
+	Username string `json:"username"`
+	Password string `json:"password"`
+}
+
+func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
+	var req loginRequest
+	err := json.NewDecoder(r.Body).Decode(&req)
+	if err != nil {
+		sendDecodeError(w)
+		return
+	}
+	token, err := h.authService.Login(r.Context(), req.Username, req.Password)
+	if err != nil {
+		if errors.Is(err, domain.ErrUserNotFound) {
+			sendError(w, http.StatusNotFound, "نام کاربری یا کلمه عبور اشتباه است")
+			return
+		}
+		handleError(w, err)
+		return
+	}
+	sendResult(w, map[string]any{
+		"token": token,
+	})
+}
+
+func getUser(ctx context.Context) (*domain.User, error) {
+	v := ctx.Value(userContextKey)
+	user, ok := v.(*domain.User)
+	if !ok {
+		return nil, errors.New("expected user was not found in context")
+	}
+	return user, nil
+}
+
+
+
+================================================
+File: api/handler/events.go
+================================================
+package handler
+
+import (
+	"github.com/Rastaiha/bermudia/internal/domain"
+	"log/slog"
+	"net/http"
+	"time"
+)
+
+type event struct {
+	PlayerUpdate *domain.PlayerUpdateEvent `json:"playerUpdate"`
+	Timestamp    int64                     `json:"timestamp,string"`
+}
+
+func (h *Handler) sendEvent(userId int32, e event) {
+	e.Timestamp = time.Now().UTC().UnixMilli()
+	go func() {
+		h.connectionHub.Send(userId, e, 15*time.Second)
+	}()
+}
+
+func (h *Handler) StreamEvents(w http.ResponseWriter, r *http.Request) {
+	user, err := getUser(r.Context())
+	if err != nil {
+		handleError(w, err)
+		return
+	}
+	conn, err := h.wsUpgrader.Upgrade(w, r, nil)
+	if err != nil {
+		slog.Error("websocket upgrade failed", err)
+		return
+	}
+	h.connectionHub.Register(user.ID, conn)
+}
+
+
+
+================================================
+File: api/handler/handler.go
+================================================
+package handler
+
+import (
+	"context"
+	"errors"
+	"github.com/Rastaiha/bermudia/api/hub"
+	"github.com/Rastaiha/bermudia/internal/service"
+	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
+	"github.com/gorilla/websocket"
+	"log"
+	"log/slog"
+	"net/http"
+	"time"
+)
+
+type Handler struct {
+	server           *http.Server
+	wsUpgrader       websocket.Upgrader
+	authService      *service.Auth
+	territoryService *service.Territory
+	islandService    *service.Island
+	playerService    *service.Player
+	connectionHub    *hub.Hub
+}
+
+func New(authService *service.Auth, territoryService *service.Territory, islandService *service.Island, playerService *service.Player) *Handler {
+	return &Handler{
+		authService:      authService,
+		territoryService: territoryService,
+		islandService:    islandService,
+		playerService:    playerService,
+		connectionHub:    hub.NewHub(),
+	}
+}
+
+func (h *Handler) Start() {
+	r := chi.NewRouter()
+
+	r.Use(middleware.Logger)
+	r.Use(corsMiddleware)
+	r.Use(middleware.Recoverer)
+	r.Use(middleware.Timeout(30 * time.Second))
+
+	// Routes
+	r.Route("/api/v1", func(r chi.Router) {
+		r.Get("/territories/{territoryID}", h.GetTerritory) // TODO: make it authenticated
+		r.Get("/islands/{islandID}", h.GetIsland)           // TODO: make it authenticated
+		r.Post("/login", h.Login)
+
+		// Authenticated endpoints
+		r.Group(func(r chi.Router) {
+			r.Use(h.authMiddleware)
+			r.Get("/me", func(w http.ResponseWriter, r *http.Request) {
+				user, err := getUser(r.Context())
+				if err != nil {
+					handleError(w, err)
+					return
+				}
+				sendResult(w, user)
+			})
+			r.HandleFunc("/events", h.StreamEvents)
+			r.Post("/answer/{inputID}", h.SubmitAnswer)
+			r.Get("/player", h.GetPlayer)
+			r.Post("/travel", h.Travel)
+		})
+	})
+
+	// Health check
+	r.Get("/health", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte("OK"))
+	})
+
+	h.playerService.OnPlayerUpdate(h.HandlePlayerUpdateEvent)
+
+	slog.Info("Server starting")
+	h.server = &http.Server{
+		Addr:    ":8080",
+		Handler: r,
+	}
+	h.wsUpgrader = websocket.Upgrader{}
+	go func() {
+		err := h.server.ListenAndServe()
+		if err != nil && !errors.Is(err, http.ErrServerClosed) {
+			log.Fatal("Error starting server:", err)
+		}
+	}()
+}
+
+func (h *Handler) Stop() {
+	if err := h.server.Shutdown(context.Background()); err != nil {
+		slog.Error("Error stopping server:", err)
+	}
+}
+
+// Simple CORS middleware
+func corsMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+		w.Header().Set("Access-Control-Allow-Headers", "Accept, Authorization, Content-Type, X-CSRF-Token")
+
+		if r.Method == http.MethodOptions {
+			return
+		}
+
+		next.ServeHTTP(w, r)
+	})
+}
+
+
+
+================================================
+File: api/handler/island.go
+================================================
+package handler
+
+import (
+	"errors"
+	"github.com/Rastaiha/bermudia/internal/domain"
+	"github.com/go-chi/chi/v5"
+	"net/http"
+)
+
+func (h *Handler) GetIsland(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "islandID")
+	if id == "" {
+		sendError(w, http.StatusBadRequest, "Island ID is required")
+		return
+	}
+
+	island, err := h.islandService.GetIsland(r.Context(), id)
+	if err != nil {
+		// Check for specific error types using errors.Is
+		if errors.Is(err, domain.ErrIslandNotFound) {
+			sendError(w, http.StatusNotFound, "Island not found")
+			return
+		}
+
+		handleError(w, err)
+		return
+	}
+
+	sendResult(w, island)
+}
+
+func (h *Handler) SubmitAnswer(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "inputID")
+	if id == "" {
+		sendError(w, http.StatusBadRequest, "input ID is required")
+		return
+	}
+
+	sendResult(w, struct{}{})
+}
+
+
+
+================================================
+File: api/handler/player.go
+================================================
+package handler
+
+import (
+	"encoding/json"
+	"github.com/Rastaiha/bermudia/internal/domain"
+	"net/http"
+)
+
+func (h *Handler) HandlePlayerUpdateEvent(e *domain.PlayerUpdateEvent) {
+	h.sendEvent(e.Player.UserId, event{PlayerUpdate: e})
+}
+
+func (h *Handler) GetPlayer(w http.ResponseWriter, r *http.Request) {
+	user, err := getUser(r.Context())
+	if err != nil {
+		handleError(w, err)
+		return
+	}
+	player, err := h.playerService.GetPlayer(r.Context(), user)
+	if err != nil {
+		handleError(w, err)
+		return
+	}
+	sendResult(w, player)
+}
+
+type travelRequest struct {
+	FromIsland string `json:"fromIsland"`
+	ToIsland   string `json:"toIsland"`
+}
+
+func (h *Handler) Travel(w http.ResponseWriter, r *http.Request) {
+	user, err := getUser(r.Context())
+	if err != nil {
+		handleError(w, err)
+		return
+	}
+
+	var req travelRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		sendDecodeError(w)
+		return
+	}
+
+	err = h.playerService.Travel(r.Context(), user, req.FromIsland, req.ToIsland)
+	if err != nil {
+		handleError(w, err)
+		return
+	}
+	sendResult(w, struct{}{})
+}
+
+
+
+================================================
+File: api/handler/response.go
+================================================
+package handler
+
+import (
+	"context"
+	"encoding/json"
+	"errors"
+	"github.com/Rastaiha/bermudia/internal/domain"
+	"log/slog"
+	"net/http"
+)
+
+type APIResponse struct {
+	OK     bool   `json:"ok"`
+	Error  string `json:"error,omitempty"`
+	Result any    `json:"result,omitempty"`
+}
+
+func handleError(w http.ResponseWriter, err error) {
+	if errors.Is(err, context.Canceled) {
+		sendError(w, http.StatusRequestTimeout, "Request cancelled")
+		return
+	}
+	var domainError domain.Error
+	if errors.As(err, &domainError) {
+		switch domainError.Reason() {
+		case domain.ErrorReasonResourceNotFound:
+			sendError(w, http.StatusNotFound, err.Error())
+		case domain.ErrorReasonRuleViolation:
+			sendError(w, http.StatusConflict, err.Error())
+		default:
+			sendError(w, http.StatusInternalServerError, err.Error())
+		}
+		return
+	}
+
+	slog.Error("internal error", err)
+	sendError(w, http.StatusInternalServerError, "Internal server error")
+}
+
+func sendResult(w http.ResponseWriter, result any) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+
+	response := APIResponse{
+		OK:     true,
+		Result: result,
+	}
+
+	if err := json.NewEncoder(w).Encode(response); err != nil {
+		// If encoding fails, send a basic error response
+		http.Error(w, "Internal server error: could not successful response", http.StatusInternalServerError)
+	}
+}
+
+func sendDecodeError(w http.ResponseWriter) {
+	sendError(w, http.StatusBadRequest, "Invalid request payload")
+}
+
+func sendError(w http.ResponseWriter, statusCode int, errorMsg string) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(statusCode)
+
+	response := APIResponse{
+		OK:    false,
+		Error: errorMsg,
+	}
+
+	if err := json.NewEncoder(w).Encode(response); err != nil {
+		// If encoding fails, send a basic error response
+		http.Error(w, "Internal server error: could not error response", http.StatusInternalServerError)
+	}
+}
+
+
+
+================================================
+File: api/handler/territory.go
+================================================
+package handler
+
+import (
+	"errors"
+	"github.com/Rastaiha/bermudia/internal/domain"
+	"github.com/go-chi/chi/v5"
+	"net/http"
+)
+
+func (h *Handler) GetTerritory(w http.ResponseWriter, r *http.Request) {
+	territoryID := chi.URLParam(r, "territoryID")
+
+	if territoryID == "" {
+		sendError(w, http.StatusBadRequest, "Territory ID is required")
+		return
+	}
+
+	territory, err := h.territoryService.GetTerritory(r.Context(), territoryID)
+	if err != nil {
+		// Check for specific error types using errors.Is
+		if errors.Is(err, domain.ErrTerritoryNotFound) {
+			sendError(w, http.StatusNotFound, "Territory not found")
+			return
+		}
+
+		handleError(w, err)
+		return
+	}
+
+	sendResult(w, territory)
+}
+
+
+
+================================================
+File: api/hub/hub.go
+================================================
+package hub
+
+import (
+	"errors"
+	"github.com/gorilla/websocket"
+	"sync"
+	"time"
+)
+
+var (
+	errClosed = errors.New("connection closed")
+)
+
+type connection struct {
+	lock   sync.Mutex
+	conn   *websocket.Conn
+	closed bool
+}
+
+func (c *connection) Write(data any, timeout time.Duration) error {
+	c.lock.Lock()
+	defer c.lock.Unlock()
+	if c.closed {
+		return errClosed
+	}
+	err := c.conn.SetWriteDeadline(time.Now().Add(timeout))
+	if err != nil {
+		return err
+	}
+	return c.conn.WriteJSON(data)
+}
+
+func (c *connection) Close() {
+	c.lock.Lock()
+	c.closed = true
+	c.lock.Unlock()
+	_ = c.conn.Close()
+}
+
+type Hub struct {
+	lock        sync.RWMutex
+	connections map[int32]*connection
+}
+
+func NewHub() *Hub {
+	return &Hub{
+		connections: make(map[int32]*connection),
+	}
+}
+
+func (h *Hub) Send(userId int32, data any, timeout time.Duration) {
+	h.lock.RLock()
+	c, ok := h.connections[userId]
+	h.lock.RUnlock()
+	if !ok {
+		return
+	}
+	err := c.Write(data, timeout)
+	if err == nil {
+		return
+	}
+
+	// receive error; remove and close the connection
+	h.lock.Lock()
+	n, ok := h.connections[userId]
+	if !ok || c != n {
+		h.lock.Unlock()
+		return
+	}
+	delete(h.connections, userId)
+	h.lock.Unlock()
+	c.Close()
+}
+
+func (h *Hub) Register(userId int32, conn *websocket.Conn) {
+	newConn := &connection{conn: conn}
+	h.lock.Lock()
+	old := h.connections[userId]
+	h.connections[userId] = newConn
+	h.lock.Unlock()
+	if old != nil {
+		old.Close()
+	}
+}
+
+
+
+================================================
+File: internal/config/config.go
+================================================
+package config
+
+type Config struct {
+	TokenSigningKey   []byte `config:"token_signing_key"`
+	MockUsersPassword string `config:"mock_users_password"`
+}
+
+func defaultConfig() *Config {
+	return &Config{}
+}
+
+
+
+================================================
+File: internal/config/load.go
+================================================
+package config
+
+import (
+	"encoding/base64"
+	"github.com/go-viper/mapstructure/v2"
+	"github.com/knadh/koanf/providers/env"
+	"github.com/knadh/koanf/providers/structs"
+	"github.com/knadh/koanf/v2"
+	"log"
+	"log/slog"
+	"reflect"
+	"strings"
+)
+
+const (
+	tag       = "config"
+	delimiter = "."
+	prefix    = "BERMUDIA__"
+	separator = "__"
+)
+
+func Load() Config {
+	k := koanf.New(delimiter)
+
+	{
+		err := k.Load(structs.Provider(defaultConfig(), tag), nil)
+		if err != nil {
+			log.Fatalf("could not load default config: %v\n", err)
+		}
+	}
+
+	{
+		err := k.Load(env.Provider(prefix, delimiter, envCallBack), nil)
+		if err != nil {
+			slog.Error("could not load env variables for config: %v\n", err)
+		}
+	}
+
+	var instance Config
+	err := k.UnmarshalWithConf("", &instance, koanf.UnmarshalConf{
+		Tag: tag,
+		DecoderConfig: &mapstructure.DecoderConfig{
+			DecodeHook: mapstructure.ComposeDecodeHookFunc(
+				mapstructure.StringToTimeDurationHookFunc(),
+				mapstructure.StringToSliceHookFunc(","),
+				func(f reflect.Type, t reflect.Type, data any) (any, error) {
+					if f.Kind() != reflect.String {
+						return data, nil
+					}
+					if t != reflect.TypeFor[[]byte]() {
+						return data, nil
+					}
+					return base64.StdEncoding.DecodeString(data.(string))
+				},
+			),
+		},
+	})
+
+	if err != nil {
+		log.Fatalf("could not unmarshal config: %v\n", err)
+	}
+
+	return instance
+}
+
+func envCallBack(s string) string {
+	base := strings.ToLower(strings.TrimPrefix(s, prefix))
+	return strings.ReplaceAll(base, separator, delimiter)
+}
+
+
+
+================================================
+File: internal/domain/error.go
+================================================
+package domain
+
+const (
+	ErrorReasonResourceNotFound = iota
+	ErrorReasonRuleViolation
+)
+
+type Error struct {
+	text   string
+	reason int
+}
+
+func (e Error) Error() string {
+	return e.text
+}
+
+func (e Error) Reason() int {
+	return e.reason
+}
+
+
+
+================================================
+File: internal/domain/island.go
+================================================
+package domain
+
+// Island represents a single island in a territory
+type Island struct {
+	ID        string  `json:"id"`
+	Name      string  `json:"name"`
+	X         float64 `json:"x"`
+	Y         float64 `json:"y"`
+	Width     float64 `json:"width"`
+	Height    float64 `json:"height"`
+	IconAsset string  `json:"iconAsset"`
+}
+
+type IslandContent struct {
+	Components []IslandComponent `json:"components"`
+}
+
+type IslandComponent struct {
+	IFrame *IslandIFrame `json:"iframe,omitempty"`
+	Input  *IslandInput  `json:"input,omitempty"`
+}
+
+type IslandIFrame struct {
+	Url string `json:"url"`
+}
+
+type IslandInput struct {
+	ID          string   `json:"id"`
+	Type        string   `json:"type"`
+	Accept      []string `json:"accept,omitempty"`
+	Description string   `json:"description"`
+}
+
+
+
+================================================
+File: internal/domain/player.go
+================================================
+package domain
+
+import (
+	"slices"
+)
+
+const (
+	travelFuelConsumption = 1
+	fuelTankCapacity      = 15
+)
+
+type Player struct {
+	UserId      int32  `json:"-"`
+	AtTerritory string `json:"atTerritory"`
+	AtIsland    string `json:"atIsland"`
+	Fuel        int32  `json:"fuel"`
+	FuelCap     int32  `json:"fuelCap"`
+}
+
+const (
+	PlayerUpdateEventTravel = "travel"
+)
+
+type PlayerUpdateEvent struct {
+	Reason string  `json:"reason"`
+	Player *Player `json:"player"`
+}
+
+func NewPlayer(userId int32, startingTerritory *Territory) Player {
+	return Player{
+		UserId:      userId,
+		AtTerritory: startingTerritory.ID,
+		AtIsland:    startingTerritory.StartIsland,
+		Fuel:        fuelTankCapacity / 2,
+		FuelCap:     fuelTankCapacity,
+	}
+}
+
+func Travel(player Player, fromIsland, toIsland string, territory *Territory) (*PlayerUpdateEvent, error) {
+	if player.AtIsland != fromIsland {
+		return nil, Error{
+			text:   "شما در جزیره اعلامی قرار ندارید.",
+			reason: ErrorReasonResourceNotFound,
+		}
+	}
+	if !slices.ContainsFunc(territory.Edges, func(edge Edge) bool {
+		return (edge.From == fromIsland && edge.To == toIsland) ||
+			(edge.From == toIsland && edge.To == fromIsland)
+	}) {
+		return nil, Error{
+			text:   "مسیری بین این دو جزیره وجود ندارد.",
+			reason: ErrorReasonRuleViolation,
+		}
+	}
+	if player.Fuel-travelFuelConsumption < 0 {
+		return nil, Error{
+			text:   "سوخت شما برای سفر کافی نیست.",
+			reason: ErrorReasonRuleViolation,
+		}
+	}
+
+	player.Fuel -= travelFuelConsumption
+	player.AtIsland = toIsland
+	return &PlayerUpdateEvent{
+		Reason: PlayerUpdateEventTravel,
+		Player: &player,
+	}, nil
+}
+
+
+
+================================================
+File: internal/domain/store.go
+================================================
+package domain
+
+import (
+	"context"
+	"errors"
+)
+
+var (
+	ErrIslandNotFound    = errors.New("island not found")
+	ErrTerritoryNotFound = errors.New("territory not found")
+	ErrUserNotFound      = errors.New("user not found")
+	ErrPlayerConflict    = errors.New("player update conflict")
+)
+
+type TerritoryStore interface {
+	CreateTerritory(ctx context.Context, territory *Territory) error
+	GetTerritoryByID(ctx context.Context, territoryID string) (*Territory, error)
+	ListTerritories(ctx context.Context) ([]Territory, error)
+}
+
+type IslandStore interface {
+	SetContent(ctx context.Context, id string, content *IslandContent) error
+	ReserveIDForTerritory(ctx context.Context, territoryId, islandId string) error
+	GetByID(ctx context.Context, id string) (*IslandContent, error)
+	GetTerritory(ctx context.Context, id string) (string, error)
+}
+
+type UserStore interface {
+	Create(ctx context.Context, user *User) error
+	Get(ctx context.Context, id int32) (*User, error)
+	GetByUsername(ctx context.Context, username string) (*User, error)
+}
+
+type PlayerStore interface {
+	Create(ctx context.Context, player Player) error
+	Get(ctx context.Context, userId int32) (Player, error)
+	Update(ctx context.Context, old, updated Player) error
+}
+
+
+
+================================================
+File: internal/domain/territory.go
+================================================
+package domain
+
+// Edge represents a connection between two islands
+type Edge struct {
+	From string `json:"from"`
+	To   string `json:"to"`
+}
+
+// Territory represents a complete territory with islands and their connections
+type Territory struct {
+	ID              string   `json:"id"`
+	Name            string   `json:"name"`
+	BackgroundAsset string   `json:"backgroundAsset"`
+	StartIsland     string   `json:"startIsland"`
+	Islands         []Island `json:"islands"`
+	Edges           []Edge   `json:"edges"`
+}
+
+
+
+================================================
+File: internal/domain/user.go
+================================================
+package domain
+
+import (
+	"fmt"
+	"golang.org/x/crypto/bcrypt"
+)
+
+type User struct {
+	ID             int32  `json:"id"`
+	Username       string `json:"username"`
+	HashedPassword []byte `json:"-"`
+}
+
+func HashPassword(plainPassword string) ([]byte, error) {
+	h, err := bcrypt.GenerateFromPassword([]byte(plainPassword), bcrypt.DefaultCost)
+	if err != nil {
+		return nil, fmt.Errorf("error hashing password: %v", err)
+	}
+	return h, nil
+}
+
+func ValidatePassword(password string, hashedPassword []byte) bool {
+	return bcrypt.CompareHashAndPassword(hashedPassword, []byte(password)) == nil
+}
+
+
+
+================================================
+File: internal/mock/mock.go
+================================================
+package mock
+
+import (
+	"context"
+	"embed"
+	"encoding/json"
+	"errors"
+	"fmt"
+	"github.com/Rastaiha/bermudia/internal/domain"
+	"io/fs"
+	"log/slog"
+	"path/filepath"
+	"slices"
+	"strings"
+)
+
+//go:embed territories
+var territoryFiles embed.FS
+
+//go:embed islands
+var islandFiles embed.FS
+
+func CreateMockData(userStore domain.UserStore, playerStore domain.PlayerStore, territoryStore domain.TerritoryStore, islandStore domain.IslandStore, mockUsersPassword string) error {
+	slog.Info("Creating mock data...")
+	if mockUsersPassword == "" {
+		return errors.New("mock users password is empty")
+	}
+	if err := createMockTerritories(territoryStore, islandStore); err != nil {
+		return fmt.Errorf("failed to create mock territories: %w", err)
+	}
+	if err := createMockIslands(islandStore); err != nil {
+		return fmt.Errorf("failed to create mock islands: %w", err)
+	}
+	territories, err := territoryStore.ListTerritories(context.Background())
+	if err != nil {
+		return fmt.Errorf("failed to list mock territories: %w", err)
+	}
+	if len(territories) == 0 {
+		return errors.New("mock territories are empty")
+	}
+	errs := []error{createMockUser(userStore, playerStore, 100, "alice", mockUsersPassword, territories[0])}
+	for i := range 100 {
+		i = i + 1
+		errs = append(errs, createMockUser(userStore, playerStore, int32(100+i), fmt.Sprintf("test%d", i), mockUsersPassword, territories[i%len(territories)]))
+	}
+	if err := errors.Join(errs...); err != nil {
+		return fmt.Errorf("failed to create mock users: %w", err)
+	}
+	return nil
+}
+
+func createMockUser(userStore domain.UserStore, playerStore domain.PlayerStore, id int32, username string, password string, startingTerritory domain.Territory) error {
+	hp, err := domain.HashPassword(password)
+	if err != nil {
+		return err
+	}
+	err = userStore.Create(context.Background(), &domain.User{
+		ID:             id,
+		Username:       username,
+		HashedPassword: hp,
+	})
+	if err != nil {
+		return err
+	}
+	return playerStore.Create(context.Background(), domain.NewPlayer(id, &startingTerritory))
+}
+
+func createMockTerritories(territoryStore domain.TerritoryStore, islandStore domain.IslandStore) error {
+	ctx := context.Background()
+	return fs.WalkDir(territoryFiles, ".", func(path string, d fs.DirEntry, err error) error {
+		if d.IsDir() {
+			return nil
+		}
+		id := strings.TrimSuffix(filepath.Base(path), filepath.Ext(path))
+		if id == "" {
+			return errors.New("invalid territory id")
+		}
+
+		content, err := territoryFiles.ReadFile(path)
+		if err != nil {
+			return err
+		}
+
+		var territory domain.Territory
+		if err := json.Unmarshal(content, &territory); err != nil {
+			return err
+		}
+
+		for _, island := range territory.Islands {
+			if island.ID == "" {
+				return fmt.Errorf("empty island id in island list")
+			}
+		}
+		if territory.StartIsland == "" {
+			return errors.New("invalid territory startIsland")
+		}
+		if !slices.ContainsFunc(territory.Islands, func(island domain.Island) bool {
+			return island.ID == territory.StartIsland
+		}) {
+			return fmt.Errorf("startIsland %q not found in island list", territory.StartIsland)
+		}
+		for _, e := range territory.Edges {
+			if e.From == "" || e.To == "" {
+				return fmt.Errorf("empty edge.from or edge.to: %v", e)
+			}
+			if !slices.ContainsFunc(territory.Islands, func(island domain.Island) bool {
+				return island.ID == e.From
+			}) {
+				return fmt.Errorf("edge.from %q is not in island list", e.From)
+			}
+			if !slices.ContainsFunc(territory.Islands, func(island domain.Island) bool {
+				return island.ID == e.To
+			}) {
+				return fmt.Errorf("edge.to %q is not in island list", e.To)
+			}
+		}
+
+		for _, island := range territory.Islands {
+			if err := islandStore.ReserveIDForTerritory(ctx, id, island.ID); err != nil {
+				return err
+			}
+		}
+
+		return territoryStore.CreateTerritory(ctx, &territory)
+	})
+}
+
+func createMockIslands(islandStore domain.IslandStore) error {
+	ctx := context.Background()
+	return fs.WalkDir(islandFiles, ".", func(path string, d fs.DirEntry, err error) error {
+		if d.IsDir() {
+			return nil
+		}
+		id := strings.TrimSuffix(filepath.Base(path), filepath.Ext(path))
+		if id == "" {
+			return errors.New("invalid island id")
+		}
+		content, err := islandFiles.ReadFile(path)
+		if err != nil {
+			return err
+		}
+		var islandContent domain.IslandContent
+		if err := json.Unmarshal(content, &islandContent); err != nil {
+			return err
+		}
+		return islandStore.SetContent(ctx, id, &islandContent)
+	})
+}
+
+
+
+================================================
+File: internal/mock/islands/island_deer.json
+================================================
+{
+  "components": [
+    {
+      "iframe": {
+        "url": "https://platform.kamva.academy/article/713"
+      }
+    },
+    {
+      "input": {
+        "id": "island_deer_1",
+        "type": "number",
+        "description": "اگه ۵ تا سیب داشته باشم یکیش رو بخورم چندتا سیب میمونه برام؟"
+      }
+    },
+    {
+      "iframe": {
+        "url": "https://platform.kamva.academy/article/713"
+      }
+    },
+    {
+      "input": {
+        "id": "island_deer_2",
+        "type": "file",
+        "accept": [
+          "image/png",
+          "image/jpeg"
+        ],
+        "description": "به کجا می رویم؟ به سوی پیروزی!"
+      }
+    }
+  ]
+}
+
+
+================================================
+File: internal/mock/islands/island_final.json
+================================================
+{
+  "components": [
+    {
+      "iframe": {
+        "url": "https://platform.kamva.academy/article/713"
+      }
+    },
+    {
+      "input": {
+        "id": "island_final_1",
+        "type": "number",
+        "description": "اگه ۵ تا سیب داشته باشم یکیش رو بخورم چندتا سیب میمونه برام؟"
+      }
+    },
+    {
+      "iframe": {
+        "url": "https://platform.kamva.academy/article/713"
+      }
+    },
+    {
+      "input": {
+        "id": "island_final_2",
+        "type": "file",
+        "accept": [
+          "image/png",
+          "image/jpeg"
+        ],
+        "description": "از جوابت عکس بگیر بفرست:"
+      }
+    }
+  ]
+}
+
+
+================================================
+File: internal/mock/islands/island_math1.json
+================================================
+{
+  "components": [
+    {
+      "input": {
+        "id": "island_math1_1",
+        "type": "text",
+        "description": "جواب سؤال معروف 2x2 رو بفرست:"
+      }
+    }
+  ]
+}
+
+
+================================================
+File: internal/mock/islands/island_math2.json
+================================================
+{
+  "components": [
+    {
+      "input": {
+        "id": "island_math2_1",
+        "type": "file",
+        "accept": ["application/pdf"],
+        "description": "یه فایل pdf بفرست:"
+      }
+    }
+  ]
+}
+
+
+================================================
+File: internal/mock/islands/island_science1.json
+================================================
+{
+  "components": [
+    {
+      "iframe": {
+        "url": "https://platform.kamva.academy/article/713"
+      }
+    },
+    {
+      "input": {
+        "id": "island_science1_1",
+        "type": "file",
+        "accept": ["image/png", "image/jpeg"],
+        "description": "از جوابت عکس بگیر بفرست:"
+      }
+    }
+  ]
+}
+
+
+================================================
+File: internal/mock/islands/island_spectacle.json
+================================================
+{
+  "components": [
+    {
+      "input": {
+        "id": "island_spectacle_1",
+        "type": "file",
+        "accept": ["application/pdf"],
+        "description": "یه فایل pdf بفرست:"
+      }
+    }
+  ]
+}
+
+
+================================================
+File: internal/mock/islands/island_start.json
+================================================
+{
+  "components": [
+    {
+      "iframe": {
+        "url": "https://platform.kamva.academy/article/713"
+      }
+    }
+  ]
+}
+
+
+================================================
+File: internal/mock/islands/island_thompson.json
+================================================
+{
+  "components": [
+    {
+      "iframe": {
+        "url": "https://platform.kamva.academy/article/713"
+      }
+    }
+  ]
+}
+
+
+================================================
+File: internal/mock/territories/territory1.json
+================================================
+{
+  "id": "territory1",
+  "name": "جزایر اسرارآمیز",
+  "backgroundAsset": "background1.png",
+  "startIsland": "island_start",
+  "islands": [
+    {
+      "id": "island_start",
+      "name": "بندر خوش‌آمدگویی",
+      "x": 0.15,
+      "y": 0.35,
+      "width": 0.12,
+      "height": 0.18,
+      "iconAsset": "island1.svg"
+    },
+    {
+      "id": "island_math1",
+      "name": "جزیره اعداد",
+      "x": 0.38,
+      "y": 0.42,
+      "width": 0.14,
+      "height": 0.16,
+      "iconAsset": "island6.svg"
+    },
+    {
+      "id": "island_math2",
+      "name": "قله هندسه",
+      "x": 0.65,
+      "y": 0.25,
+      "width": 0.13,
+      "height": 0.20,
+      "iconAsset": "island3.svg"
+    },
+    {
+      "id": "island_science1",
+      "name": "خلیج فیزیک",
+      "x": 0.52,
+      "y": 0.68,
+      "width": 0.15,
+      "height": 0.17,
+      "iconAsset": "island3.svg"
+    },
+    {
+      "id": "island_final",
+      "name": "قله دانش",
+      "x": 0.82,
+      "y": 0.52,
+      "width": 0.16,
+      "height": 0.22,
+      "iconAsset": "island7.svg"
+    }
+  ],
+  "edges": [
+    {
+      "from": "island_start",
+      "to": "island_math1"
+    },
+    {
+      "from": "island_start",
+      "to": "island_science1"
+    },
+    {
+      "from": "island_math1",
+      "to": "island_math2"
+    },
+    {
+      "from": "island_math2",
+      "to": "island_final"
+    },
+    {
+      "from": "island_science1",
+      "to": "island_final"
+    }
+  ]
+}
+
+
+================================================
+File: internal/mock/territories/territory2.json
+================================================
+{
+  "id": "territory2",
+  "name": "جزایر دور",
+  "backgroundAsset": "background1.png",
+  "startIsland": "island_thompson",
+  "islands": [
+    {
+      "id": "island_thompson",
+      "name": "جزیره تامپسون",
+      "x": 0.05,
+      "y": 0.85,
+      "width": 0.12,
+      "height": 0.18,
+      "iconAsset": "island5.svg"
+    },
+    {
+      "id": "island_spectacle",
+      "name": "جزیره تماشا",
+      "x": 0.20,
+      "y": 0.75,
+      "width": 0.14,
+      "height": 0.16,
+      "iconAsset": "island4.svg"
+    },
+    {
+      "id": "island_deer",
+      "name": "جزیره آهو",
+      "x": 0.55,
+      "y": 0.30,
+      "width": 0.11,
+      "height": 0.11,
+      "iconAsset": "island3.svg"
+    }
+  ],
+  "edges": [
+    {
+      "from": "island_thompson",
+      "to": "island_spectacle"
+    },
+    {
+      "from": "island_spectacle",
+      "to": "island_deer"
+    }
+  ]
+}
+
+
+================================================
+File: internal/repository/db.go
+================================================
+package repository
+
+import (
+	"database/sql"
+	_ "github.com/mattn/go-sqlite3"
+	"os"
+	"path/filepath"
+)
+
+func ConnectToSqlite() (*sql.DB, error) {
+	p := filepath.Join(os.TempDir(), "bermudia_sqlite.db")
+	if err := os.Remove(p); err != nil && !os.IsNotExist(err) {
+		return nil, err
+	}
+	db, err := sql.Open("sqlite3", p)
+	return db, err
+}
+
+type scannable interface {
+	Scan(dest ...any) error
+}
+
+
+
+================================================
+File: internal/repository/island.go
+================================================
+package repository
+
+import (
+	"context"
+	"database/sql"
+	"encoding/json"
+	"errors"
+	"fmt"
+	"github.com/Rastaiha/bermudia/internal/domain"
+)
+
+const (
+	islandsSchema = `
+CREATE TABLE IF NOT EXISTS islands (
+    id VARCHAR(255) PRIMARY KEY,
+    territory_id VARCHAR(255) NOT NULL,
+    content TEXT NOT NULL
+);
+`
+)
+
+type sqlIslandRepository struct {
+	db *sql.DB
+}
+
+func NewSqlIslandRepository(db *sql.DB) (domain.IslandStore, error) {
+	_, err := db.Exec(islandsSchema)
+	if err != nil {
+		return nil, fmt.Errorf("create islands table: %w", err)
+	}
+	return sqlIslandRepository{
+		db: db,
+	}, nil
+}
+
+func (s sqlIslandRepository) SetContent(ctx context.Context, id string, content *domain.IslandContent) error {
+	c, err := json.Marshal(content)
+	if err != nil {
+		return err
+	}
+	cmd, err := s.db.ExecContext(ctx, `UPDATE islands SET content = $1 WHERE id = $2`, c, id)
+	if err != nil {
+		return err
+	}
+	affected, err := cmd.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if affected == 0 {
+		return domain.ErrIslandNotFound
+	}
+	return nil
+}
+
+func (s sqlIslandRepository) ReserveIDForTerritory(ctx context.Context, territoryId, islandId string) error {
+	var actualTerritoryId string
+	err := s.db.QueryRowContext(ctx, `INSERT INTO islands (id, territory_id, content) VALUES ($1, $2, $3) ON CONFLICT DO UPDATE SET id = EXCLUDED.id RETURNING territory_id ;`, islandId, territoryId, []byte("{}")).Scan(&actualTerritoryId)
+	if err != nil {
+		return err
+	}
+	if actualTerritoryId != territoryId {
+		return fmt.Errorf("island_id %q is already taken by territory %q", islandId, actualTerritoryId)
+	}
+	return nil
+}
+
+func (s sqlIslandRepository) GetByID(ctx context.Context, id string) (*domain.IslandContent, error) {
+	var content []byte
+	err := s.db.QueryRowContext(ctx, `SELECT content FROM islands WHERE id = $1`, id).Scan(&content)
+	if errors.Is(err, sql.ErrNoRows) {
+		return nil, domain.ErrIslandNotFound
+	}
+	if err != nil {
+		return nil, err
+	}
+	var result domain.IslandContent
+	if err := json.Unmarshal(content, &result); err != nil {
+		return nil, err
+	}
+	return &result, nil
+}
+
+func (s sqlIslandRepository) GetTerritory(ctx context.Context, id string) (string, error) {
+	var territoryId string
+	err := s.db.QueryRowContext(ctx, `SELECT territory_id FROM islands WHERE id = $1`, id).Scan(&territoryId)
+	if errors.Is(err, sql.ErrNoRows) {
+		return "", domain.ErrIslandNotFound
+	}
+	return territoryId, err
+}
+
+
+
+================================================
+File: internal/repository/player.go
+================================================
+package repository
+
+import (
+	"context"
+	"database/sql"
+	"fmt"
+	"github.com/Rastaiha/bermudia/internal/domain"
+)
+
+const playersSchema = `
+CREATE TABLE IF NOT EXISTS players (
+	user_id INT4 PRIMARY KEY,
+	at_territory VARCHAR(255) NOT NULL,
+	at_island VARCHAR(255) NOT NULL,
+	fuel INT4 NOT NULL,
+    fuel_cap INT4 NOT NULL
+);
+`
+
+type sqlPlayerRepository struct {
+	db *sql.DB
+}
+
+func NewSqlPlayerRepository(db *sql.DB) (domain.PlayerStore, error) {
+	_, err := db.Exec(playersSchema)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create players table: %w", err)
+	}
+	return sqlPlayerRepository{db: db}, nil
+}
+
+func (s sqlPlayerRepository) Create(ctx context.Context, player domain.Player) error {
+	_, err := s.db.ExecContext(ctx,
+		`INSERT INTO players (user_id, at_territory, at_island, fuel, fuel_cap) VALUES ($1, $2, $3, $4, $5)`,
+		player.UserId, player.AtTerritory, player.AtIsland, player.Fuel, player.FuelCap,
+	)
+	return err
+}
+
+func (s sqlPlayerRepository) Get(ctx context.Context, userId int32) (domain.Player, error) {
+	var p domain.Player
+	err := s.db.QueryRowContext(ctx,
+		`SELECT user_id, at_territory, at_island, fuel, fuel_cap FROM players WHERE user_id = $1`,
+		userId,
+	).Scan(&p.UserId, &p.AtTerritory, &p.AtIsland, &p.Fuel, &p.FuelCap)
+
+	if err != nil {
+		return domain.Player{}, fmt.Errorf("failed to get player from db: %w", err)
+	}
+	return p, nil
+}
+
+// Update updates a player row if and only if all fields match "old".
+// UserId is never updated.
+func (s sqlPlayerRepository) Update(ctx context.Context, old, updated domain.Player) error {
+	cmd, err := s.db.ExecContext(ctx,
+		`UPDATE players
+		 SET at_territory = $1, at_island = $2, fuel = $3, fuel_cap = $4
+		 WHERE user_id = $5
+		   AND at_territory = $6
+		   AND at_island = $7
+		   AND fuel = $8
+		   AND fuel_cap = $9`,
+		updated.AtTerritory, updated.AtIsland, updated.Fuel, updated.FuelCap,
+		old.UserId, old.AtTerritory, old.AtIsland, old.Fuel, old.FuelCap,
+	)
+	if err != nil {
+		return err
+	}
+	rows, err := cmd.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if rows == 0 {
+		// nothing updated -> either player not found, or old didn’t match
+		return domain.ErrPlayerConflict
+	}
+	return nil
+}
+
+
+
+================================================
+File: internal/repository/territory.go
+================================================
+package repository
+
+import (
+	"context"
+	"database/sql"
+	"encoding/json"
+	"errors"
+	"fmt"
+	"time"
+
+	"github.com/Rastaiha/bermudia/internal/domain"
+)
+
+const (
+	territorySchema = `
+CREATE TABLE IF NOT EXISTS territories (
+	id VARCHAR(255) PRIMARY KEY,
+    start_island VARCHAR(255) NOT NULL,
+    content TEXT NOT NULL,
+    updated_at TIMESTAMP NOT NULL
+);
+`
+)
+
+type sqlTerritoryRepository struct {
+	db *sql.DB
+}
+
+func NewSqlTerritoryRepository(db *sql.DB) (domain.TerritoryStore, error) {
+	_, err := db.Exec(territorySchema)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create territories table: %w", err)
+	}
+	return sqlTerritoryRepository{
+		db: db,
+	}, nil
+}
+
+type territoryContent struct {
+	Name            string          `json:"name"`
+	BackgroundAsset string          `json:"backgroundAsset"`
+	Islands         []domain.Island `json:"islands"`
+	Edges           []domain.Edge   `json:"edges"`
+}
+
+func (s sqlTerritoryRepository) columns() string {
+	return "SELECT id, start_island, content FROM territories"
+}
+
+func (s sqlTerritoryRepository) scan(row scannable, territory *domain.Territory) error {
+	var content []byte
+	err := row.Scan(&territory.ID, &territory.StartIsland, &content)
+	if errors.Is(err, sql.ErrNoRows) {
+		return domain.ErrTerritoryNotFound
+	}
+	if err != nil {
+		return fmt.Errorf("failed to get territory from db: %w", err)
+	}
+	var tc territoryContent
+	err = json.Unmarshal(content, &tc)
+	if err != nil {
+		return err
+	}
+	territory.Name = tc.Name
+	territory.BackgroundAsset = tc.BackgroundAsset
+	territory.Islands = tc.Islands
+	territory.Edges = tc.Edges
+	return nil
+}
+
+func (s sqlTerritoryRepository) CreateTerritory(ctx context.Context, territory *domain.Territory) error {
+	tc := territoryContent{
+		Name:            territory.Name,
+		BackgroundAsset: territory.BackgroundAsset,
+		Islands:         territory.Islands,
+		Edges:           territory.Edges,
+	}
+	content, err := json.Marshal(tc)
+	if err != nil {
+		return err
+	}
+	_, err = s.db.ExecContext(ctx, `INSERT INTO territories (id, start_island, content, updated_at) VALUES ($1, $2, $3, $4)`, territory.ID, territory.StartIsland, content, time.Now().UTC())
+	return err
+}
+
+func (s sqlTerritoryRepository) GetTerritoryByID(ctx context.Context, territoryID string) (*domain.Territory, error) {
+	var t domain.Territory
+	err := s.scan(s.db.QueryRowContext(ctx, s.columns()+" WHERE id = $1", territoryID), &t)
+	return &t, err
+}
+
+// ListTerritories returns all available territories from embedded files
+func (s sqlTerritoryRepository) ListTerritories(ctx context.Context) ([]domain.Territory, error) {
+	var result []domain.Territory
+	rows, err := s.db.QueryContext(ctx, s.columns())
+	if err != nil {
+		return nil, err
+	}
+	for rows.Next() {
+		var t domain.Territory
+		if err := s.scan(rows, &t); err != nil {
+			return nil, err
+		}
+		result = append(result, t)
+	}
+	return result, rows.Close()
+}
+
+
+
+================================================
+File: internal/repository/user.go
+================================================
+package repository
+
+import (
+	"context"
+	"database/sql"
+	"errors"
+	"fmt"
+	"github.com/Rastaiha/bermudia/internal/domain"
+	"strings"
+)
+
+const (
+	userSchema = `
+CREATE TABLE IF NOT EXISTS users (
+    id INT4 PRIMARY KEY,
+    username_display VARCHAR(255) NOT NULL,
+    username VARCHAR(255) NOT NULL UNIQUE,
+    hashed_password BYTEA NOT NULL
+);`
+)
+
+type sqlUser struct {
+	db *sql.DB
+}
+
+func NewSqlUser(db *sql.DB) (domain.UserStore, error) {
+	_, err := db.Exec(userSchema)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create users table: %w", err)
+	}
+	return sqlUser{
+		db: db,
+	}, nil
+}
+
+func (s sqlUser) columns() string {
+	return "SELECT id, username_display, hashed_password FROM users"
+}
+
+func (s sqlUser) scan(row *sql.Row, user *domain.User) error {
+	err := row.Scan(&user.ID, &user.Username, &user.HashedPassword)
+	if errors.Is(err, sql.ErrNoRows) {
+		return domain.ErrUserNotFound
+	}
+	return err
+}
+
+func (s sqlUser) Create(ctx context.Context, user *domain.User) error {
+	_, err := s.db.ExecContext(ctx, `INSERT INTO users (id, username_display, username, hashed_password) VALUES ($1, $2, $3, $4)`,
+		user.ID,
+		user.Username,
+		strings.ToLower(user.Username),
+		user.HashedPassword,
+	)
+	return err
+}
+
+func (s sqlUser) Get(ctx context.Context, id int32) (*domain.User, error) {
+	var result domain.User
+	err := s.scan(s.db.QueryRowContext(ctx, s.columns()+" WHERE id = $1", id), &result)
+	return &result, err
+}
+
+func (s sqlUser) GetByUsername(ctx context.Context, username string) (*domain.User, error) {
+	var result domain.User
+	err := s.scan(s.db.QueryRowContext(ctx, s.columns()+" WHERE username = $1", strings.ToLower(username)), &result)
+	return &result, err
+}
+
+
+
+================================================
+File: internal/service/auth.go
+================================================
+package service
+
+import (
+	"context"
+	"fmt"
+	"github.com/Rastaiha/bermudia/internal/config"
+	"github.com/Rastaiha/bermudia/internal/domain"
+	"github.com/golang-jwt/jwt/v5"
+	"log/slog"
+	"time"
+)
+
+type Auth struct {
+	userStore domain.UserStore
+	cfg       config.Config
+}
+
+func NewAuth(cfg config.Config, userStore domain.UserStore) *Auth {
+	return &Auth{cfg: cfg, userStore: userStore}
+}
+
+func (a *Auth) Login(ctx context.Context, username, password string) (string, error) {
+	user, err := a.userStore.GetByUsername(ctx, username)
+	if err != nil {
+		return "", err
+	}
+	if !domain.ValidatePassword(password, user.HashedPassword) {
+		return "", domain.ErrUserNotFound
+	}
+	token := jwt.NewWithClaims(jwt.SigningMethodHS512, jwt.MapClaims{
+		"user_id": fmt.Sprint(user.ID),
+		"iat":     float64(time.Now().UTC().UnixNano()) / 1e9,
+	})
+	tokenString, err := token.SignedString(a.cfg.TokenSigningKey)
+	if err != nil {
+		return "", fmt.Errorf("failed to sign token: %w", err)
+	}
+	return tokenString, nil
+}
+
+func (a *Auth) ValidateToken(ctx context.Context, tokenStr string) (*domain.User, bool) {
+	token, err := jwt.Parse(
+		tokenStr,
+		func(token *jwt.Token) (interface{}, error) {
+			return a.cfg.TokenSigningKey, nil
+		},
+		jwt.WithValidMethods([]string{jwt.SigningMethodHS512.Alg()}),
+		jwt.WithIssuedAt(),
+	)
+	if err != nil {
+		return nil, false
+	}
+	if !token.Valid {
+		return nil, false
+	}
+	if iat, err := token.Claims.GetIssuedAt(); err != nil || time.Since(iat.Time) > 16*time.Hour {
+		return nil, false
+	}
+	claims, ok := token.Claims.(jwt.MapClaims)
+	if !ok {
+		return nil, false
+	}
+	v, ok := claims["user_id"]
+	if !ok {
+		return nil, false
+	}
+	userIdStr, _ := v.(string)
+	var userId int32
+	_, err = fmt.Sscanf(userIdStr, "%d", &userId)
+	if err != nil {
+		return nil, false
+	}
+	user, err := a.userStore.Get(ctx, userId)
+	if err != nil {
+		slog.Error("failed to find valid user by id", userId)
+		return nil, false
+	}
+	return user, true
+}
+
+
+
+================================================
+File: internal/service/island.go
+================================================
+package service
+
+import (
+	"context"
+	"github.com/Rastaiha/bermudia/internal/domain"
+)
+
+type Island struct {
+	repo domain.IslandStore
+}
+
+func NewIsland(repo domain.IslandStore) *Island {
+	return &Island{repo: repo}
+}
+
+func (i *Island) GetIsland(ctx context.Context, id string) (*domain.IslandContent, error) {
+	return i.repo.GetByID(ctx, id)
+}
+
+
+
+================================================
+File: internal/service/player.go
+================================================
+package service
+
+import (
+	"context"
+	"github.com/Rastaiha/bermudia/internal/domain"
+)
+
+type Player struct {
+	playerStore              domain.PlayerStore
+	territoryStore           domain.TerritoryStore
+	playerUpdateEventHandler func(event *domain.PlayerUpdateEvent)
+}
+
+func NewPlayer(playerStore domain.PlayerStore, territoryStore domain.TerritoryStore) *Player {
+	return &Player{playerStore: playerStore, territoryStore: territoryStore}
+}
+
+func (p *Player) GetPlayer(ctx context.Context, user *domain.User) (domain.Player, error) {
+	return p.playerStore.Get(ctx, user.ID)
+}
+
+func (p *Player) Travel(ctx context.Context, user *domain.User, fromIsland string, toIsland string) error {
+	player, err := p.playerStore.Get(ctx, user.ID)
+	if err != nil {
+		return err
+	}
+	territory, err := p.territoryStore.GetTerritoryByID(ctx, player.AtTerritory)
+	if err != nil {
+		return err
+	}
+
+	event, err := domain.Travel(player, fromIsland, toIsland, territory)
+	if err != nil {
+		return err
+	}
+	if err := p.playerStore.Update(ctx, player, *event.Player); err != nil {
+		return err
+	}
+	p.sendPlayerUpdateEvent(event)
+
+	return nil
+}
+
+func (p *Player) OnPlayerUpdate(eventHandler func(event *domain.PlayerUpdateEvent)) {
+	p.playerUpdateEventHandler = eventHandler
+}
+
+func (p *Player) sendPlayerUpdateEvent(event *domain.PlayerUpdateEvent) {
+	if p.playerUpdateEventHandler != nil {
+		p.playerUpdateEventHandler(event)
+	}
+}
+
+
+
+================================================
+File: internal/service/territory.go
+================================================
+package service
+
+import (
+	"context"
+
+	"github.com/Rastaiha/bermudia/internal/domain"
+)
+
+// Territory handles business logic for territories
+type Territory struct {
+	repo domain.TerritoryStore
+}
+
+// NewTerritory creates a new territory service
+func NewTerritory(repo domain.TerritoryStore) *Territory {
+	return &Territory{
+		repo: repo,
+	}
+}
+
+// GetTerritory retrieves a territory by ID with any business logic applied
+func (s *Territory) GetTerritory(ctx context.Context, territoryID string) (*domain.Territory, error) {
+	return s.repo.GetTerritoryByID(ctx, territoryID)
+}
+
+// ListTerritories retrieves all territories with business logic applied
+func (s *Territory) ListTerritories(ctx context.Context) ([]domain.Territory, error) {
+	territories, err := s.repo.ListTerritories(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	// Apply business logic here if needed
+	// For example:
+	// - Sort territories by some criteria
+	// - Filter based on user permissions
+	// - Add metadata
+
+	return territories, nil
+}
+
+
