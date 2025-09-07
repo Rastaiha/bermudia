@@ -1,5 +1,9 @@
 <template>
-    <div v-if="player" dir="rtl" class="fixed top-4 right-4 z-50 font-sans text-white p-3 rounded-lg w-64">
+    <div
+        v-if="player"
+        dir="rtl"
+        class="fixed top-4 right-4 z-50 font-sans text-white p-3 rounded-lg w-64"
+    >
         <div class="flex justify-between items-center mb-3">
             <h2 class="text-lg font-bold text-gray-200 drop-shadow-lg">
                 {{ username }}
@@ -7,15 +11,33 @@
             <div class="flex items-center gap-3">
                 <button
                     class="text-sm font-bold text-gray-200 transition-colors duration-300 transform cursor-pointer hover:text-red-400 drop-shadow-lg"
-                    title="خروج" @click="open">
+                    title="خروج"
+                    @pointerdown="open"
+                >
                     خروج
                 </button>
             </div>
         </div>
-        <PlayerInventoryBar v-if="knowledgeBar" :bar-data="knowledgeBar"></PlayerInventoryBar>
-        <PlayerInventoryBar v-if="fuelBar" :bar-data="fuelBar"></PlayerInventoryBar>
-        <PlayerInventoryBar v-if="coinBar" :bar-data="coinBar"></PlayerInventoryBar>
+        <PlayerInventoryBar
+            v-if="knowledgeBar"
+            :bar-data="knowledgeBar"
+        ></PlayerInventoryBar>
+        <PlayerInventoryBar
+            v-if="fuelBar"
+            :bar-data="fuelBar"
+        ></PlayerInventoryBar>
+        <PlayerInventoryBar
+            v-if="coinBar"
+            :bar-data="coinBar"
+        ></PlayerInventoryBar>
         <Dropdown title="کوله پشتی" :items="inventoryDropdownItems" />
+        <button
+            class="text-sm font-bold text-gray-200 transition-colors duration-300 transform cursor-pointer hover:text-red-400 drop-shadow-lg"
+            title="کتاب"
+            @pointerdown="checkBookshelf"
+        >
+            <img src="/images/icons/book.png" class="w-12 h-12" alt="کتاب‌ها" />
+        </button>
     </div>
 </template>
 
@@ -27,6 +49,7 @@ import PlayerInventoryBar from './PlayerInventoryBar.vue';
 import Dropdown from './Dropdown.vue';
 import { useModal } from 'vue-final-modal';
 import ConfirmModal from './ConfirmModal.vue';
+import Bookshelf from './Bookshelf.vue';
 
 const props = defineProps({
     player: {
@@ -56,7 +79,17 @@ const { open, close } = useModal({
     },
     slots: {
         content: '<p>آیا برای خروج از حساب کاربری خود اطمینان دارید؟</p>',
-    }
+    },
+});
+
+const { open: checkBookshelf, close: closeBookshelf } = useModal({
+    component: Bookshelf,
+    attrs: {
+        books: props.player.books,
+        onClose() {
+            closeBookshelf();
+        },
+    },
 });
 
 const inventoryItems = ['goldenKeys', 'redKeys', 'blueKeys'];
