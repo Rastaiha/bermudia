@@ -17,10 +17,8 @@ onMounted(() => {
     let parallaxX = 0;
     let parallaxY = 0;
 
-    const isMobile = /Mobi|Android/i.test(navigator.userAgent);
-    const NUM_STARS = isMobile ? 150 : 400;
-    const MILKY_WAY_STAR_COUNT = isMobile ? 100 : 300;
-
+    const NUM_STARS = 600;
+    const MILKY_WAY_STAR_COUNT = 500;
     const SHOOTING_STAR_FREQ = Math.random() < 0.5 ? 0.005 : 0.01;
     const HOVER_RADIUS = 150;
     const MAX_FADE_OPACITY = 0.2;
@@ -176,44 +174,33 @@ onMounted(() => {
         mouseY = (e.clientY / cvs.height) * 2 - 1;
     });
 
-    const starGlowCache = new Map();
-
-    function getStarGlowGradient(x, y, radius, color, opacity) {
-        const key = `${radius}|${color}`;
-        if (!starGlowCache.has(key)) {
-            const glowR = radius * 5;
-            const grad = ctx.createRadialGradient(x, y, radius, x, y, glowR);
-            grad.addColorStop(0, `rgba(${color},${opacity * 0.6})`);
-            grad.addColorStop(1, 'rgba(0,0,0,0)');
-            starGlowCache.set(key, grad);
-        }
-        return starGlowCache.get(key);
-    }
-
     function drawStar(star, ox = 0, oy = 0) {
         const x = star.x + ox,
             y = star.y + oy;
-
         if (star.glow) {
-            const grad = getStarGlowGradient(
+            const glowR = star.radius * 5 + Math.random() * 3;
+            const grad = ctx.createRadialGradient(
                 x,
                 y,
                 star.radius,
-                star.color,
-                star.opacity
+                x,
+                y,
+                glowR
             );
+            grad.addColorStop(0, `rgba(${star.color},${star.opacity * 0.6})`);
+            grad.addColorStop(1, 'rgba(0,0,0,0)');
             ctx.fillStyle = grad;
             ctx.beginPath();
-            ctx.arc(x, y, star.radius * 5, 0, Math.PI * 2);
+            ctx.arc(x, y, glowR, 0, Math.PI * 2);
             ctx.fill();
         }
-
         ctx.beginPath();
         ctx.fillStyle = `rgba(${star.color},${star.opacity})`;
         ctx.shadowColor = `rgba(${star.color},${star.opacity})`;
         ctx.shadowBlur = star.radius * 1.5 + (star.glow ? 1.5 : 0);
         ctx.arc(x, y, star.radius, 0, Math.PI * 2);
         ctx.fill();
+        ctx.shadowBlur = 0;
     }
 
     function drawMilkyWayGlow() {
