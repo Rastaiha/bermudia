@@ -6,6 +6,11 @@
         <LoadingIndicator v-if="isLoading" :message="loadingMessage" />
 
         <template v-else-if="player">
+            <div
+                class="fixed top-8 text-2xl font-bold text-[#f5deb3] drop-shadow-[2px_4px_6px_white]"
+            >
+                {{ territoryName }}
+            </div>
             <MapView
                 ref="mapViewComponentRef"
                 :islands="islands"
@@ -58,6 +63,7 @@ const islands = ref([]);
 const refuelIslands = ref([]);
 const terminalIslands = ref([]);
 const edges = ref([]);
+const territoryName = ref('');
 const player = ref(null);
 const username = ref('...');
 const backgroundImage = ref('');
@@ -129,6 +135,7 @@ const loadPageData = async id => {
         territoryId.value = id;
 
         backgroundImage.value = `/images/${territoryData.backgroundAsset}`;
+        territoryName.value = territoryData.name;
         islands.value = territoryData.islands;
         edges.value = territoryData.edges;
         refuelIslands.value = territoryData.refuelIslands;
