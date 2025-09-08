@@ -75,6 +75,9 @@ func NewPlayer(userId int32, startingTerritory *Territory) Player {
 		Fuel:               initialFuelAmount,
 		FuelCap:            fuelTankCapacity,
 		Coins:              initialCoinsAmount,
+		redKeys:			5,
+		blueKeys:			5,
+		goldenKeys:			5,
 		VisitedTerritories: []string{startingTerritory.ID},
 	}
 }
