@@ -20,7 +20,8 @@ CREATE TABLE IF NOT EXISTS trade_offers (
 	deleted_at TIMESTAMP NULL
 );
 
-CREATE INDEX IF NOT EXISTS idx_trade_offers_created_at ON trade_offers(created_at);
+CREATE INDEX IF NOT EXISTS idx_trade_offers_by_created_at ON trade_offers(by, deleted_at, created_at);
+CREATE INDEX IF NOT EXISTS idx_trade_offers_created_at ON trade_offers(deleted_at, created_at);
 `
 
 type sqlMarketRepository struct {
@@ -107,13 +108,23 @@ func (s sqlMarketRepository) GetOffer(ctx context.Context, offerId string) (doma
 	return offer, nil
 }
 
-func (s sqlMarketRepository) GetOffers(ctx context.Context, offset int, limit int) ([]domain.TradeOffer, error) {
+func (s sqlMarketRepository) GetOffers(ctx context.Context, filter domain.GetOffersByFilterType, userId int32, offset int, limit int) ([]domain.TradeOffer, error) {
+	filterCondition := ""
+	switch filter {
+	case domain.GetOffersByAll:
+	case domain.GetOffersByMe:
+		filterCondition = fmt.Sprintf("AND (by = %d)", userId)
+	case domain.GetOffersByOthers:
+		filterCondition = fmt.Sprintf("AND (by != %d)", userId)
+	default:
+		return nil, domain.ErrInvalidFilter
+	}
 	rows, err := s.db.QueryContext(ctx,
-		`SELECT id, by, offered, requested, created_at 
+		fmt.Sprintf(`SELECT id, by, offered, requested, created_at 
 		 FROM trade_offers 
-		 WHERE deleted_at IS NULL 
+		 WHERE deleted_at IS NULL %s 
 		 ORDER BY created_at DESC 
-		 LIMIT $1 OFFSET $2`,
+		 LIMIT $1 OFFSET $2`, filterCondition),
 		limit, offset,
 	)
 	if err != nil {
@@ -147,4 +158,16 @@ func (s sqlMarketRepository) GetOffers(ctx context.Context, offset int, limit in
 	}
 
 	return offers, nil
+}
+
+func (s sqlMarketRepository) GetOffersCountOfUser(ctx context.Context, userId int32) (int, error) {
+	var count int
+	err := s.db.QueryRowContext(ctx, `SELECT COUNT(*) FROM trade_offers WHERE by = $1 AND deleted_at IS NULL`, userId).Scan(&count)
+	if errors.Is(err, sql.ErrNoRows) {
+		return 0, nil
+	}
+	if err != nil {
+		return 0, fmt.Errorf("failed to get trade offer count: %w", err)
+	}
+	return count, nil
 }

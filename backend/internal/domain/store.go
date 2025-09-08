@@ -22,6 +22,7 @@ var (
 	ErrUserTreasureConflict       = errors.New("user treasure update conflict")
 	ErrAlreadyApplied             = errors.New("already applied")
 	ErrOfferAlreadyDeleted        = errors.New("offer already deleted")
+	ErrInvalidFilter              = errors.New("invalid filter")
 )
 
 type Tx interface {
@@ -92,10 +93,19 @@ type TreasureStore interface {
 	UpdateUserTreasure(ctx context.Context, old UserTreasure, updated UserTreasure) error
 }
 
+type GetOffersByFilterType string
+
+const (
+	GetOffersByAll    GetOffersByFilterType = ""
+	GetOffersByMe     GetOffersByFilterType = "me"
+	GetOffersByOthers GetOffersByFilterType = "others"
+)
+
 type MarketStore interface {
 	CreateOffer(ctx context.Context, tx Tx, offer TradeOffer) error
 	// DeleteOffer soft-deletes the offer
 	DeleteOffer(ctx context.Context, tx Tx, offerId string) error
 	GetOffer(ctx context.Context, offerId string) (TradeOffer, error)
-	GetOffers(ctx context.Context, offset int, limit int) ([]TradeOffer, error)
+	GetOffers(ctx context.Context, byFilter GetOffersByFilterType, userId int32, offset int, limit int) ([]TradeOffer, error)
+	GetOffersCountOfUser(ctx context.Context, userId int32) (int, error)
 }

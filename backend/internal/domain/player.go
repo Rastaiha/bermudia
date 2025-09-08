@@ -109,54 +109,42 @@ func canAfford(player Player, cost Cost) bool {
 	return ok
 }
 
+func getItemField(player *Player, itemType string) *int32 {
+	switch itemType {
+	case CostItemTypeFuel:
+		return &player.Fuel
+	case CostItemTypeCoin:
+		return &player.Coins
+	case CostItemTypeBlueKey:
+		return &player.BlueKeys
+	case CostItemTypeRedKey:
+		return &player.RedKeys
+	case CostItemTypeGoldenKey:
+		return &player.GoldenKeys
+	default:
+		return nil
+	}
+}
+
 func deductCost(player Player, cost Cost) (Player, bool) {
 	for _, o := range cost.Items {
-		switch o.Type {
-		case CostItemTypeFuel:
-			if player.Fuel < o.Amount {
-				return player, false
-			}
-			player.Fuel -= o.Amount
-		case CostItemTypeCoin:
-			if player.Coins < o.Amount {
-				return player, false
-			}
-			player.Coins -= o.Amount
-		case CostItemTypeBlueKey:
-			if player.BlueKeys < o.Amount {
-				return player, false
-			}
-			player.BlueKeys -= o.Amount
-		case CostItemTypeRedKey:
-			if player.RedKeys < o.Amount {
-				return player, false
-			}
-			player.RedKeys -= o.Amount
-		case CostItemTypeGoldenKey:
-			if player.GoldenKeys < o.Amount {
-				return player, false
-			}
-			player.GoldenKeys -= o.Amount
-		default:
+		field := getItemField(&player, o.Type)
+		if field == nil {
 			return player, false
 		}
+		if *field < o.Amount {
+			return player, false
+		}
+		*field -= o.Amount
 	}
 	return player, true
 }
 
 func inductCost(player Player, cost Cost) Player {
 	for _, o := range cost.Items {
-		switch o.Type {
-		case CostItemTypeFuel:
-			player.Fuel += o.Amount
-		case CostItemTypeCoin:
-			player.Coins += o.Amount
-		case CostItemTypeBlueKey:
-			player.BlueKeys += o.Amount
-		case CostItemTypeRedKey:
-			player.RedKeys += o.Amount
-		case CostItemTypeGoldenKey:
-			player.GoldenKeys += o.Amount
+		field := getItemField(&player, o.Type)
+		if field != nil {
+			*field += o.Amount
 		}
 	}
 	return player
