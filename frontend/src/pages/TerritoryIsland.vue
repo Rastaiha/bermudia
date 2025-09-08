@@ -32,12 +32,14 @@
                     @submit="handleChallengeSubmit"
                 />
             </template>
-            <template v-for="treasureData in treasures" :key="treasureData.id">
+            <template
+                v-for="(treasureData, index) in treasures"
+                :key="treasureData.id"
+            >
                 <Treasure
-                    v-for="(treasure, index) in treasures"
-                    :key="treasure.id"
                     v-model="treasures[index]"
                     :treasure-data="treasureData"
+                    @treasureOpened="openRewardModal"
                 />
             </template>
         </div>
@@ -55,12 +57,14 @@
 import { ref, onMounted } from 'vue';
 import { useToast } from 'vue-toastification';
 import { getIsland, submitAnswer } from '@/services/api';
+import { useModal } from 'vue-final-modal';
 
 import Iframe from '@/components/Iframe.vue';
 import challengeBox from '@/components/challengeBox.vue';
 import BackButton from '@/components/BackButton.vue';
 import Treasure from '@/components/Treasure.vue';
 import FloatingUI from '@/components/FloatingUI.vue';
+import TreasureRewardModal from '@/components/TreasureRewardModal.vue';
 
 const props = defineProps({
     id: { type: String, required: true },
@@ -107,6 +111,28 @@ const handleChallengeSubmit = async ({ inputId, data }) => {
         console.error('Error submitting answer:', error);
         toast.error(error.message || 'خطا در ارسال پاسخ!');
     }
+};
+
+const openRewardModal = rewards => {
+    const { open, close, patchOptions } = useModal({
+        component: TreasureRewardModal,
+        attrs: {
+            rewards: rewards,
+            onClose() {
+                close();
+            },
+        },
+        defaultModelValue: true,
+        clickToClose: false,
+    });
+
+    open();
+
+    setTimeout(() => {
+        patchOptions({
+            clickToClose: true,
+        });
+    }, 50);
 };
 
 const updateMousePosition = event => {

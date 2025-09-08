@@ -67,13 +67,22 @@ const props = defineProps({
     modelValue: { type: Object, required: true },
 });
 
-const emit = defineEmits(['update:modelValue']);
+const emit = defineEmits(['update:modelValue', 'treasureOpened']);
 
 const treasureFetchedInfo = ref(null);
 
 const unlockTreasure = async () => {
-    const resp = await treasureUnlock(props.treasureData.id);
-    emit('update:modelValue', resp);
+    try {
+        const resp = await treasureUnlock(props.treasureData.id);
+
+        emit('update:modelValue', resp);
+
+        if (resp.rewards && resp.rewards.length > 0) {
+            emit('treasureOpened', resp.rewards);
+        }
+    } catch (error) {
+        console.error('Failed to unlock treasure:', error);
+    }
 };
 
 const infoBoxStyle = computed(() => {
