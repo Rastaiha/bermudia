@@ -6,11 +6,6 @@
         <LoadingIndicator v-if="isLoading" :message="loadingMessage" />
 
         <template v-else-if="player">
-            <div
-                class="fixed md:top-8 top-0 text-2xl font-bold text-[#f5deb3] drop-shadow-[2px_4px_6px_white]"
-            >
-                {{ territoryName }}
-            </div>
             <MapView
                 ref="mapViewComponentRef"
                 :islands="islands"
@@ -37,6 +32,12 @@
                     :territory-id="territoryId"
                 />
             </Transition>
+
+            <div
+                class="fixed top-4 md:top-6 left-1/2 -translate-x-1/2 text-3xl font-bold text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.7)] pointer-events-none"
+            >
+                {{ territoryName }}
+            </div>
         </template>
     </div>
 </template>
