@@ -25,6 +25,7 @@ CREATE TABLE IF NOT EXISTS user_treasures (
     treasure_id VARCHAR(255) NOT NULL,
     unlocked BOOLEAN NOT NULL,
     cost TEXT NOT NULL,
+    reward TEXT NOT NULL,
     updated_at TIMESTAMP NOT NULL,
     PRIMARY KEY (user_id, treasure_id)
 );
@@ -77,17 +78,21 @@ func (s sqlTreasureRepository) BindTreasuresToBook(ctx context.Context, bookId s
 }
 
 func (s sqlTreasureRepository) userTreasureColumnsToSelect() string {
-	return `user_id, treasure_id, unlocked, cost, updated_at`
+	return `user_id, treasure_id, unlocked, cost, reward, updated_at`
 }
 
 func (s sqlTreasureRepository) scanUserTreasure(row scannable, userTreasure *domain.UserTreasure) error {
 	var cost []byte
-	err := row.Scan(&userTreasure.UserId, &userTreasure.TreasureID, &userTreasure.Unlocked, &cost, &userTreasure.UpdatedAt)
+	var reward []byte
+	err := row.Scan(&userTreasure.UserId, &userTreasure.TreasureID, &userTreasure.Unlocked, &cost, &reward, &userTreasure.UpdatedAt)
 	if err != nil {
 		return err
 	}
 	if err := json.Unmarshal(cost, &userTreasure.Cost); err != nil {
 		return fmt.Errorf("failed to unmarshal cost: %w", err)
+	}
+	if err := json.Unmarshal(reward, &userTreasure.Reward); err != nil {
+		return fmt.Errorf("failed to unmarshal reward: %w", err)
 	}
 	return nil
 }
@@ -101,13 +106,17 @@ func (s sqlTreasureRepository) GetOrCreateUserTreasure(ctx context.Context, user
 	if err != nil {
 		return domain.UserTreasure{}, fmt.Errorf("failed to marshal cost: %w", err)
 	}
+	reward, err := json.Marshal(generated.Reward)
+	if err != nil {
+		return domain.UserTreasure{}, fmt.Errorf("failed to marshal reward: %w", err)
+	}
 
 	err = s.scanUserTreasure(s.db.QueryRowContext(ctx,
-		`INSERT INTO user_treasures (user_id, treasure_id, unlocked, cost, updated_at) 
-		 VALUES ($1, $2, $3, $4, $5)
+		`INSERT INTO user_treasures (user_id, treasure_id, unlocked, cost, reward, updated_at) 
+		 VALUES ($1, $2, $3, $4, $5, $6)
 		 ON CONFLICT (user_id, treasure_id) DO UPDATE SET user_id = EXCLUDED.user_id
 		 RETURNING `+s.userTreasureColumnsToSelect(),
-		n(userId), n(treasureId), generated.Unlocked, cost, now,
+		n(userId), n(treasureId), generated.Unlocked, cost, reward, now,
 	), &userTreasure)
 
 	if err != nil {
@@ -148,13 +157,17 @@ func (s sqlTreasureRepository) UpdateUserTreasure(ctx context.Context, old domai
 	if err != nil {
 		return fmt.Errorf("failed to marshal cost: %w", err)
 	}
+	reward, err := json.Marshal(updated.Reward)
+	if err != nil {
+		return fmt.Errorf("failed to marshal reward: %w", err)
+	}
 	updated.UpdatedAt = time.Now().UTC()
 
 	cmd, err := s.db.ExecContext(ctx,
 		`UPDATE user_treasures
-		 SET unlocked = $1, cost = $2, updated_at = $3
-		 WHERE user_id = $4 AND treasure_id = $5 AND updated_at = $6`,
-		updated.Unlocked, cost, updated.UpdatedAt,
+		 SET unlocked = $1, cost = $2, reward = $3, updated_at = $4
+		 WHERE user_id = $5 AND treasure_id = $6 AND updated_at = $7`,
+		updated.Unlocked, cost, reward, updated.UpdatedAt,
 		old.UserId, old.TreasureID, old.UpdatedAt,
 	)
 	if err != nil {

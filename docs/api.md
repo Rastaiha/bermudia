@@ -646,10 +646,11 @@ curl --request POST \
 
 ### IslandTreasure
 
-| Field    | Type   | Description                                          |
-|----------|--------|------------------------------------------------------|
-| id       | string | Unique identifier for the treasure                   |
-| unlocked | bool   | Whether the treasure has been unlocked by the player |
+| Field    | Type           | Description                                                                             |
+|----------|----------------|-----------------------------------------------------------------------------------------|
+| id       | string         | Unique identifier for the treasure                                                      |
+| unlocked | bool           | Whether the treasure has been unlocked by the player                                    |
+| reward   | [Cost](#cost)? | If _unlocked_ is true, shows the achieved reward. Length of _reward.items_ can be zero. |
 
 
 ### IslandInput
