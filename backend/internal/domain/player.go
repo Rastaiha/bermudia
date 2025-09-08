@@ -172,7 +172,7 @@ func TravelCheck(player Player, fromIsland, toIsland string, territory *Territor
 		TravelCost: Cost{Items: []CostItem{{Type: CostItemTypeFuel, Amount: travelFuelConsumption}}},
 	}
 	if !isDestinationIslandUnlocked {
-		result.Reason = "باید قبل از سفر به این سیاره، سؤالات جزایر قبلی آن را پاسخ دهید."
+		result.Reason = "باید قبل از سفر به این سیاره، سؤالات سیاره‌های قبلی آن را پاسخ دهید."
 		return
 	}
 	if player.AtIsland != fromIsland {
