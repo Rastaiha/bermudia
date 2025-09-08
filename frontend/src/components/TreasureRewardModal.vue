@@ -8,7 +8,7 @@
         <div
             class="flex items-center justify-between border-b-2 border-amber-600 pb-2 mb-4"
         >
-            <h1 class="text-xl font-semibold text-amber-100">پاداش شما!</h1>
+            <h1 class="text-xl font-semibold text-amber-100">پاداش گنج!</h1>
             <button
                 class="p-1 rounded-full hover:bg-amber-800"
                 @click="handleClose"
