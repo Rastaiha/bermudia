@@ -2,7 +2,7 @@
     <div
         v-if="player"
         dir="rtl"
-        class="fixed top-4 right-4 z-50 font-sans text-white p-3 rounded-lg w-64"
+        class="fixed top-4 right-4 z-50 font-sans text-white p-3 rounded-lg w-64 pointer-events-none"
     >
         <div class="flex justify-between items-center mb-3">
             <h2 class="text-lg font-bold text-gray-200 drop-shadow-lg">
@@ -10,7 +10,7 @@
             </h2>
             <div class="flex items-center gap-3">
                 <button
-                    class="text-sm font-bold text-gray-200 transition-colors duration-300 transform cursor-pointer hover:text-red-400 drop-shadow-lg"
+                    class="text-sm font-bold text-gray-200 transition-colors duration-300 transform cursor-pointer hover:text-red-400 drop-shadow-lg pointer-events-auto"
                     @pointerdown="openLogoutModal"
                 >
                     خروج
@@ -33,7 +33,7 @@
 
         <div class="flex items-center gap-2 mt-2">
             <button
-                class="transition-transform duration-200 hover:scale-110"
+                class="transition-transform duration-200 hover:scale-110 pointer-events-auto"
                 title="کتابخانه"
                 @pointerdown="openBookshelf"
             >
@@ -44,7 +44,7 @@
                 />
             </button>
             <button
-                class="transition-transform duration-200 hover:scale-110"
+                class="transition-transform duration-200 hover:scale-110 pointer-events-auto"
                 title="کوله پشتی"
                 @pointerdown="openBackpack"
             >

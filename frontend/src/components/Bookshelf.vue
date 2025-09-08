@@ -2,8 +2,8 @@
     <VueFinalModal
         class="flex justify-center items-center"
         content-class="flex flex-col w-full md:w-1/2 mx-4 p-6 
-                        bg-[#5C3A21] border-4 border-[#3E2A17] 
-                        rounded-xl shadow-xl space-y-4"
+                       bg-[#5C3A21] border-4 border-[#3E2A17] 
+                       rounded-xl shadow-xl space-y-4"
         overlay-transition="vfm-fade"
         content-transition="vfm-slide-up"
     >
@@ -34,7 +34,10 @@
             </button>
         </div>
 
-        <div class="w-full flex flex-col justify-between items-end space-y-2">
+        <div
+            v-if="books.length > 0"
+            class="w-full flex flex-col justify-between items-end space-y-2"
+        >
             <div
                 v-for="(booksInTerritory, territoryId) in booksByTerritory"
                 :key="territoryId"
@@ -59,6 +62,13 @@
                 </div>
                 <div class="w-full h-1 bg-[#3E2A17] rounded-sm"></div>
             </div>
+        </div>
+
+        <div
+            v-else
+            class="w-full flex justify-center items-center h-48 text-amber-200 text-lg"
+        >
+            <p>هنوز هیچ کتابی دریافت نکرده اید</p>
         </div>
     </VueFinalModal>
 </template>
