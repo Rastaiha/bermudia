@@ -2,6 +2,7 @@ package domain
 
 import (
 	"errors"
+	"github.com/Rastaiha/bermudia/internal/config"
 	"math"
 	"slices"
 	"strings"
@@ -66,7 +67,11 @@ type FullPlayerUpdateEvent struct {
 	Player *FullPlayer `json:"player"`
 }
 
-func NewPlayer(userId int32, startingTerritory *Territory) Player {
+func NewPlayer(cfg config.Config, userId int32, startingTerritory *Territory) Player {
+	initialKeyCount := int32(0)
+	if cfg.DevMode {
+		initialKeyCount = 5
+	}
 	return Player{
 		UserId:             userId,
 		AtTerritory:        startingTerritory.ID,
@@ -75,9 +80,9 @@ func NewPlayer(userId int32, startingTerritory *Territory) Player {
 		Fuel:               initialFuelAmount,
 		FuelCap:            fuelTankCapacity,
 		Coins:              initialCoinsAmount,
-		RedKeys:			5,
-		BlueKeys:			5,
-		GoldenKeys:			5,
+		RedKeys:            initialKeyCount,
+		BlueKeys:           initialKeyCount,
+		GoldenKeys:         initialKeyCount,
 		VisitedTerritories: []string{startingTerritory.ID},
 	}
 }
