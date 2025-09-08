@@ -3,7 +3,12 @@
         class="w-full h-screen flex justify-center items-center p-4 box-border bg-cover bg-center bg-no-repeat overflow-hidden bg-[#0c2036]"
         :style="{ backgroundImage: `url(${backgroundImage})` }"
     >
-        <LoadingIndicator v-if="isLoading" :message="loadingMessage" />
+        <div
+            v-if="isLoading"
+            class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50"
+        >
+            <LoadingBar :progress="loadingProgress" />
+        </div>
 
         <template v-else-if="player">
             <MapView
@@ -51,7 +56,7 @@ import { usePlayerWebSocket } from '@/components/service/WebSocket.js';
 import MapView from '@/components/MapView.vue';
 import IslandInfoBox from '@/components/IslandInfoBox.vue';
 import PlayerInfo from '@/components/PlayerInfo.vue';
-import LoadingIndicator from '@/components/LoadingIndicator.vue';
+import LoadingBar from '@/components/LoadingBar.vue';
 
 const route = useRoute();
 const router = useRouter();
@@ -70,8 +75,8 @@ const username = ref('...');
 const backgroundImage = ref('');
 const selectedIsland = ref(null);
 const dynamicViewBox = ref('0 0 1 1');
-const loadingMessage = ref('در حال بارگذاری نقشه...');
 const isLoading = ref(true);
+const loadingProgress = ref(0);
 const infoBoxStyle = ref({ display: 'none' });
 
 const handleClickOutside = event => {
@@ -109,15 +114,17 @@ watch([selectedIsland, transformCounter], calculateInfoBoxStyle, {
 const loadPageData = async id => {
     if (!id) return;
     isLoading.value = true;
+    loadingProgress.value = 0;
     hideInfoBox();
 
     try {
+        loadingProgress.value = 10;
         if (!getToken()) {
             router.push({ name: 'Login' });
             return;
         }
 
-        loadingMessage.value = 'در حال دریافت اطلاعات کاربری...';
+        loadingProgress.value = 30;
         const [playerData, meData] = await Promise.all([getPlayer(), getMe()]);
 
         if (playerData.atTerritory.toString() !== id.toString()) {
@@ -128,13 +135,12 @@ const loadPageData = async id => {
             return;
         }
 
-        loadingMessage.value = 'در حال بارگذاری نقشه...';
+        loadingProgress.value = 70;
         const territoryData = await getTerritory(id);
 
         player.value = playerData;
         username.value = meData.username;
         territoryId.value = id;
-
         backgroundImage.value = `/images/${territoryData.backgroundAsset}`;
         territoryName.value = territoryData.name;
         islands.value = territoryData.islands;
@@ -142,11 +148,18 @@ const loadPageData = async id => {
         refuelIslands.value = territoryData.refuelIslands;
         terminalIslands.value = territoryData.terminalIslands;
         dynamicViewBox.value = calculateViewBox(territoryData.islands);
+        loadingProgress.value = 100;
     } catch (error) {
         console.error('Failed to load territory data:', error);
         router.push({ name: 'Login' });
     } finally {
-        isLoading.value = false;
+        if (loadingProgress.value === 100) {
+            setTimeout(() => {
+                isLoading.value = false;
+            }, 500);
+        } else {
+            isLoading.value = false;
+        }
     }
 };
 
