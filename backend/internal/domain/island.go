@@ -9,6 +9,7 @@ type IslandHeader struct {
 
 type PortableIsland struct {
 	IslandID    string `json:"islandId"`
+	IslandName  string `json:"islandName"`
 	TerritoryID string `json:"territoryId"`
 }
 

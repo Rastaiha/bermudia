@@ -677,10 +677,11 @@ curl --request POST \
 
 ### Book
 
-| Field       | Type   | Description                                            |
-|-------------|--------|--------------------------------------------------------|
-| territoryId | string | ID of territory this book belongs to                   |
-| islandId    | string | ID of island this book belongs to                      |
+| Field       | Type   | Description                          |
+|-------------|--------|--------------------------------------|
+| territoryId | string | ID of territory this book belongs to |
+| islandId    | string | ID of island this book belongs to    |
+| islandName  | string | Name of island this book belongs to  |
 
 
 ### KnowledgeBar

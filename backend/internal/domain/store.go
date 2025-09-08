@@ -38,7 +38,7 @@ type IslandStore interface {
 	SetBook(ctx context.Context, book Book) error
 	GetBook(ctx context.Context, bookId string) (*Book, error)
 	SetIslandHeader(ctx context.Context, header IslandHeader) error
-	ReserveIDForTerritory(ctx context.Context, territoryId, islandId string) error
+	ReserveIDForTerritory(ctx context.Context, territoryId, islandId, islandName string) error
 	GetBookOfIsland(ctx context.Context, islandId string, userId int32) (string, error)
 	GetTerritory(ctx context.Context, id string) (string, error)
 	GetIslandHeader(ctx context.Context, islandId string) (IslandHeader, error)
@@ -50,7 +50,7 @@ type IslandStore interface {
 	GetPoolOfBook(ctx context.Context, bookId string) (poolId string, found bool, err error)
 	AssignBookToIslandFromPool(ctx context.Context, territoryId string, islandId string, userId int32) (bookId string, err error)
 	IsIslandPortable(ctx context.Context, userId int32, islandId string) (bool, error)
-	AddPortableIsland(ctx context.Context, userId int32, portable PortableIsland) (bool, error)
+	AddPortableIsland(ctx context.Context, userId int32, islandId string) (bool, error)
 	GetPortableIslands(ctx context.Context, userId int32) (result []PortableIsland, err error)
 }
 

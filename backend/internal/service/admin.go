@@ -81,7 +81,10 @@ func (a *Admin) SetTerritory(ctx context.Context, territory domain.Territory) er
 	}
 
 	for _, island := range territory.Islands {
-		if err := a.islandStore.ReserveIDForTerritory(ctx, territory.ID, island.ID); err != nil {
+		if err := a.islandStore.ReserveIDForTerritory(ctx, territory.ID, island.ID, island.Name); err != nil {
+			return err
+		}
+		if err := a.islandStore.ReserveIDForTerritory(ctx, territory.ID, island.ID, island.Name); err != nil {
 			return err
 		}
 	}
