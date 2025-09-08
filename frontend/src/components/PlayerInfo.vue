@@ -1,6 +1,4 @@
 <template>
-    <FloatingUI :tooltip-text="tooltipText" :mouse-position="mousePosition" />
-
     <div
         v-if="player"
         dir="rtl"
@@ -36,10 +34,8 @@
         <div class="flex items-center gap-2 mt-2">
             <button
                 class="transition-transform duration-200 hover:scale-110"
+                title="کتابخانه"
                 @pointerdown="openBookshelf"
-                @mouseenter="showTooltip('کتابخانه', $event)"
-                @mousemove="updateMousePosition"
-                @mouseleave="hideTooltip"
             >
                 <img
                     src="/images/icons/book.png"
@@ -49,10 +45,8 @@
             </button>
             <button
                 class="transition-transform duration-200 hover:scale-110"
+                title="کوله پشتی"
                 @pointerdown="openBackpack"
-                @mouseenter="showTooltip('کوله پشتی', $event)"
-                @mousemove="updateMousePosition"
-                @mouseleave="hideTooltip"
             >
                 <img
                     src="/images/icons/backpack.png"
@@ -65,7 +59,7 @@
 </template>
 
 <script setup>
-import { computed, ref } from 'vue';
+import { computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { logout as apiLogout } from '@/services/api';
 import PlayerInventoryBar from './PlayerInventoryBar.vue';
@@ -73,7 +67,6 @@ import { useModal } from 'vue-final-modal';
 import ConfirmModal from './ConfirmModal.vue';
 import Bookshelf from './Bookshelf.vue';
 import Backpack from './Backpack.vue';
-import FloatingUI from './FloatingUI.vue';
 
 const props = defineProps({
     player: {
@@ -87,24 +80,6 @@ const props = defineProps({
 });
 
 const router = useRouter();
-
-const tooltipText = ref('');
-const mousePosition = ref({ x: 0, y: 0 });
-
-const showTooltip = (text, event) => {
-    tooltipText.value = text;
-    mousePosition.value = { x: event.clientX, y: event.clientY };
-};
-
-const updateMousePosition = event => {
-    if (tooltipText.value) {
-        mousePosition.value = { x: event.clientX, y: event.clientY };
-    }
-};
-
-const hideTooltip = () => {
-    tooltipText.value = '';
-};
 
 const { open: openLogoutModal, close: closeLogoutModal } = useModal({
     component: ConfirmModal,
