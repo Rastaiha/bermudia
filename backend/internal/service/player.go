@@ -460,12 +460,30 @@ func (p *Player) HandleNewPortableIsland(userId int32) {
 	}()
 }
 
+func (p *Player) MakeOfferCheck(ctx context.Context, userId int32) (*domain.MakeOfferCheckResult, error) {
+	player, err := p.playerStore.Get(ctx, userId)
+	if err != nil {
+		return nil, err
+	}
+	count, err := p.marketStore.GetOffersCountOfUser(ctx, userId)
+	if err != nil {
+		return nil, err
+	}
+
+	check := domain.MakeOfferCheck(player, count)
+	return &check, nil
+}
+
 func (p *Player) MakeOffer(ctx context.Context, userId int32, offered, requested domain.Cost) (err error) {
 	player, err := p.playerStore.Get(ctx, userId)
 	if err != nil {
 		return err
 	}
-	event, tradeOffer, err := domain.MakeOffer(player, offered, requested)
+	count, err := p.marketStore.GetOffersCountOfUser(ctx, userId)
+	if err != nil {
+		return err
+	}
+	event, tradeOffer, err := domain.MakeOffer(player, count, offered, requested)
 	if err != nil {
 		return err
 	}
@@ -603,11 +621,11 @@ func (p *Player) DeleteOffer(ctx context.Context, userId int32, tradeOfferId str
 	return nil
 }
 
-func (p *Player) GetTradeOffers(ctx context.Context, userId int32, page, limit int) ([]domain.TradeOfferView, error) {
+func (p *Player) GetTradeOffers(ctx context.Context, userId int32, filter domain.GetOffersByFilterType, page, limit int) ([]domain.TradeOfferView, error) {
 	page = max(0, page)
 	limit = min(max(5, limit), 100)
 	offset := page * limit
-	offers, err := p.marketStore.GetOffers(ctx, offset, limit)
+	offers, err := p.marketStore.GetOffers(ctx, filter, userId, offset, limit)
 	if err != nil {
 		return nil, err
 	}

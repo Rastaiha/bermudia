@@ -2,6 +2,7 @@ package handler
 
 import (
 	"encoding/json"
+	"errors"
 	"github.com/Rastaiha/bermudia/internal/domain"
 	"net/http"
 	"strconv"
@@ -264,6 +265,21 @@ func (h *Handler) UnlockTreasure(w http.ResponseWriter, r *http.Request) {
 	sendResult(w, result)
 }
 
+func (h *Handler) MakeOfferCheck(w http.ResponseWriter, r *http.Request) {
+	user, err := getUser(r.Context())
+	if err != nil {
+		handleError(w, err)
+		return
+	}
+
+	result, err := h.playerService.MakeOfferCheck(r.Context(), user.ID)
+	if err != nil {
+		handleError(w, err)
+		return
+	}
+	sendResult(w, result)
+}
+
 type makeOfferRequest struct {
 	Offered   domain.Cost `json:"offered"`
 	Requested domain.Cost `json:"requested"`
@@ -352,9 +368,14 @@ func (h *Handler) GetTradeOffers(w http.ResponseWriter, r *http.Request) {
 
 	page, _ := strconv.Atoi(r.URL.Query().Get("page"))
 	limit, _ := strconv.Atoi(r.URL.Query().Get("limit"))
+	filter := r.URL.Query().Get("by")
 
-	offers, err := h.playerService.GetTradeOffers(r.Context(), user.ID, page, limit)
+	offers, err := h.playerService.GetTradeOffers(r.Context(), user.ID, domain.GetOffersByFilterType(filter), page, limit)
 	if err != nil {
+		if errors.Is(err, domain.ErrInvalidFilter) {
+			sendError(w, http.StatusBadRequest, "invalid filter")
+			return
+		}
 		handleError(w, err)
 		return
 	}

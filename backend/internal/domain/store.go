@@ -22,6 +22,7 @@ var (
 	ErrUserTreasureConflict       = errors.New("user treasure update conflict")
 	ErrAlreadyApplied             = errors.New("already applied")
 	ErrOfferAlreadyDeleted        = errors.New("offer already deleted")
+	ErrInvalidFilter              = errors.New("invalid filter")
 )
 
 type Tx interface {
@@ -38,7 +39,7 @@ type IslandStore interface {
 	SetBook(ctx context.Context, book Book) error
 	GetBook(ctx context.Context, bookId string) (*Book, error)
 	SetIslandHeader(ctx context.Context, header IslandHeader) error
-	ReserveIDForTerritory(ctx context.Context, territoryId, islandId string) error
+	ReserveIDForTerritory(ctx context.Context, territoryId, islandId, islandName string) error
 	GetBookOfIsland(ctx context.Context, islandId string, userId int32) (string, error)
 	GetTerritory(ctx context.Context, id string) (string, error)
 	GetIslandHeader(ctx context.Context, islandId string) (IslandHeader, error)
@@ -50,7 +51,7 @@ type IslandStore interface {
 	GetPoolOfBook(ctx context.Context, bookId string) (poolId string, found bool, err error)
 	AssignBookToIslandFromPool(ctx context.Context, territoryId string, islandId string, userId int32) (bookId string, err error)
 	IsIslandPortable(ctx context.Context, userId int32, islandId string) (bool, error)
-	AddPortableIsland(ctx context.Context, userId int32, portable PortableIsland) (bool, error)
+	AddPortableIsland(ctx context.Context, userId int32, islandId string) (bool, error)
 	GetPortableIslands(ctx context.Context, userId int32) (result []PortableIsland, err error)
 }
 
@@ -92,10 +93,19 @@ type TreasureStore interface {
 	UpdateUserTreasure(ctx context.Context, old UserTreasure, updated UserTreasure) error
 }
 
+type GetOffersByFilterType string
+
+const (
+	GetOffersByAll    GetOffersByFilterType = ""
+	GetOffersByMe     GetOffersByFilterType = "me"
+	GetOffersByOthers GetOffersByFilterType = "others"
+)
+
 type MarketStore interface {
 	CreateOffer(ctx context.Context, tx Tx, offer TradeOffer) error
 	// DeleteOffer soft-deletes the offer
 	DeleteOffer(ctx context.Context, tx Tx, offerId string) error
 	GetOffer(ctx context.Context, offerId string) (TradeOffer, error)
-	GetOffers(ctx context.Context, offset int, limit int) ([]TradeOffer, error)
+	GetOffers(ctx context.Context, byFilter GetOffersByFilterType, userId int32, offset int, limit int) ([]TradeOffer, error)
+	GetOffersCountOfUser(ctx context.Context, userId int32) (int, error)
 }

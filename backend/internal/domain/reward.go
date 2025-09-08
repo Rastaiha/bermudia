@@ -142,7 +142,7 @@ func GiveRewardOfPool(player Player, poolId string) (Player, bool) {
 	return player, false
 }
 
-func giveRewardOfTreasure(player Player, treasure UserTreasure) Player {
+func giveRewardOfTreasure(player Player, treasure UserTreasure) (Player, Cost) {
 	worthOfCoins := int32(0)
 	for _, item := range treasure.Cost.Items {
 		idx := slices.IndexFunc(rewardTypes, func(r rewardType) bool {
@@ -154,7 +154,15 @@ func giveRewardOfTreasure(player Player, treasure UserTreasure) Player {
 		worthOfCoins += item.Amount * rewardTypes[idx].value
 	}
 	player.Coins += worthOfCoins
-	return player
+	reward := Cost{
+		Items: []CostItem{
+			{
+				Type:   CostItemTypeCoin,
+				Amount: worthOfCoins,
+			},
+		},
+	}
+	return player, reward
 }
 
 func utc(blue, red, golden int32) Cost {
@@ -181,11 +189,16 @@ func GenerateUserTreasure(userId int32, treasureId string) UserTreasure {
 	golden := int32(goldenC * 4)
 	cost := utc(blue, red, golden)
 
+	reward := &Cost{}
+	if len(cost.Items) > 0 {
+		reward = nil
+	}
 	return UserTreasure{
 		UserId:     userId,
 		TreasureID: treasureId,
 		Unlocked:   len(cost.Items) == 0,
 		Cost:       cost,
+		Reward:     reward,
 		UpdatedAt:  time.Now().UTC(),
 	}
 }

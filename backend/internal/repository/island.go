@@ -15,6 +15,7 @@ const (
 	islandsSchema = `
 CREATE TABLE IF NOT EXISTS islands (
     id VARCHAR(255) PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
     territory_id VARCHAR(255) NOT NULL,
     from_pool BOOLEAN NOT NULL DEFAULT FALSE,
     book_id VARCHAR(255) REFERENCES books(id)
@@ -60,7 +61,6 @@ CREATE TABLE IF NOT EXISTS user_books (
 
 	userPortableIslandsSchema = `
 CREATE TABLE IF NOT EXISTS user_portable_islands (
-    territory_id VARCHAR(255) NOT NULL,
     island_id VARCHAR(255) NOT NULL,
     user_id INT4 NOT NULL,
 	created_at TIMESTAMP NOT NULL,
@@ -191,11 +191,11 @@ func (s sqlIslandRepository) GetIslandHeaderByBookId(ctx context.Context, bookId
 	return header, err
 }
 
-func (s sqlIslandRepository) ReserveIDForTerritory(ctx context.Context, territoryId, islandId string) error {
+func (s sqlIslandRepository) ReserveIDForTerritory(ctx context.Context, territoryId, islandId, islandName string) error {
 	var actualTerritoryId string
 	err := s.db.QueryRowContext(ctx,
-		`INSERT INTO islands (id, territory_id) VALUES ($1, $2) ON CONFLICT (id) DO UPDATE SET id = EXCLUDED.id RETURNING territory_id ;`,
-		n(islandId), n(territoryId)).Scan(&actualTerritoryId)
+		`INSERT INTO islands (id, territory_id, name) VALUES ($1, $2, $3) ON CONFLICT (id) DO UPDATE SET name = CASE WHEN $2 = territory_id THEN $3 ELSE name END RETURNING territory_id ;`,
+		n(islandId), n(territoryId), n(islandName)).Scan(&actualTerritoryId)
 	if err != nil {
 		return err
 	}
@@ -347,13 +347,13 @@ func (s sqlIslandRepository) IsIslandPortable(ctx context.Context, userId int32,
 	return result, err
 }
 
-func (s sqlIslandRepository) AddPortableIsland(ctx context.Context, userId int32, portable domain.PortableIsland) (bool, error) {
+func (s sqlIslandRepository) AddPortableIsland(ctx context.Context, userId int32, islandId string) (bool, error) {
 	now := time.Now().UTC()
 	var actualCreatedAt time.Time
 	err := s.db.QueryRowContext(ctx,
-		`INSERT INTO user_portable_islands (user_id, island_id, territory_id, created_at) VALUES ($1, $2, $3, $4)
+		`INSERT INTO user_portable_islands (user_id, island_id, created_at) VALUES ($1, $2, $3)
 ON CONFLICT (user_id, island_id) DO UPDATE SET user_id = EXCLUDED.user_id RETURNING created_at;`,
-		n(userId), n(portable.IslandID), n(portable.TerritoryID), now).Scan(&actualCreatedAt)
+		n(userId), n(islandId), now).Scan(&actualCreatedAt)
 	if err != nil {
 		return false, err
 	}
@@ -362,7 +362,7 @@ ON CONFLICT (user_id, island_id) DO UPDATE SET user_id = EXCLUDED.user_id RETURN
 
 func (s sqlIslandRepository) GetPortableIslands(ctx context.Context, userId int32) (result []domain.PortableIsland, err error) {
 	result = make([]domain.PortableIsland, 0)
-	rows, err := s.db.QueryContext(ctx, `SELECT island_id, territory_id FROM user_portable_islands WHERE user_id = $1 ORDER BY created_at;`, userId)
+	rows, err := s.db.QueryContext(ctx, `SELECT u.island_id, i.territory_id, i.name FROM user_portable_islands u LEFT JOIN islands i ON u.island_id = i.id WHERE u.user_id = $1 ORDER BY u.created_at;`, userId)
 	if err != nil {
 		return nil, err
 	}
@@ -371,7 +371,7 @@ func (s sqlIslandRepository) GetPortableIslands(ctx context.Context, userId int3
 	}()
 	for rows.Next() {
 		var p domain.PortableIsland
-		err = rows.Scan(&p.IslandID, &p.TerritoryID)
+		err = rows.Scan(&p.IslandID, &p.TerritoryID, &p.IslandName)
 		if err != nil {
 			return nil, err
 		}
