@@ -7,7 +7,7 @@
 
         <template v-else-if="player">
             <div
-                class="fixed top-8 text-2xl font-bold text-[#f5deb3] drop-shadow-[2px_4px_6px_white]"
+                class="fixed md:top-8 top-0 text-2xl font-bold text-[#f5deb3] drop-shadow-[2px_4px_6px_white]"
             >
                 {{ territoryName }}
             </div>
