@@ -31,8 +31,6 @@
 </template>
 
 <script setup>
-import { defineProps } from 'vue';
-
 defineProps({
     progress: {
         type: Number,
