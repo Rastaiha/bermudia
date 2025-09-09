@@ -49,15 +49,20 @@
                 />
             </div>
             <div v-else-if="checkMigrate()" class="w-full space-y-3">
-                <PlayerInventoryBar
-                    v-if="knowledgeBar"
-                    :bar-data="knowledgeBar"
-                ></PlayerInventoryBar>
-                <div class="w-full flex justify-around">
+                <div class="flex justify-center">
+                    <div class="w-11/12 md:w-full">
+                        <PlayerInventoryBar
+                            v-if="knowledgeBar"
+                            :bar-data="knowledgeBar"
+                        ></PlayerInventoryBar>
+                    </div>
+                </div>
+                <div
+                    class="w-full grid grid-cols-2 md:flex md:flex-wrap md:justify-center gap-2"
+                >
                     <div
                         v-for="territory in migrate.territoryMigrationOptions"
                         :key="territory.territoryId"
-                        style="margin-bottom: 0"
                     >
                         <IslandInfoBox
                             v-if="territory"
@@ -187,7 +192,7 @@ const isCurrentIsland = computed(
 
 const calculateWidth = () => {
     if (checkSubMigration()) return 39;
-    else if (checkMigrate()) return 160;
+    else if (checkMigrate()) return 85;
     else return 60;
 };
 
@@ -404,7 +409,7 @@ const knowledgeBar = computed(() => {
         bar => bar.territoryId === migrate.value.knowledgeCriteriaTerritory
     );
     return {
-        name: 'دانش مورد نیاز برای مهاجرت',
+        name: 'دانش مورد نیاز',
         englishName: 'Knowledge',
         total: fetchedKnowledgeBar.total,
         required: migrate.value.minAcceptableKnowledge,

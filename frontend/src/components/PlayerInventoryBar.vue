@@ -3,11 +3,12 @@
         <div
             class="flex justify-between px-1 mb-1 text-xs text-gray-300 drop-shadow-md"
         >
-            <span>{{ barData.name }}</span>
+            <span class="hidden sm:block">{{ barData.name }}</span>
             <span
                 :style="{
                     visibility: barData.total == -1 ? 'hidden' : 'visible',
                 }"
+                class="hidden sm:block"
                 >ظرفیت: {{ barData.total }}</span
             >
         </div>
