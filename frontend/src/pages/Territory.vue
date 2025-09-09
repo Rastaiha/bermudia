@@ -22,6 +22,8 @@
                 @map-transformed="updateInfoBoxPosition"
             />
 
+            <Toolbar :player="player" :username="username" />
+
             <PlayerInfo :player="player" :username="username" />
 
             <Transition name="popup-fade">
@@ -39,7 +41,7 @@
             </Transition>
 
             <div
-                class="fixed top-4 md:top-6 left-1/2 -translate-x-1/2 text-3xl font-bold text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.7)] pointer-events-none"
+                class="fixed top-4 left-4 text-xl font-bold text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.7)] pointer-events-none md:top-6 md:left-1/2 md:-translate-x-1/2 md:text-3xl"
             >
                 {{ territoryName }}
             </div>
@@ -57,6 +59,7 @@ import MapView from '@/components/MapView.vue';
 import IslandInfoBox from '@/components/IslandInfoBox.vue';
 import PlayerInfo from '@/components/PlayerInfo.vue';
 import LoadingBar from '@/components/LoadingBar.vue';
+import Toolbar from '@/components/Toolbar.vue';
 
 const route = useRoute();
 const router = useRouter();
@@ -146,11 +149,9 @@ const loadPageData = async id => {
     } catch (error) {
         console.error('Failed to load page data:', error.message);
         if (
-            error.message.includes('authenticated') ||
-            error.message.includes('Redirecting')
+            !error.message.includes('authenticated') &&
+            !error.message.includes('Redirecting')
         ) {
-            //pass
-        } else {
             router.push({ name: 'Login' });
         }
     } finally {
