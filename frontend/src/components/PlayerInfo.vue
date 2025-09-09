@@ -31,41 +31,6 @@
             :bar-data="coinBar"
         ></PlayerInventoryBar>
 
-        <div class="flex items-center gap-2 mt-2">
-            <button
-                class="transition-transform duration-200 hover:scale-110 pointer-events-auto"
-                title="کتابخانه"
-                @pointerdown="openBookshelf"
-            >
-                <img
-                    src="/images/icons/book.png"
-                    class="w-12 h-12 drop-shadow-lg"
-                    alt="کتاب‌ها"
-                />
-            </button>
-            <button
-                class="transition-transform duration-200 hover:scale-110 pointer-events-auto"
-                title="بازار"
-                @pointerdown="openMarket"
-            >
-                <img
-                    src="/images/icons/market.png"
-                    class="w-12 h-12 drop-shadow-lg"
-                    alt="داد و ستد"
-                />
-            </button>
-            <button
-                class="transition-transform duration-200 hover:scale-110 pointer-events-auto"
-                title="کوله پشتی"
-                @pointerdown="openBackpack"
-            >
-                <img
-                    src="/images/icons/backpack.png"
-                    class="w-12 h-12 drop-shadow-lg"
-                    alt="کوله پشتی"
-                />
-            </button>
-        </div>
     </div>
 </template>
 
@@ -76,9 +41,6 @@ import { logout as apiLogout } from '@/services/api';
 import PlayerInventoryBar from './PlayerInventoryBar.vue';
 import { useModal } from 'vue-final-modal';
 import ConfirmModal from './ConfirmModal.vue';
-import Bookshelf from './Bookshelf.vue';
-import Backpack from './Backpack.vue';
-import Market from './Market.vue';
 
 const props = defineProps({
     player: {
@@ -110,54 +72,6 @@ const { open: openLogoutModal, close: closeLogoutModal } = useModal({
         content: '<p>آیا برای خروج از حساب کاربری خود اطمینان دارید؟</p>',
     },
 });
-
-const { open: openBookshelf, close: closeBookshelf } = useModal({
-    component: Bookshelf,
-    attrs: {
-        books: props.player.books,
-        onClose() {
-            closeBookshelf();
-        },
-    },
-});
-
-const { open: openMarket, close: closeMarket } = useModal({
-    component: Market,
-    attrs: {
-        player: props.player,
-        username: props.username,
-        onClose() {
-            closeMarket();
-        },
-    },
-});
-
-const { open: openBackpack, close: closeBackpack } = useModal({
-    component: Backpack,
-    attrs: {
-        inventoryItems: computed(() => {
-            if (!props.player) return [];
-            const items = ['goldenKeys', 'redKeys', 'blueKeys'];
-            return items.map(key => ({
-                icon: `/images/icons/${key}.png`,
-                name: getKeyDisplayName(key),
-                quantity: props.player[key],
-            }));
-        }),
-        onClose() {
-            closeBackpack();
-        },
-    },
-});
-
-function getKeyDisplayName(key) {
-    const displayNames = {
-        goldenKeys: 'کلید طلایی',
-        redKeys: 'کلید قرمز',
-        blueKeys: 'کلید آبی',
-    };
-    return displayNames[key] || key;
-}
 
 const knowledgeBar = computed(() => {
     if (

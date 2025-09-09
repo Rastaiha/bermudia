@@ -22,7 +22,7 @@
                 @map-transformed="updateInfoBoxPosition"
             />
 
-            <Toolbar />
+            <Toolbar :player="player" :username="username" />
 
             <PlayerInfo :player="player" :username="username" />
 
@@ -152,7 +152,6 @@ const loadPageData = async id => {
             error.message.includes('authenticated') ||
             error.message.includes('Redirecting')
         ) {
-            //pass
         } else {
             router.push({ name: 'Login' });
         }
