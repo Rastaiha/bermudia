@@ -8,14 +8,6 @@
             <h2 class="text-lg font-bold text-gray-200 drop-shadow-lg">
                 {{ username }}
             </h2>
-            <div class="flex items-center gap-3">
-                <button
-                    class="text-sm font-bold text-gray-200 transition-colors duration-300 transform cursor-pointer hover:text-red-400 drop-shadow-lg pointer-events-auto"
-                    @pointerdown="openLogoutModal"
-                >
-                    خروج
-                </button>
-            </div>
         </div>
 
         <PlayerInventoryBar
@@ -30,17 +22,12 @@
             v-if="coinBar"
             :bar-data="coinBar"
         ></PlayerInventoryBar>
-
     </div>
 </template>
 
 <script setup>
 import { computed } from 'vue';
-import { useRouter } from 'vue-router';
-import { logout as apiLogout } from '@/services/api';
 import PlayerInventoryBar from './PlayerInventoryBar.vue';
-import { useModal } from 'vue-final-modal';
-import ConfirmModal from './ConfirmModal.vue';
 
 const props = defineProps({
     player: {
@@ -50,26 +37,6 @@ const props = defineProps({
     username: {
         type: String,
         default: '...',
-    },
-});
-
-const router = useRouter();
-
-const { open: openLogoutModal, close: closeLogoutModal } = useModal({
-    component: ConfirmModal,
-    attrs: {
-        title: 'خروج از حساب',
-        onConfirm() {
-            apiLogout();
-            router.push({ name: 'Login' });
-            closeLogoutModal();
-        },
-        onCancel() {
-            closeLogoutModal();
-        },
-    },
-    slots: {
-        content: '<p>آیا برای خروج از حساب کاربری خود اطمینان دارید؟</p>',
     },
 });
 

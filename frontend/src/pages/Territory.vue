@@ -149,10 +149,9 @@ const loadPageData = async id => {
     } catch (error) {
         console.error('Failed to load page data:', error.message);
         if (
-            error.message.includes('authenticated') ||
-            error.message.includes('Redirecting')
+            !error.message.includes('authenticated') &&
+            !error.message.includes('Redirecting')
         ) {
-        } else {
             router.push({ name: 'Login' });
         }
     } finally {

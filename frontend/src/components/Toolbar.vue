@@ -1,9 +1,12 @@
 <script setup>
 import { ref, onMounted, onUnmounted, computed } from 'vue';
+import { useRouter } from 'vue-router';
 import { useModal } from 'vue-final-modal';
+import { logout as apiLogout } from '@/services/api';
 import Backpack from './Backpack.vue';
 import Bookshelf from './Bookshelf.vue';
 import Market from './Market.vue';
+import ConfirmModal from './ConfirmModal.vue';
 
 const props = defineProps({
     player: {
@@ -16,8 +19,27 @@ const props = defineProps({
     },
 });
 
+const router = useRouter();
 const isMobile = ref(false);
 const isOpen = ref(false);
+
+const { open: openLogoutModal, close: closeLogoutModal } = useModal({
+    component: ConfirmModal,
+    attrs: {
+        title: 'خروج از حساب',
+        onConfirm() {
+            apiLogout();
+            router.push({ name: 'Login' });
+            closeLogoutModal();
+        },
+        onCancel() {
+            closeLogoutModal();
+        },
+    },
+    slots: {
+        content: '<p>آیا برای خروج از حساب کاربری خود اطمینان دارید؟</p>',
+    },
+});
 
 const { open: openBookshelf, close: closeBookshelf } = useModal({
     component: Bookshelf,
@@ -68,9 +90,30 @@ function getKeyDisplayName(key) {
 }
 
 const menuItems = [
-    { id: 'backpack', icon: '/images/icons/backpack.png', alt: 'کوله پشتی', action: openBackpack },
-    { id: 'bookshelf', icon: '/images/icons/book.png', alt: 'کتابخانه', action: openBookshelf },
-    { id: 'market', icon: '/images/icons/market.png', alt: 'بازار', action: openMarket },
+    {
+        id: 'backpack',
+        icon: '/images/icons/backpack.png',
+        alt: 'کوله پشتی',
+        action: openBackpack,
+    },
+    {
+        id: 'bookshelf',
+        icon: '/images/icons/book.png',
+        alt: 'کتابخانه',
+        action: openBookshelf,
+    },
+    {
+        id: 'market',
+        icon: '/images/icons/market.png',
+        alt: 'بازار',
+        action: openMarket,
+    },
+    {
+        id: 'logout',
+        icon: '/images/icons/logout.png',
+        alt: 'خروج',
+        action: openLogoutModal,
+    },
 ];
 
 function handleItemClick(item) {
