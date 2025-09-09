@@ -79,6 +79,63 @@ const isLoading = ref(true);
 const loadingProgress = ref(0);
 const infoBoxStyle = ref({ display: 'none' });
 
+const loadPageData = async id => {
+    if (!id) return;
+    isLoading.value = true;
+    loadingProgress.value = 0;
+    hideInfoBox();
+
+    let progressInterval = null;
+
+    try {
+        progressInterval = setInterval(() => {
+            if (loadingProgress.value < 90) {
+                loadingProgress.value += 5;
+            }
+        }, 100);
+
+        if (!getToken()) {
+            router.push({ name: 'Login' });
+            return;
+        }
+
+        const [territoryData, playerData, meData] = await Promise.all([
+            getTerritory(id),
+            getPlayer(),
+            getMe(),
+        ]);
+
+        if (playerData.atTerritory.toString() !== id.toString()) {
+            router.push({
+                name: 'Territory',
+                params: { id: playerData.atTerritory },
+            });
+            return;
+        }
+
+        loadingProgress.value = 100;
+
+        player.value = playerData;
+        username.value = meData.username;
+        territoryId.value = id;
+        backgroundImage.value = `/images/${territoryData.backgroundAsset}`;
+        territoryName.value = territoryData.name;
+        islands.value = territoryData.islands;
+        edges.value = territoryData.edges;
+        refuelIslands.value = territoryData.refuelIslands;
+        terminalIslands.value = territoryData.terminalIslands;
+        dynamicViewBox.value = calculateViewBox(territoryData.islands);
+    } catch (error) {
+        console.error('Failed to load page data:', error);
+        router.push({ name: 'Login' });
+    } finally {
+        clearInterval(progressInterval);
+        setTimeout(() => {
+            isLoading.value = false;
+        }, 500);
+    }
+};
+
 const handleClickOutside = event => {
     if (!selectedIsland.value || infoBoxRef.value?.$el.contains(event.target)) {
         return;
@@ -110,58 +167,6 @@ const calculateInfoBoxStyle = () => {
 watch([selectedIsland, transformCounter], calculateInfoBoxStyle, {
     flush: 'post',
 });
-
-const loadPageData = async id => {
-    if (!id) return;
-    isLoading.value = true;
-    loadingProgress.value = 0;
-    hideInfoBox();
-
-    try {
-        loadingProgress.value = 10;
-        if (!getToken()) {
-            router.push({ name: 'Login' });
-            return;
-        }
-
-        loadingProgress.value = 30;
-        const [playerData, meData] = await Promise.all([getPlayer(), getMe()]);
-
-        if (playerData.atTerritory.toString() !== id.toString()) {
-            router.push({
-                name: 'Territory',
-                params: { id: playerData.atTerritory },
-            });
-            return;
-        }
-
-        loadingProgress.value = 70;
-        const territoryData = await getTerritory(id);
-
-        player.value = playerData;
-        username.value = meData.username;
-        territoryId.value = id;
-        backgroundImage.value = `/images/${territoryData.backgroundAsset}`;
-        territoryName.value = territoryData.name;
-        islands.value = territoryData.islands;
-        edges.value = territoryData.edges;
-        refuelIslands.value = territoryData.refuelIslands;
-        terminalIslands.value = territoryData.terminalIslands;
-        dynamicViewBox.value = calculateViewBox(territoryData.islands);
-        loadingProgress.value = 100;
-    } catch (error) {
-        console.error('Failed to load territory data:', error);
-        router.push({ name: 'Login' });
-    } finally {
-        if (loadingProgress.value === 100) {
-            setTimeout(() => {
-                isLoading.value = false;
-            }, 500);
-        } else {
-            isLoading.value = false;
-        }
-    }
-};
 
 const updateInfoBoxPosition = () => {
     transformCounter.value++;

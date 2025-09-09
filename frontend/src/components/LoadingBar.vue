@@ -4,11 +4,11 @@
             <img
                 src="/images/ships/spaceship.png"
                 alt="Loading spaceship"
-                class="absolute z-10 transform -translate-x-1/2 transition-all duration-300 ease-linear object-contain"
+                class="absolute z-10 transition-all duration-300 ease-linear object-contain"
                 :style="{
                     left: progress + '%',
                     bottom: '50%',
-                    transform: `translateX(-50%) translateY(50%)`,
+                    transform: `translateX(-25%) translateY(50%)`,
                     height: '4rem',
                     width: '4rem',
                 }"
