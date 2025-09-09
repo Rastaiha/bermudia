@@ -701,7 +701,7 @@ curl --request POST \
 |-------------|--------|--------------------------------------|
 | territoryId | string | ID of territory this book belongs to |
 | islandId    | string | ID of island this book belongs to    |
-| islandName  | string | Name of island this book belongs to  |
+| name        | string | Name of the book                     |
 
 
 ### KnowledgeBar
