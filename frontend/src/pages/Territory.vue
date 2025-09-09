@@ -48,7 +48,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, watch } from 'vue';
+import { ref, onMounted, onUnmounted, watch, nextTick } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { getPlayer, getMe, getToken, getTerritory } from '@/services/api.js';
 import { usePlayerWebSocket } from '@/components/service/WebSocket.js';
@@ -157,6 +157,9 @@ const loadPageData = async id => {
         clearInterval(progressInterval);
         setTimeout(() => {
             isLoading.value = false;
+            nextTick(() => {
+                mapViewComponentRef.value?.zoomToPlayer();
+            });
         }, 500);
     }
 };
@@ -209,7 +212,9 @@ const calculateViewBox = (islands, padding = 0.1) => {
         { minX: Infinity, maxX: -Infinity, minY: Infinity, maxY: -Infinity }
     );
     const { minX, minY, maxX, maxY } = bounds;
-    return `${minX - padding} ${minY - padding} ${maxX - minX + padding * 2} ${maxY - minY + padding * 2}`;
+    return `${minX - padding} ${minY - padding} ${maxX - minX + padding * 2} ${
+        maxY - minY + padding * 2
+    }`;
 };
 
 const showInfoBox = island => {
