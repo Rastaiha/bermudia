@@ -175,7 +175,7 @@ export const acceptTradeOffer = async offerID => {
     const response = await fetch(API_ENDPOINTS.acceptOffer, {
         method: 'POST',
         headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
-        body: JSON.stringify({ offerID }),
+        body: JSON.stringify({ offerID: offerID }),
     });
     return handleResponse(response);
 };
@@ -184,7 +184,7 @@ export const deleteTradeOffer = async offerID => {
     const response = await fetch(API_ENDPOINTS.deleteOffer, {
         method: 'POST',
         headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
-        body: JSON.stringify({ offerID }),
+        body: JSON.stringify({ offerID: offerID }),
     });
     return handleResponse(response);
 };

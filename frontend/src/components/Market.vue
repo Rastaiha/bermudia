@@ -3,23 +3,21 @@
         class="flex justify-center items-center"
         content-class="flex flex-col w-full h-full md:w-1/2 mx-4 p-6 
                        bg-[#5C3A21] border-4 border-[#3E2A17] 
-                       rounded-xl shadow-xl space-y-4"
+                       rounded-xl shadow-xl space-y-4 text-amber-200"
         overlay-transition="vfm-fade"
         content-transition="vfm-slide-up"
     >
         <div
             class="flex items-center justify-between border-b-2 border-[#3E2A17] pb-2 mb-4"
         >
-            <h1 class="text-xl font-semibold text-amber-200">
-                بازارچه بنزوئیلا
-            </h1>
+            <h1 class="text-xl font-semibold">بازارچه بنزوئیلا</h1>
             <button
                 class="p-1 rounded-full hover:bg-[#3E2A17]"
                 @click="handleClose"
             >
                 <svg
                     xmlns="http://www.w3.org/2000/svg"
-                    class="h-6 w-6 text-amber-200"
+                    class="h-6 w-6"
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"
@@ -34,7 +32,7 @@
             </button>
         </div>
 
-        <div>
+        <div class="flex justify-around">
             <button @pointerdown="isOffersYours = false">
                 معاملات درخواستی
             </button>
@@ -43,32 +41,37 @@
 
         <div
             v-if="!isOffersYours"
-            class="w-full flex flex-col justify-between items-end space-y-2"
+            class="w-full flex flex-col items-center justify-between items-end space-y-2"
         >
-            <div class="flex gap-1 items-end pb-2">
+            <div class="flex flex-wrap justify-around gap-y-4 pb-2">
                 <div
                     v-for="(offer, index) in otherOffers"
                     :key="index"
-                    class="relative w-8 h-32 flex items-center justify-center bg-gradient-to-b from-yellow-600 via-yellow-700 to-yellow-800 border-l-2 border-yellow-900 rounded-sm shadow-md cursor-pointer hover:skew-x-[3deg] hover:skew-y-[3deg] transition-transform"
+                    class="relative w-48 h-32 flex flex-col justify-between items-center pb-1 pt-1 bg-gradient-to-b from-yellow-600 via-yellow-700 to-yellow-800 border-l-2 border-yellow-900 rounded-sm shadow-md"
                 >
-                    <div>
-                        <CostlyButton
-                            :on-click="() => {}"
-                            ;
-                            :cost="offer.offered"
-                            label="داد"
-                            enabled
-                            :loading="false"
-                        >
-                        </CostlyButton>
-                        <CostlyButton
-                            :on-click="() => {}"
-                            :cost="offer.requested"
-                            label="ستد"
-                            enabled
-                            :loading="false"
-                        >
-                        </CostlyButton>
+                    <div
+                        class="flex flex-row justify-between items-center w-full"
+                    >
+                        <div class="w-2/5">
+                            <CostlyButton
+                                :on-click="() => {}"
+                                :cost="offer.offered"
+                                label="داد"
+                                enabled
+                                :loading="false"
+                            >
+                            </CostlyButton>
+                        </div>
+                        <div class="w-2/5">
+                            <CostlyButton
+                                :on-click="() => {}"
+                                :cost="offer.requested"
+                                label="ستد"
+                                enabled
+                                :loading="false"
+                            >
+                            </CostlyButton>
+                        </div>
                     </div>
                     <div>{{ offer.createdAt }}</div>
                     <button
@@ -84,40 +87,42 @@
 
         <div
             v-else
-            class="w-full flex flex-col justify-between items-end space-y-2"
+            class="w-full flex flex-col items-center justify-between items-end space-y-2"
         >
-            <div class="flex gap-1 items-end pb-2">
+            <div class="flex flex-wrap justify-around gap-y-4 pb-2">
                 <div
                     v-for="(offer, index) in myOffers"
                     :key="index"
-                    class="relative w-8 h-32 flex items-center justify-center bg-gradient-to-b from-yellow-600 via-yellow-700 to-yellow-800 border-l-2 border-yellow-900 rounded-sm shadow-md cursor-pointer hover:skew-x-[3deg] hover:skew-y-[3deg] transition-transform"
+                    class="relative w-48 h-32 flex flex-col justify-between items-center pb-1 pt-1 bg-gradient-to-b from-yellow-600 via-yellow-700 to-yellow-800 border-l-2 border-yellow-900 rounded-sm shadow-md"
                 >
-                    <div>
-                        <CostlyButton
-                            :on-click="() => {}"
-                            :cost="offer.offered"
-                            label="داد"
-                            enabled
-                            :loading="false"
-                        >
-                        </CostlyButton>
-                        <CostlyButton
-                            :on-click="() => {}"
-                            :cost="offer.requested"
-                            label="ستد"
-                            enabled
-                            :loading="false"
-                        >
-                        </CostlyButton>
+                    <div
+                        class="flex flex-row justify-between items-center w-full"
+                    >
+                        <div class="w-2/5">
+                            <CostlyButton
+                                :on-click="() => {}"
+                                :cost="offer.offered"
+                                label="داد"
+                                enabled
+                                :loading="false"
+                            >
+                            </CostlyButton>
+                        </div>
+                        <div class="w-2/5">
+                            <CostlyButton
+                                :on-click="() => {}"
+                                :cost="offer.requested"
+                                label="ستد"
+                                enabled
+                                :loading="false"
+                            >
+                            </CostlyButton>
+                        </div>
                     </div>
                     <div>{{ offer.createdAt }}</div>
-                    <button
-                        v-if="offer.acceptable"
-                        @pointerdown="deleteTradeOffer(offer.id)"
-                    >
+                    <button @pointerdown="deleteTradeOffer(offer.id)">
                         حذف معامله
                     </button>
-                    <div v-else></div>
                 </div>
             </div>
             <button
