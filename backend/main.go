@@ -71,7 +71,7 @@ func main() {
 	islandService := service.NewIsland(theBot, islandRepo, questionStore, playerRepo, treasureRepo)
 	playerService := service.NewPlayer(cfg, db, userRepo, playerRepo, territoryRepo, questionStore, islandRepo, treasureRepo, marketRepo)
 	correctionService := service.NewCorrection(cfg, questionStore)
-	adminService := service.NewAdmin(territoryRepo, islandRepo, userRepo, playerRepo, questionStore, treasureRepo)
+	adminService := service.NewAdmin(cfg, territoryRepo, islandRepo, userRepo, playerRepo, questionStore, treasureRepo)
 
 	islandService.OnNewPortableIsland(playerService.HandleNewPortableIsland)
 

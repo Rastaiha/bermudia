@@ -4,11 +4,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/Rastaiha/bermudia/internal/config"
 	"github.com/Rastaiha/bermudia/internal/domain"
 	"slices"
 )
 
 type Admin struct {
+	cfg            config.Config
 	territoryStore domain.TerritoryStore
 	islandStore    domain.IslandStore
 	userStore      domain.UserStore
@@ -17,8 +19,9 @@ type Admin struct {
 	treasureStore  domain.TreasureStore
 }
 
-func NewAdmin(territoryStore domain.TerritoryStore, islandStore domain.IslandStore, userStore domain.UserStore, playerStore domain.PlayerStore, questionStore domain.QuestionStore, treasureStore domain.TreasureStore) *Admin {
+func NewAdmin(cfg config.Config, territoryStore domain.TerritoryStore, islandStore domain.IslandStore, userStore domain.UserStore, playerStore domain.PlayerStore, questionStore domain.QuestionStore, treasureStore domain.TreasureStore) *Admin {
 	return &Admin{
+		cfg:            cfg,
 		territoryStore: territoryStore,
 		islandStore:    islandStore,
 		userStore:      userStore,
@@ -78,7 +81,10 @@ func (a *Admin) SetTerritory(ctx context.Context, territory domain.Territory) er
 	}
 
 	for _, island := range territory.Islands {
-		if err := a.islandStore.ReserveIDForTerritory(ctx, territory.ID, island.ID); err != nil {
+		if err := a.islandStore.ReserveIDForTerritory(ctx, territory.ID, island.ID, island.Name); err != nil {
+			return err
+		}
+		if err := a.islandStore.ReserveIDForTerritory(ctx, territory.ID, island.ID, island.Name); err != nil {
 			return err
 		}
 	}
@@ -303,5 +309,5 @@ func (a *Admin) CreateUser(ctx context.Context, id int32, username, password, st
 	if err := a.userStore.Create(ctx, &user); err != nil {
 		return err
 	}
-	return a.playerStore.Create(ctx, domain.NewPlayer(user.ID, &startingTerritory))
+	return a.playerStore.Create(ctx, domain.NewPlayer(a.cfg, user.ID, &startingTerritory))
 }

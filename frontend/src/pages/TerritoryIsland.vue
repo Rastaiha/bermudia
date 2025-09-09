@@ -32,12 +32,15 @@
                     @submit="handleChallengeSubmit"
                 />
             </template>
-            <template v-for="treasureData in treasures" :key="treasureData.id">
+            <template
+                v-for="(treasureData, index) in treasures"
+                :key="treasureData.id"
+            >
                 <Treasure
-                    v-for="(treasure, index) in treasures"
-                    :key="treasure.id"
                     v-model="treasures[index]"
                     :treasure-data="treasureData"
+                    :player="player"
+                    @treasureOpened="openRewardModal"
                 />
             </template>
         </div>
@@ -52,15 +55,20 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+// بخش اسکریپت این فایل هیچ تغییری نیاز ندارد و همان کد موفق قبلی است
+import { ref, onMounted, toRef } from 'vue';
 import { useToast } from 'vue-toastification';
-import { getIsland, submitAnswer } from '@/services/api';
+import { useRouter } from 'vue-router';
+import { getIsland, submitAnswer, getPlayer } from '@/services/api';
+import { usePlayerWebSocket } from '@/components/service/WebSocket.js';
+import { useModal } from 'vue-final-modal';
 
 import Iframe from '@/components/Iframe.vue';
 import challengeBox from '@/components/challengeBox.vue';
 import BackButton from '@/components/BackButton.vue';
 import Treasure from '@/components/Treasure.vue';
 import FloatingUI from '@/components/FloatingUI.vue';
+import TreasureRewardModal from '@/components/TreasureRewardModal.vue';
 
 const props = defineProps({
     id: { type: String, required: true },
@@ -74,14 +82,24 @@ const mousePosition = ref({ x: 0, y: 0 });
 const loadingMessage = ref('درحال بارگذاری اطلاعات سیاره...');
 const components = ref([]);
 const treasures = ref([]);
+const player = ref(null);
 const toast = useToast();
+const router = useRouter();
+const territoryId = toRef(props, 'id');
+
+usePlayerWebSocket(player, territoryId, router);
 
 const fetchIslandData = async id => {
     try {
-        const rawData = await getIsland(id);
+        const [islandData, playerData] = await Promise.all([
+            getIsland(id),
+            getPlayer(),
+        ]);
+
+        player.value = playerData;
         backgroundImage.value = `/images/island/background.png`;
-        components.value = rawData.components;
-        treasures.value = rawData.treasures;
+        components.value = islandData.components;
+        treasures.value = islandData.treasures;
         isLoaded.value = true;
     } catch (error) {
         console.error('Failed to load island data from API:', error);
@@ -90,15 +108,24 @@ const fetchIslandData = async id => {
     }
 };
 
+const openRewardModal = rewards => {
+    const { open, close } = useModal({
+        component: TreasureRewardModal,
+        attrs: {
+            rewards: rewards,
+            onClose: () => close(),
+        },
+    });
+    setTimeout(() => open(), 0);
+};
+
 const handleChallengeSubmit = async ({ inputId, data }) => {
     if (data === '' || data === null || data === undefined) {
         toast.error(`چیزی برای ارسال وارد نشده‌است!`);
         return;
     }
-
     const formData = new FormData();
     formData.append('data', data);
-
     try {
         await submitAnswer(inputId, formData);
         toast.success(`پاسخ شما با موفقیت ثبت شد.`);

@@ -3,7 +3,12 @@
         class="w-full h-screen flex justify-center items-center p-4 box-border bg-cover bg-center bg-no-repeat overflow-hidden bg-[#0c2036]"
         :style="{ backgroundImage: `url(${backgroundImage})` }"
     >
-        <LoadingIndicator v-if="isLoading" :message="loadingMessage" />
+        <div
+            v-if="isLoading"
+            class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50"
+        >
+            <LoadingBar :progress="loadingProgress" />
+        </div>
 
         <template v-else-if="player">
             <MapView
@@ -43,7 +48,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, watch } from 'vue';
+import { ref, onMounted, onUnmounted, watch, nextTick } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { getPlayer, getMe, getToken, getTerritory } from '@/services/api.js';
 import { usePlayerWebSocket } from '@/components/service/WebSocket.js';
@@ -51,7 +56,7 @@ import { usePlayerWebSocket } from '@/components/service/WebSocket.js';
 import MapView from '@/components/MapView.vue';
 import IslandInfoBox from '@/components/IslandInfoBox.vue';
 import PlayerInfo from '@/components/PlayerInfo.vue';
-import LoadingIndicator from '@/components/LoadingIndicator.vue';
+import LoadingBar from '@/components/LoadingBar.vue';
 
 const route = useRoute();
 const router = useRouter();
@@ -70,9 +75,94 @@ const username = ref('...');
 const backgroundImage = ref('');
 const selectedIsland = ref(null);
 const dynamicViewBox = ref('0 0 1 1');
-const loadingMessage = ref('در حال بارگذاری نقشه...');
 const isLoading = ref(true);
+const loadingProgress = ref(0);
 const infoBoxStyle = ref({ display: 'none' });
+
+const fetchTerritoryData = async id => {
+    return getTerritory(id);
+};
+
+const fetchPlayerAndUserData = async () => {
+    if (!getToken()) {
+        router.push({ name: 'Login' });
+        throw new Error('User not authenticated');
+    }
+    const [playerData, meData] = await Promise.all([getPlayer(), getMe()]);
+    return { playerData, meData };
+};
+
+const setupTerritoryData = territoryData => {
+    backgroundImage.value = `/images/${territoryData.backgroundAsset}`;
+    territoryName.value = territoryData.name;
+    islands.value = territoryData.islands;
+    edges.value = territoryData.edges;
+    refuelIslands.value = territoryData.refuelIslands;
+    terminalIslands.value = territoryData.terminalIslands;
+    dynamicViewBox.value = calculateViewBox(territoryData.islands);
+};
+
+const setupPlayerAndUserData = (playerAndUserData, currentTerritoryId) => {
+    if (!playerAndUserData) return;
+    const { playerData, meData } = playerAndUserData;
+
+    if (playerData.atTerritory.toString() !== currentTerritoryId.toString()) {
+        router.push({
+            name: 'Territory',
+            params: { id: playerData.atTerritory },
+        });
+        throw new Error('Redirecting to correct territory');
+    }
+
+    username.value = meData.username;
+    player.value = playerData;
+};
+
+const loadPageData = async id => {
+    if (!id) return;
+    isLoading.value = true;
+    loadingProgress.value = 0;
+    territoryId.value = id;
+    hideInfoBox();
+
+    let progressInterval = null;
+
+    try {
+        progressInterval = setInterval(() => {
+            if (loadingProgress.value < 90) {
+                loadingProgress.value += 5;
+            }
+        }, 100);
+
+        const [territoryData, playerAndUserData] = await Promise.all([
+            fetchTerritoryData(id),
+            fetchPlayerAndUserData(),
+        ]);
+
+        loadingProgress.value = 100;
+
+        setupTerritoryData(territoryData);
+        setupPlayerAndUserData(playerAndUserData, id);
+    } catch (error) {
+        console.error('Failed to load page data:', error.message);
+        if (
+            error.message.includes('authenticated') ||
+            error.message.includes('Redirecting')
+        ) {
+            //pass
+        } else {
+            router.push({ name: 'Login' });
+        }
+    } finally {
+        clearInterval(progressInterval);
+        setTimeout(() => {
+            isLoading.value = false;
+            nextTick(() => {
+                mapViewComponentRef.value?.zoomToPlayer();
+            });
+        }, 500);
+    }
+};
 
 const handleClickOutside = event => {
     if (!selectedIsland.value || infoBoxRef.value?.$el.contains(event.target)) {
@@ -106,50 +196,6 @@ watch([selectedIsland, transformCounter], calculateInfoBoxStyle, {
     flush: 'post',
 });
 
-const loadPageData = async id => {
-    if (!id) return;
-    isLoading.value = true;
-    hideInfoBox();
-
-    try {
-        if (!getToken()) {
-            router.push({ name: 'Login' });
-            return;
-        }
-
-        loadingMessage.value = 'در حال دریافت اطلاعات کاربری...';
-        const [playerData, meData] = await Promise.all([getPlayer(), getMe()]);
-
-        if (playerData.atTerritory.toString() !== id.toString()) {
-            router.push({
-                name: 'Territory',
-                params: { id: playerData.atTerritory },
-            });
-            return;
-        }
-
-        loadingMessage.value = 'در حال بارگذاری نقشه...';
-        const territoryData = await getTerritory(id);
-
-        player.value = playerData;
-        username.value = meData.username;
-        territoryId.value = id;
-
-        backgroundImage.value = `/images/${territoryData.backgroundAsset}`;
-        territoryName.value = territoryData.name;
-        islands.value = territoryData.islands;
-        edges.value = territoryData.edges;
-        refuelIslands.value = territoryData.refuelIslands;
-        terminalIslands.value = territoryData.terminalIslands;
-        dynamicViewBox.value = calculateViewBox(territoryData.islands);
-    } catch (error) {
-        console.error('Failed to load territory data:', error);
-        router.push({ name: 'Login' });
-    } finally {
-        isLoading.value = false;
-    }
-};
-
 const updateInfoBoxPosition = () => {
     transformCounter.value++;
 };
@@ -166,7 +212,9 @@ const calculateViewBox = (islands, padding = 0.1) => {
         { minX: Infinity, maxX: -Infinity, minY: Infinity, maxY: -Infinity }
     );
     const { minX, minY, maxX, maxY } = bounds;
-    return `${minX - padding} ${minY - padding} ${maxX - minX + padding * 2} ${maxY - minY + padding * 2}`;
+    return `${minX - padding} ${minY - padding} ${maxX - minX + padding * 2} ${
+        maxY - minY + padding * 2
+    }`;
 };
 
 const showInfoBox = island => {

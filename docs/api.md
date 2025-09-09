@@ -360,6 +360,25 @@ curl --request POST \
   --header 'Content-Type: application/json' \
   --data '{"treasureID": "trs_C0B869257687459"}'
 ```
+---
+
+### Make Trade Offer Check
+
+_This endpoint **is authenticated** and needs an auth token for access._
+
+Checks the limitation of making a new trade offer.
+
+Does not receive anything.
+
+Returns [MakeOfferCheckResult](#makeoffercheckresult) in response.
+
+**Endpoint:** `POST /trade/make_offer_check`
+
+```shell
+curl --request POST \
+  --url https://bermudia-api-internal.darkube.app/api/v1/trade/make_offer_check \
+  --header 'Authorization: TOKEN'
+```
 
 ---
 
@@ -439,6 +458,7 @@ Retrieves a paginated list of active trade offers from the marketplace, showing 
 
 - `page` (int, query param): Page number for pagination (0-based, default: 0)
 - `limit` (int, query param): Number of offers per page (default: 5, max: 100)
+- `by` (string, query param): Filters list based on the offerer. One of `me`, `others`. If empty, returns all offers.
 
 Returns an array of [TradeOfferView](#tradeofferview) in response.
 
@@ -646,10 +666,11 @@ curl --request POST \
 
 ### IslandTreasure
 
-| Field    | Type   | Description                                          |
-|----------|--------|------------------------------------------------------|
-| id       | string | Unique identifier for the treasure                   |
-| unlocked | bool   | Whether the treasure has been unlocked by the player |
+| Field    | Type           | Description                                                                             |
+|----------|----------------|-----------------------------------------------------------------------------------------|
+| id       | string         | Unique identifier for the treasure                                                      |
+| unlocked | bool           | Whether the treasure has been unlocked by the player                                    |
+| reward   | [Cost](#cost)? | If _unlocked_ is true, shows the achieved reward. Length of _reward.items_ can be zero. |
 
 
 ### IslandInput
@@ -676,10 +697,11 @@ curl --request POST \
 
 ### Book
 
-| Field       | Type   | Description                                            |
-|-------------|--------|--------------------------------------------------------|
-| territoryId | string | ID of territory this book belongs to                   |
-| islandId    | string | ID of island this book belongs to                      |
+| Field       | Type   | Description                          |
+|-------------|--------|--------------------------------------|
+| territoryId | string | ID of territory this book belongs to |
+| islandId    | string | ID of island this book belongs to    |
+| name        | string | Name of the book                     |
 
 
 ### KnowledgeBar
@@ -770,6 +792,15 @@ curl --request POST \
 | mustPayCost            | boolean       | Whether the player must pay the migration cost                                      |
 | feasible               | boolean       | Whether migration to this territory is possible                                     |
 | reason                 | string?       | If _feasible_ is false, explanation of why migration is not possible                |
+
+
+### MakeOfferCheckResult
+
+| Field         | Type          | Description                                                                      |
+|---------------|---------------|----------------------------------------------------------------------------------|
+| feasible      | boolean       | True if player can make a new offer, false otherwise                             |
+| tradableItems | [Cost](#cost) | Shows a list of tradable items and how many of each can the user put in a offer. |
+| reason        | string?       | If _feasible_ is false, this field is present and reports why                    |
 
 
 ### TradeOfferView

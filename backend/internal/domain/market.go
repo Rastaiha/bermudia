@@ -48,6 +48,31 @@ var tradableItems = []string{
 	CostItemTypeGoldenKey,
 }
 
+type MakeOfferCheckResult struct {
+	Feasible      bool   `json:"feasible"`
+	TradableItems Cost   `json:"tradableItems"`
+	Reason        string `json:"reason,omitempty"`
+}
+
+func MakeOfferCheck(player Player, numberOfOpenOffers int) (result MakeOfferCheckResult) {
+	for _, i := range tradableItems {
+		field := getItemField(&player, i)
+		if field != nil {
+			maxItem := CostItem{
+				Type:   i,
+				Amount: *field,
+			}
+			result.TradableItems.Items = append(result.TradableItems.Items, maxItem)
+		}
+	}
+	if numberOfOpenOffers >= 5 {
+		result.Reason = fmt.Sprintf("نمی‌توانید بیش از %d پیشنهاد باز داشته باشید.", numberOfOpenOffers)
+		return
+	}
+	result.Feasible = true
+	return
+}
+
 func validateAndNormalizeOfferCost(cost Cost) (Cost, error) {
 	normalized := make(map[string]CostItem)
 
@@ -90,7 +115,15 @@ func validateAndNormalizeOfferCost(cost Cost) (Cost, error) {
 	return result, nil
 }
 
-func MakeOffer(player Player, offered, requested Cost) (*PlayerUpdateEvent, TradeOffer, error) {
+func MakeOffer(player Player, numberOfOpenOffers int, offered, requested Cost) (*PlayerUpdateEvent, TradeOffer, error) {
+	check := MakeOfferCheck(player, numberOfOpenOffers)
+	if !check.Feasible {
+		return nil, TradeOffer{}, Error{
+			reason: ErrorReasonRuleViolation,
+			text:   check.Reason,
+		}
+	}
+
 	var err error
 	offered, err = validateAndNormalizeOfferCost(offered)
 	if err != nil {

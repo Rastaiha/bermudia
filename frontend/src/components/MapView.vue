@@ -78,7 +78,6 @@ const svgRef = ref(null);
 let panzoomInstance = null;
 let potentialClickNode = null;
 
-// --- Ship animation state ---
 const shipTransform = ref('');
 const shipTransition = ref('none');
 const previousAtIsland = ref(null);
@@ -88,13 +87,12 @@ const BOAT_HEIGHT = 0.11;
 
 const getShipPosition = atIsland => {
     const island = props.islands.find(island => island.id === atIsland);
-    if (!island) return { x: 0, y: 0 }; // safe fallback
+    if (!island) return { x: 0, y: 0 };
     const x = island.x;
     const y = island.y - island.height / 2;
     return { x, y };
 };
 
-// --- Watch for player's island changes to animate the ship ---
 watch(
     () => props.player?.atIsland,
     newAtIsland => {
@@ -188,6 +186,44 @@ const initializePanzoom = () => {
     });
 };
 
+const zoomToPlayer = () => {
+    if (!panzoomInstance || !props.player?.atIsland || !svgRef.value) return;
+
+    const svg = svgRef.value;
+    const ctm = svg.getScreenCTM();
+    if (!ctm) return;
+
+    const { x: topLeftX, y: topLeftY } = getShipPosition(props.player.atIsland);
+    const shipCenterX_svg = topLeftX + BOAT_WIDTH / 2;
+    const shipCenterY_svg = topLeftY + BOAT_HEIGHT / 2;
+
+    const point = svg.createSVGPoint();
+    point.x = shipCenterX_svg;
+    point.y = shipCenterY_svg;
+
+    const shipCenterOnScreen = point.matrixTransform(ctm);
+
+    const clientW = svg.clientWidth;
+    const clientH = svg.clientHeight;
+    const screenCenterX = clientW / 2;
+    const screenCenterY = clientH / 2;
+
+    const currentTransform = panzoomInstance.getTransform();
+    const currentPanX = currentTransform.x;
+    const currentPanY = currentTransform.y;
+
+    const deltaX = screenCenterX - shipCenterOnScreen.x;
+    const deltaY = screenCenterY - shipCenterOnScreen.y;
+
+    const finalPanX = currentPanX + deltaX;
+    const finalPanY = currentPanY + deltaY;
+
+    const targetScale = 2;
+
+    panzoomInstance.smoothZoom(screenCenterX, screenCenterY, targetScale);
+    panzoomInstance.smoothMoveTo(finalPanX, finalPanY);
+};
+
 onMounted(() => {
     initializePanzoom();
 });
@@ -198,6 +234,7 @@ onUnmounted(() => {
 
 defineExpose({
     svgRef,
+    zoomToPlayer,
 });
 </script>
 

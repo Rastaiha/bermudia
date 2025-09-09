@@ -53,10 +53,7 @@ func (i *Island) GetIsland(ctx context.Context, userId int32, islandId string) (
 	}
 
 	if domain.ShouldBeMadePortableOnAccess(islandHeader) {
-		added, err := i.islandStore.AddPortableIsland(ctx, userId, domain.PortableIsland{
-			IslandID:    islandHeader.ID,
-			TerritoryID: islandHeader.TerritoryID,
-		})
+		added, err := i.islandStore.AddPortableIsland(ctx, userId, islandId)
 		if err != nil {
 			return nil, err
 		}

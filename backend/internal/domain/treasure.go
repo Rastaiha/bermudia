@@ -26,6 +26,7 @@ type UserTreasure struct {
 	TreasureID string
 	Unlocked   bool
 	Cost       Cost
+	Reward     *Cost
 	UpdatedAt  time.Time
 }
 
@@ -72,8 +73,9 @@ func UnlockTreasure(player Player, treasure Treasure, userTreasure UserTreasure,
 			reason: ErrorReasonRuleViolation,
 		}
 	}
-	player = giveRewardOfTreasure(player, userTreasure)
+	player, reward := giveRewardOfTreasure(player, userTreasure)
 	userTreasure.Unlocked = true
+	userTreasure.Reward = &reward
 	return &PlayerUpdateEvent{
 		Reason: PlayerUpdateEventUnlockTreasure,
 		Player: &player,

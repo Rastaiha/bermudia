@@ -9,6 +9,7 @@ type IslandHeader struct {
 
 type PortableIsland struct {
 	IslandID    string `json:"islandId"`
+	Name        string `json:"name"`
 	TerritoryID string `json:"territoryId"`
 }
 
@@ -64,12 +65,14 @@ type IslandIFrame struct {
 type IslandTreasure struct {
 	ID       string `json:"id"`
 	Unlocked bool   `json:"unlocked"`
+	Reward   *Cost  `json:"reward,omitempty"`
 }
 
 func GetIslandTreasureOfUserTreasure(treasure UserTreasure) IslandTreasure {
 	return IslandTreasure{
 		ID:       treasure.TreasureID,
 		Unlocked: treasure.Unlocked,
+		Reward:   treasure.Reward,
 	}
 }
 
