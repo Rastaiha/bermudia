@@ -3,7 +3,7 @@
         class="flex justify-center items-center"
         content-class="flex flex-col w-full md:w-1/2 mx-4 p-6 
                        bg-[#5C3A21] border-4 border-[#3E2A17] 
-                       rounded-xl shadow-xl space-y-4"
+                       rounded-xl shadow-xl space-y-4 text-amber-200"
         overlay-transition="vfm-fade"
         content-transition="vfm-slide-up"
     >
@@ -34,27 +34,45 @@
             </button>
         </div>
 
-        <div class="w-full flex flex-col justify-between items-end space-y-2">
-            <div>داد</div>
-            <div v-for="tradable in tradables" :key="tradable">
-                <img
-                    :src="getIconByType(tradable)"
-                    :alt="tradable + ' Icon'"
-                    class="w-5 h-5"
-                />
-                <input v-model="offered[tradable]" type="number" />
+        <div class="flex flex-row justify-around items-center">
+            <div class="flex flex-col justify-between items-center space-y-2">
+                <div>داد</div>
+                <div
+                    v-for="tradable in tradables"
+                    :key="tradable"
+                    class="flex flex-row-reverse"
+                >
+                    <img
+                        :src="getIconByType(tradable)"
+                        :alt="tradable + ' Icon'"
+                        class="w-5 h-5"
+                    />
+                    <input
+                        v-model="offered[tradable]"
+                        type="number"
+                        class="w-10"
+                    />
+                </div>
             </div>
-        </div>
 
-        <div class="w-full flex flex-col justify-between items-end space-y-2">
-            <div>ستد</div>
-            <div v-for="tradable in tradables" :key="tradable">
-                <img
-                    :src="getIconByType(tradable)"
-                    :alt="tradable + ' Icon'"
-                    class="w-5 h-5"
-                />
-                <input v-model="requested[tradable]" type="number" />
+            <div class="flex flex-col justify-between items-center space-y-2">
+                <div>ستد</div>
+                <div
+                    v-for="tradable in tradables"
+                    :key="tradable"
+                    class="flex flex-row-reverse"
+                >
+                    <img
+                        :src="getIconByType(tradable)"
+                        :alt="tradable + ' Icon'"
+                        class="w-5 h-5"
+                    />
+                    <input
+                        v-model="requested[tradable]"
+                        type="number"
+                        class="w-10"
+                    />
+                </div>
             </div>
         </div>
 

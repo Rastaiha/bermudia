@@ -87,7 +87,7 @@
 
         <div
             v-else
-            class="w-full flex flex-col items-center justify-between items-end space-y-2"
+            class="w-full flex flex-col items-center justify-between space-y-2"
         >
             <div class="flex flex-wrap justify-around gap-y-4 pb-2">
                 <div
