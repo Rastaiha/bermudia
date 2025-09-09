@@ -81,11 +81,6 @@
                     <div v-else></div>
                 </div>
             </div>
-            <div>
-                <span @pointerdown="pagesOffset -= 1">-</span>
-                <span>{{ pagesOffset }}</span>
-                <span @pointerdown="pagesOffset += 1">+</span>
-            </div>
         </div>
 
         <div
@@ -158,8 +153,8 @@ const props = defineProps({
 const myOffers = ref([]);
 const otherOffers = ref([]);
 const tradables = ref([]);
-const pagesLimit = ref(5);
-const pagesOffset = ref(0);
+const pagesLimit = ref(30);
+const pageNumber = ref(0);
 const isOffersYours = ref(false);
 const emit = defineEmits(['close']);
 
@@ -181,11 +176,8 @@ function handleClose() {
 
 onMounted(async () => {
     try {
-        const offers = await getTradeOffers(
-            pagesOffset.value,
-            pagesLimit.value
-        );
-        offers.value.forEach(offer => {
+        const offers = await getTradeOffers(pageNumber.value, pagesLimit.value);
+        offers.forEach(offer => {
             if (offer.by == props.username) myOffers.value.push(offer);
             else otherOffers.value.push(offer);
         });

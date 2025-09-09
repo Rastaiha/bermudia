@@ -36,33 +36,38 @@
 
         <div class="w-full flex flex-col justify-between items-end space-y-2">
             <div>داد</div>
-            <div v-for="(tradable, index) in tradables" :key="index">
+            <div v-for="tradable in tradables" :key="tradable">
                 <img
                     :src="getIconByType(tradable)"
                     :alt="tradable + ' Icon'"
                     class="w-5 h-5"
                 />
-                <input :v-model="offered[index]" type="number" />
+                <input v-model="offered[tradable]" type="number" />
             </div>
         </div>
 
         <div class="w-full flex flex-col justify-between items-end space-y-2">
             <div>ستد</div>
-            <div v-for="(tradable, index) in tradables" :key="index">
+            <div v-for="tradable in tradables" :key="tradable">
                 <img
                     :src="getIconByType(tradable)"
                     :alt="tradable + ' Icon'"
                     class="w-5 h-5"
                 />
-                <input :v-model="requested[index]" type="number" />
+                <input v-model="requested[tradable]" type="number" />
             </div>
         </div>
+
+        <button @pointerdown="makeTradeOffer(offered, requested)">
+            ثبت معامله
+        </button>
     </VueFinalModal>
 </template>
 
 <script setup>
 import { onMounted, ref } from 'vue';
 import { VueFinalModal } from 'vue-final-modal';
+import { makeTradeOffer } from '../services/api';
 
 const props = defineProps({
     player: Object,
@@ -91,9 +96,9 @@ const getIconByType = type => {
 };
 
 onMounted(() => {
-    props.tradables.forEach(() => {
-        offered.value.push(0);
-        requested.value.push(0);
+    props.tradables.forEach(tradable => {
+        offered.value[tradable] = 0;
+        requested.value[tradable] = 0;
     });
 });
 </script>

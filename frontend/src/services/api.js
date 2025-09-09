@@ -163,7 +163,7 @@ export const treasureUnlock = async treasureId => {
 };
 
 export const makeTradeOffer = async (offered, requested) => {
-    const response = await fetch(API_ENDPOINTS.makeTradeOffer, {
+    const response = await fetch(API_ENDPOINTS.makeOffer, {
         method: 'POST',
         headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
         body: JSON.stringify({ offered, requested }),
