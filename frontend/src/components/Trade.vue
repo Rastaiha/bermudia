@@ -58,9 +58,7 @@
             </div>
         </div>
 
-        <button @pointerdown="makeTradeOffer(offered, requested)">
-            ثبت معامله
-        </button>
+        <button @pointerdown="handleSubmit">ثبت معامله</button>
     </VueFinalModal>
 </template>
 
@@ -94,6 +92,29 @@ const getIconByType = type => {
     }
     return '/images/icons/' + type + '.png';
 };
+
+function buildPayload(offered, requested) {
+    const toItems = obj =>
+        Object.entries(obj).map(([type, amount]) => ({
+            type,
+            amount: Number(amount),
+        }));
+
+    return {
+        offered: { items: toItems(offered) },
+        requested: { items: toItems(requested) },
+    };
+}
+
+async function handleSubmit() {
+    const payload = buildPayload(offered.value, requested.value);
+    try {
+        await makeTradeOffer(payload.offered, payload.requested);
+        handleClose();
+    } catch (err) {
+        console.error('Failed to make trade offer:', err);
+    }
+}
 
 onMounted(() => {
     props.tradables.forEach(tradable => {

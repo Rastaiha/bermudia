@@ -57,17 +57,16 @@
                             ;
                             :cost="offer.offered"
                             label="داد"
-                            enabled="true"
-                            loading="false"
+                            enabled
+                            :loading="false"
                         >
                         </CostlyButton>
                         <CostlyButton
                             :on-click="() => {}"
-                            ;
                             :cost="offer.requested"
                             label="ستد"
-                            enabled="true"
-                            loading="false"
+                            enabled
+                            :loading="false"
                         >
                         </CostlyButton>
                     </div>
@@ -89,27 +88,25 @@
         >
             <div class="flex gap-1 items-end pb-2">
                 <div
-                    v-for="(offer, index) in otherOffers"
+                    v-for="(offer, index) in myOffers"
                     :key="index"
                     class="relative w-8 h-32 flex items-center justify-center bg-gradient-to-b from-yellow-600 via-yellow-700 to-yellow-800 border-l-2 border-yellow-900 rounded-sm shadow-md cursor-pointer hover:skew-x-[3deg] hover:skew-y-[3deg] transition-transform"
                 >
                     <div>
                         <CostlyButton
                             :on-click="() => {}"
-                            ;
                             :cost="offer.offered"
                             label="داد"
-                            enabled="true"
-                            loading="false"
+                            enabled
+                            :loading="false"
                         >
                         </CostlyButton>
                         <CostlyButton
                             :on-click="() => {}"
-                            ;
                             :cost="offer.requested"
                             label="ستد"
-                            enabled="true"
-                            loading="false"
+                            enabled
+                            :loading="false"
                         >
                         </CostlyButton>
                     </div>
@@ -176,11 +173,16 @@ function handleClose() {
 
 onMounted(async () => {
     try {
-        const offers = await getTradeOffers(pageNumber.value, pagesLimit.value);
-        offers.forEach(offer => {
-            if (offer.by == props.username) myOffers.value.push(offer);
-            else otherOffers.value.push(offer);
-        });
+        myOffers.value = await getTradeOffers(
+            pageNumber.value,
+            pagesLimit.value,
+            'me'
+        );
+        otherOffers.value = await getTradeOffers(
+            pageNumber.value,
+            pagesLimit.value,
+            'others'
+        );
         tradables.value = ['coin', 'redKey', 'blueKey', 'goldenKey'];
     } catch (err) {
         console.error('Failed to load trade offers:', err);
