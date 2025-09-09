@@ -26,6 +26,15 @@ export const API_ENDPOINTS = {
     treasureCheck: `${API_BASE_URL}/unlock_treasure_check`,
     treasureUnlock: `${API_BASE_URL}/unlock_treasure`,
 
+    // Market
+    makeOffer: `${API_BASE_URL}/trade/make_offer`,
+    acceptOffer: `${API_BASE_URL}/trade/accept_offer`,
+    deleteOffer: `${API_BASE_URL}/trade/delete_offer`,
+    getOffers: (page, limit, by) =>
+        by == null
+            ? `${API_BASE_URL}/trade/offers?page=${page}&limit=${limit}`
+            : `${API_BASE_URL}/trade/offers?page=${page}&limit=${limit}&by=${by}`,
+
     // WebSocket - Assuming it must also go through the /api/v1 proxy path
     events: `${WS_BASE_URL}/events`,
 };

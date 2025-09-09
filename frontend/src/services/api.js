@@ -161,3 +161,41 @@ export const treasureUnlock = async treasureId => {
     });
     return handleResponse(response);
 };
+
+export const makeTradeOffer = async (offered, requested) => {
+    const response = await fetch(API_ENDPOINTS.makeOffer, {
+        method: 'POST',
+        headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
+        body: JSON.stringify({ offered: offered, requested: requested }),
+    });
+    return handleResponse(response);
+};
+
+export const acceptTradeOffer = async offerID => {
+    const response = await fetch(API_ENDPOINTS.acceptOffer, {
+        method: 'POST',
+        headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
+        body: JSON.stringify({ offerID: offerID }),
+    });
+    return handleResponse(response);
+};
+
+export const deleteTradeOffer = async offerID => {
+    const response = await fetch(API_ENDPOINTS.deleteOffer, {
+        method: 'POST',
+        headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
+        body: JSON.stringify({ offerID: offerID }),
+    });
+    return handleResponse(response);
+};
+
+export const getTradeOffers = async (page = 0, limit = 5, by = null) => {
+    const response = await fetch(
+        `${API_ENDPOINTS.getOffers(page, limit, by)}`,
+        {
+            method: 'GET',
+            headers: getAuthHeaders(),
+        }
+    );
+    return handleResponse(response);
+};
