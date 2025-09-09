@@ -371,7 +371,7 @@ func (s sqlIslandRepository) GetPortableIslands(ctx context.Context, userId int3
 	}()
 	for rows.Next() {
 		var p domain.PortableIsland
-		err = rows.Scan(&p.IslandID, &p.TerritoryID, &p.IslandName)
+		err = rows.Scan(&p.IslandID, &p.TerritoryID, &p.Name)
 		if err != nil {
 			return nil, err
 		}
