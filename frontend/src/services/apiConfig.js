@@ -1,7 +1,7 @@
 // frontend/src/services/apiConfig.js
 
-const API_BASE_URL = 'https://bermudia-api.darkube.app/api/v1';
-const WS_BASE_URL = 'wss://bermudia-api.darkube.app/api/v1';
+const API_BASE_URL = 'https://bermudia-api-internal.darkube.app/api/v1';
+const WS_BASE_URL = 'ws://bermudia-api-internal.darkube.app/api/v1';
 
 export const API_ENDPOINTS = {
     // Authentication
@@ -25,6 +25,15 @@ export const API_ENDPOINTS = {
     submitAnswer: id => `${API_BASE_URL}/answer/${id}`,
     treasureCheck: `${API_BASE_URL}/unlock_treasure_check`,
     treasureUnlock: `${API_BASE_URL}/unlock_treasure`,
+
+    // Market
+    makeOffer: `${API_BASE_URL}/trade/make_offer`,
+    acceptOffer: `${API_BASE_URL}/trade/accept_offer`,
+    deleteOffer: `${API_BASE_URL}/trade/delete_offer`,
+    getOffers: (page, limit, by) =>
+        by == null
+            ? `${API_BASE_URL}/trade/offers?page=${page}&limit=${limit}`
+            : `${API_BASE_URL}/trade/offers?page=${page}&limit=${limit}&by=${by}`,
 
     // WebSocket - Assuming it must also go through the /api/v1 proxy path
     events: `${WS_BASE_URL}/events`,

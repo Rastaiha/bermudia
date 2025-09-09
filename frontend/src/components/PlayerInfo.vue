@@ -45,6 +45,17 @@
             </button>
             <button
                 class="transition-transform duration-200 hover:scale-110 pointer-events-auto"
+                title="بازار"
+                @pointerdown="openMarket"
+            >
+                <img
+                    src="/images/icons/market.png"
+                    class="w-12 h-12 drop-shadow-lg"
+                    alt="داد و ستد"
+                />
+            </button>
+            <button
+                class="transition-transform duration-200 hover:scale-110 pointer-events-auto"
                 title="کوله پشتی"
                 @pointerdown="openBackpack"
             >
@@ -67,6 +78,7 @@ import { useModal } from 'vue-final-modal';
 import ConfirmModal from './ConfirmModal.vue';
 import Bookshelf from './Bookshelf.vue';
 import Backpack from './Backpack.vue';
+import Market from './Market.vue';
 
 const props = defineProps({
     player: {
@@ -105,6 +117,17 @@ const { open: openBookshelf, close: closeBookshelf } = useModal({
         books: props.player.books,
         onClose() {
             closeBookshelf();
+        },
+    },
+});
+
+const { open: openMarket, close: closeMarket } = useModal({
+    component: Market,
+    attrs: {
+        player: props.player,
+        username: props.username,
+        onClose() {
+            closeMarket();
         },
     },
 });
