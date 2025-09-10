@@ -47,13 +47,13 @@
                     <div
                         v-for="(book, bookIndex) in booksInTerritory"
                         :key="bookIndex"
-                        class="relative w-8 h-32 flex items-center justify-center bg-gradient-to-b from-yellow-600 via-yellow-700 to-yellow-800 border-l-2 border-yellow-900 rounded-sm shadow-md cursor-pointer hover:skew-x-[3deg] hover:skew-y-[3deg] transition-transform"
+                        class="relative w-8 h-[7rem] flex items-center justify-center bg-gradient-to-b from-yellow-600 via-yellow-700 to-yellow-800 border-l-2 border-yellow-900 rounded-sm shadow-md cursor-pointer hover:skew-x-[3deg] hover:skew-y-[3deg] transition-transform"
                         @click="navigateToIsland(territoryId, book.islandId)"
                     >
                         <span
-                            class="transform -rotate-90 text-xs font-bold text-white whitespace-nowrap"
+                            class="transform -rotate-90 text-[0.7rem] font-bold text-white whitespace-nowrap"
                         >
-                            {{ book.islandId }}
+                            {{ book.name }}
                         </span>
                         <div
                             class="absolute left-0 top-0 h-full w-1 bg-yellow-900 rounded-l-sm"
