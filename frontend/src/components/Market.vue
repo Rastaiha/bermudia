@@ -61,7 +61,10 @@
             v-if="!isOffersYours"
             class="w-full flex flex-col items-center justify-between items-end space-y-2"
         >
-            <div class="w-full flex flex-wrap justify-around gap-y-4 pb-2">
+            <div
+                v-if="otherOffers.length > 0"
+                class="w-full flex flex-wrap justify-around gap-y-4 pb-2"
+            >
                 <div
                     v-for="(offer, index) in otherOffers"
                     :key="index"
@@ -103,13 +106,17 @@
                     <div v-else></div>
                 </div>
             </div>
+            <div v-else class="text-center w-full">معامله‌ای یافت نشد.</div>
         </div>
 
         <div
             v-else
             class="w-full flex flex-col items-center justify-between space-y-2"
         >
-            <div class="w-full flex flex-wrap justify-around gap-y-4 pb-2">
+            <div
+                v-if="myOffers.length > 0"
+                class="w-full flex flex-wrap justify-around gap-y-4 pb-2"
+            >
                 <div
                     v-for="(offer, index) in myOffers"
                     :key="index"
@@ -149,6 +156,7 @@
                     </button>
                 </div>
             </div>
+            <div v-else class="text-center w-full">معامله‌ای یافت نشد.</div>
             <button
                 class="transition-transform duration-200 hover:scale-110 pointer-events-auto p-1 rounded-[5px] bg-[#fee685] text-[#5c3a21]"
                 title="معامله جدید"
