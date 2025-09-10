@@ -92,7 +92,7 @@
                             </CostlyButton>
                         </div>
                     </div>
-                    <div>{{ offer.createdAt }}</div>
+                    <div>{{ timeCommenter(offer.created_at) }}</div>
                     <button
                         v-if="offer.acceptable"
                         class="transition-transform duration-200 hover:scale-110 pointer-events-auto p-1 rounded-[5px] bg-[#fee685] text-[#5c3a21]"
@@ -140,7 +140,7 @@
                             </CostlyButton>
                         </div>
                     </div>
-                    <div>{{ offer.createdAt }}</div>
+                    <div>{{ timeCommenter(offer.created_at) }}</div>
                     <button
                         class="transition-transform duration-200 hover:scale-110 pointer-events-auto p-1 rounded-[5px] bg-[#fee685] text-[#5c3a21]"
                         @pointerdown="deleteTrade(offer)"
@@ -169,6 +169,7 @@ import {
     getTradeOffers,
 } from '../services/api';
 import { useToast } from 'vue-toastification';
+import { useNow } from '../services/timer';
 import Trade from './Trade.vue';
 import CostlyButton from './CostlyButton.vue';
 
@@ -184,6 +185,7 @@ const pagesLimit = ref(30);
 const pageNumber = ref(0);
 const isOffersYours = ref(false);
 const toast = useToast();
+const { now } = useNow(60000);
 const emit = defineEmits(['close']);
 
 const { open: openTrade, close: closeTrade } = useModal({
@@ -218,6 +220,15 @@ const deleteTrade = offer => {
     } catch (err) {
         toast.error(err.message || 'در حین حذف معامله خطایی رخ داد');
     }
+};
+
+const timeCommenter = time => {
+    let diff = now.value - time;
+    diff /= 1000;
+    if (diff < 60) return 'ثانیه‌هایی پیش';
+    diff = Math.floor(diff / 60);
+    if (diff < 60) return diff + ' دقیقه پیش';
+    return Math.floor(diff / 60) + ' ساعت پیش';
 };
 
 onMounted(async () => {
