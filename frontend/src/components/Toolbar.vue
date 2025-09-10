@@ -24,6 +24,20 @@
                         class="h-full w-full object-contain"
                     />
                 </button>
+
+                <MuteButton />
+
+                <button
+                    class="h-12 w-12 rounded-lg p-2 transition-colors duration-200 hover:bg-slate-700/90"
+                    title="خروج"
+                    @pointerdown="openLogoutModal"
+                >
+                    <img
+                        src="/images/icons/logout.png"
+                        alt="خروج"
+                        class="h-full w-full object-contain"
+                    />
+                </button>
             </div>
 
             <button
@@ -60,6 +74,7 @@ import Backpack from './Backpack.vue';
 import Bookshelf from './Bookshelf.vue';
 import Market from './Market.vue';
 import ConfirmModal from './ConfirmModal.vue';
+import MuteButton from './MuteButton.vue';
 
 const props = defineProps({
     player: {
@@ -160,12 +175,6 @@ const menuItems = [
         icon: '/images/icons/market.png',
         alt: 'بازار',
         action: openMarket,
-    },
-    {
-        id: 'logout',
-        icon: '/images/icons/logout.png',
-        alt: 'خروج',
-        action: openLogoutModal,
     },
 ];
 
