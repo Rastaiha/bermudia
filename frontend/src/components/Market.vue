@@ -1,7 +1,7 @@
 <template>
     <VueFinalModal
         class="flex justify-center items-center"
-        content-class="flex flex-col w-full h-full md:w-1/2 mx-4 p-6 
+        content-class="flex flex-col w-full h-full md:w-5/7 mx-4 p-6 
                        bg-[#5C3A21] border-4 border-[#3E2A17] 
                        rounded-xl shadow-xl space-y-4 text-amber-200"
         overlay-transition="vfm-fade"
@@ -65,12 +65,12 @@
                 <div
                     v-for="(offer, index) in otherOffers"
                     :key="index"
-                    class="relative w-48 h-32 flex flex-col justify-between items-center pb-1 pt-1 bg-gradient-to-b from-yellow-600 via-yellow-700 to-yellow-800 border-l-2 border-yellow-900 rounded-sm shadow-md"
+                    class="relative w-64 h-32 flex flex-col justify-between items-center p-2 bg-gradient-to-b from-yellow-600 via-yellow-700 to-yellow-800 border-l-2 border-yellow-900 rounded-sm shadow-md"
                 >
                     <div
                         class="flex flex-row justify-between items-center w-full"
                     >
-                        <div class="w-2/5">
+                        <div class="w-3/7">
                             <CostlyButton
                                 :on-click="() => {}"
                                 :cost="offer.offered"
@@ -80,7 +80,7 @@
                             >
                             </CostlyButton>
                         </div>
-                        <div class="w-2/5">
+                        <div class="w-3/7">
                             <CostlyButton
                                 :on-click="() => {}"
                                 :cost="offer.requested"
@@ -113,12 +113,12 @@
                 <div
                     v-for="(offer, index) in myOffers"
                     :key="index"
-                    class="relative w-48 h-32 flex flex-col justify-between items-center pb-1 pt-1 bg-gradient-to-b from-yellow-600 via-yellow-700 to-yellow-800 border-l-2 border-yellow-900 rounded-sm shadow-md"
+                    class="relative w-64 h-32 flex flex-col justify-between items-center p-2 bg-gradient-to-b from-yellow-600 via-yellow-700 to-yellow-800 border-l-2 border-yellow-900 rounded-sm shadow-md"
                 >
                     <div
                         class="flex flex-row justify-between items-center w-full"
                     >
-                        <div class="w-2/5">
+                        <div class="w-3/7">
                             <CostlyButton
                                 :on-click="() => {}"
                                 :cost="offer.offered"
@@ -129,7 +129,7 @@
                             >
                             </CostlyButton>
                         </div>
-                        <div class="w-2/5">
+                        <div class="w-3/7">
                             <CostlyButton
                                 :on-click="() => {}"
                                 :cost="offer.requested"
