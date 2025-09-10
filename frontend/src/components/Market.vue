@@ -1,7 +1,7 @@
 <template>
     <VueFinalModal
         class="flex justify-center items-center"
-        content-class="flex flex-col w-full h-full md:w-1/2 mx-4 p-6 
+        content-class="flex flex-col w-full h-[50vh] md:w-1/2 mx-4 p-6 
                        bg-[#5C3A21] border-4 border-[#3E2A17] 
                        rounded-xl shadow-xl space-y-4 text-amber-200"
         overlay-transition="vfm-fade"
@@ -42,8 +42,7 @@
         <div
             v-if="!isOffersYours"
             ref="otherOffersContainer"
-            class="w-full flex flex-col items-center justify-between items-end space-y-2 overflow-y-auto"
-            style="max-height: -webkit-fill-available"
+            class="w-full flex flex-col items-center justify-between space-y-2 overflow-y-auto max-h-[fit-content]"
             @scroll="handleOtherScroll"
         >
             <div class="flex flex-wrap justify-around gap-y-4 pb-2">
@@ -87,7 +86,7 @@
 
         <div
             v-else
-            class="w-full flex flex-col items-center justify-between space-y-2"
+            class="w-full h-full flex flex-col items-center justify-between space-y-2"
         >
             <button
                 class="transition-transform duration-200 hover:scale-110 pointer-events-auto pr-auto pl-auto"
@@ -98,7 +97,7 @@
             </button>
             <div
                 ref="myOffersContainer"
-                class="w-full flex flex-col items-center justify-between space-y-2 overflow-y-auto max-h-[50vh]"
+                class="w-full flex flex-col items-center justify-between space-y-2 overflow-y-auto max-h-[fit-content]"
                 @scroll="handleMyScroll"
             >
                 <div class="flex flex-wrap justify-around gap-y-4 pb-2">
@@ -264,3 +263,28 @@ onMounted(async () => {
     }
 });
 </script>
+<style>
+::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+
+::-webkit-scrollbar-track {
+    background: #3e2a17;
+    border-radius: 25px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #fee685;
+    border-radius: 25px;
+    border: 2px solid #3e2a17;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #fcd34d;
+}
+
+* {
+    scrollbar-color: #fee685 #3e2a17;
+}
+</style>
