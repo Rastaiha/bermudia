@@ -33,10 +33,28 @@
         </div>
 
         <div class="flex justify-around">
-            <button @pointerdown="isOffersYours = false">
+            <button
+                class="p-1 rounded-[5px]"
+                :class="
+                    !isOffersYours
+                        ? 'bg-[#fee685] text-[#5c3a21]'
+                        : 'border-[5px] border-solid border-[#fee685]'
+                "
+                @pointerdown="isOffersYours = false"
+            >
                 معاملات درخواستی
             </button>
-            <button @pointerdown="isOffersYours = true">معاملات شما</button>
+            <button
+                class="p-1 rounded-[5px]"
+                :class="
+                    isOffersYours
+                        ? 'bg-[#fee685] text-[#5c3a21]'
+                        : 'border-[5px] border-solid border-[#fee685]'
+                "
+                @pointerdown="isOffersYours = true"
+            >
+                معاملات شما
+            </button>
         </div>
 
         <div
@@ -69,6 +87,7 @@
                                 label="ستد"
                                 enabled
                                 :loading="false"
+                                background-color="#480202"
                             >
                             </CostlyButton>
                         </div>
@@ -76,6 +95,7 @@
                     <div>{{ offer.createdAt }}</div>
                     <button
                         v-if="offer.acceptable"
+                        class="transition-transform duration-200 hover:scale-110 pointer-events-auto p-1 rounded-[5px] bg-[#fee685] text-[#5c3a21]"
                         @pointerdown="acceptTradeOffer(offer.id)"
                     >
                         انجام معامله
@@ -105,6 +125,7 @@
                                 label="داد"
                                 enabled
                                 :loading="false"
+                                background-color="#480202"
                             >
                             </CostlyButton>
                         </div>
@@ -120,13 +141,16 @@
                         </div>
                     </div>
                     <div>{{ offer.createdAt }}</div>
-                    <button @pointerdown="deleteTradeOffer(offer.id)">
+                    <button
+                        class="transition-transform duration-200 hover:scale-110 pointer-events-auto p-1 rounded-[5px] bg-[#fee685] text-[#5c3a21]"
+                        @pointerdown="deleteTradeOffer(offer.id)"
+                    >
                         حذف معامله
                     </button>
                 </div>
             </div>
             <button
-                class="transition-transform duration-200 hover:scale-110 pointer-events-auto"
+                class="transition-transform duration-200 hover:scale-110 pointer-events-auto p-1 rounded-[5px] bg-[#fee685] text-[#5c3a21]"
                 title="معامله جدید"
                 @pointerdown="openTrade"
             >
