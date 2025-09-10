@@ -65,7 +65,7 @@ func MakeOfferCheck(player Player, numberOfOpenOffers int) (result MakeOfferChec
 			result.TradableItems.Items = append(result.TradableItems.Items, maxItem)
 		}
 	}
-	if numberOfOpenOffers >= 5 {
+	if numberOfOpenOffers >= 10 {
 		result.Reason = fmt.Sprintf("نمی‌توانید بیش از %d پیشنهاد باز داشته باشید.", numberOfOpenOffers)
 		return
 	}
