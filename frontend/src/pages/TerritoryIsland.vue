@@ -55,13 +55,13 @@
 </template>
 
 <script setup>
-// بخش اسکریپت این فایل هیچ تغییری نیاز ندارد و همان کد موفق قبلی است
 import { ref, onMounted, toRef } from 'vue';
 import { useToast } from 'vue-toastification';
 import { useRouter } from 'vue-router';
 import { getIsland, submitAnswer, getPlayer } from '@/services/api';
 import { usePlayerWebSocket } from '@/components/service/WebSocket.js';
 import { useModal } from 'vue-final-modal';
+import eventBus from '@/services/eventBus';
 
 import Iframe from '@/components/Iframe.vue';
 import challengeBox from '@/components/challengeBox.vue';
@@ -148,6 +148,7 @@ const hideTooltip = () => {
 };
 
 onMounted(() => {
+    eventBus.emit('set-audio-state', 'stop');
     fetchIslandData(props.islandId);
 });
 </script>

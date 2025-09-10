@@ -54,6 +54,7 @@ import { ref, onMounted, onUnmounted, watch, nextTick } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { getPlayer, getMe, getToken, getTerritory } from '@/services/api.js';
 import { usePlayerWebSocket } from '@/components/service/WebSocket.js';
+import eventBus from '@/services/eventBus';
 
 import MapView from '@/components/MapView.vue';
 import IslandInfoBox from '@/components/IslandInfoBox.vue';
@@ -231,11 +232,13 @@ const hideInfoBox = () => {
 };
 
 onMounted(() => {
+    eventBus.emit('set-audio-state', 'play');
     loadPageData(route.params.id);
     document.addEventListener('pointerdown', handleClickOutside);
 });
 
 onUnmounted(() => {
+    eventBus.emit('set-audio-state', 'stop');
     document.removeEventListener('pointerdown', handleClickOutside);
 });
 
