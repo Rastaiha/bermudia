@@ -90,6 +90,7 @@
 <script setup>
 import { onMounted, ref } from 'vue';
 import { VueFinalModal } from 'vue-final-modal';
+import { useToast } from 'vue-toastification';
 import { makeTradeOffer } from '../services/api';
 
 const props = defineProps({
@@ -100,6 +101,7 @@ const props = defineProps({
 
 const offered = ref([]);
 const requested = ref([]);
+const toast = useToast();
 const emit = defineEmits(['close']);
 
 function handleClose() {
@@ -135,9 +137,10 @@ async function handleSubmit() {
     const payload = buildPayload(offered.value, requested.value);
     try {
         await makeTradeOffer(payload.offered, payload.requested);
+        toast.success('معامله اضافه شد.');
         handleClose();
     } catch (err) {
-        console.error('Failed to make trade offer:', err);
+        toast.error(err.message || 'در حین اضافه کردن معامله خطایی رخ داد');
     }
 }
 

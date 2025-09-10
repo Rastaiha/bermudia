@@ -61,7 +61,7 @@
             v-if="!isOffersYours"
             class="w-full flex flex-col items-center justify-between items-end space-y-2"
         >
-            <div class="flex flex-wrap justify-around gap-y-4 pb-2">
+            <div class="w-full flex flex-wrap justify-around gap-y-4 pb-2">
                 <div
                     v-for="(offer, index) in otherOffers"
                     :key="index"
@@ -96,7 +96,7 @@
                     <button
                         v-if="offer.acceptable"
                         class="transition-transform duration-200 hover:scale-110 pointer-events-auto p-1 rounded-[5px] bg-[#fee685] text-[#5c3a21]"
-                        @pointerdown="acceptTradeOffer(offer.id)"
+                        @pointerdown="acceptTrade(offer)"
                     >
                         انجام معامله
                     </button>
@@ -109,7 +109,7 @@
             v-else
             class="w-full flex flex-col items-center justify-between space-y-2"
         >
-            <div class="flex flex-wrap justify-around gap-y-4 pb-2">
+            <div class="w-full flex flex-wrap justify-around gap-y-4 pb-2">
                 <div
                     v-for="(offer, index) in myOffers"
                     :key="index"
@@ -143,7 +143,7 @@
                     <div>{{ offer.createdAt }}</div>
                     <button
                         class="transition-transform duration-200 hover:scale-110 pointer-events-auto p-1 rounded-[5px] bg-[#fee685] text-[#5c3a21]"
-                        @pointerdown="deleteTradeOffer(offer.id)"
+                        @pointerdown="deleteTrade(offer)"
                     >
                         حذف معامله
                     </button>
@@ -168,6 +168,7 @@ import {
     deleteTradeOffer,
     getTradeOffers,
 } from '../services/api';
+import { useToast } from 'vue-toastification';
 import Trade from './Trade.vue';
 import CostlyButton from './CostlyButton.vue';
 
@@ -182,6 +183,7 @@ const tradables = ref([]);
 const pagesLimit = ref(30);
 const pageNumber = ref(0);
 const isOffersYours = ref(false);
+const toast = useToast();
 const emit = defineEmits(['close']);
 
 const { open: openTrade, close: closeTrade } = useModal({
@@ -200,6 +202,24 @@ function handleClose() {
     emit('close');
 }
 
+const acceptTrade = offer => {
+    try {
+        acceptTradeOffer(offer.id);
+        toast.success('معامله جوش خورد.');
+    } catch (err) {
+        toast.error(err.message || 'در حین تایید معامله خطایی رخ داد');
+    }
+};
+
+const deleteTrade = offer => {
+    try {
+        deleteTradeOffer(offer.id);
+        toast.success('معامله حذف شد.');
+    } catch (err) {
+        toast.error(err.message || 'در حین حذف معامله خطایی رخ داد');
+    }
+};
+
 onMounted(async () => {
     try {
         myOffers.value = await getTradeOffers(
@@ -214,7 +234,7 @@ onMounted(async () => {
         );
         tradables.value = ['coin', 'redKey', 'blueKey', 'goldenKey'];
     } catch (err) {
-        console.error('Failed to load trade offers:', err);
+        toast.error(err.message || 'در حین دریافت معاملات خطایی رخ داد');
     }
 });
 </script>
