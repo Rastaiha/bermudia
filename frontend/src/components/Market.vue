@@ -87,6 +87,7 @@
                                 label="ستد"
                                 enabled
                                 :loading="false"
+                                background-color="#480202"
                             >
                             </CostlyButton>
                         </div>
@@ -124,6 +125,7 @@
                                 label="داد"
                                 enabled
                                 :loading="false"
+                                background-color="#480202"
                             >
                             </CostlyButton>
                         </div>

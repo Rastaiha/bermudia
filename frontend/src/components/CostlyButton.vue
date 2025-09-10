@@ -1,7 +1,8 @@
 <template>
     <button
         :disabled="loading || !enabled"
-        class="btn-hover w-full p-2 rounded-lg bg-green-600 text-white disabled:opacity-50 disabled:cursor-not-allowed text-xs"
+        class="btn-hover w-full p-2 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed text-xs"
+        :style="{ backgroundColor: backgroundColor, color: textColor }"
         @pointerdown.stop="onClick"
     >
         <div
@@ -17,7 +18,7 @@
                     class="flex justify-between items-center flex-col"
                 >
                     <div class="flex items-center gap-x-1">
-                        <span class="text-gray-900 font-bold">{{
+                        <span class="font-bold" :style="{ color: textColor }">{{
                             costItem.amount
                         }}</span>
                         <img
@@ -39,6 +40,14 @@ defineProps({
     label: String,
     enabled: Boolean,
     loading: Boolean,
+    backgroundColor: {
+        type: String,
+        default: 'green',
+    },
+    textColor: {
+        type: String,
+        default: 'white',
+    },
 });
 
 const getIconByType = type => {
