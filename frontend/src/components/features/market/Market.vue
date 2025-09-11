@@ -182,7 +182,7 @@ import {
     getTradeOffers,
 } from '@/services/api/index.js';
 import { useToast } from 'vue-toastification';
-import { useNow } from '@/composables/timer.js';
+import { useNow } from '@/composables/useNow.js';
 import Trade from '@/components/features/market/Trade.vue';
 import CostlyButton from '@/components/common/CostlyButton.vue';
 

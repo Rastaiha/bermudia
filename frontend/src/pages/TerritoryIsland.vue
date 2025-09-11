@@ -59,7 +59,7 @@ import { ref, onMounted, toRef } from 'vue';
 import { useToast } from 'vue-toastification';
 import { useRouter } from 'vue-router';
 import { getIsland, submitAnswer, getPlayer } from '@/services/api';
-import { usePlayerWebSocket } from '@/components/service/WebSocket.js';
+import { usePlayerWebSocket } from '@/services/websocket.js';
 import { useModal } from 'vue-final-modal';
 import eventBus from '@/services/eventBus.js';
 

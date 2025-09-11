@@ -58,7 +58,7 @@ import {
     getToken,
     getTerritory,
 } from '@/services/api/index.js';
-import { usePlayerWebSocket } from '@/components/service/WebSocket.js';
+import { usePlayerWebSocket } from '@/services/websocket.js';
 import eventBus from '@/services/eventBus.js';
 
 import MapView from '@/components/features/map/MapView.vue';
