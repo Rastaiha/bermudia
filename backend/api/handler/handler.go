@@ -23,7 +23,8 @@ type Handler struct {
 	territoryService *service.Territory
 	islandService    *service.Island
 	playerService    *service.Player
-	connectionHub    *hub.Hub
+	playerHub        *hub.Hub
+	tradeHub         *hub.Hub
 }
 
 func New(authService *service.Auth, territoryService *service.Territory, islandService *service.Island, playerService *service.Player) *Handler {
@@ -32,7 +33,8 @@ func New(authService *service.Auth, territoryService *service.Territory, islandS
 		territoryService: territoryService,
 		islandService:    islandService,
 		playerService:    playerService,
-		connectionHub:    hub.NewHub(),
+		playerHub:        hub.NewHub(),
+		tradeHub:         hub.NewHub(),
 	}
 }
 
@@ -48,7 +50,10 @@ func (h *Handler) Start() {
 	r.Route("/api/v1", func(r chi.Router) {
 		r.Get("/territories/{territoryID}", h.GetTerritory) // TODO: make it authenticated
 		r.Post("/login", h.Login)
-		r.HandleFunc("/events", h.StreamEvents)
+
+		// ws endpoints
+		r.HandleFunc("/events", h.StreamPlayerEvents)
+		r.HandleFunc("/trade/events", h.StreamTradeEvents)
 
 		// Authenticated endpoints
 		r.Group(func(r chi.Router) {
@@ -91,6 +96,7 @@ func (h *Handler) Start() {
 	})
 
 	h.playerService.OnPlayerUpdate(h.HandlePlayerUpdateEvent)
+	h.playerService.OnTradeEventBroadcast(h.HandleTradeEventBroadcast)
 
 	slog.Info("Server starting")
 	h.server = &http.Server{

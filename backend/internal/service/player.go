@@ -15,18 +15,21 @@ import (
 )
 
 type Player struct {
-	cfg                      config.Config
-	db                       *sql.DB
-	userStore                domain.UserStore
-	playerStore              domain.PlayerStore
-	territoryStore           domain.TerritoryStore
-	questionStore            domain.QuestionStore
-	islandStore              domain.IslandStore
-	treasureStore            domain.TreasureStore
-	marketStore              domain.MarketStore
-	playerUpdateEventHandler func(event *domain.FullPlayerUpdateEvent)
-	cron                     gocron.Scheduler
+	cfg                        config.Config
+	db                         *sql.DB
+	userStore                  domain.UserStore
+	playerStore                domain.PlayerStore
+	territoryStore             domain.TerritoryStore
+	questionStore              domain.QuestionStore
+	islandStore                domain.IslandStore
+	treasureStore              domain.TreasureStore
+	marketStore                domain.MarketStore
+	playerUpdateEventHandler   func(event *domain.FullPlayerUpdateEvent)
+	tradeEventBroadcastHandler TradeEventBroadcastHandler
+	cron                       gocron.Scheduler
 }
+
+type TradeEventBroadcastHandler func(func(userId int32) *domain.TradeEvent)
 
 func NewPlayer(cfg config.Config, db *sql.DB, userStore domain.UserStore, playerStore domain.PlayerStore, territoryStore domain.TerritoryStore, questionStore domain.QuestionStore, islandStore domain.IslandStore, treasureStore domain.TreasureStore, marketStore domain.MarketStore) *Player {
 	return &Player{
@@ -474,23 +477,23 @@ func (p *Player) MakeOfferCheck(ctx context.Context, userId int32) (*domain.Make
 	return &check, nil
 }
 
-func (p *Player) MakeOffer(ctx context.Context, userId int32, offered, requested domain.Cost) (err error) {
-	player, err := p.playerStore.Get(ctx, userId)
+func (p *Player) MakeOffer(ctx context.Context, offerer *domain.User, offered, requested domain.Cost) (result *domain.TradeOfferView, err error) {
+	player, err := p.playerStore.Get(ctx, offerer.ID)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	count, err := p.marketStore.GetOffersCountOfUser(ctx, userId)
+	count, err := p.marketStore.GetOffersCountOfUser(ctx, offerer.ID)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	event, tradeOffer, err := domain.MakeOffer(player, count, offered, requested)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	tx, err := p.db.BeginTx(ctx, nil)
 	if err != nil {
-		return fmt.Errorf("failed to start transaction: %w", err)
+		return nil, fmt.Errorf("failed to start transaction: %w", err)
 	}
 	defer func() {
 		if err != nil {
@@ -501,17 +504,25 @@ func (p *Player) MakeOffer(ctx context.Context, userId int32, offered, requested
 	}()
 	err = p.marketStore.CreateOffer(ctx, tx, tradeOffer)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	err = p.playerStore.Update(ctx, tx, player, *event.Player)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	err = p.sendPlayerUpdateEventErr(ctx, event)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	return nil
+	p.tradeEventBroadcastHandler(func(userId int32) *domain.TradeEvent {
+		return &domain.TradeEvent{
+			NewOffer: &domain.NewOfferTradeEvent{
+				Offer: domain.TradeOfferViewForPlayer(userId, offerer.Username, tradeOffer),
+			},
+		}
+	})
+	view := domain.TradeOfferViewForPlayer(offerer.ID, offerer.Username, tradeOffer)
+	return &view, nil
 }
 
 func (p *Player) AcceptOffer(ctx context.Context, userId int32, tradeOfferId string) (err error) {
@@ -572,6 +583,15 @@ func (p *Player) AcceptOffer(ctx context.Context, userId int32, tradeOfferId str
 		return err
 	}
 
+	p.tradeEventBroadcastHandler(func(userId int32) *domain.TradeEvent {
+		return &domain.TradeEvent{
+			DeletedOffer: &domain.DeletedOfferTradeEvent{
+				OfferID: offer.ID,
+				ByMe:    userId == offer.By,
+			},
+		}
+	})
+
 	return nil
 }
 
@@ -618,19 +638,25 @@ func (p *Player) DeleteOffer(ctx context.Context, userId int32, tradeOfferId str
 		return err
 	}
 
+	p.tradeEventBroadcastHandler(func(userId int32) *domain.TradeEvent {
+		return &domain.TradeEvent{
+			DeletedOffer: &domain.DeletedOfferTradeEvent{
+				OfferID: offer.ID,
+				ByMe:    userId == offer.By,
+			},
+		}
+	})
+
 	return nil
 }
 
-func (p *Player) GetTradeOffers(ctx context.Context, userId int32, filter domain.GetOffersByFilterType, page, limit int) ([]domain.TradeOfferView, error) {
-	page = max(0, page)
-	limit = min(max(5, limit), 100)
-	offset := page * limit
-	offers, err := p.marketStore.GetOffers(ctx, filter, userId, offset, limit)
-	if err != nil {
-		return nil, err
+func (p *Player) GetTradeOffers(ctx context.Context, userId int32, filter domain.GetOffersByFilterType, offset int64, limit int) ([]domain.TradeOfferView, error) {
+	limit = min(max(1, limit), 100)
+	before := time.Now().UTC()
+	if offset > 0 {
+		before = time.UnixMilli(offset).UTC()
 	}
-
-	player, err := p.playerStore.Get(ctx, userId)
+	offers, err := p.marketStore.GetOffers(ctx, filter, userId, before, limit)
 	if err != nil {
 		return nil, err
 	}
@@ -643,9 +669,21 @@ func (p *Player) GetTradeOffers(ctx context.Context, userId int32, filter domain
 			return nil, fmt.Errorf("failed to get offerer user: %w", err)
 		}
 
-		tradeOfferView := domain.TradeOfferViewForPlayer(player, offererUser.Username, offer)
+		tradeOfferView := domain.TradeOfferViewForPlayer(userId, offererUser.Username, offer)
 		result = append(result, tradeOfferView)
 	}
 
 	return result, nil
+}
+
+func (p *Player) OnTradeEventBroadcast(handler TradeEventBroadcastHandler) {
+	p.tradeEventBroadcastHandler = handler
+}
+
+func (p *Player) GetInitialTradeEvent(_ context.Context) (*domain.TradeEvent, error) {
+	return &domain.TradeEvent{
+		Sync: &domain.SyncTradeEvent{
+			Offset: fmt.Sprint(time.Now().UnixMilli()),
+		},
+	}, nil
 }

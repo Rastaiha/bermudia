@@ -8,10 +8,6 @@ import (
 	"strconv"
 )
 
-func (h *Handler) HandlePlayerUpdateEvent(e *domain.FullPlayerUpdateEvent) {
-	h.sendEvent(e.Player.UserId, event{PlayerUpdate: e})
-}
-
 func (h *Handler) GetPlayer(w http.ResponseWriter, r *http.Request) {
 	user, err := getUser(r.Context())
 	if err != nil {
@@ -298,13 +294,13 @@ func (h *Handler) MakeOffer(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = h.playerService.MakeOffer(r.Context(), user.ID, req.Offered, req.Requested)
+	result, err := h.playerService.MakeOffer(r.Context(), user, req.Offered, req.Requested)
 	if err != nil {
 		handleError(w, err)
 		return
 	}
 
-	sendResult(w, struct{}{})
+	sendResult(w, result)
 }
 
 type acceptOfferRequest struct {
@@ -366,11 +362,19 @@ func (h *Handler) GetTradeOffers(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	page, _ := strconv.Atoi(r.URL.Query().Get("page"))
+	offsetStr := r.URL.Query().Get("offset")
+	offset := int64(0)
+	if offsetStr != "" {
+		offset, err = strconv.ParseInt(offsetStr, 10, 64)
+		if err != nil {
+			sendDecodeError(w)
+			return
+		}
+	}
 	limit, _ := strconv.Atoi(r.URL.Query().Get("limit"))
 	filter := r.URL.Query().Get("by")
 
-	offers, err := h.playerService.GetTradeOffers(r.Context(), user.ID, domain.GetOffersByFilterType(filter), page, limit)
+	offers, err := h.playerService.GetTradeOffers(r.Context(), user.ID, domain.GetOffersByFilterType(filter), offset, limit)
 	if err != nil {
 		if errors.Is(err, domain.ErrInvalidFilter) {
 			sendError(w, http.StatusBadRequest, "invalid filter")

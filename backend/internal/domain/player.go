@@ -2,7 +2,6 @@ package domain
 
 import (
 	"errors"
-	"github.com/Rastaiha/bermudia/internal/config"
 	"math"
 	"slices"
 	"strings"
@@ -18,6 +17,10 @@ const (
 	anchoringCoinCost               = 20
 	migrationMinAcceptableKnowledge = 50
 	migrationCoinCost               = 80
+)
+
+var (
+	initialKeyCount = int32(0)
 )
 
 type Player struct {
@@ -67,11 +70,7 @@ type FullPlayerUpdateEvent struct {
 	Player *FullPlayer `json:"player"`
 }
 
-func NewPlayer(cfg config.Config, userId int32, startingTerritory *Territory) Player {
-	initialKeyCount := int32(0)
-	if cfg.DevMode {
-		initialKeyCount = 5
-	}
+func NewPlayer(userId int32, startingTerritory *Territory) Player {
 	return Player{
 		UserId:             userId,
 		AtTerritory:        startingTerritory.ID,
