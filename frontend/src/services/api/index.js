@@ -189,9 +189,9 @@ export const deleteTradeOffer = async offerID => {
     return handleResponse(response);
 };
 
-export const getTradeOffers = async (page = 0, limit = 5, by = null) => {
+export const getTradeOffers = async (offset = 0, limit = 5, by = null) => {
     const response = await fetch(
-        `${API_ENDPOINTS.getOffers(page, limit, by)}`,
+        `${API_ENDPOINTS.getOffers(offset, limit, by)}`,
         {
             method: 'GET',
             headers: getAuthHeaders(),

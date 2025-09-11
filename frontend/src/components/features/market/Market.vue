@@ -183,6 +183,7 @@ import {
 } from '@/services/api/index.js';
 import { useToast } from 'vue-toastification';
 import { useNow } from '@/composables/useNow.js';
+import { useMarketWebSocket } from '../../../services/marketwebsocket';
 import Trade from '@/components/features/market/Trade.vue';
 import CostlyButton from '@/components/common/CostlyButton.vue';
 
@@ -195,11 +196,10 @@ const myOffers = ref([]);
 const otherOffers = ref([]);
 const tradables = ref([]);
 const myPagesLimit = ref(12);
-const myPageNumber = ref(0);
+const syncTrade = ref(0);
 const myPageIsLoading = ref(true);
 const myPageIsLoadedAll = ref(false);
 const otherPagesLimit = ref(12);
-const otherPageNumber = ref(0);
 const otherPageIsLoading = ref(true);
 const otherPageIsLoadedAll = ref(false);
 const isOffersYours = ref(false);
@@ -228,12 +228,11 @@ function handleClose() {
 async function loadMoreMyOffers() {
     myPageIsLoading.value = true;
     const newOffers = await getTradeOffers(
-        myPageNumber.value + 1,
+        syncTrade.value,
         myPagesLimit.value,
         'me'
     );
     if (newOffers.length) {
-        myPageNumber.value += 1;
         myOffers.value.push(...newOffers);
         myPageIsLoading.value = false;
     } else {
@@ -244,12 +243,11 @@ async function loadMoreMyOffers() {
 async function loadMoreOtherOffers() {
     otherPageIsLoading.value = true;
     const newOffers = await getTradeOffers(
-        otherPageNumber.value + 1,
+        syncTrade.value.VueFinalModal,
         otherPagesLimit.value,
         'others'
     );
     if (newOffers.length) {
-        otherPageNumber.value += 1;
         otherOffers.value.push(...newOffers);
         otherPageIsLoading.value = false;
     } else {
@@ -310,13 +308,13 @@ const timeCommenter = time => {
 onMounted(async () => {
     try {
         myOffers.value = await getTradeOffers(
-            myPageNumber.value,
+            syncTrade.value,
             myPagesLimit.value,
             'me'
         );
         myPageIsLoading.value = false;
         otherOffers.value = await getTradeOffers(
-            otherPageNumber.value,
+            syncTrade.value,
             otherPagesLimit.value,
             'others'
         );
@@ -326,6 +324,7 @@ onMounted(async () => {
         toast.error(err.message || 'در حین دریافت معاملات خطایی رخ داد');
     }
 });
+useMarketWebSocket(syncTrade, myOffers, otherOffers, props.username);
 </script>
 <style>
 ::-webkit-scrollbar {
