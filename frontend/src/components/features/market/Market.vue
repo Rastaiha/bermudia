@@ -278,18 +278,18 @@ function handleOtherScroll() {
         loadMoreOtherOffers();
     }
 }
-const acceptTrade = id => {
+const acceptTrade = async id => {
     try {
-        acceptTradeOffer(id);
+        await acceptTradeOffer(id);
         toast.success('معامله جوش خورد.');
     } catch (err) {
         toast.error(err.message || 'در حین تایید معامله خطایی رخ داد');
     }
 };
 
-const deleteTrade = id => {
+const deleteTrade = async id => {
     try {
-        deleteTradeOffer(id);
+        await deleteTradeOffer(id);
         toast.success('معامله حذف شد.');
     } catch (err) {
         toast.error(err.message || 'در حین حذف معامله خطایی رخ داد');
