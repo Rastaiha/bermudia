@@ -180,11 +180,11 @@ import {
     acceptTradeOffer,
     deleteTradeOffer,
     getTradeOffers,
-} from '../services/api';
+} from '@/services/api/index.js';
 import { useToast } from 'vue-toastification';
-import { useNow } from '../services/timer';
-import Trade from './Trade.vue';
-import CostlyButton from './CostlyButton.vue';
+import { useNow } from '@/composables/useNow.js';
+import Trade from '@/components/features/market/Trade.vue';
+import CostlyButton from '@/components/common/CostlyButton.vue';
 
 const props = defineProps({
     player: Object,

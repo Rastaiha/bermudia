@@ -41,10 +41,10 @@
 <script setup>
 import { computed, onMounted, onUnmounted, ref } from 'vue';
 import { useModal } from 'vue-final-modal';
-import { treasureCheck, treasureUnlock } from '@/services/api.js';
+import { treasureCheck, treasureUnlock } from '@/services/api/index.js';
 import emitter from '@/services/eventBus.js';
-import InfoBox from './InfoBox.vue';
-import TreasureRewardModal from './TreasureRewardModal.vue';
+import InfoBox from '@/components/common/InfoBox.vue';
+import TreasureRewardModal from '@/components/features/island/TreasureRewardModal.vue';
 
 const props = defineProps({
     treasureData: { type: Object, required: true },

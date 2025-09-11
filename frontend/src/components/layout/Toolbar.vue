@@ -69,12 +69,12 @@
 import { ref, onMounted, onUnmounted, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { useModal } from 'vue-final-modal';
-import { logout as apiLogout } from '@/services/api';
-import Backpack from './Backpack.vue';
-import Bookshelf from './Bookshelf.vue';
-import Market from './Market.vue';
-import ConfirmModal from './ConfirmModal.vue';
-import MuteButton from './MuteButton.vue';
+import { logout as apiLogout } from '@/services/api/index.js';
+import Backpack from '@/components/features/player/Backpack.vue';
+import Bookshelf from '@/components/features/player/Bookshelf.vue';
+import Market from '@/components/features/market/Market.vue';
+import ConfirmModal from '@/components/common/ConfirmModal.vue';
+import MuteButton from '@/components/common/MuteButton.vue';
 
 const props = defineProps({
     player: {

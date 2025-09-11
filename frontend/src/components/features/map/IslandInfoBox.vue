@@ -16,7 +16,7 @@
             @action="actionOnClick"
         >
             <div v-if="checkSubMigration()" class="w-full">
-                <img src="../../public/images/territories/territory1.jfif" />
+                <img src="/images/territories/territory1.jfif" />
             </div>
             <div
                 v-else-if="checkRefuelIsland() && refuel"
@@ -103,9 +103,9 @@ import {
     dropAnchorAtIsland,
     migrateCheck,
     migrateTo,
-} from '@/services/api.js';
-import InfoBox from './InfoBox.vue';
-import PlayerInventoryBar from './PlayerInventoryBar.vue';
+} from '@/services/api/index.js';
+import InfoBox from '@/components/common/InfoBox.vue';
+import PlayerInventoryBar from '@/components/common/PlayerInventoryBar.vue';
 
 defineOptions({
     name: 'IslandInfoBox',

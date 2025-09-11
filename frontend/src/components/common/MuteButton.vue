@@ -14,7 +14,7 @@
 
 <script setup>
 import { computed } from 'vue';
-import { audioSettings } from '@/services/audioSettings';
+import { audioSettings } from '@/services/audio/settings.js';
 
 const iconSrc = computed(() => {
     return audioSettings.isMuted

@@ -9,21 +9,21 @@
             <span class="font-semibold">{{ refuel.maxAvailableAmount }}</span>
         </div>
         <input
-            type="number"
             ref="fuelInput"
+            v-model.number="fuelCount"
+            type="number"
             :max="
                 refuel
                     ? refuel.maxAvailableAmount
                     : player.fuelCap - player.fuel
             "
-            v-model.number="fuelCount"
+            class="w-full mt-1 rounded-lg border border-[#07458bb5] text-center bg-transparent py-1.5"
             @pointerdown.stop="focusFuelInput"
             @dblclick.stop
-            class="w-full mt-1 rounded-lg border border-[#07458bb5] text-center bg-transparent py-1.5"
         />
         <button
-            @pointerdown.stop="buyFuel"
             class="btn-hover w-full p-2 rounded-lg bg-[#07458bb5] text-white"
+            @pointerdown.stop="buyFuel"
         >
             {{ fuelPriceText }}
         </button>
@@ -31,21 +31,21 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, nextTick } from "vue";
+import { ref, computed, watch, nextTick } from 'vue';
 
 const props = defineProps({
     refuel: Object,
     player: Object,
 });
 
-const emit = defineEmits(["buyFuel"]);
+const emit = defineEmits(['buyFuel']);
 
 const fuelInput = ref(null);
 const fuelCount = ref(0);
 
 const fuelPriceText = computed(() => {
     if (!props.refuel || !fuelCount.value || fuelCount.value <= 0)
-        return "خرید سوخت";
+        return 'خرید سوخت';
     const totalCost = props.refuel.coinCostPerUnit * fuelCount.value;
     return `خرید (${totalCost} سکه)`;
 });
@@ -55,10 +55,10 @@ const focusFuelInput = () => {
 };
 
 const buyFuel = () => {
-    if (fuelCount.value > 0) emit("buyFuel", fuelCount.value);
+    if (fuelCount.value > 0) emit('buyFuel', fuelCount.value);
 };
 
-watch(fuelCount, (newValue) => {
+watch(fuelCount, newValue => {
     if (!props.refuel) return;
     let correctedValue = newValue;
     if (newValue > props.refuel.maxAvailableAmount) {

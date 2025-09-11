@@ -180,7 +180,7 @@
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useToast } from 'vue-toastification';
-import { login, getPlayer } from '../services/api.js';
+import { login, getPlayer } from '@/services/api/index.js';
 
 const username = ref('');
 const password = ref('');

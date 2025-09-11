@@ -26,7 +26,7 @@
                     @show-tooltip="showTooltip"
                     @hide-tooltip="hideTooltip"
                 />
-                <challengeBox
+                <ChallengeBox
                     v-else-if="componentData.input"
                     :challenge="componentData.input"
                     @submit="handleChallengeSubmit"
@@ -59,16 +59,16 @@ import { ref, onMounted, toRef } from 'vue';
 import { useToast } from 'vue-toastification';
 import { useRouter } from 'vue-router';
 import { getIsland, submitAnswer, getPlayer } from '@/services/api';
-import { usePlayerWebSocket } from '@/components/service/WebSocket.js';
+import { usePlayerWebSocket } from '@/services/websocket.js';
 import { useModal } from 'vue-final-modal';
-import eventBus from '@/services/eventBus';
+import eventBus from '@/services/eventBus.js';
 
-import Iframe from '@/components/Iframe.vue';
-import challengeBox from '@/components/challengeBox.vue';
-import BackButton from '@/components/BackButton.vue';
-import Treasure from '@/components/Treasure.vue';
-import FloatingUI from '@/components/FloatingUI.vue';
-import TreasureRewardModal from '@/components/TreasureRewardModal.vue';
+import Iframe from '@/components/common/Iframe.vue';
+import ChallengeBox from '@/components/features/island/ChallengeBox.vue';
+import BackButton from '@/components/features/island/BackButton.vue';
+import Treasure from '@/components/features/island/Treasure.vue';
+import FloatingUI from '@/components/common/FloatingUI.vue';
+import TreasureRewardModal from '@/components/features/island/TreasureRewardModal.vue';
 
 const props = defineProps({
     id: { type: String, required: true },

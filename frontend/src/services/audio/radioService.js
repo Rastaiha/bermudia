@@ -1,4 +1,4 @@
-import { playlist } from './playlist.js';
+import { playlist } from '@/services/audio/playlist.js';
 
 const totalPlaylistDuration = playlist.reduce(
     (sum, song) => sum + song.duration,

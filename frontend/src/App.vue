@@ -11,7 +11,7 @@
 <script setup>
 import { ModalsContainer } from 'vue-final-modal';
 import { ref } from 'vue';
-import { useAudioPlayer } from './services/useAudioPlayer';
+import { useAudioPlayer } from '@/composables/useAudioPlayer.js';
 
 const audioPlayer = ref(null);
 
