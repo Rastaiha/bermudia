@@ -59,7 +59,9 @@
 
         <div
             v-if="!isOffersYours"
-            class="w-full flex flex-col items-center justify-between items-end space-y-2"
+            ref="otherOffersContainer"
+            class="w-full flex flex-col items-center justify-between space-y-2 overflow-y-auto max-h-[fit-content]"
+            @scroll="handleOtherScroll"
         >
             <div
                 v-if="otherOffers.length > 0"
@@ -80,8 +82,7 @@
                                 label="داد"
                                 enabled
                                 :loading="false"
-                            >
-                            </CostlyButton>
+                            />
                         </div>
                         <div class="w-3/7">
                             <CostlyButton
@@ -91,8 +92,7 @@
                                 enabled
                                 :loading="false"
                                 background-color="#480202"
-                            >
-                            </CostlyButton>
+                            />
                         </div>
                     </div>
                     <div>{{ timeCommenter(offer.created_at) }}</div>
@@ -103,7 +103,6 @@
                     >
                         انجام معامله
                     </button>
-                    <div v-else></div>
                 </div>
             </div>
             <div v-else class="text-center w-full">معامله‌ای یافت نشد.</div>
@@ -111,52 +110,8 @@
 
         <div
             v-else
-            class="w-full flex flex-col items-center justify-between space-y-2"
+            class="w-full h-full flex flex-col items-center justify-between space-y-2"
         >
-            <div
-                v-if="myOffers.length > 0"
-                class="w-full flex flex-wrap justify-around gap-y-4 pb-2"
-            >
-                <div
-                    v-for="(offer, index) in myOffers"
-                    :key="index"
-                    class="relative w-64 h-32 flex flex-col justify-between items-center p-2 bg-gradient-to-b from-yellow-600 via-yellow-700 to-yellow-800 border-l-2 border-yellow-900 rounded-sm shadow-md"
-                >
-                    <div
-                        class="flex flex-row justify-between items-center w-full"
-                    >
-                        <div class="w-3/7">
-                            <CostlyButton
-                                :on-click="() => {}"
-                                :cost="offer.offered"
-                                label="داد"
-                                enabled
-                                :loading="false"
-                                background-color="#480202"
-                            >
-                            </CostlyButton>
-                        </div>
-                        <div class="w-3/7">
-                            <CostlyButton
-                                :on-click="() => {}"
-                                :cost="offer.requested"
-                                label="ستد"
-                                enabled
-                                :loading="false"
-                            >
-                            </CostlyButton>
-                        </div>
-                    </div>
-                    <div>{{ timeCommenter(offer.created_at) }}</div>
-                    <button
-                        class="transition-transform duration-200 hover:scale-110 pointer-events-auto p-1 rounded-[5px] bg-[#fee685] text-[#5c3a21]"
-                        @pointerdown="deleteTrade(offer)"
-                    >
-                        حذف معامله
-                    </button>
-                </div>
-            </div>
-            <div v-else class="text-center w-full">معامله‌ای یافت نشد.</div>
             <button
                 class="transition-transform duration-200 hover:scale-110 pointer-events-auto p-1 rounded-[5px] bg-[#fee685] text-[#5c3a21]"
                 title="معامله جدید"
@@ -164,6 +119,56 @@
             >
                 معامله جدید
             </button>
+            <div
+                ref="myOffersContainer"
+                class="w-full flex flex-col items-center justify-between space-y-2 overflow-y-auto max-h-[fit-content]"
+                @scroll="handleMyScroll"
+            >
+                <div
+                    v-if="myOffers.length > 0"
+                    class="w-full flex flex-wrap justify-around gap-y-4 pb-2"
+                >
+                    <div
+                        v-for="(offer, index) in myOffers"
+                        :key="index"
+                        class="relative w-64 h-32 flex flex-col justify-between items-center p-2 bg-gradient-to-b from-yellow-600 via-yellow-700 to-yellow-800 border-l-2 border-yellow-900 rounded-sm shadow-md"
+                    >
+                        <div
+                            class="flex flex-row justify-between items-center w-full"
+                        >
+                            <div class="w-3/7">
+                                <CostlyButton
+                                    :on-click="() => {}"
+                                    :cost="offer.offered"
+                                    label="داد"
+                                    enabled
+                                    :loading="false"
+                                    background-color="#480202"
+                                >
+                                </CostlyButton>
+                            </div>
+                            <div class="w-3/7">
+                                <CostlyButton
+                                    :on-click="() => {}"
+                                    :cost="offer.requested"
+                                    label="ستد"
+                                    enabled
+                                    :loading="false"
+                                >
+                                </CostlyButton>
+                            </div>
+                        </div>
+                        <div>{{ timeCommenter(offer.created_at) }}</div>
+                        <button
+                            class="transition-transform duration-200 hover:scale-110 pointer-events-auto p-1 rounded-[5px] bg-[#fee685] text-[#5c3a21]"
+                            @pointerdown="deleteTrade(offer)"
+                        >
+                            حذف معامله
+                        </button>
+                    </div>
+                </div>
+                <div v-else class="text-center w-full">معامله‌ای یافت نشد.</div>
+            </div>
         </div>
     </VueFinalModal>
 </template>
@@ -189,9 +194,17 @@ const props = defineProps({
 const myOffers = ref([]);
 const otherOffers = ref([]);
 const tradables = ref([]);
-const pagesLimit = ref(30);
-const pageNumber = ref(0);
+const myPagesLimit = ref(12);
+const myPageNumber = ref(0);
+const myPageIsLoading = ref(true);
+const myPageIsLoadedAll = ref(false);
+const otherPagesLimit = ref(12);
+const otherPageNumber = ref(0);
+const otherPageIsLoading = ref(true);
+const otherPageIsLoadedAll = ref(false);
 const isOffersYours = ref(false);
+const myOffersContainer = ref(null);
+const otherOffersContainer = ref(null);
 const toast = useToast();
 const { now } = useNow(60000);
 const emit = defineEmits(['close']);
@@ -212,6 +225,61 @@ function handleClose() {
     emit('close');
 }
 
+async function loadMoreMyOffers() {
+    myPageIsLoading.value = true;
+    const newOffers = await getTradeOffers(
+        myPageNumber.value + 1,
+        myPagesLimit.value,
+        'me'
+    );
+    if (newOffers.length) {
+        myPageNumber.value += 1;
+        myOffers.value.push(...newOffers);
+        myPageIsLoading.value = false;
+    } else {
+        myPageIsLoadedAll.value = true;
+    }
+}
+
+async function loadMoreOtherOffers() {
+    otherPageIsLoading.value = true;
+    const newOffers = await getTradeOffers(
+        otherPageNumber.value + 1,
+        otherPagesLimit.value,
+        'others'
+    );
+    if (newOffers.length) {
+        otherPageNumber.value += 1;
+        otherOffers.value.push(...newOffers);
+        otherPageIsLoading.value = false;
+    } else {
+        otherPageIsLoadedAll.value = true;
+    }
+}
+
+function handleMyScroll() {
+    if (myPageIsLoadedAll.value || myPageIsLoading.value) return;
+    const container = myOffersContainer.value;
+    if (!container) return;
+    if (
+        container.scrollTop + container.clientHeight >=
+        container.scrollHeight - 50
+    ) {
+        loadMoreMyOffers();
+    }
+}
+
+function handleOtherScroll() {
+    if (otherPageIsLoadedAll.value || otherPageIsLoading.value) return;
+    const container = otherOffersContainer.value;
+    if (!container) return;
+    if (
+        container.scrollTop + container.clientHeight >=
+        container.scrollHeight - 50
+    ) {
+        loadMoreOtherOffers();
+    }
+}
 const acceptTrade = offer => {
     try {
         acceptTradeOffer(offer.id);
@@ -242,18 +310,45 @@ const timeCommenter = time => {
 onMounted(async () => {
     try {
         myOffers.value = await getTradeOffers(
-            pageNumber.value,
-            pagesLimit.value,
+            myPageNumber.value,
+            myPagesLimit.value,
             'me'
         );
+        myPageIsLoading.value = false;
         otherOffers.value = await getTradeOffers(
-            pageNumber.value,
-            pagesLimit.value,
+            otherPageNumber.value,
+            otherPagesLimit.value,
             'others'
         );
+        otherPageIsLoading.value = false;
         tradables.value = ['coin', 'redKey', 'blueKey', 'goldenKey'];
     } catch (err) {
         toast.error(err.message || 'در حین دریافت معاملات خطایی رخ داد');
     }
 });
 </script>
+<style>
+::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+
+::-webkit-scrollbar-track {
+    background: #3e2a17;
+    border-radius: 25px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #fee685;
+    border-radius: 25px;
+    border: 2px solid #3e2a17;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #fcd34d;
+}
+
+* {
+    scrollbar-color: #fee685 #3e2a17;
+}
+</style>
