@@ -120,88 +120,54 @@
                 معامله جدید
             </button>
             <div
-                v-if="myOffers.length > 0"
-                class="w-full flex flex-wrap justify-around gap-y-4 pb-2"
-            >
-                <div
-                    v-for="(offer, index) in myOffers"
-                    :key="index"
-                    class="relative w-64 h-32 flex flex-col justify-between items-center p-2 bg-gradient-to-b from-yellow-600 via-yellow-700 to-yellow-800 border-l-2 border-yellow-900 rounded-sm shadow-md"
-                >
-                    <div
-                        class="flex flex-row justify-between items-center w-full"
-                    >
-                        <div class="w-3/7">
-                            <CostlyButton
-                                :on-click="() => {}"
-                                :cost="offer.offered"
-                                label="داد"
-                                enabled
-                                :loading="false"
-                                background-color="#480202"
-                            >
-                            </CostlyButton>
-                        </div>
-                        <div class="w-3/7">
-                            <CostlyButton
-                                :on-click="() => {}"
-                                :cost="offer.requested"
-                                label="ستد"
-                                enabled
-                                :loading="false"
-                            >
-                            </CostlyButton>
-                        </div>
-                    </div>
-                    <div>{{ timeCommenter(offer.created_at) }}</div>
-                    <button
-                        class="transition-transform duration-200 hover:scale-110 pointer-events-auto p-1 rounded-[5px] bg-[#fee685] text-[#5c3a21]"
-                        @pointerdown="deleteTrade(offer)"
-                    >
-                        حذف معامله
-                    </button>
-                </div>
-            </div>
-            <div v-else class="text-center w-full">معامله‌ای یافت نشد.</div>
-            <div
                 ref="myOffersContainer"
                 class="w-full flex flex-col items-center justify-between space-y-2 overflow-y-auto max-h-[fit-content]"
                 @scroll="handleMyScroll"
             >
-                <div class="flex flex-wrap justify-around gap-y-4 pb-2">
+                <div
+                    v-if="myOffers.length > 0"
+                    class="w-full flex flex-wrap justify-around gap-y-4 pb-2"
+                >
                     <div
                         v-for="(offer, index) in myOffers"
                         :key="index"
-                        class="relative w-48 h-32 flex flex-col justify-between items-center pb-1 pt-1 bg-gradient-to-b from-yellow-600 via-yellow-700 to-yellow-800 border-l-2 border-yellow-900 rounded-sm shadow-md"
+                        class="relative w-64 h-32 flex flex-col justify-between items-center p-2 bg-gradient-to-b from-yellow-600 via-yellow-700 to-yellow-800 border-l-2 border-yellow-900 rounded-sm shadow-md"
                     >
                         <div
                             class="flex flex-row justify-between items-center w-full"
                         >
-                            <div class="w-2/5">
+                            <div class="w-3/7">
                                 <CostlyButton
                                     :on-click="() => {}"
                                     :cost="offer.offered"
                                     label="داد"
                                     enabled
                                     :loading="false"
-                                />
+                                    background-color="#480202"
+                                >
+                                </CostlyButton>
                             </div>
-                            <div class="w-2/5">
+                            <div class="w-3/7">
                                 <CostlyButton
                                     :on-click="() => {}"
                                     :cost="offer.requested"
                                     label="ستد"
                                     enabled
                                     :loading="false"
-                                />
+                                >
+                                </CostlyButton>
                             </div>
                         </div>
-                        <div>{{ offer.createdAt }}</div>
-                        <button @pointerdown="deleteTradeOffer(offer.id)">
+                        <div>{{ timeCommenter(offer.created_at) }}</div>
+                        <button
+                            class="transition-transform duration-200 hover:scale-110 pointer-events-auto p-1 rounded-[5px] bg-[#fee685] text-[#5c3a21]"
+                            @pointerdown="deleteTrade(offer)"
+                        >
                             حذف معامله
                         </button>
                     </div>
                 </div>
+                <div v-else class="text-center w-full">معامله‌ای یافت نشد.</div>
             </div>
         </div>
     </VueFinalModal>
@@ -228,11 +194,11 @@ const props = defineProps({
 const myOffers = ref([]);
 const otherOffers = ref([]);
 const tradables = ref([]);
-const myPagesLimit = ref(3);
+const myPagesLimit = ref(12);
 const myPageNumber = ref(0);
 const myPageIsLoading = ref(true);
 const myPageIsLoadedAll = ref(false);
-const otherPagesLimit = ref(3);
+const otherPagesLimit = ref(12);
 const otherPageNumber = ref(0);
 const otherPageIsLoading = ref(true);
 const otherPageIsLoadedAll = ref(false);
