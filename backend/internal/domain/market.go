@@ -50,7 +50,7 @@ type NewOfferTradeEvent struct {
 }
 
 type DeletedOfferTradeEvent struct {
-	OfferID string `json:"offerId"`
+	OfferID string `json:"offerID"`
 	ByMe    bool   `json:"byMe"`
 }
 
