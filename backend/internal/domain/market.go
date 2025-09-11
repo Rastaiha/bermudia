@@ -7,6 +7,10 @@ import (
 )
 
 var (
+	playerOpenOffersLimit = 5
+)
+
+var (
 	ErrOfferNotFound = Error{
 		reason: ErrorReasonResourceNotFound,
 		text:   "offer not found",
@@ -16,6 +20,7 @@ var (
 type TradeOfferView struct {
 	ID         string `json:"id"`
 	By         string `json:"by"`
+	ByMe       bool   `json:"byBe"`
 	Offered    Cost   `json:"offered"`
 	Requested  Cost   `json:"requested"`
 	CreatedAt  string `json:"created_at"`
@@ -30,14 +35,34 @@ type TradeOffer struct {
 	CreatedAt time.Time `json:"created_at"`
 }
 
-func TradeOfferViewForPlayer(player Player, offererUsername string, offer TradeOffer) TradeOfferView {
+type TradeEvent struct {
+	Sync         *SyncTradeEvent         `json:"sync,omitempty"`
+	NewOffer     *NewOfferTradeEvent     `json:"new_offer,omitempty"`
+	DeletedOffer *DeletedOfferTradeEvent `json:"deleted_offer,omitempty"`
+}
+
+type SyncTradeEvent struct {
+	Offset string `json:"offset"`
+}
+
+type NewOfferTradeEvent struct {
+	Offer TradeOfferView `json:"offer"`
+}
+
+type DeletedOfferTradeEvent struct {
+	OfferID string `json:"offerId"`
+	ByMe    bool   `json:"byMe"`
+}
+
+func TradeOfferViewForPlayer(userID int32, offererUsername string, offer TradeOffer) TradeOfferView {
 	return TradeOfferView{
 		ID:         offer.ID,
 		By:         offererUsername,
+		ByMe:       userID == offer.By,
 		Offered:    offer.Offered,
 		Requested:  offer.Requested,
 		CreatedAt:  fmt.Sprint(offer.CreatedAt.UnixMilli()),
-		Acceptable: isAcceptable(player, offer) == nil,
+		Acceptable: userID != offer.By,
 	}
 }
 
@@ -65,7 +90,7 @@ func MakeOfferCheck(player Player, numberOfOpenOffers int) (result MakeOfferChec
 			result.TradableItems.Items = append(result.TradableItems.Items, maxItem)
 		}
 	}
-	if numberOfOpenOffers >= 10 {
+	if numberOfOpenOffers >= playerOpenOffersLimit {
 		result.Reason = fmt.Sprintf("نمی‌توانید بیش از %d پیشنهاد باز داشته باشید.", numberOfOpenOffers)
 		return
 	}

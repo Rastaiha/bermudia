@@ -108,9 +108,9 @@ func (s sqlMarketRepository) GetOffer(ctx context.Context, offerId string) (doma
 	return offer, nil
 }
 
-func (s sqlMarketRepository) GetOffers(ctx context.Context, filter domain.GetOffersByFilterType, userId int32, offset int, limit int) ([]domain.TradeOffer, error) {
+func (s sqlMarketRepository) GetOffers(ctx context.Context, byFilter domain.GetOffersByFilterType, userId int32, offset time.Time, limit int) ([]domain.TradeOffer, error) {
 	filterCondition := ""
-	switch filter {
+	switch byFilter {
 	case domain.GetOffersByAll:
 	case domain.GetOffersByMe:
 		filterCondition = fmt.Sprintf("AND (by = %d)", userId)
@@ -122,10 +122,10 @@ func (s sqlMarketRepository) GetOffers(ctx context.Context, filter domain.GetOff
 	rows, err := s.db.QueryContext(ctx,
 		fmt.Sprintf(`SELECT id, by, offered, requested, created_at 
 		 FROM trade_offers 
-		 WHERE deleted_at IS NULL %s 
+		 WHERE created_at < $1 AND deleted_at IS NULL %s 
 		 ORDER BY created_at DESC 
-		 LIMIT $1 OFFSET $2`, filterCondition),
-		limit, offset,
+		 LIMIT $2`, filterCondition),
+		offset.UTC(), limit,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to query trade offers: %w", err)

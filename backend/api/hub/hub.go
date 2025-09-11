@@ -75,6 +75,10 @@ func (h *Hub) Send(userId int32, data any, timeout time.Duration) {
 	if !ok {
 		return
 	}
+	h.SendOnConn(c, userId, data, timeout)
+}
+
+func (h *Hub) SendOnConn(c *Connection, userId int32, data any, timeout time.Duration) {
 	err := c.write(data, timeout)
 	if err == nil {
 		return
@@ -121,11 +125,9 @@ func (h *Hub) RemoveConnection(userId int32, c *Connection, err error) {
 func (h *Hub) removeConnection(userId int32, c *Connection, closeMessage []byte) {
 	h.lock.Lock()
 	n, ok := h.connections[userId]
-	if !ok || c != n {
-		h.lock.Unlock()
-		return
+	if ok && c == n {
+		delete(h.connections, userId)
 	}
-	delete(h.connections, userId)
 	h.lock.Unlock()
 	c.close(closeMessage)
 }
@@ -148,5 +150,13 @@ func (h *Hub) readMessages(userId int32, c *Connection) {
 			h.removeConnection(userId, c, nil)
 			return
 		}
+	}
+}
+
+func (h *Hub) Broadcast(callback func(userId int32, c *Connection)) {
+	h.lock.RLock()
+	defer h.lock.RUnlock()
+	for userId, conn := range h.connections {
+		callback(userId, conn)
 	}
 }

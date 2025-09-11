@@ -123,13 +123,13 @@ curl --request POST \
 
 ---
 
-### Stream Events
+### Stream Player Events
 
 _This endpoint **is authenticated** and needs an auth token for access._
 
 A **websocket** endpoint for receiving realtime events.
 
-Type of messages is text; JSON encoding of [Event](#event).
+Type of messages is text; JSON encoding of [PlayerEvent](#playerevent).
 
 **Endpoint:** `/events?token=TOKEN`
 
@@ -390,7 +390,7 @@ Creates a new trade offer in the marketplace. The offered items are immediately 
 
 Receives a [MakeOfferRequest](#makeofferrequest) in body.
 
-Returns an empty object in response.
+Returns the [TradeOfferView](#tradeofferview) of the created offer in response.
 
 **Endpoint:** `POST /trade/make_offer`
 
@@ -448,6 +448,23 @@ curl --request POST \
 
 ---
 
+### Stream Trade Events
+
+_This endpoint **is authenticated** and needs an auth token for access._
+
+A **websocket** endpoint for receiving realtime trade marketplace events.
+
+Type of messages is text; JSON encoding of [TradeEvent](#tradeevent).
+
+**Endpoint:** `/trade/events?token=TOKEN`
+
+
+**Note**: This endpoint only returns offers that are created after the connection is established.
+To receive old existing offers, a [SyncTradeEvent](#synctradeevent) is immediately sent as the first event.
+It contains an _offset_ that should be used to call [Get Trade Offers](#get-trade-offers) to receive old, existing offers.
+
+---
+
 ### Get Trade Offers
 
 _This endpoint **is authenticated** and needs an auth token for access._
@@ -456,8 +473,8 @@ Retrieves a paginated list of active trade offers from the marketplace, showing 
 
 **Parameters**:
 
-- `page` (int, query param): Page number for pagination (0-based, default: 0)
-- `limit` (int, query param): Number of offers per page (default: 5, max: 100)
+- `offset` (string, query param): Offset of offers to be received (should be set to _offset_ in a [SyncTradeEvent](#synctradeevent), or the _createdAt_ of the **last** [TradeOfferView](#tradeofferview) in a previous non-empty response)
+- `limit` (int, query param): Number of offers per page (default: 1, max: 100)
 - `by` (string, query param): Filters list based on the offerer. One of `me`, `others`. If empty, returns all offers.
 
 Returns an array of [TradeOfferView](#tradeofferview) in response.
@@ -466,7 +483,7 @@ Returns an array of [TradeOfferView](#tradeofferview) in response.
 
 ```shell
 curl --request POST \
-  --url https://bermudia-api-internal.darkube.app/api/v1/trade/offers?page=1&limit=20 \
+  --url https://bermudia-api-internal.darkube.app/api/v1/trade/offers?offset=1757554205581&limit=20&by=others \
   --header 'Authorization: TOKEN'
 ```
 
@@ -712,7 +729,7 @@ curl --request POST \
 | value       | int    | Player's knowledge in the territory                    |
 | total       | int    | Total amount of knowledge that exists in the territory |
 
-### Event
+### PlayerEvent
 
 | Field        | Type                                    | Description                                                                          |
 |--------------|-----------------------------------------|--------------------------------------------------------------------------------------|
@@ -809,10 +826,41 @@ curl --request POST \
 |------------|---------------|-----------------------------------------------------|
 | id         | string        | Unique identifier of the trade offer                |
 | by         | string        | Name of the player who created the offer            |
+| byMe       | bool          | True if this offer was created by the player        |
 | offered    | [Cost](#cost) | The items being offered by the creator              |
 | requested  | [Cost](#cost) | The items being requested in exchange               |
 | createdAt  | string        | Time when the offer was created (Unix milliseconds) |
 | acceptable | boolean       | Whether the current player can accept this offer    |
+
+
+### TradeEvent
+
+| Field        | Type                                               | Description                                                                                           |
+|--------------|----------------------------------------------------|-------------------------------------------------------------------------------------------------------|
+| sync         | [SyncTradeEvent](#synctradeevent)?                 | Synchronization event containing offset information for calling [Get Trade Offers](#get-trade-offers) |
+| newOffer     | [NewOfferTradeEvent](#newoffertradeevent)?         | Event fired when a new trade offer is created in the marketplace                                      |
+| deletedOffer | [DeletedOfferTradeEvent](#deletedoffertradeevent)? | Event fired when a trade offer is removed from the marketplace (deleted or accepted)                  |
+
+**Note:** Exactly one of these fields will be present in a trade event object
+
+### SyncTradeEvent
+
+| Field  | Type   | Description                                                                                                        |
+|--------|--------|--------------------------------------------------------------------------------------------------------------------|
+| offset | string | Synchronization offset. Use it to receive current existing offers by calling [Get Trade Offers](#get-trade-offers) |
+
+### NewOfferTradeEvent
+
+| Field | Type                              | Description                           |
+|-------|-----------------------------------|---------------------------------------|
+| offer | [TradeOfferView](#tradeofferview) | The new trade offer that was created  |
+
+### DeletedOfferTradeEvent
+
+| Field   | Type    | Description                                         |
+|---------|---------|-----------------------------------------------------|
+| offerID | string  | The unique identifier of the deleted/accepted offer |
+| byMe    | boolean | True if the offer belonged to the player            |
 
 
 ### PlayerUpdateEvent

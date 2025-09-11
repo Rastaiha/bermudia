@@ -6,6 +6,7 @@ import (
 	"github.com/Rastaiha/bermudia/adminbot"
 	"github.com/Rastaiha/bermudia/api/handler"
 	"github.com/Rastaiha/bermudia/internal/config"
+	"github.com/Rastaiha/bermudia/internal/domain"
 	"github.com/Rastaiha/bermudia/internal/mock"
 	"github.com/Rastaiha/bermudia/internal/repository"
 	"github.com/Rastaiha/bermudia/internal/service"
@@ -19,6 +20,8 @@ import (
 
 func main() {
 	cfg := config.Load()
+
+	domain.ApplyConfig(cfg)
 
 	theBot, err := bot.New(cfg.BotToken, bot.WithServerURL("https://tapi.bale.ai"))
 	if err != nil {

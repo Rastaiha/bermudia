@@ -309,5 +309,5 @@ func (a *Admin) CreateUser(ctx context.Context, id int32, username, password, st
 	if err := a.userStore.Create(ctx, &user); err != nil {
 		return err
 	}
-	return a.playerStore.Create(ctx, domain.NewPlayer(a.cfg, user.ID, &startingTerritory))
+	return a.playerStore.Create(ctx, domain.NewPlayer(user.ID, &startingTerritory))
 }
