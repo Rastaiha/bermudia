@@ -99,7 +99,7 @@
                     <button
                         v-if="offer.acceptable"
                         class="transition-transform duration-200 hover:scale-110 pointer-events-auto p-1 rounded-[5px] bg-[#fee685] text-[#5c3a21]"
-                        @pointerdown="acceptTrade(offer)"
+                        @pointerdown="acceptTrade(offer.id)"
                     >
                         انجام معامله
                     </button>
@@ -161,7 +161,7 @@
                         <div>{{ timeCommenter(offer.created_at) }}</div>
                         <button
                             class="transition-transform duration-200 hover:scale-110 pointer-events-auto p-1 rounded-[5px] bg-[#fee685] text-[#5c3a21]"
-                            @pointerdown="deleteTrade(offer)"
+                            @pointerdown="deleteTrade(offer.id)"
                         >
                             حذف معامله
                         </button>
@@ -278,18 +278,18 @@ function handleOtherScroll() {
         loadMoreOtherOffers();
     }
 }
-const acceptTrade = offer => {
+const acceptTrade = id => {
     try {
-        acceptTradeOffer(offer.id);
+        acceptTradeOffer(id);
         toast.success('معامله جوش خورد.');
     } catch (err) {
         toast.error(err.message || 'در حین تایید معامله خطایی رخ داد');
     }
 };
 
-const deleteTrade = offer => {
+const deleteTrade = id => {
     try {
-        deleteTradeOffer(offer.id);
+        deleteTradeOffer(id);
         toast.success('معامله حذف شد.');
     } catch (err) {
         toast.error(err.message || 'در حین حذف معامله خطایی رخ داد');

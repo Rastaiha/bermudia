@@ -60,8 +60,8 @@ export function useMarketWebSocket(syncTrade, myOffers, otherOffers, username) {
                 }
                 if (data.deleted_offer) {
                     if (data.deleted_offer.byMe) {
-                        for (let offer in myOffers.value) {
-                            if (offer.id == data.deleted_offer.offerId) {
+                        for (let offer of myOffers.value) {
+                            if (offer.id == data.deleted_offer.offerID) {
                                 myOffers.value.splice(
                                     myOffers.value.indexOf(offer),
                                     1
@@ -70,8 +70,8 @@ export function useMarketWebSocket(syncTrade, myOffers, otherOffers, username) {
                             }
                         }
                     } else {
-                        for (let offer in otherOffers.value) {
-                            if (offer.id == data.deleted_offer.offerId) {
+                        for (let offer of otherOffers.value) {
+                            if (offer.id == data.deleted_offer.offerID) {
                                 otherOffers.value.splice(
                                     otherOffers.value.indexOf(offer),
                                     1
