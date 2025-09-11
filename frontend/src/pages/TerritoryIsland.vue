@@ -26,7 +26,7 @@
                     @show-tooltip="showTooltip"
                     @hide-tooltip="hideTooltip"
                 />
-                <challengeBox
+                <ChallengeBox
                     v-else-if="componentData.input"
                     :challenge="componentData.input"
                     @submit="handleChallengeSubmit"
@@ -64,7 +64,7 @@ import { useModal } from 'vue-final-modal';
 import eventBus from '@/services/eventBus.js';
 
 import Iframe from '@/components/common/Iframe.vue';
-import challengeBox from '@/components/features/island/challengeBox.vue';
+import ChallengeBox from '@/components/features/island/ChallengeBox.vue';
 import BackButton from '@/components/features/island/BackButton.vue';
 import Treasure from '@/components/features/island/Treasure.vue';
 import FloatingUI from '@/components/common/FloatingUI.vue';
