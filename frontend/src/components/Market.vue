@@ -1,7 +1,7 @@
 <template>
     <VueFinalModal
         class="flex justify-center items-center"
-        content-class="flex flex-col w-full h-full md:w-1/2 mx-4 p-6 
+        content-class="flex flex-col w-full h-full md:w-5/7 mx-4 p-6 
                        bg-[#5C3A21] border-4 border-[#3E2A17] 
                        rounded-xl shadow-xl space-y-4 text-amber-200"
         overlay-transition="vfm-fade"
@@ -33,10 +33,28 @@
         </div>
 
         <div class="flex justify-around">
-            <button @pointerdown="isOffersYours = false">
+            <button
+                class="p-1 rounded-[5px]"
+                :class="
+                    !isOffersYours
+                        ? 'bg-[#fee685] text-[#5c3a21]'
+                        : 'border-[5px] border-solid border-[#fee685]'
+                "
+                @pointerdown="isOffersYours = false"
+            >
                 معاملات درخواستی
             </button>
-            <button @pointerdown="isOffersYours = true">معاملات شما</button>
+            <button
+                class="p-1 rounded-[5px]"
+                :class="
+                    isOffersYours
+                        ? 'bg-[#fee685] text-[#5c3a21]'
+                        : 'border-[5px] border-solid border-[#fee685]'
+                "
+                @pointerdown="isOffersYours = true"
+            >
+                معاملات شما
+            </button>
         </div>
 
         <div
@@ -45,16 +63,19 @@
             class="w-full flex flex-col items-center justify-between space-y-2 overflow-y-auto max-h-[fit-content]"
             @scroll="handleOtherScroll"
         >
-            <div class="flex flex-wrap justify-around gap-y-4 pb-2">
+            <div
+                v-if="otherOffers.length > 0"
+                class="w-full flex flex-wrap justify-around gap-y-4 pb-2"
+            >
                 <div
                     v-for="(offer, index) in otherOffers"
                     :key="index"
-                    class="relative w-48 h-32 flex flex-col justify-between items-center pb-1 pt-1 bg-gradient-to-b from-yellow-600 via-yellow-700 to-yellow-800 border-l-2 border-yellow-900 rounded-sm shadow-md"
+                    class="relative w-64 h-32 flex flex-col justify-between items-center p-2 bg-gradient-to-b from-yellow-600 via-yellow-700 to-yellow-800 border-l-2 border-yellow-900 rounded-sm shadow-md"
                 >
                     <div
                         class="flex flex-row justify-between items-center w-full"
                     >
-                        <div class="w-2/5">
+                        <div class="w-3/7">
                             <CostlyButton
                                 :on-click="() => {}"
                                 :cost="offer.offered"
@@ -63,25 +84,28 @@
                                 :loading="false"
                             />
                         </div>
-                        <div class="w-2/5">
+                        <div class="w-3/7">
                             <CostlyButton
                                 :on-click="() => {}"
                                 :cost="offer.requested"
                                 label="ستد"
                                 enabled
                                 :loading="false"
+                                background-color="#480202"
                             />
                         </div>
                     </div>
-                    <div>{{ offer.createdAt }}</div>
+                    <div>{{ timeCommenter(offer.created_at) }}</div>
                     <button
                         v-if="offer.acceptable"
-                        @pointerdown="acceptTradeOffer(offer.id)"
+                        class="transition-transform duration-200 hover:scale-110 pointer-events-auto p-1 rounded-[5px] bg-[#fee685] text-[#5c3a21]"
+                        @pointerdown="acceptTrade(offer)"
                     >
                         انجام معامله
                     </button>
                 </div>
             </div>
+            <div v-else class="text-center w-full">معامله‌ای یافت نشد.</div>
         </div>
 
         <div
@@ -89,12 +113,56 @@
             class="w-full h-full flex flex-col items-center justify-between space-y-2"
         >
             <button
-                class="transition-transform duration-200 hover:scale-110 pointer-events-auto pr-auto pl-auto"
+                class="transition-transform duration-200 hover:scale-110 pointer-events-auto p-1 rounded-[5px] bg-[#fee685] text-[#5c3a21]"
                 title="معامله جدید"
                 @pointerdown="openTrade"
             >
                 معامله جدید
             </button>
+            <div
+                v-if="myOffers.length > 0"
+                class="w-full flex flex-wrap justify-around gap-y-4 pb-2"
+            >
+                <div
+                    v-for="(offer, index) in myOffers"
+                    :key="index"
+                    class="relative w-64 h-32 flex flex-col justify-between items-center p-2 bg-gradient-to-b from-yellow-600 via-yellow-700 to-yellow-800 border-l-2 border-yellow-900 rounded-sm shadow-md"
+                >
+                    <div
+                        class="flex flex-row justify-between items-center w-full"
+                    >
+                        <div class="w-3/7">
+                            <CostlyButton
+                                :on-click="() => {}"
+                                :cost="offer.offered"
+                                label="داد"
+                                enabled
+                                :loading="false"
+                                background-color="#480202"
+                            >
+                            </CostlyButton>
+                        </div>
+                        <div class="w-3/7">
+                            <CostlyButton
+                                :on-click="() => {}"
+                                :cost="offer.requested"
+                                label="ستد"
+                                enabled
+                                :loading="false"
+                            >
+                            </CostlyButton>
+                        </div>
+                    </div>
+                    <div>{{ timeCommenter(offer.created_at) }}</div>
+                    <button
+                        class="transition-transform duration-200 hover:scale-110 pointer-events-auto p-1 rounded-[5px] bg-[#fee685] text-[#5c3a21]"
+                        @pointerdown="deleteTrade(offer)"
+                    >
+                        حذف معامله
+                    </button>
+                </div>
+            </div>
+            <div v-else class="text-center w-full">معامله‌ای یافت نشد.</div>
             <div
                 ref="myOffersContainer"
                 class="w-full flex flex-col items-center justify-between space-y-2 overflow-y-auto max-h-[fit-content]"
@@ -147,6 +215,8 @@ import {
     deleteTradeOffer,
     getTradeOffers,
 } from '../services/api';
+import { useToast } from 'vue-toastification';
+import { useNow } from '../services/timer';
 import Trade from './Trade.vue';
 import CostlyButton from './CostlyButton.vue';
 
@@ -169,6 +239,8 @@ const otherPageIsLoadedAll = ref(false);
 const isOffersYours = ref(false);
 const myOffersContainer = ref(null);
 const otherOffersContainer = ref(null);
+const toast = useToast();
+const { now } = useNow(60000);
 const emit = defineEmits(['close']);
 
 const { open: openTrade, close: closeTrade } = useModal({
@@ -242,6 +314,32 @@ function handleOtherScroll() {
         loadMoreOtherOffers();
     }
 }
+const acceptTrade = offer => {
+    try {
+        acceptTradeOffer(offer.id);
+        toast.success('معامله جوش خورد.');
+    } catch (err) {
+        toast.error(err.message || 'در حین تایید معامله خطایی رخ داد');
+    }
+};
+
+const deleteTrade = offer => {
+    try {
+        deleteTradeOffer(offer.id);
+        toast.success('معامله حذف شد.');
+    } catch (err) {
+        toast.error(err.message || 'در حین حذف معامله خطایی رخ داد');
+    }
+};
+
+const timeCommenter = time => {
+    let diff = now.value - time;
+    diff /= 1000;
+    if (diff < 60) return 'ثانیه‌هایی پیش';
+    diff = Math.floor(diff / 60);
+    if (diff < 60) return diff + ' دقیقه پیش';
+    return Math.floor(diff / 60) + ' ساعت پیش';
+};
 
 onMounted(async () => {
     try {
@@ -259,7 +357,7 @@ onMounted(async () => {
         otherPageIsLoading.value = false;
         tradables.value = ['coin', 'redKey', 'blueKey', 'goldenKey'];
     } catch (err) {
-        console.error('Failed to load trade offers:', err);
+        toast.error(err.message || 'در حین دریافت معاملات خطایی رخ داد');
     }
 });
 </script>

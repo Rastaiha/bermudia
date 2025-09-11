@@ -50,7 +50,8 @@
                     <input
                         v-model="offered[tradable]"
                         type="number"
-                        class="w-10"
+                        :name="`offered_${tradable}`"
+                        class="w-10 border-[3px] border-[#fee685] rounded-[10px] text-center ltr"
                     />
                 </div>
             </div>
@@ -70,19 +71,26 @@
                     <input
                         v-model="requested[tradable]"
                         type="number"
-                        class="w-10"
+                        :name="`requested_${tradable}`"
+                        class="w-10 border-[3px] border-[#fee685] rounded-[10px] text-center ltr"
                     />
                 </div>
             </div>
         </div>
 
-        <button @pointerdown="handleSubmit">ثبت معامله</button>
+        <button
+            class="w-1/2 m-auto transition-transform duration-200 hover:scale-110 pointer-events-auto p-1 rounded-[5px] bg-[#fee685] text-[#5c3a21]"
+            @pointerdown="handleSubmit"
+        >
+            ثبت معامله
+        </button>
     </VueFinalModal>
 </template>
 
 <script setup>
 import { onMounted, ref } from 'vue';
 import { VueFinalModal } from 'vue-final-modal';
+import { useToast } from 'vue-toastification';
 import { makeTradeOffer } from '../services/api';
 
 const props = defineProps({
@@ -93,6 +101,7 @@ const props = defineProps({
 
 const offered = ref([]);
 const requested = ref([]);
+const toast = useToast();
 const emit = defineEmits(['close']);
 
 function handleClose() {
@@ -128,9 +137,10 @@ async function handleSubmit() {
     const payload = buildPayload(offered.value, requested.value);
     try {
         await makeTradeOffer(payload.offered, payload.requested);
+        toast.success('معامله اضافه شد.');
         handleClose();
     } catch (err) {
-        console.error('Failed to make trade offer:', err);
+        toast.error(err.message || 'در حین اضافه کردن معامله خطایی رخ داد');
     }
 }
 

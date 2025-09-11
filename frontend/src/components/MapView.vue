@@ -77,6 +77,7 @@ const emit = defineEmits(['nodeClick', 'mapTransformed']);
 const svgRef = ref(null);
 let panzoomInstance = null;
 let potentialClickNode = null;
+let lastTapTime = 0;
 
 const shipTransform = ref('');
 const shipTransition = ref('none');
@@ -169,26 +170,55 @@ const wavyEdges = computed(() => {
 
 const initializePanzoom = () => {
     if (!svgRef.value || panzoomInstance) return;
+
     panzoomInstance = panzoom(svgRef.value, {
         maxZoom: 4,
         minZoom: 1,
         friction: 1,
         smoothScroll: false,
         zoomDoubleClickSpeed: 0,
+        zoomOutDoubleClickSpeed: 0,
     });
+
+    svgRef.value.addEventListener(
+        'dblclick',
+        e => {
+            e.preventDefault();
+            e.stopPropagation();
+        },
+        { capture: true }
+    );
+
+    svgRef.value.addEventListener(
+        'touchend',
+        e => {
+            const currentTime = new Date().getTime();
+            const tapLength = currentTime - lastTapTime;
+            if (tapLength < 500 && tapLength > 0) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+            lastTapTime = currentTime;
+        },
+        { passive: false }
+    );
 
     panzoomInstance.on('panstart', () => {
         potentialClickNode = null;
     });
 
     panzoomInstance.on('transform', () => {
-        emit('mapTransformed');
+        const transform = panzoomInstance.getTransform();
+        emit('mapTransformed', {
+            x: transform.x,
+            y: transform.y,
+            scale: transform.scale,
+        });
     });
 };
 
 const zoomToPlayer = () => {
-    if (!panzoomInstance || !props.player?.atIsland || !svgRef.value) return;
-
+    if (!props.player || !props.player.atIsland || !panzoomInstance) return;
     const svg = svgRef.value;
     const ctm = svg.getScreenCTM();
     if (!ctm) return;
