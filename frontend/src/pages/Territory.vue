@@ -52,15 +52,20 @@
 <script setup>
 import { ref, onMounted, onUnmounted, watch, nextTick } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { getPlayer, getMe, getToken, getTerritory } from '@/services/api.js';
+import {
+    getPlayer,
+    getMe,
+    getToken,
+    getTerritory,
+} from '@/services/api/index.js';
 import { usePlayerWebSocket } from '@/components/service/WebSocket.js';
-import eventBus from '@/services/eventBus';
+import eventBus from '@/services/eventBus.js';
 
-import MapView from '@/components/MapView.vue';
-import IslandInfoBox from '@/components/IslandInfoBox.vue';
-import PlayerInfo from '@/components/PlayerInfo.vue';
-import LoadingBar from '@/components/LoadingBar.vue';
-import Toolbar from '@/components/Toolbar.vue';
+import MapView from '@/components/features/map/MapView.vue';
+import IslandInfoBox from '@/components/features/map/IslandInfoBox.vue';
+import PlayerInfo from '@/components/layout/PlayerInfo.vue';
+import LoadingBar from '@/components/common/LoadingBar.vue';
+import Toolbar from '@/components/layout/Toolbar.vue';
 
 const route = useRoute();
 const router = useRouter();

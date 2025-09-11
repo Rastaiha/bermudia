@@ -1,7 +1,7 @@
 import { ref, onMounted, onUnmounted, watch } from 'vue';
-import eventBus from './eventBus';
-import { getCurrentTrack } from './radioService';
-import { audioSettings } from './audioSettings';
+import eventBus from '../services/eventBus';
+import { getCurrentTrack } from '@/services/audio/radioService.js';
+import { audioSettings } from '@/services/audio/settings.js';
 
 export function useAudioPlayer(audioPlayer) {
     const isMusicPageActive = ref(false);

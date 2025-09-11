@@ -1,6 +1,6 @@
 // frontend/src/services/api.js
 
-import { API_ENDPOINTS } from './apiConfig.js';
+import { API_ENDPOINTS } from '@/services/api/config.js';
 
 // --- Helper Functions ---
 const getAuthHeaders = () => {

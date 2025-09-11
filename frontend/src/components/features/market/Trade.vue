@@ -91,7 +91,7 @@
 import { onMounted, ref } from 'vue';
 import { VueFinalModal } from 'vue-final-modal';
 import { useToast } from 'vue-toastification';
-import { makeTradeOffer } from '../services/api';
+import { makeTradeOffer } from '@/services/api/index.js';
 
 const props = defineProps({
     player: Object,

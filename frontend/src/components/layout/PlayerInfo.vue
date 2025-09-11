@@ -27,7 +27,7 @@
 
 <script setup>
 import { computed } from 'vue';
-import PlayerInventoryBar from './PlayerInventoryBar.vue';
+import PlayerInventoryBar from '@/components/common/PlayerInventoryBar.vue';
 
 const props = defineProps({
     player: {

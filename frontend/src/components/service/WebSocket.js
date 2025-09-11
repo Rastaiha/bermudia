@@ -1,6 +1,6 @@
 import { onUnmounted, watch } from 'vue';
-import { getToken } from '@/services/api.js';
-import { API_ENDPOINTS } from '@/services/apiConfig.js';
+import { getToken } from '@/services/api/index.js';
+import { API_ENDPOINTS } from '@/services/api/config.js';
 import emitter from '@/services/eventBus.js';
 
 export function usePlayerWebSocket(player, territoryId, router) {
