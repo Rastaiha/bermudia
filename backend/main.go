@@ -68,11 +68,15 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	inboxRepo, err := repository.NewSqlInboxRepository(db)
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	authService := service.NewAuth(cfg, userRepo)
 	territoryService := service.NewTerritory(territoryRepo)
 	islandService := service.NewIsland(theBot, islandRepo, questionStore, playerRepo, treasureRepo)
-	playerService := service.NewPlayer(cfg, db, userRepo, playerRepo, territoryRepo, questionStore, islandRepo, treasureRepo, marketRepo)
+	playerService := service.NewPlayer(cfg, db, userRepo, playerRepo, territoryRepo, questionStore, islandRepo, treasureRepo, marketRepo, inboxRepo)
 	correctionService := service.NewCorrection(cfg, questionStore)
 	adminService := service.NewAdmin(cfg, territoryRepo, islandRepo, userRepo, playerRepo, questionStore, treasureRepo)
 

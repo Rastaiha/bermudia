@@ -72,5 +72,23 @@ func (h *Handler) StreamTradeEvents(w http.ResponseWriter, r *http.Request) {
 		h.tradeHub.RemoveConnection(user.ID, c, errors.New("failed to get initial trade events"))
 		return
 	}
-	go h.tradeHub.SendOnConn(c, user.ID, event, eventSendTimeout)
+	h.tradeHub.SendOnConn(c, user.ID, event, eventSendTimeout)
+}
+
+func (h *Handler) HandleInboxEvent(e *domain.InboxEvent) {
+	go h.inboxHub.Send(e.UserId, e, eventSendTimeout)
+}
+
+func (h *Handler) StreamInboxEvents(w http.ResponseWriter, r *http.Request) {
+	user, c := h.createConnection(w, r, h.inboxHub)
+	if c == nil {
+		return
+	}
+	event, err := h.playerService.GetInitialInboxEvent(r.Context(), user.ID)
+	if err != nil {
+		slog.Error("get initial inbox event failed", slog.String("error", err.Error()))
+		h.inboxHub.RemoveConnection(user.ID, c, errors.New("failed to get initial inbox events"))
+		return
+	}
+	h.inboxHub.SendOnConn(c, user.ID, event, eventSendTimeout)
 }

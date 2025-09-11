@@ -121,9 +121,11 @@ func (i *Island) SubmitAnswer(ctx context.Context, user *domain.User, questionId
 	islandID := player.AtIsland
 	territoryID := ""
 	isPortable := false
-	if islandHeader, err := i.islandStore.GetIslandHeaderByBookId(ctx, question.BookID); err == nil {
+	if islandHeader, err := i.islandStore.GetIslandHeaderByBookIdAndUserId(ctx, question.BookID, user.ID); err == nil {
 		islandID = islandHeader.ID
-		territoryID = islandHeader.TerritoryID
+		if !islandHeader.FromPool {
+			territoryID = islandHeader.TerritoryID
+		}
 		isPortable, err = i.islandStore.IsIslandPortable(ctx, user.ID, islandHeader.ID)
 		if err != nil {
 			return nil, err

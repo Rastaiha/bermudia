@@ -57,6 +57,7 @@ CREATE TABLE IF NOT EXISTS user_books (
     book_id VARCHAR(255) REFERENCES books(id),
     PRIMARY KEY (user_id, island_id)
 );
+CREATE INDEX IF NOT EXISTS idx_user_books_book_id ON user_books (user_id, book_id);
 `
 
 	userPortableIslandsSchema = `
@@ -146,8 +147,19 @@ func (s sqlIslandRepository) SetIslandHeader(ctx context.Context, header domain.
 	return err
 }
 
+func (s sqlIslandRepository) islandHeaderColumnsToSelect() string {
+	return `id, name, territory_id, from_pool, book_id `
+}
+
+func (s sqlIslandRepository) scanIslandHeader(row scannable, header *domain.IslandHeader) error {
+	var bId sql.NullString
+	err := row.Scan(&header.ID, &header.Name, &header.TerritoryID, &header.FromPool, &bId)
+	header.BookID = bId.String
+	return err
+}
+
 func (s sqlIslandRepository) GetIslandHeadersByTerritory(ctx context.Context, territoryId string) (result []domain.IslandHeader, err error) {
-	rows, err := s.db.QueryContext(ctx, `SELECT id, territory_id, from_pool, book_id FROM islands WHERE territory_id = $1`, territoryId)
+	rows, err := s.db.QueryContext(ctx, `SELECT `+s.islandHeaderColumnsToSelect()+` WHERE territory_id = $1`, territoryId)
 	if err != nil {
 		return nil, fmt.Errorf("get island headers by territory %q: %w", territoryId, err)
 	}
@@ -155,36 +167,39 @@ func (s sqlIslandRepository) GetIslandHeadersByTerritory(ctx context.Context, te
 		err = rows.Close()
 	}()
 	for rows.Next() {
-		var bookId sql.NullString
 		var h domain.IslandHeader
-		err := rows.Scan(&h.ID, &h.TerritoryID, &h.FromPool, &bookId)
+		err := s.scanIslandHeader(rows, &h)
 		if err != nil {
 			return nil, fmt.Errorf("get island header by territory %q: %w", territoryId, err)
 		}
-		h.BookID = bookId.String
 		result = append(result, h)
 	}
 	return result, nil
 }
 
 func (s sqlIslandRepository) GetIslandHeader(ctx context.Context, islandId string) (domain.IslandHeader, error) {
-	var bookId sql.NullString
 	var header domain.IslandHeader
-	err := s.db.QueryRowContext(ctx, `SELECT id, territory_id, from_pool, book_id FROM islands WHERE id = $1`,
-		islandId).Scan(&header.ID, &header.TerritoryID, &header.FromPool, &bookId)
-	header.BookID = bookId.String
+	err := s.scanIslandHeader(s.db.QueryRowContext(ctx, `SELECT `+s.islandHeaderColumnsToSelect()+` FROM islands WHERE id = $1`,
+		islandId), &header)
 	if errors.Is(err, sql.ErrNoRows) {
 		return header, domain.ErrIslandNotFound
 	}
 	return header, err
 }
 
-func (s sqlIslandRepository) GetIslandHeaderByBookId(ctx context.Context, bookId string) (domain.IslandHeader, error) {
-	var bId sql.NullString
+func (s sqlIslandRepository) GetIslandHeaderByBookIdAndUserId(ctx context.Context, bookId string, userId int32) (domain.IslandHeader, error) {
+	var islandID string
+	err := s.db.QueryRowContext(ctx, `SELECT island_id FROM user_books WHERE user_id = $1 AND book_id = $2`,
+		userId, bookId).Scan(&islandID)
+	if err == nil {
+		return s.GetIslandHeader(ctx, islandID)
+	}
+	if !errors.Is(err, sql.ErrNoRows) {
+		return domain.IslandHeader{}, err
+	}
 	var header domain.IslandHeader
-	err := s.db.QueryRowContext(ctx, `SELECT id, territory_id, from_pool, book_id FROM islands WHERE book_id = $1`,
-		bookId).Scan(&header.ID, &header.TerritoryID, &header.FromPool, &header.BookID)
-	header.BookID = bId.String
+	err = s.scanIslandHeader(s.db.QueryRowContext(ctx, `SELECT `+s.islandHeaderColumnsToSelect()+` FROM islands WHERE book_id = $1`,
+		bookId), &header)
 	if errors.Is(err, sql.ErrNoRows) {
 		return header, domain.ErrIslandNotFound
 	}

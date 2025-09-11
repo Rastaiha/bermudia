@@ -489,6 +489,45 @@ curl --request POST \
 
 ---
 
+### Stream Inbox Events
+
+_This endpoint **is authenticated** and needs an auth token for access._
+
+A **websocket** endpoint for receiving realtime inbox events, including new message notifications.
+
+Type of messages is text; JSON encoding of [InboxEvent](#inboxevent).
+
+**Endpoint:** `/inbox/events?token=TOKEN`
+
+**Note**: This endpoint only returns messages that are sent after the connection is established.
+To receive old existing messages, a [SyncInboxEvent](#syncinboxevent) is immediately sent as the first event.
+It contains an _offset_ that should be used to call [Get Inbox Messages](#get-inbox-messages) to receive old, existing messages.
+
+---
+
+### Get Inbox Messages
+
+_This endpoint **is authenticated** and needs an auth token for access._
+
+Retrieves a paginated list of inbox messages for the player.
+
+**Parameters**:
+
+- `offset` (string, query param): Offset for pagination - Unix milliseconds timestamp. (should be set to _offset_ in [InboxSyncEvent](#syncinboxevent) or the _createdAt_ of the **last** [InboxMessageView](#inboxmessageview) in a previous non-empty response). If not provided, returns most recent messages.
+- `limit` (int, query param): Number of messages per page (default: 1, max: 100)
+
+Returns an array of [InboxMessageView](#inboxmessageview) in response.
+
+**Endpoint:** `GET /inbox/messages`
+
+```shell
+curl --request GET \
+  --url https://bermudia-api-internal.darkube.app/api/v1/inbox/messages?offset=1757554205581&limit=20 \
+  --header 'Authorization: TOKEN'
+```
+
+---
+
 ## Data Models
 
 ### LoginRequest
@@ -869,3 +908,53 @@ curl --request POST \
 |--------|-------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | reason | string            | The reason for change in player state. One of `initial`, `travel`, `refuel`, `correction`, `anchor`, `migration`, `unlockTreasure`, `newBook`, `makeOffer`, `acceptOffer`, `ownOfferAccepted`, `ownOfferDeleted` |
 | player | [Player](#player) | The new value of player object.                                                                                                                                                                                  |
+
+
+### InboxMessageView
+
+| Field     | Type                                        | Description                                           |
+|-----------|---------------------------------------------|-------------------------------------------------------|
+| createdAt | string                                      | Time when the message was created (Unix milliseconds) |
+| content   | [InboxMessageContent](#inboxmessagecontent) | The content of the inbox message                      |
+
+### InboxMessageContent
+
+| Field            | Type                                                           | Description                                                          |
+|------------------|----------------------------------------------------------------|----------------------------------------------------------------------|
+| newCorrection    | [InboxMessageNewCorrection](#inboxmessagenewcorrection)?       | Notification about a new question correction result                  |
+| ownOfferAccepted | [InboxMessageOwnOfferAccepted](#inboxmessageownofferaccepted)? | Notification that one of the player's trade offers has been accepted |
+
+**Note:** Exactly one of these fields will be present in a message content object
+
+### InboxMessageNewCorrection
+
+| Field         | Type                                | Description                                                              |
+|---------------|-------------------------------------|--------------------------------------------------------------------------|
+| territoryId   | string                              | ID of the territory where the question was answered                      |
+| territoryName | string                              | Name of the territory where the question was answered                    |
+| islandId      | string                              | ID of the island where the question was answered                         |
+| islandName    | string                              | Name of the island where the question was answered                       |
+| inputId       | string                              | ID of the input component that was answered                              |
+| newState      | [SubmissionState](#submissionstate) | The updated submission state after correction                            |
+| reward        | [Cost](#cost)?                      | Reward received for correct answers (only present if a reward was given) |
+
+### InboxMessageOwnOfferAccepted
+
+| Field | Type                              | Description                                    |
+|-------|-----------------------------------|------------------------------------------------|
+| offer | [TradeOfferView](#tradeofferview) | Details of the trade offer that was accepted   |
+
+### InboxEvent
+
+| Field      | Type                                   | Description                                                   |
+|------------|----------------------------------------|---------------------------------------------------------------|
+| sync       | [InboxSyncEvent](#syncinboxevent)?     | Synchronization event for inbox message stream                |
+| newMessage | [InboxMessageView](#inboxmessageview)? | Event fired when a new message is added to the player's inbox |
+
+**Note:** Exactly one of these fields will be present in an inbox event object
+
+### SyncInboxEvent
+
+| Field  | Type   | Description                                                    |
+|--------|--------|----------------------------------------------------------------|
+| offset | string | Synchronization offset for inbox message stream positioning    |

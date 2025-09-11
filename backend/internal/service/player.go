@@ -24,14 +24,16 @@ type Player struct {
 	islandStore                domain.IslandStore
 	treasureStore              domain.TreasureStore
 	marketStore                domain.MarketStore
+	inboxStore                 domain.InboxStore
 	playerUpdateEventHandler   func(event *domain.FullPlayerUpdateEvent)
 	tradeEventBroadcastHandler TradeEventBroadcastHandler
+	inboxEventHandler          func(e *domain.InboxEvent)
 	cron                       gocron.Scheduler
 }
 
 type TradeEventBroadcastHandler func(func(userId int32) *domain.TradeEvent)
 
-func NewPlayer(cfg config.Config, db *sql.DB, userStore domain.UserStore, playerStore domain.PlayerStore, territoryStore domain.TerritoryStore, questionStore domain.QuestionStore, islandStore domain.IslandStore, treasureStore domain.TreasureStore, marketStore domain.MarketStore) *Player {
+func NewPlayer(cfg config.Config, db *sql.DB, userStore domain.UserStore, playerStore domain.PlayerStore, territoryStore domain.TerritoryStore, questionStore domain.QuestionStore, islandStore domain.IslandStore, treasureStore domain.TreasureStore, marketStore domain.MarketStore, inboxStore domain.InboxStore) *Player {
 	return &Player{
 		cfg:            cfg,
 		db:             db,
@@ -42,6 +44,7 @@ func NewPlayer(cfg config.Config, db *sql.DB, userStore domain.UserStore, player
 		islandStore:    islandStore,
 		treasureStore:  treasureStore,
 		marketStore:    marketStore,
+		inboxStore:     inboxStore,
 	}
 }
 
@@ -240,7 +243,7 @@ func (p *Player) applyCorrections(ctx context.Context) {
 	ctx, cancel := context.WithTimeout(ctx, 10*time.Minute)
 	defer cancel()
 
-	corrections, err := p.questionStore.GetUnappliedCorrections(ctx, time.Now().Add(-time.Second*5).UTC())
+	corrections, err := p.questionStore.GetUnappliedCorrections(ctx, time.Now().Add(-p.cfg.CorrectionRevertWindow).UTC())
 	if err != nil {
 		slog.Error("failed to GetUnappliedCorrections from db", err)
 		return
@@ -248,10 +251,7 @@ func (p *Player) applyCorrections(ctx context.Context) {
 
 	var wg sync.WaitGroup
 	workerLimit := make(chan struct{}, 2)
-
 	appliedCorrections := &atomic.Int64{}
-	updatedUserIDs := make(map[int32]struct{})
-	lock := sync.Mutex{}
 	for _, c := range corrections {
 		workerLimit <- struct{}{}
 		wg.Add(1)
@@ -268,35 +268,6 @@ func (p *Player) applyCorrections(ctx context.Context) {
 			if ok {
 				appliedCorrections.Add(1)
 			}
-			if ok && c.IsCorrect {
-				lock.Lock()
-				defer lock.Unlock()
-				updatedUserIDs[c.UserId] = struct{}{}
-			}
-		}()
-	}
-	wg.Wait()
-
-	for userId := range updatedUserIDs {
-		workerLimit <- struct{}{}
-		wg.Add(1)
-		go func() {
-			defer func() {
-				<-workerLimit
-				wg.Done()
-			}()
-			player, err := p.playerStore.Get(ctx, userId)
-			if err != nil {
-				slog.Error("failed to Get player from db", err)
-				return
-			}
-			err = p.sendPlayerUpdateEventErr(ctx, &domain.PlayerUpdateEvent{
-				Reason: domain.PlayerUpdateEventCorrection,
-				Player: &player,
-			})
-			if err != nil {
-				slog.Error("failed to sendPlayerUpdateEventErr after applying correction", slog.String("error", err.Error()))
-			}
 		}()
 	}
 	wg.Wait()
@@ -306,8 +277,21 @@ func (p *Player) applyCorrections(ctx context.Context) {
 	}
 }
 
-func (p *Player) applyCorrection(ctx context.Context, c domain.Correction) (bool, error) {
-	ok, err := p.questionStore.ApplyCorrection(ctx, c, time.Now().Add(-p.cfg.MinCorrectionDelay).UTC())
+func (p *Player) applyCorrection(ctx context.Context, c domain.Correction) (ok bool, err error) {
+	tx, err := p.db.BeginTx(ctx, nil)
+	if err != nil {
+		return false, fmt.Errorf("failed to begin transaction: %w", err)
+	}
+	defer func() {
+		if err != nil {
+			err = errors.Join(err, tx.Rollback())
+		} else {
+			err = tx.Commit()
+		}
+	}()
+
+	var answer domain.Answer
+	answer, ok, err = p.questionStore.ApplyCorrection(ctx, tx, time.Now().Add(-p.cfg.MinCorrectionDelay()).UTC(), c)
 	if err != nil {
 		return false, err
 	}
@@ -319,25 +303,67 @@ func (p *Player) applyCorrection(ctx context.Context, c domain.Correction) (bool
 	if err != nil {
 		return false, err
 	}
-	pool, hasPool, err := p.islandStore.GetPoolOfBook(ctx, question.BookID)
-	if err != nil {
-		return false, err
-	}
-	currentPlayer, err := p.playerStore.Get(ctx, c.UserId)
-	if err != nil {
-		return false, err
-	}
-	newPlayer, rewarded := domain.GiveRewardOfSource(currentPlayer, question.RewardSource)
-	if hasPool {
-		var rewarded2 bool
-		newPlayer, rewarded2 = domain.GiveRewardOfPool(newPlayer, pool)
-		rewarded = rewarded || rewarded2
-	}
-	if rewarded {
-		if err := p.playerStore.Update(ctx, nil, currentPlayer, newPlayer); err != nil {
+
+	var reward *domain.Cost
+	if c.IsCorrect {
+		pool, hasPool, err := p.islandStore.GetPoolOfBook(ctx, question.BookID)
+		if err != nil {
 			return false, err
 		}
+		currentPlayer, err := p.playerStore.Get(ctx, c.UserId)
+		if err != nil {
+			return false, err
+		}
+		newPlayer, rewarded := domain.GiveRewardOfSource(currentPlayer, question.RewardSource)
+		if hasPool {
+			var rewarded2 bool
+			newPlayer, rewarded2 = domain.GiveRewardOfPool(newPlayer, pool)
+			rewarded = rewarded || rewarded2
+		}
+		if rewarded {
+			if err := p.playerStore.Update(ctx, tx, currentPlayer, newPlayer); err != nil {
+				return false, err
+			}
+			if err := p.sendPlayerUpdateEventErr(ctx, &domain.PlayerUpdateEvent{
+				Reason: domain.PlayerUpdateEventCorrection,
+				Player: &newPlayer,
+			}); err != nil {
+				return false, err
+			}
+			r := domain.Diff(currentPlayer, newPlayer)
+			reward = &r
+		}
 	}
+
+	islandHeader, err := p.islandStore.GetIslandHeaderByBookIdAndUserId(ctx, question.BookID, answer.UserID)
+	if err != nil {
+		return false, err
+	}
+	territory, err := p.territoryStore.GetTerritoryByID(ctx, islandHeader.TerritoryID)
+	if err != nil {
+		return false, err
+	}
+
+	err = p.createAndSendInboxMessage(ctx, tx, domain.InboxMessage{
+		ID:        domain.NewID(domain.ResourceTypeInboxMessage),
+		UserID:    c.UserId,
+		CreatedAt: time.Now().UTC(),
+		Content: domain.InboxMessageContent{
+			NewCorrection: &domain.InboxMessageNewCorrection{
+				TerritoryID:   territory.ID,
+				TerritoryName: territory.Name,
+				IslandID:      islandHeader.ID,
+				IslandName:    islandHeader.Name,
+				InputID:       answer.QuestionID,
+				NewState:      domain.GetSubmissionStateFromAnswer(answer),
+				Reward:        reward,
+			},
+		},
+	})
+	if err != nil {
+		return false, err
+	}
+
 	return true, nil
 }
 
@@ -573,6 +599,20 @@ func (p *Player) AcceptOffer(ctx context.Context, userId int32, tradeOfferId str
 		return err
 	}
 
+	err = p.createAndSendInboxMessage(ctx, tx, domain.InboxMessage{
+		ID:        domain.NewID(domain.ResourceTypeInboxMessage),
+		UserID:    offer.By,
+		CreatedAt: time.Now().UTC(),
+		Content: domain.InboxMessageContent{
+			OwnOfferAccepted: &domain.InboxMessageOwnOfferAccepted{
+				Offer: domain.TradeOfferViewForPlayer(offer.By, "", offer),
+			},
+		},
+	})
+	if err != nil {
+		return err
+	}
+
 	err = p.sendPlayerUpdateEventErr(ctx, acceptorEvent)
 	if err != nil {
 		return err
@@ -683,7 +723,50 @@ func (p *Player) OnTradeEventBroadcast(handler TradeEventBroadcastHandler) {
 func (p *Player) GetInitialTradeEvent(_ context.Context) (*domain.TradeEvent, error) {
 	return &domain.TradeEvent{
 		Sync: &domain.SyncTradeEvent{
-			Offset: fmt.Sprint(time.Now().UnixMilli()),
+			Offset: fmt.Sprint(time.Now().UTC().UnixMilli()),
 		},
 	}, nil
+}
+
+func (p *Player) OnInboxEvent(handler func(e *domain.InboxEvent)) {
+	p.inboxEventHandler = handler
+}
+
+func (p *Player) createAndSendInboxMessage(ctx context.Context, tx domain.Tx, msg domain.InboxMessage) error {
+	err := p.inboxStore.CreateMessage(ctx, tx, msg)
+	if err != nil {
+		return fmt.Errorf("failed to create inbox message: %w", err)
+	}
+	view := domain.InboxMessageToView(msg)
+	p.inboxEventHandler(&domain.InboxEvent{
+		UserId:     msg.UserID,
+		NewMessage: &view,
+	})
+	return nil
+}
+
+func (p *Player) GetInitialInboxEvent(_ context.Context, userId int32) (*domain.InboxEvent, error) {
+	return &domain.InboxEvent{
+		UserId: userId,
+		Sync: &domain.SyncInboxEvent{
+			Offset: fmt.Sprint(time.Now().UTC().UnixMilli()),
+		},
+	}, nil
+}
+
+func (p *Player) GetInboxMessages(ctx context.Context, userId int32, offset int64, limit int) ([]domain.InboxMessageView, error) {
+	limit = min(max(1, limit), 100)
+	before := time.Now().UTC()
+	if offset > 0 {
+		before = time.UnixMilli(offset).UTC()
+	}
+	messages, err := p.inboxStore.GetMessages(ctx, userId, before, limit)
+	if err != nil {
+		return nil, err
+	}
+	result := make([]domain.InboxMessageView, 0, len(messages))
+	for _, m := range messages {
+		result = append(result, domain.InboxMessageToView(m))
+	}
+	return result, nil
 }

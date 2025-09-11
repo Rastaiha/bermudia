@@ -145,11 +145,11 @@ func (m *Bot) handleTag(ctx context.Context, b *bot.Bot, update *models.Update) 
 			}},
 		},
 	}
-	username := update.CallbackQuery.From.Username
-	if username == "" {
-		username = update.CallbackQuery.From.FirstName
+	username := update.CallbackQuery.From.FirstName
+	if update.CallbackQuery.From.Username != "" {
+		username = "@" + update.CallbackQuery.From.Username
 	}
-	suffix := fmt.Sprintf("\n\n✏️ @%s داره تصحیح میکنه", username)
+	suffix := fmt.Sprintf("\n\n✏️ %s داره تصحیح میکنه", username)
 	var err error
 	if update.CallbackQuery.Message.Message.Document != nil {
 		_, err = b.EditMessageCaption(ctx, &bot.EditMessageCaptionParams{

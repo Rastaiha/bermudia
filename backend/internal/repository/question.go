@@ -238,30 +238,35 @@ func (s sqlQuestionRepository) CreateCorrection(ctx context.Context, correction 
 	return err
 }
 
-func (s sqlQuestionRepository) ApplyCorrection(ctx context.Context, correction domain.Correction, ifBefore time.Time) (bool, error) {
+func (s sqlQuestionRepository) ApplyCorrection(ctx context.Context, tx domain.Tx, ifBefore time.Time, correction domain.Correction) (answer domain.Answer, ok bool, err error) {
+	if tx == nil {
+		tx = s.db
+	}
 	ifBefore = ifBefore.UTC()
 	newStatus := domain.AnswerStatusWrong
 	if correction.IsCorrect {
 		newStatus = domain.AnswerStatusCorrect
 	}
-	var postApplyStatus domain.AnswerStatus
-	err := s.db.QueryRowContext(ctx,
-		`UPDATE answers SET status = CASE WHEN status = $1 THEN $2 ELSE status END WHERE user_id = $3 AND question_id = $4 AND updated_at <= $5 RETURNING status ;`,
+	err = s.scanAnswer(tx.QueryRowContext(ctx,
+		`UPDATE answers SET status = CASE WHEN status = $1 THEN $2 ELSE status END WHERE user_id = $3 AND question_id = $4 AND updated_at <= $5 RETURNING `+s.answerColumnsToSelect(),
 		domain.AnswerStatusPending, newStatus, correction.UserId, correction.QuestionId, ifBefore,
-	).Scan(&postApplyStatus)
+	), &answer)
 	if errors.Is(err, sql.ErrNoRows) {
-		return false, nil
+		err = nil
+		return
 	}
 	if err != nil {
-		return false, err
+		return
 	}
-	if _, err := s.db.ExecContext(ctx, `UPDATE corrections SET applied = TRUE WHERE id = $1 ;`, correction.ID); err != nil {
+	if _, err := tx.ExecContext(ctx, `UPDATE corrections SET applied = TRUE WHERE id = $1 ;`, correction.ID); err != nil {
 		slog.Error("db: failed to set is_applied for correction to true", slog.Any("error", err), slog.String("correction_id", correction.ID))
 	}
-	if postApplyStatus != newStatus {
+	if answer.Status != newStatus {
 		err = domain.ErrAnswerNotPending
+	} else {
+		ok = true
 	}
-	return true, err
+	return
 }
 
 func (s sqlQuestionRepository) GetUnappliedCorrections(ctx context.Context, before time.Time) (result []domain.Correction, err error) {
