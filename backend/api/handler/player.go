@@ -386,3 +386,30 @@ func (h *Handler) GetTradeOffers(w http.ResponseWriter, r *http.Request) {
 
 	sendResult(w, offers)
 }
+
+func (h *Handler) GetInboxMessages(w http.ResponseWriter, r *http.Request) {
+	user, err := getUser(r.Context())
+	if err != nil {
+		handleError(w, err)
+		return
+	}
+
+	offsetStr := r.URL.Query().Get("offset")
+	offset := int64(0)
+	if offsetStr != "" {
+		offset, err = strconv.ParseInt(offsetStr, 10, 64)
+		if err != nil {
+			sendDecodeError(w)
+			return
+		}
+	}
+	limit, _ := strconv.Atoi(r.URL.Query().Get("limit"))
+
+	result, err := h.playerService.GetInboxMessages(r.Context(), user.ID, offset, limit)
+	if err != nil {
+		handleError(w, err)
+		return
+	}
+
+	sendResult(w, result)
+}

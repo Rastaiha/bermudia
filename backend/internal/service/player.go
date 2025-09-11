@@ -723,7 +723,7 @@ func (p *Player) OnTradeEventBroadcast(handler TradeEventBroadcastHandler) {
 func (p *Player) GetInitialTradeEvent(_ context.Context) (*domain.TradeEvent, error) {
 	return &domain.TradeEvent{
 		Sync: &domain.SyncTradeEvent{
-			Offset: fmt.Sprint(time.Now().UnixMilli()),
+			Offset: fmt.Sprint(time.Now().UTC().UnixMilli()),
 		},
 	}, nil
 }
@@ -737,12 +737,36 @@ func (p *Player) createAndSendInboxMessage(ctx context.Context, tx domain.Tx, ms
 	if err != nil {
 		return fmt.Errorf("failed to create inbox message: %w", err)
 	}
+	view := domain.InboxMessageToView(msg)
 	p.inboxEventHandler(&domain.InboxEvent{
-		UserId: msg.UserID,
-		NewMessage: &domain.InboxMessageView{
-			CreatedAt: fmt.Sprint(time.Now().UnixMilli()),
-			Content:   msg.Content,
-		},
+		UserId:     msg.UserID,
+		NewMessage: &view,
 	})
 	return nil
+}
+
+func (p *Player) GetInitialInboxEvent(_ context.Context, userId int32) (*domain.InboxEvent, error) {
+	return &domain.InboxEvent{
+		UserId: userId,
+		Sync: &domain.SyncInboxEvent{
+			Offset: fmt.Sprint(time.Now().UTC().UnixMilli()),
+		},
+	}, nil
+}
+
+func (p *Player) GetInboxMessages(ctx context.Context, userId int32, offset int64, limit int) ([]domain.InboxMessageView, error) {
+	limit = min(max(1, limit), 100)
+	before := time.Now().UTC()
+	if offset > 0 {
+		before = time.UnixMilli(offset).UTC()
+	}
+	messages, err := p.inboxStore.GetMessages(ctx, userId, before, limit)
+	if err != nil {
+		return nil, err
+	}
+	result := make([]domain.InboxMessageView, 0, len(messages))
+	for _, m := range messages {
+		result = append(result, domain.InboxMessageToView(m))
+	}
+	return result, nil
 }

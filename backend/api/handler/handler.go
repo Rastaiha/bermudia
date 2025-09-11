@@ -89,6 +89,7 @@ func (h *Handler) Start() {
 				r.Post("/delete_offer", h.DeleteOffer)
 				r.Get("/offers", h.GetTradeOffers)
 			})
+			r.Get("/inbox/messages", h.GetInboxMessages)
 		})
 	})
 

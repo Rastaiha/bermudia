@@ -1,6 +1,7 @@
 package domain
 
 import (
+	"fmt"
 	"time"
 )
 
@@ -24,6 +25,18 @@ type InboxMessageContent struct {
 type InboxEvent struct {
 	UserId     int32             `json:"-"`
 	NewMessage *InboxMessageView `json:"newMessage,omitempty"`
+	Sync       *SyncInboxEvent   `json:"sync,omitempty"`
+}
+
+type SyncInboxEvent struct {
+	Offset string `json:"offset"`
+}
+
+func InboxMessageToView(msg InboxMessage) InboxMessageView {
+	return InboxMessageView{
+		CreatedAt: fmt.Sprint(msg.CreatedAt.UnixMilli()),
+		Content:   msg.Content,
+	}
 }
 
 type InboxMessageNewCorrection struct {
