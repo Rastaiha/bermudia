@@ -8,12 +8,19 @@ type Config struct {
 	TokenSigningKey        []byte        `config:"token_signing_key"`
 	MockUsersPassword      string        `config:"mock_users_password"`
 	BotToken               string        `config:"bot_token"`
-	MinCorrectionDelay     time.Duration `config:"min_correction_delay"`
 	CorrectionJobInterval  time.Duration `config:"correction_job_interval"`
 	DefaultCorrectionGroup int64         `config:"default_correction_group"`
 	CorrectionGroupsStr    string        `config:"correction_groups"`
 	ContentFileID          string        `config:"content_file_id"`
 	CorrectionGroups       map[string]int64
+	CorrectionRevertWindow time.Duration `config:"correction_revert_window"`
+}
+
+func (c Config) MinCorrectionDelay() time.Duration {
+	if c.DevMode {
+		return 10 * time.Second
+	}
+	return 3 * time.Minute
 }
 
 type Postgres struct {
@@ -28,10 +35,10 @@ type Postgres struct {
 
 func defaultConfig() *Config {
 	return &Config{
-		MinCorrectionDelay: 30 * time.Second,
 		Postgres: Postgres{
 			SSLMode: "disable",
 		},
-		CorrectionJobInterval: 10 * time.Second,
+		CorrectionJobInterval:  10 * time.Second,
+		CorrectionRevertWindow: 10 * time.Second,
 	}
 }

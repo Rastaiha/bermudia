@@ -210,8 +210,8 @@ func AcceptOffer(acceptor Player, offerer Player, offer TradeOffer) (*PlayerUpda
 			text:   "دارایی شما برای قبول این درخواست کافی نیست.",
 		}
 	}
-	offerer = inductCost(offerer, offer.Requested)
-	acceptor = inductCost(acceptor, offer.Offered)
+	offerer = addCost(offerer, offer.Requested)
+	acceptor = addCost(acceptor, offer.Offered)
 
 	return &PlayerUpdateEvent{
 			Reason: PlayerUpdateEventAcceptOffer,
@@ -229,7 +229,7 @@ func DeleteOffer(player Player, offer TradeOffer) (*PlayerUpdateEvent, error) {
 			text:   "can't delete an offer that doesn't belong to you",
 		}
 	}
-	player = inductCost(player, offer.Offered)
+	player = addCost(player, offer.Offered)
 	return &PlayerUpdateEvent{
 		Reason: PlayerUpdateEventOwnOfferDeleted,
 		Player: &player,

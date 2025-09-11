@@ -25,6 +25,7 @@ type Handler struct {
 	playerService    *service.Player
 	playerHub        *hub.Hub
 	tradeHub         *hub.Hub
+	inboxHub         *hub.Hub
 }
 
 func New(authService *service.Auth, territoryService *service.Territory, islandService *service.Island, playerService *service.Player) *Handler {
@@ -35,6 +36,7 @@ func New(authService *service.Auth, territoryService *service.Territory, islandS
 		playerService:    playerService,
 		playerHub:        hub.NewHub(),
 		tradeHub:         hub.NewHub(),
+		inboxHub:         hub.NewHub(),
 	}
 }
 
@@ -54,6 +56,7 @@ func (h *Handler) Start() {
 		// ws endpoints
 		r.HandleFunc("/events", h.StreamPlayerEvents)
 		r.HandleFunc("/trade/events", h.StreamTradeEvents)
+		r.HandleFunc("/inbox/events", h.StreamInboxEvents)
 
 		// Authenticated endpoints
 		r.Group(func(r chi.Router) {
@@ -97,6 +100,7 @@ func (h *Handler) Start() {
 
 	h.playerService.OnPlayerUpdate(h.HandlePlayerUpdateEvent)
 	h.playerService.OnTradeEventBroadcast(h.HandleTradeEventBroadcast)
+	h.playerService.OnInboxEvent(h.HandleInboxEvent)
 
 	slog.Info("Server starting")
 	h.server = &http.Server{

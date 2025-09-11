@@ -74,3 +74,11 @@ func (h *Handler) StreamTradeEvents(w http.ResponseWriter, r *http.Request) {
 	}
 	go h.tradeHub.SendOnConn(c, user.ID, event, eventSendTimeout)
 }
+
+func (h *Handler) HandleInboxEvent(e *domain.InboxEvent) {
+	go h.inboxHub.Send(e.UserId, e, eventSendTimeout)
+}
+
+func (h *Handler) StreamInboxEvents(w http.ResponseWriter, r *http.Request) {
+	_, _ = h.createConnection(w, r, h.inboxHub)
+}

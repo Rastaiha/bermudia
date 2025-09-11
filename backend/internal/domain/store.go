@@ -26,6 +26,7 @@ var (
 )
 
 type Tx interface {
+	QueryRowContext(ctx context.Context, query string, args ...interface{}) *sql.Row
 	ExecContext(ctx context.Context, query string, args ...any) (sql.Result, error)
 }
 
@@ -44,7 +45,7 @@ type IslandStore interface {
 	GetTerritory(ctx context.Context, id string) (string, error)
 	GetIslandHeader(ctx context.Context, islandId string) (IslandHeader, error)
 	GetIslandHeadersByTerritory(ctx context.Context, territoryId string) ([]IslandHeader, error)
-	GetIslandHeaderByBookId(ctx context.Context, bookId string) (IslandHeader, error)
+	GetIslandHeaderByBookIdAndUserId(ctx context.Context, bookId string, userId int32) (IslandHeader, error)
 	SetTerritoryPoolSettings(ctx context.Context, territoryId string, settings TerritoryPoolSettings) error
 	GetTerritoryPoolSettings(ctx context.Context, territoryId string) (TerritoryPoolSettings, error)
 	AddBookToPool(ctx context.Context, poolId string, bookId string) error
@@ -80,7 +81,7 @@ type QuestionStore interface {
 	HasAnsweredIsland(ctx context.Context, userId int32, islandId string) (bool, error)
 	GetQuestion(ctx context.Context, questionId string) (BookQuestion, error)
 	CreateCorrection(ctx context.Context, Correction Correction) error
-	ApplyCorrection(ctx context.Context, correction Correction, ifBefore time.Time) (bool, error)
+	ApplyCorrection(ctx context.Context, tx Tx, ifBefore time.Time, correction Correction) (Answer, bool, error)
 	GetUnappliedCorrections(ctx context.Context, before time.Time) ([]Correction, error)
 	UpdateCorrection(ctx context.Context, co string, newIsCorrect bool) error
 }
@@ -108,4 +109,9 @@ type MarketStore interface {
 	GetOffer(ctx context.Context, offerId string) (TradeOffer, error)
 	GetOffers(ctx context.Context, byFilter GetOffersByFilterType, userId int32, before time.Time, limit int) ([]TradeOffer, error)
 	GetOffersCountOfUser(ctx context.Context, userId int32) (int, error)
+}
+
+type InboxStore interface {
+	CreateMessage(ctx context.Context, tx Tx, msg InboxMessage) error
+	GetMessages(ctx context.Context, userId int32, before time.Time, limit int) ([]InboxMessage, error)
 }

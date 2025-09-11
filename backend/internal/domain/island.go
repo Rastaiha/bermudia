@@ -2,6 +2,7 @@ package domain
 
 type IslandHeader struct {
 	ID          string `json:"id"`
+	Name        string `json:"name"`
 	TerritoryID string `json:"territory_id"`
 	BookID      string `json:"bookId"`
 	FromPool    bool   `json:"fromPool"`
