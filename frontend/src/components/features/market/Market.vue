@@ -115,7 +115,7 @@
             <button
                 class="transition-transform duration-200 hover:scale-110 pointer-events-auto p-1 rounded-[5px] bg-[#fee685] text-[#5c3a21]"
                 title="معامله جدید"
-                @pointerdown="openTrade"
+                @click="openTrade"
             >
                 معامله جدید
             </button>
