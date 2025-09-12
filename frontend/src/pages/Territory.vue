@@ -1,8 +1,9 @@
 <template>
     <div
-        class="w-full h-screen flex justify-center items-center p-4 box-border bg-cover bg-center bg-no-repeat overflow-hidden bg-[#0c2036]"
-        :style="{ backgroundImage: `url(${backgroundImage})` }"
+        class="w-full h-screen flex justify-center items-center p-4 box-border overflow-hidden relative"
     >
+        <StarryNight :star-count="200" :shooting-star-interval="8000" />
+        <div class="fixed inset-0 bg-[#0c2036] -z-20"></div>
         <div
             v-if="isLoading"
             class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50"
@@ -66,7 +67,7 @@ import IslandInfoBox from '@/components/features/map/IslandInfoBox.vue';
 import PlayerInfo from '@/components/layout/PlayerInfo.vue';
 import LoadingBar from '@/components/common/LoadingBar.vue';
 import Toolbar from '@/components/layout/Toolbar.vue';
-
+import StarryNight from '@/components/common/StarryNight.vue';
 const route = useRoute();
 const router = useRouter();
 const mapViewComponentRef = ref(null);

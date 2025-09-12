@@ -1,6 +1,6 @@
 <template>
     <div
-        class="relative min-h-screen flex items-center justify-center overflow-hidden font-vazirmatn bg-slate-900"
+        class="relative min-h-screen flex items-center justify-center overflow-hidden font-vazirmatn"
     >
         <div class="animate-fade-in-scale w-full max-w-md mx-4 relative z-10">
             <div
@@ -63,7 +63,7 @@
                                     v-model="username"
                                     autocomplete="on"
                                     type="text"
-                                    class="input-focus text-left [direction:ltr] bg-slate-700 border border-slate-600 text-slate-100 text-sm sm:text-base rounded-lg block w-full pl-10 p-2 sm:p-3 sm:pl-10 placeholder-slate-400"
+                                    class="input-focus text-left [direction:ltr] bg-slate-700/90 border border-slate-600 text-slate-100 text-sm sm:text-base rounded-lg block w-full pl-10 p-2 sm:p-3 sm:pl-10 placeholder-slate-400"
                                     placeholder="Username"
                                     required
                                 />
@@ -133,7 +133,7 @@
                                     v-model="password"
                                     :type="showPassword ? 'text' : 'password'"
                                     autocomplete="on"
-                                    class="input-focus text-left [direction:ltr] bg-slate-700 border border-slate-600 text-slate-100 text-sm sm:text-base rounded-lg block w-full pl-10 p-2 sm:p-3 sm:pl-10 placeholder-slate-400"
+                                    class="input-focus text-left [direction:ltr] bg-slate-700/90 border border-slate-600 text-slate-100 text-sm sm:text-base rounded-lg block w-full pl-10 p-2 sm:p-3 sm:pl-10 placeholder-slate-400"
                                     placeholder="********"
                                     required
                                 />
