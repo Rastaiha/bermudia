@@ -38,19 +38,19 @@
             <div class="flex flex-col justify-between items-center space-y-2">
                 <div>داد</div>
                 <div
-                    v-for="tradable in tradables"
-                    :key="tradable"
+                    v-for="(entry, type) in offered"
+                    :key="type"
                     class="flex flex-row-reverse"
                 >
                     <img
-                        :src="getIconByType(tradable)"
-                        :alt="tradable + ' Icon'"
+                        :src="getIconByType(type)"
+                        :alt="type + ' Icon'"
                         class="w-5 h-5"
                     />
                     <input
-                        v-model="offered[tradable]"
+                        v-model="entry.current"
                         type="number"
-                        :name="`offered_${tradable}`"
+                        :name="`offered_${type}`"
                         class="w-20 border-[3px] border-[#fee685] rounded-[10px] text-center ltr pr-[0.7rem]"
                     />
                 </div>
@@ -59,19 +59,19 @@
             <div class="flex flex-col justify-between items-center space-y-2">
                 <div>ستد</div>
                 <div
-                    v-for="tradable in tradables"
-                    :key="tradable"
+                    v-for="(entry, type) in requested"
+                    :key="type"
                     class="flex flex-row-reverse"
                 >
                     <img
-                        :src="getIconByType(tradable)"
-                        :alt="tradable + ' Icon'"
+                        :src="getIconByType(type)"
+                        :alt="type + ' Icon'"
                         class="w-5 h-5"
                     />
                     <input
-                        v-model="requested[tradable]"
+                        v-model="entry.current"
                         type="number"
-                        :name="`requested_${tradable}`"
+                        :name="`requested_${type}`"
                         class="w-20 border-[3px] border-[#fee685] rounded-[10px] text-center ltr pr-[0.7rem]"
                     />
                 </div>
@@ -88,7 +88,7 @@
 </template>
 
 <script setup>
-import { onMounted, ref } from 'vue';
+import { onMounted, ref, watch } from 'vue';
 import { VueFinalModal } from 'vue-final-modal';
 import { useToast } from 'vue-toastification';
 import { makeTradeOffer } from '@/services/api/index.js';
@@ -96,11 +96,11 @@ import { makeTradeOffer } from '@/services/api/index.js';
 const props = defineProps({
     player: Object,
     username: String,
-    tradables: Array,
+    tradables: Object,
 });
 
-const offered = ref([]);
-const requested = ref([]);
+const offered = ref({});
+const requested = ref({});
 const toast = useToast();
 const emit = defineEmits(['close']);
 
@@ -122,9 +122,9 @@ const getIconByType = type => {
 
 function buildPayload(offered, requested) {
     const toItems = obj =>
-        Object.entries(obj).map(([type, amount]) => ({
-            type,
-            amount: Number(amount),
+        Object.entries(obj).map(([type, entry]) => ({
+            type: type,
+            amount: Number(entry.current),
         }));
 
     return {
@@ -145,9 +145,53 @@ async function handleSubmit() {
 }
 
 onMounted(() => {
-    props.tradables.forEach(tradable => {
-        offered.value[tradable] = 0;
-        requested.value[tradable] = 0;
+    props.tradables.items.forEach(tradable => {
+        offered.value[tradable.type] = {
+            min: 0,
+            current: 0,
+            max: tradable.amount,
+        };
+        requested.value[tradable.type] = {
+            min: 0,
+            current: 0,
+            max: 1 / 0,
+        };
     });
 });
+
+const clamp = (val, min, max) => {
+    if (val < min) return min;
+    if (val > max) return max;
+    return val;
+};
+
+watch(
+    offered,
+    newVal => {
+        for (const type in newVal) {
+            const entry = newVal[type];
+            entry.current = clamp(
+                Number(entry.current) || 0,
+                entry.min,
+                entry.max
+            );
+        }
+    },
+    { deep: true }
+);
+
+watch(
+    requested,
+    newVal => {
+        for (const type in newVal) {
+            const entry = newVal[type];
+            entry.current = clamp(
+                Number(entry.current) || 0,
+                entry.min,
+                entry.max
+            );
+        }
+    },
+    { deep: true }
+);
 </script>
