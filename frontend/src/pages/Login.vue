@@ -5,7 +5,7 @@ import StarryNight from '@/components/common/StarryNight.vue';
 
 <template>
     <div class="relative min-h-screen overflow-hidden">
-        <StarryNight :star-count="200" :shooting-star-interval="6000" />
+        <StarryNight />
         <Login />
     </div>
 </template>

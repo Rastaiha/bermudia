@@ -9,95 +9,75 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue';
+import { ref, onMounted, onUnmounted, nextTick } from 'vue';
 
 const starsContainer = ref(null);
-let animationIntervals = [];
+let resizeObserver = null;
 
 const props = defineProps({
-    starCount: {
+    starDensity: {
         type: Number,
-        default: 100,
-    },
-    shootingStarInterval: {
-        type: Number,
-        default: 8000,
+        default: 0.0001, // Stars per pixel (adjust this value to control density)
     },
 });
+
+const calculateStarCount = () => {
+    if (!starsContainer.value) return 100; // fallback
+
+    const rect = starsContainer.value.getBoundingClientRect();
+    const screenArea = rect.width * rect.height;
+    return Math.floor(screenArea * props.starDensity);
+};
 
 const createStar = () => {
     const star = document.createElement('div');
     star.className = 'star';
     star.style.cssText = `
-    position: absolute;
-    background-color: #fff;
-    width: 1px;
-    height: 1px;
-    border-radius: 50%;
-    top: ${Math.random() * 100}%;
-    left: ${Math.random() * 100}%;
-  `;
+        position: absolute;
+        background-color: #fff;
+        width: 1px;
+        height: 1px;
+        border-radius: 50%;
+        top: ${Math.random() * 100}%;
+        left: ${Math.random() * 100}%;
+    `;
 
     // Add the ::before pseudo-element effect using a real element
     const twinkle = document.createElement('div');
     twinkle.style.cssText = `
-    position: absolute;
-    top: -5px;
-    left: -5px;
-    width: 10px;
-    height: 10px;
-    border-radius: 50%;
-    background-color: rgba(255, 255, 255, 0.8);
-    opacity: 0;
-    animation: starTwinkle 2s infinite;
-    animation-delay: ${Math.random() * 2}s;
-  `;
+        position: absolute;
+        top: -5px;
+        left: -5px;
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background-color: rgba(255, 255, 255, 0.8);
+        opacity: 0;
+        animation: starTwinkle 2s infinite;
+        animation-delay: ${Math.random() * 2}s;
+    `;
 
     star.appendChild(twinkle);
     return star;
 };
 
-const createShootingStar = () => {
-    const shootingStar = document.createElement('div');
-    shootingStar.className = 'shooting-star';
-    shootingStar.style.cssText = `
-    position: absolute;
-    width: 2px;
-    height: 10px;
-    background-color: #fff;
-    opacity: 1;
-    z-index: 1;
-    top: ${Math.random() * 100}%;
-    left: ${Math.random() * 100}%;
-    animation: shootingStarAnimation 0.5s linear forwards;
-  `;
+const clearStars = () => {
+    if (!starsContainer.value) return;
 
-    document.body.appendChild(shootingStar);
-
-    setTimeout(() => {
-        if (document.body.contains(shootingStar)) {
-            document.body.removeChild(shootingStar);
-        }
-    }, 3000);
+    const existingStars = starsContainer.value.querySelectorAll('.star');
+    existingStars.forEach(star => star.remove());
 };
 
 const generateStars = () => {
     if (!starsContainer.value) return;
 
-    for (let i = 0; i < props.starCount; i++) {
+    clearStars();
+    const starCount = calculateStarCount();
+
+    for (let i = 0; i < starCount; i++) {
         const star = createStar();
         starsContainer.value.appendChild(star);
     }
-};
-
-const randomizeShootingStarInterval = () => {
-    const interval = Math.random() * props.shootingStarInterval;
-    const timeoutId = setTimeout(() => {
-        createShootingStar();
-        randomizeShootingStarInterval();
-    }, interval);
-
-    animationIntervals.push(timeoutId);
 };
 
 const addStyles = () => {
@@ -107,32 +87,21 @@ const addStyles = () => {
     const style = document.createElement('style');
     style.id = 'starry-night-styles';
     style.textContent = `
-    @keyframes starTwinkle {
-      0% {
-        transform: scale(0.3);
-        opacity: 0;
-      }
-      50% {
-        transform: scale(0.5);
-        opacity: 1;
-      }
-      100% {
-        transform: scale(0.5);
-        opacity: 0;
-      }
-    }
-    
-    @keyframes shootingStarAnimation {
-      0% {
-        opacity: 1;
-        transform: translateX(-200px) translateY(-200px) rotate(70deg);
-      }
-      100% {
-        opacity: 0;
-        transform: translateX(200px) translateY(-300px) rotate(70deg);
-      }
-    }
-  `;
+        @keyframes starTwinkle {
+            0% {
+                transform: scale(0.3);
+                opacity: 0;
+            }
+            50% {
+                transform: scale(0.5);
+                opacity: 1;
+            }
+            100% {
+                transform: scale(0.5);
+                opacity: 0;
+            }
+        }
+    `;
 
     document.head.appendChild(style);
 };
@@ -144,35 +113,41 @@ const cleanupStyles = () => {
     }
 };
 
-onMounted(() => {
+const handleResize = () => {
+    // Debounce the resize to avoid too many recalculations
+    clearTimeout(handleResize.timeoutId);
+    handleResize.timeoutId = setTimeout(() => {
+        generateStars();
+    }, 100);
+};
+
+onMounted(async () => {
     addStyles();
+
+    await nextTick();
+
     generateStars();
 
-    // Initial shooting star
-    const initialDelay = setTimeout(() => {
-        createShootingStar();
-    }, Math.random() * props.shootingStarInterval);
-
-    animationIntervals.push(initialDelay);
-
-    // Start the randomized shooting star intervals
-    randomizeShootingStarInterval();
+    // Set up ResizeObserver to watch for container size changes
+    if (window.ResizeObserver && starsContainer.value) {
+        resizeObserver = new ResizeObserver(handleResize);
+        resizeObserver.observe(starsContainer.value);
+    } else {
+        // Fallback to window resize event for older browsers
+        window.addEventListener('resize', handleResize);
+    }
 });
 
 onUnmounted(() => {
-    // Clear all timeouts
-    animationIntervals.forEach(clearTimeout);
-    animationIntervals = [];
+    if (resizeObserver) {
+        resizeObserver.disconnect();
+    } else {
+        window.removeEventListener('resize', handleResize);
+    }
 
-    // Clean up shooting stars that might still be in the DOM
-    const shootingStars = document.querySelectorAll('.shooting-star');
-    shootingStars.forEach(star => {
-        if (document.body.contains(star)) {
-            document.body.removeChild(star);
-        }
-    });
-
-    // Clean up styles when component is destroyed
+    if (handleResize.timeoutId) {
+        clearTimeout(handleResize.timeoutId);
+    }
     cleanupStyles();
 });
 </script>
