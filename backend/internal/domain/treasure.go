@@ -26,18 +26,25 @@ type UserTreasure struct {
 	TreasureID string
 	Unlocked   bool
 	Cost       Cost
+	AltCost    Cost
 	Reward     *Cost
 	UpdatedAt  time.Time
 }
 
 type UnlockTreasureCheckResult struct {
-	Feasible bool   `json:"feasible"`
-	Cost     Cost   `json:"cost"`
-	Reason   string `json:"reason,omitempty"`
+	Feasible      bool   `json:"feasible"`
+	CanPayCost    bool   `json:"canPayCost"`
+	Cost          Cost   `json:"cost"`
+	CanPayAltCost bool   `json:"canPayAltCost"`
+	AltCost       Cost   `json:"altCost"`
+	Reason        string `json:"reason,omitempty"`
 }
 
 func UnlockTreasureCheck(player Player, treasure Treasure, userTreasure UserTreasure, currentIslandBook string) (result UnlockTreasureCheckResult) {
 	result.Cost = userTreasure.Cost
+	result.AltCost = userTreasure.AltCost
+	result.CanPayCost = canAfford(player, userTreasure.Cost)
+	result.CanPayAltCost = canAfford(player, userTreasure.AltCost)
 
 	if currentIslandBook == "" || treasure.BookID != currentIslandBook {
 		result.Reason = "شما باید وارد سیاره شوید تا بتوانید گنج را باز کنید."
@@ -49,7 +56,7 @@ func UnlockTreasureCheck(player Player, treasure Treasure, userTreasure UserTrea
 		return
 	}
 
-	if _, ok := deductCost(player, userTreasure.Cost); !ok {
+	if !result.CanPayCost && !result.CanPayAltCost {
 		result.Reason = "شما کلید کافی برای باز کردن این گنج ندارید. "
 		return
 	}
@@ -58,7 +65,7 @@ func UnlockTreasureCheck(player Player, treasure Treasure, userTreasure UserTrea
 	return
 }
 
-func UnlockTreasure(player Player, treasure Treasure, userTreasure UserTreasure, currentIslandBook string) (*PlayerUpdateEvent, UserTreasure, error) {
+func UnlockTreasure(player Player, treasure Treasure, userTreasure UserTreasure, currentIslandBook string, chosenCost string) (*PlayerUpdateEvent, UserTreasure, error) {
 	check := UnlockTreasureCheck(player, treasure, userTreasure, currentIslandBook)
 	if !check.Feasible {
 		return nil, UserTreasure{}, Error{
@@ -66,14 +73,28 @@ func UnlockTreasure(player Player, treasure Treasure, userTreasure UserTreasure,
 			reason: ErrorReasonRuleViolation,
 		}
 	}
-	player, ok := deductCost(player, check.Cost)
-	if !ok {
+
+	var couldAfford bool
+	switch chosenCost {
+	case "":
+		player, couldAfford = deductCost(player, userTreasure.Cost)
+	case "alt":
+		player, couldAfford = deductCost(player, userTreasure.AltCost)
+	default:
 		return nil, UserTreasure{}, Error{
-			text:   "شما دارایی کافی ندارید.",
+			reason: ErrorReasonRuleViolation,
+			text:   "invalid chosenCost",
+		}
+	}
+	if !couldAfford {
+		return nil, UserTreasure{}, Error{
+			text:   "شما دارایی کافی برای بازکردن گنج با این روش را ندارید.",
 			reason: ErrorReasonRuleViolation,
 		}
 	}
-	player, reward := giveRewardOfTreasure(player, userTreasure)
+
+	reward := getRewardOfTreasure(userTreasure)
+	player = addCost(player, reward)
 	userTreasure.Unlocked = true
 	userTreasure.Reward = &reward
 	return &PlayerUpdateEvent{

@@ -2,28 +2,27 @@ package domain
 
 import (
 	"math/rand"
-	"slices"
 	"time"
 )
 
 var rewardSources = map[string]func(player Player) Player{
 	"edu1": func(player Player) Player {
-		return giveWorthOfCoins(player, 10, false)
+		return giveRandomWorthOfCoins(player, 10, eduQuestionRewardTypes)
 	},
 	"edu2": func(player Player) Player {
-		return giveWorthOfCoins(player, 20, false)
+		return giveRandomWorthOfCoins(player, 20, eduQuestionRewardTypes)
 	},
 	"edu3": func(player Player) Player {
-		return giveWorthOfCoins(player, 30, false)
+		return giveRandomWorthOfCoins(player, 30, eduQuestionRewardTypes)
 	},
 	"edu4": func(player Player) Player {
-		return giveWorthOfCoins(player, 40, false)
+		return giveRandomWorthOfCoins(player, 40, eduQuestionRewardTypes)
 	},
 	"edu5": func(player Player) Player {
-		return giveWorthOfCoins(player, 50, false)
+		return giveRandomWorthOfCoins(player, 50, eduQuestionRewardTypes)
 	},
 	"edu6": func(player Player) Player {
-		return giveWorthOfCoins(player, 60, false)
+		return giveRandomWorthOfCoins(player, 60, eduQuestionRewardTypes)
 	},
 }
 
@@ -35,44 +34,61 @@ func IsValidRewardSource(rewardSource string) bool {
 	return ok
 }
 
-type rewardType struct {
-	kind   string
-	value  int32
-	weight int
+type rewardParam struct {
+	worthOfCoins int32
+	weight       int
 }
 
-var rewardTypes = []rewardType{
-	{
-		kind:   CostItemTypeCoin,
-		value:  1,
-		weight: 40,
+var rewardParams = map[string]rewardParam{
+	CostItemTypeCoin: {
+		worthOfCoins: 1,
+		weight:       40,
 	},
-	{
-		kind:   CostItemTypeBlueKey,
-		value:  20,
-		weight: 6,
+	CostItemTypeBlueKey: {
+		worthOfCoins: 20,
+		weight:       6,
 	},
-	{
-		kind:   CostItemTypeRedKey,
-		value:  30,
-		weight: 3,
+	CostItemTypeRedKey: {
+		worthOfCoins: 30,
+		weight:       3,
 	},
-	{
-		kind:   CostItemTypeGoldenKey,
-		value:  50,
-		weight: 1,
+	CostItemTypeGoldenKey: {
+		worthOfCoins: 50,
+		weight:       1,
 	},
 }
 
-func giveWorthOfCoins(player Player, worthOfCoins int32, allowCoins bool) Player {
+var eduQuestionRewardTypes = []string{
+	CostItemTypeBlueKey,
+	CostItemTypeRedKey,
+	CostItemTypeGoldenKey,
+}
+
+var pooledQuestionRewardTypes = []string{
+	CostItemTypeCoin,
+	CostItemTypeBlueKey,
+	CostItemTypeRedKey,
+	CostItemTypeGoldenKey,
+}
+
+func giveRandomWorthOfCoins(player Player, worthOfCoins int32, rewardTypes []string) Player {
+	type rkp struct {
+		kind string
+		rewardParam
+	}
+
 	remaining := worthOfCoins
 
 	for remaining > 0 {
 		// filter rewards that can still fit in remaining
-		var validRewards []rewardType
-		for _, r := range rewardTypes {
-			if r.value <= remaining {
-				validRewards = append(validRewards, r)
+		var validRewards []rkp
+		for _, t := range rewardTypes {
+			p, ok := rewardParams[t]
+			if ok && p.worthOfCoins <= remaining {
+				validRewards = append(validRewards, rkp{
+					kind:        t,
+					rewardParam: p,
+				})
 			}
 		}
 
@@ -81,9 +97,9 @@ func giveWorthOfCoins(player Player, worthOfCoins int32, allowCoins bool) Player
 		}
 
 		// special case
-		if len(validRewards) == 1 && validRewards[0].value == 1 && validRewards[0].kind == CostItemTypeCoin {
-			if allowCoins {
-				player.Coins += remaining
+		if len(validRewards) == 1 && validRewards[0].worthOfCoins == 1 {
+			if field := getItemField(&player, validRewards[0].kind); field != nil {
+				*field += remaining
 			}
 			break
 		}
@@ -95,7 +111,7 @@ func giveWorthOfCoins(player Player, worthOfCoins int32, allowCoins bool) Player
 		}
 
 		choice := rand.Intn(totalWeight)
-		var pick rewardType
+		var pick rkp
 		for _, r := range validRewards {
 			if choice < r.weight {
 				pick = r
@@ -104,19 +120,10 @@ func giveWorthOfCoins(player Player, worthOfCoins int32, allowCoins bool) Player
 			choice -= r.weight
 		}
 
-		switch pick.kind {
-		case CostItemTypeCoin:
-			if allowCoins {
-				player.Coins++
-			}
-		case CostItemTypeBlueKey:
-			player.BlueKeys++
-		case CostItemTypeRedKey:
-			player.RedKeys++
-		case CostItemTypeGoldenKey:
-			player.GoldenKeys++
+		if field := getItemField(&player, pick.kind); field != nil {
+			*field++
 		}
-		remaining -= pick.value
+		remaining -= pick.worthOfCoins
 	}
 
 	return player
@@ -133,36 +140,48 @@ func GiveRewardOfSource(player Player, rewardSource string) (Player, bool) {
 func GiveRewardOfPool(player Player, poolId string) (Player, bool) {
 	switch poolId {
 	case PoolEasy:
-		return giveWorthOfCoins(player, 20, true), true
+		return giveRandomWorthOfCoins(player, 20, pooledQuestionRewardTypes), true
 	case PoolMedium:
-		return giveWorthOfCoins(player, 40, true), true
+		return giveRandomWorthOfCoins(player, 40, pooledQuestionRewardTypes), true
 	case PoolHard:
-		return giveWorthOfCoins(player, 80, true), true
+		return giveRandomWorthOfCoins(player, 80, pooledQuestionRewardTypes), true
 	}
 	return player, false
 }
 
-func giveRewardOfTreasure(player Player, treasure UserTreasure) (Player, Cost) {
+const (
+	roughValueOfMasterKey    = 80
+	chanceOfGettingMasterKey = 0.3
+)
+
+func getRewardOfTreasure(treasure UserTreasure) Cost {
 	worthOfCoins := int32(0)
 	for _, item := range treasure.Cost.Items {
-		idx := slices.IndexFunc(rewardTypes, func(r rewardType) bool {
-			return r.kind == item.Type
-		})
-		if idx < 0 {
-			continue
-		}
-		worthOfCoins += item.Amount * rewardTypes[idx].value
+		worthOfCoins += item.Amount * rewardParams[item.Type].worthOfCoins
 	}
-	player.Coins += worthOfCoins
-	reward := Cost{
-		Items: []CostItem{
-			{
+
+	reward := Cost{}
+	if worthOfCoins >= roughValueOfMasterKey && rand.Float64() < chanceOfGettingMasterKey {
+		reward.Items = append(reward.Items,
+			CostItem{
+				Type:   CostItemTypeCoin,
+				Amount: worthOfCoins - roughValueOfMasterKey,
+			},
+			CostItem{
+				Type:   CostItemTypeMasterKey,
+				Amount: 1,
+			},
+		)
+	} else {
+		reward.Items = append(reward.Items,
+			CostItem{
 				Type:   CostItemTypeCoin,
 				Amount: worthOfCoins,
 			},
-		},
+		)
 	}
-	return player, reward
+
+	return reward
 }
 
 func utc(blue, red, golden int32) Cost {
@@ -198,7 +217,15 @@ func GenerateUserTreasure(userId int32, treasureId string) UserTreasure {
 		TreasureID: treasureId,
 		Unlocked:   len(cost.Items) == 0,
 		Cost:       cost,
-		Reward:     reward,
-		UpdatedAt:  time.Now().UTC(),
+		AltCost: Cost{
+			Items: []CostItem{
+				{
+					Type:   CostItemTypeMasterKey,
+					Amount: 1,
+				},
+			},
+		},
+		Reward:    reward,
+		UpdatedAt: time.Now().UTC(),
 	}
 }

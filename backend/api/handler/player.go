@@ -237,6 +237,7 @@ func (h *Handler) UnlockTreasureCheck(w http.ResponseWriter, r *http.Request) {
 
 type unlockTreasureRequest struct {
 	TreasureID string `json:"treasureID"`
+	ChosenCost string `json:"chosenCost"`
 }
 
 func (h *Handler) UnlockTreasure(w http.ResponseWriter, r *http.Request) {
@@ -252,7 +253,7 @@ func (h *Handler) UnlockTreasure(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	result, err := h.playerService.UnlockTreasure(r.Context(), user.ID, req.TreasureID)
+	result, err := h.playerService.UnlockTreasure(r.Context(), user.ID, req.TreasureID, req.ChosenCost)
 	if err != nil {
 		handleError(w, err)
 		return

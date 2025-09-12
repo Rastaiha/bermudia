@@ -71,6 +71,7 @@ var tradableItems = []string{
 	CostItemTypeBlueKey,
 	CostItemTypeRedKey,
 	CostItemTypeGoldenKey,
+	CostItemTypeMasterKey,
 }
 
 type MakeOfferCheckResult struct {

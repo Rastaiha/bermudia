@@ -25,6 +25,7 @@ CREATE TABLE IF NOT EXISTS user_treasures (
     treasure_id VARCHAR(255) NOT NULL,
     unlocked BOOLEAN NOT NULL,
     cost TEXT NOT NULL,
+    alt_cost TEXT NOT NULL,
     reward TEXT NOT NULL,
     updated_at TIMESTAMP NOT NULL,
     PRIMARY KEY (user_id, treasure_id)
@@ -78,18 +79,22 @@ func (s sqlTreasureRepository) BindTreasuresToBook(ctx context.Context, bookId s
 }
 
 func (s sqlTreasureRepository) userTreasureColumnsToSelect() string {
-	return `user_id, treasure_id, unlocked, cost, reward, updated_at`
+	return `user_id, treasure_id, unlocked, cost, alt_cost, reward, updated_at`
 }
 
 func (s sqlTreasureRepository) scanUserTreasure(row scannable, userTreasure *domain.UserTreasure) error {
 	var cost []byte
+	var altCost []byte
 	var reward []byte
-	err := row.Scan(&userTreasure.UserId, &userTreasure.TreasureID, &userTreasure.Unlocked, &cost, &reward, &userTreasure.UpdatedAt)
+	err := row.Scan(&userTreasure.UserId, &userTreasure.TreasureID, &userTreasure.Unlocked, &cost, &altCost, &reward, &userTreasure.UpdatedAt)
 	if err != nil {
 		return err
 	}
 	if err := json.Unmarshal(cost, &userTreasure.Cost); err != nil {
 		return fmt.Errorf("failed to unmarshal cost: %w", err)
+	}
+	if err := json.Unmarshal(altCost, &userTreasure.AltCost); err != nil {
+		return fmt.Errorf("failed to unmarshal altCost: %w", err)
 	}
 	if err := json.Unmarshal(reward, &userTreasure.Reward); err != nil {
 		return fmt.Errorf("failed to unmarshal reward: %w", err)
@@ -106,17 +111,21 @@ func (s sqlTreasureRepository) GetOrCreateUserTreasure(ctx context.Context, user
 	if err != nil {
 		return domain.UserTreasure{}, fmt.Errorf("failed to marshal cost: %w", err)
 	}
+	altCost, err := json.Marshal(generated.AltCost)
+	if err != nil {
+		return domain.UserTreasure{}, fmt.Errorf("failed to marshal altCost: %w", err)
+	}
 	reward, err := json.Marshal(generated.Reward)
 	if err != nil {
 		return domain.UserTreasure{}, fmt.Errorf("failed to marshal reward: %w", err)
 	}
 
 	err = s.scanUserTreasure(s.db.QueryRowContext(ctx,
-		`INSERT INTO user_treasures (user_id, treasure_id, unlocked, cost, reward, updated_at) 
-		 VALUES ($1, $2, $3, $4, $5, $6)
+		`INSERT INTO user_treasures (user_id, treasure_id, unlocked, cost, alt_cost, reward, updated_at) 
+		 VALUES ($1, $2, $3, $4, $5, $6, $7)
 		 ON CONFLICT (user_id, treasure_id) DO UPDATE SET user_id = EXCLUDED.user_id
 		 RETURNING `+s.userTreasureColumnsToSelect(),
-		n(userId), n(treasureId), generated.Unlocked, cost, reward, now,
+		n(userId), n(treasureId), generated.Unlocked, cost, altCost, reward, now,
 	), &userTreasure)
 
 	if err != nil {
