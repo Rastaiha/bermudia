@@ -115,7 +115,7 @@
             <button
                 class="transition-transform duration-200 hover:scale-110 pointer-events-auto p-1 rounded-[5px] bg-[#fee685] text-[#5c3a21]"
                 title="معامله جدید"
-                @click="openTrade"
+                @click="createTrade"
             >
                 معامله جدید
             </button>
@@ -185,6 +185,7 @@ import { useToast } from 'vue-toastification';
 import { useNow } from '@/composables/useNow.js';
 import Trade from '@/components/features/market/Trade.vue';
 import CostlyButton from '@/components/common/CostlyButton.vue';
+import { makeTradeOfferCheck } from '../../../services/api';
 
 const props = defineProps({
     player: Object,
@@ -208,6 +209,23 @@ const otherOffersContainer = ref(null);
 const toast = useToast();
 const { now } = useNow(60000);
 const emit = defineEmits(['close']);
+
+const createTrade = async () => {
+    try {
+        const makeOfferCheck = await makeTradeOfferCheck();
+        if (makeOfferCheck.feasible) {
+            tradables.value.splice(0, tradables.value.length);
+            makeOfferCheck.tradableItems.items.array.forEach(element => {
+                tradables.value.push(element.type);
+            });
+            openTrade();
+        } else {
+            toast.error(makeOfferCheck.reason || 'مشکل در ثبت معامله');
+        }
+    } catch (err) {
+        toast.error(err.message || 'مشکل در ثبت معامله');
+    }
+};
 
 const { open: openTrade, close: closeTrade } = useModal({
     component: Trade,
@@ -321,7 +339,6 @@ onMounted(async () => {
             'others'
         );
         otherPageIsLoading.value = false;
-        tradables.value = ['coin', 'redKey', 'blueKey', 'goldenKey'];
     } catch (err) {
         toast.error(err.message || 'در حین دریافت معاملات خطایی رخ داد');
     }

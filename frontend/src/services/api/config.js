@@ -27,6 +27,7 @@ export const API_ENDPOINTS = {
     treasureUnlock: `${API_BASE_URL}/unlock_treasure`,
 
     // Market
+    makeOfferCheck: `${API_BASE_URL}/trade/make_offer_check`,
     makeOffer: `${API_BASE_URL}/trade/make_offer`,
     acceptOffer: `${API_BASE_URL}/trade/accept_offer`,
     deleteOffer: `${API_BASE_URL}/trade/delete_offer`,

@@ -162,6 +162,14 @@ export const treasureUnlock = async treasureId => {
     return handleResponse(response);
 };
 
+export const makeTradeOfferCheck = async () => {
+    const response = await fetch(API_ENDPOINTS.makeOfferCheck, {
+        method: 'POST',
+        headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
+    });
+    return handleResponse(response);
+};
+
 export const makeTradeOffer = async (offered, requested) => {
     const response = await fetch(API_ENDPOINTS.makeOffer, {
         method: 'POST',
