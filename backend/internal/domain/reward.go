@@ -162,17 +162,15 @@ func getRewardOfTreasure(treasure UserTreasure) Cost {
 
 	reward := Cost{}
 	if worthOfCoins >= roughValueOfMasterKey && rand.Float64() < chanceOfGettingMasterKey {
+		worthOfCoins -= roughValueOfMasterKey
 		reward.Items = append(reward.Items,
-			CostItem{
-				Type:   CostItemTypeCoin,
-				Amount: worthOfCoins - roughValueOfMasterKey,
-			},
 			CostItem{
 				Type:   CostItemTypeMasterKey,
 				Amount: 1,
 			},
 		)
-	} else {
+	}
+	if worthOfCoins > 0 {
 		reward.Items = append(reward.Items,
 			CostItem{
 				Type:   CostItemTypeCoin,
