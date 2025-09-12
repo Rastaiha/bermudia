@@ -2,7 +2,13 @@ import { onMounted, onUnmounted } from 'vue';
 import { getToken } from '@/services/api/index.js';
 import { API_ENDPOINTS } from '@/services/api/config.js';
 
-export function useMarketWebSocket(syncTrade, myOffers, otherOffers, username) {
+export function useMarketWebSocket(
+    mySyncTrade,
+    otherSyncTrade,
+    myOffers,
+    otherOffers,
+    username
+) {
     let socket = null;
     let reconnectTimeoutId = null;
     let reconnectAttempts = 0;
@@ -48,15 +54,17 @@ export function useMarketWebSocket(syncTrade, myOffers, otherOffers, username) {
                 console.log('Market WebSocket message received:', data);
 
                 if (data.sync) {
-                    syncTrade.value = data.sync.offset;
+                    mySyncTrade.value = data.sync.offset;
+                    otherSyncTrade.value = data.sync.offset;
                 }
                 if (data.new_offer) {
                     if (data.new_offer.offer.by == username) {
                         myOffers.value.push(data.new_offer.offer);
+                        mySyncTrade.value = data.new_offer.offer.created_at;
                     } else {
                         otherOffers.value.push(data.new_offer.offer);
+                        otherSyncTrade.value = data.new_offer.offer.created_at;
                     }
-                    syncTrade.value = data.new_offer.offer.created_at;
                 }
                 if (data.deleted_offer) {
                     if (data.deleted_offer.byMe) {

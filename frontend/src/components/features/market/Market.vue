@@ -174,7 +174,7 @@
 </template>
 
 <script setup>
-import { onMounted, ref } from 'vue';
+import { watch, ref } from 'vue';
 import { VueFinalModal, useModal } from 'vue-final-modal';
 import {
     acceptTradeOffer,
@@ -196,10 +196,11 @@ const myOffers = ref([]);
 const otherOffers = ref([]);
 const tradables = ref([]);
 const myPagesLimit = ref(12);
-const syncTrade = ref(0);
+const mySyncTrade = ref('');
 const myPageIsLoading = ref(true);
 const myPageIsLoadedAll = ref(false);
 const otherPagesLimit = ref(12);
+const otherSyncTrade = ref('');
 const otherPageIsLoading = ref(true);
 const otherPageIsLoadedAll = ref(false);
 const isOffersYours = ref(false);
@@ -228,11 +229,12 @@ function handleClose() {
 async function loadMoreMyOffers() {
     myPageIsLoading.value = true;
     const newOffers = await getTradeOffers(
-        syncTrade.value,
+        mySyncTrade.value,
         myPagesLimit.value,
         'me'
     );
     if (newOffers.length) {
+        mySyncTrade.value = newOffers[newOffers.length - 1].created_at;
         myOffers.value.push(...newOffers);
         myPageIsLoading.value = false;
     } else {
@@ -243,11 +245,12 @@ async function loadMoreMyOffers() {
 async function loadMoreOtherOffers() {
     otherPageIsLoading.value = true;
     const newOffers = await getTradeOffers(
-        syncTrade.value.VueFinalModal,
+        otherSyncTrade.value,
         otherPagesLimit.value,
         'others'
     );
     if (newOffers.length) {
+        otherSyncTrade.value = newOffers[newOffers.length - 1].created_at;
         otherOffers.value.push(...newOffers);
         otherPageIsLoading.value = false;
     } else {
@@ -305,26 +308,53 @@ const timeCommenter = time => {
     return Math.floor(diff / 60) + ' ساعت پیش';
 };
 
-onMounted(async () => {
-    try {
-        myOffers.value = await getTradeOffers(
-            syncTrade.value,
-            myPagesLimit.value,
-            'me'
-        );
-        myPageIsLoading.value = false;
-        otherOffers.value = await getTradeOffers(
-            syncTrade.value,
-            otherPagesLimit.value,
-            'others'
-        );
-        otherPageIsLoading.value = false;
-        tradables.value = ['coin', 'redKey', 'blueKey', 'goldenKey'];
-    } catch (err) {
-        toast.error(err.message || 'در حین دریافت معاملات خطایی رخ داد');
+const loadMyOffers = watch(mySyncTrade, async newVal => {
+    if (newVal.length > 0) {
+        try {
+            myOffers.value = await getTradeOffers(
+                mySyncTrade.value,
+                myPagesLimit.value,
+                'me'
+            );
+            if (myOffers.value.length)
+                mySyncTrade.value =
+                    myOffers.value[myOffers.value.l - 1].created_at;
+            myPageIsLoading.value = false;
+            tradables.value = ['coin', 'redKey', 'blueKey', 'goldenKey'];
+        } catch (err) {
+            toast.error(err.message || 'در حین دریافت معاملات خطایی رخ داد');
+        }
     }
+    loadMyOffers();
 });
-useMarketWebSocket(syncTrade, myOffers, otherOffers, props.username);
+
+const loadOtherOffers = watch(otherSyncTrade, async newVal => {
+    if (newVal.length > 0) {
+        try {
+            otherOffers.value = await getTradeOffers(
+                otherSyncTrade.value,
+                otherPagesLimit.value,
+                'others'
+            );
+            if (otherOffers.value.length)
+                otherSyncTrade.value =
+                    otherOffers.value[otherOffers.value.l - 1].created_at;
+            otherPageIsLoading.value = false;
+            tradables.value = ['coin', 'redKey', 'blueKey', 'goldenKey'];
+        } catch (err) {
+            toast.error(err.message || 'در حین دریافت معاملات خطایی رخ داد');
+        }
+    }
+    loadOtherOffers();
+});
+
+useMarketWebSocket(
+    mySyncTrade,
+    otherSyncTrade,
+    myOffers,
+    otherOffers,
+    props.username
+);
 </script>
 <style>
 ::-webkit-scrollbar {
