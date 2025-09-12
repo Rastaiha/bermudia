@@ -215,9 +215,7 @@ const createTrade = async () => {
         const makeOfferCheck = await makeTradeOfferCheck();
         if (makeOfferCheck.feasible) {
             tradables.value.splice(0, tradables.value.length);
-            makeOfferCheck.tradableItems.items.array.forEach(element => {
-                tradables.value.push(element.type);
-            });
+            tradables.value = makeOfferCheck.tradableItems;
             openTrade();
         } else {
             toast.error(makeOfferCheck.reason || 'مشکل در ثبت معامله');
