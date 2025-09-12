@@ -97,7 +97,7 @@ const itemDictionary = {
     redKey: { name: 'کلید قرمز', icon: '/images/icons/redKeys.png' },
     goldenKey: { name: 'کلید طلایی', icon: '/images/icons/goldenKeys.png' },
     fuel: { name: 'سوخت', icon: '/images/icons/fuel.png' },
-    masterKey: { name: 'شاه کلید', icon: '/images/icons/kingsKey.png' },
+    masterKey: { name: 'شاه کلید', icon: '/images/icons/masterKeys.png' },
 };
 
 const formatItemsToList = items => {
