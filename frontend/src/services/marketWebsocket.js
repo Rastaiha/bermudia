@@ -59,10 +59,10 @@ export function useMarketWebSocket(
                 }
                 if (data.new_offer) {
                     if (data.new_offer.offer.by == username) {
-                        myOffers.value.push(data.new_offer.offer);
+                        myOffers.value.unshift(data.new_offer.offer);
                         mySyncTrade.value = data.new_offer.offer.created_at;
                     } else {
-                        otherOffers.value.push(data.new_offer.offer);
+                        otherOffers.value.unshift(data.new_offer.offer);
                         otherSyncTrade.value = data.new_offer.offer.created_at;
                     }
                 }

@@ -318,7 +318,7 @@ const loadMyOffers = watch(mySyncTrade, async newVal => {
             );
             if (myOffers.value.length)
                 mySyncTrade.value =
-                    myOffers.value[myOffers.value.l - 1].created_at;
+                    myOffers.value[myOffers.value.length - 1].created_at;
             myPageIsLoading.value = false;
             tradables.value = ['coin', 'redKey', 'blueKey', 'goldenKey'];
         } catch (err) {
@@ -338,7 +338,7 @@ const loadOtherOffers = watch(otherSyncTrade, async newVal => {
             );
             if (otherOffers.value.length)
                 otherSyncTrade.value =
-                    otherOffers.value[otherOffers.value.l - 1].created_at;
+                    otherOffers.value[otherOffers.value.length - 1].created_at;
             otherPageIsLoading.value = false;
             tradables.value = ['coin', 'redKey', 'blueKey', 'goldenKey'];
         } catch (err) {
