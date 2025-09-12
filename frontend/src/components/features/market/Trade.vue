@@ -51,7 +51,7 @@
                         v-model="entry.current"
                         type="number"
                         :name="`offered_${type}`"
-                        class="w-10 border-[3px] border-[#fee685] rounded-[10px] text-center ltr"
+                        class="w-20 border-[3px] border-[#fee685] rounded-[10px] text-center ltr pr-[0.7rem]"
                     />
                 </div>
             </div>
@@ -72,7 +72,7 @@
                         v-model="entry.current"
                         type="number"
                         :name="`requested_${type}`"
-                        class="w-10 border-[3px] border-[#fee685] rounded-[10px] text-center ltr"
+                        class="w-20 border-[3px] border-[#fee685] rounded-[10px] text-center ltr pr-[0.7rem]"
                     />
                 </div>
             </div>
