@@ -1,49 +1,78 @@
 <template>
-    <div class="w-full flex justify-center items-center">
-        <transition name="popup-fade" mode="out-in">
-            <div v-if="treasureData.unlocked">
-                <InfoBox
-                    title="صندوق گنج"
-                    :info-box-style="infoBoxStyle"
-                    :loading="false"
-                    error-text="این صندوق قبلا باز شده‌است."
-                >
-                    <img src="/images/island/opened_treasure.png" />
-                </InfoBox>
+    <div class="fixed bottom-4 left-4 lg:bottom-6 lg:left-6 z-20">
+        <div
+            class="rounded-xl bg-gray-900 bg-opacity-75 p-2 lg:p-3 shadow-2xl border border-gray-700"
+        >
+            <div v-if="treasureData.unlocked" class="flex justify-center">
+                <img
+                    src="/images/island/opened_treasure.png"
+                    alt="گنج باز شده"
+                    class="h-20 w-20 lg:h-28 lg:w-28 object-contain cursor-not-allowed"
+                />
             </div>
 
-            <div
-                v-else-if="treasureFetchedInfo"
-                key="form"
-                class="w-full max-w-lg"
-            >
-                <InfoBox
-                    title="صندوق گنج"
-                    :info-box-style="infoBoxStyle"
-                    :loading="false"
-                    :button-enabled="treasureFetchedInfo.feasible"
-                    button-text="بگشا"
-                    :error-text="
-                        treasureFetchedInfo.feasible
-                            ? null
-                            : treasureFetchedInfo.reason
-                    "
-                    :cost="treasureFetchedInfo.cost"
-                    @action="unlockTreasure"
-                >
-                    <img src="/images/island/closed_treasure.png" />
-                </InfoBox>
+            <div v-else>
+                <div v-if="!treasureFetchedInfo" class="flex justify-center">
+                    <img
+                        src="/images/island/closed_treasure.png"
+                        alt="در حال بارگذاری..."
+                        class="h-20 w-20 lg:h-28 lg:w-28 object-contain opacity-60"
+                    />
+                </div>
+
+                <div v-else>
+                    <div class="flex justify-center">
+                        <img
+                            src="/images/island/closed_treasure.png"
+                            alt="گنج بسته"
+                            class="h-20 w-20 lg:h-28 lg:w-28 object-contain transition-transform duration-300 cursor-pointer hover:scale-115"
+                            @click="handleTreasureClick"
+                        />
+                    </div>
+
+                    <div
+                        v-if="
+                            treasureFetchedInfo.cost &&
+                            treasureFetchedInfo.cost.items &&
+                            treasureFetchedInfo.cost.items.length > 0
+                        "
+                        class="mt-2 border-t-2 border-gray-600 pt-2"
+                    >
+                        <div
+                            class="flex items-center justify-center gap-x-2 lg:gap-x-4 px-1 lg:px-2"
+                        >
+                            <div
+                                v-for="req in treasureFetchedInfo.cost.items"
+                                :key="req.type"
+                                class="flex flex-col items-center gap-y-1"
+                            >
+                                <img
+                                    :src="itemMap[req.type]?.icon"
+                                    :alt="itemMap[req.type]?.name"
+                                    class="h-7 w-7 lg:h-9 lg:w-9 object-contain"
+                                />
+                                <span
+                                    class="text-sm lg:text-md font-bold text-white text-shadow"
+                                    >x{{ req.amount }}</span
+                                >
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
-        </transition>
+        </div>
     </div>
 </template>
 
 <script setup>
-import { computed, onMounted, onUnmounted, ref } from 'vue';
+import { onMounted, ref } from 'vue';
 import { useModal } from 'vue-final-modal';
-import { treasureCheck, treasureUnlock } from '@/services/api/index.js';
-import emitter from '@/services/eventBus.js';
-import InfoBox from '@/components/common/InfoBox.vue';
+import { useToast } from 'vue-toastification';
+import {
+    treasureCheck,
+    treasureUnlock,
+    getPlayer,
+} from '@/services/api/index.js';
 import TreasureRewardModal from '@/components/features/island/TreasureRewardModal.vue';
 
 const props = defineProps({
@@ -52,16 +81,25 @@ const props = defineProps({
 });
 
 const emit = defineEmits(['update:modelValue']);
+const toast = useToast();
 
 const treasureFetchedInfo = ref(null);
 const receivedRewards = ref([]);
 
 const itemMap = {
+    blueKey: { name: 'کلید آبی', icon: '/images/icons/blueKeys.png' },
+    redKey: { name: 'کلید قرمز', icon: '/images/icons/redKeys.png' },
+    goldenKey: { name: 'کلید طلایی', icon: '/images/icons/goldenKeys.png' },
     coins: { name: 'سکه', icon: '/images/icons/coin.png' },
-    blueKeys: { name: 'کلید آبی', icon: '/images/icons/blueKeys.png' },
-    redKeys: { name: 'کلید قرمز', icon: '/images/icons/redKeys.png' },
-    goldenKeys: { name: 'کلید طلایی', icon: '/images/icons/goldenKeys.png' },
     books: { name: 'کتاب', icon: '/images/icons/book.png' },
+};
+
+const playerStateMap = {
+    blueKeys: 'blueKey',
+    redKeys: 'redKey',
+    goldenKeys: 'goldenKey',
+    coins: 'coins',
+    books: 'books',
 };
 
 const { open, close } = useModal({
@@ -76,52 +114,56 @@ function calculateRewards(oldPlayer, newPlayer) {
     const rewards = [];
     if (!oldPlayer || !newPlayer) return [];
 
-    for (const key in itemMap) {
-        const oldValue = Array.isArray(oldPlayer[key])
-            ? oldPlayer[key].length
-            : oldPlayer[key] || 0;
-        const newValue = Array.isArray(newPlayer[key])
-            ? newPlayer[key].length
-            : newPlayer[key] || 0;
-        if (newValue > oldValue) {
-            rewards.push({ ...itemMap[key], quantity: newValue - oldValue });
+    for (const playerKey in playerStateMap) {
+        const itemType = playerStateMap[playerKey];
+        const oldValue = Array.isArray(oldPlayer[playerKey])
+            ? oldPlayer[playerKey].length
+            : oldPlayer[playerKey] || 0;
+        const newValue = Array.isArray(newPlayer[playerKey])
+            ? newPlayer[playerKey].length
+            : newPlayer[playerKey] || 0;
+
+        if (newValue > oldValue && itemMap[itemType]) {
+            rewards.push({
+                ...itemMap[itemType],
+                quantity: newValue - oldValue,
+            });
         }
     }
     return rewards;
 }
 
-const unlockTreasure = async () => {
+const handleTreasureClick = async () => {
     try {
+        const oldPlayerState = await getPlayer();
         await treasureUnlock(props.treasureData.id);
-        emit('update:modelValue', { ...props.treasureData, unlocked: true });
-    } catch (error) {
-        console.error('Failed to unlock treasure:', error);
-    }
-};
+        const newPlayerState = await getPlayer();
 
-const onTreasureUnlocked = ({ oldPlayerState, newPlayerState }) => {
-    const rewards = calculateRewards(oldPlayerState, newPlayerState);
-    if (rewards.length > 0) {
-        receivedRewards.value = rewards;
-        open();
+        emit('update:modelValue', { ...props.treasureData, unlocked: true });
+
+        const rewards = calculateRewards(oldPlayerState, newPlayerState);
+        if (rewards.length > 0) {
+            receivedRewards.value = rewards;
+            open();
+        }
+    } catch (error) {
+        toast.error(error.message || 'شرایط لازم برای باز کردن گنج را ندارید.');
+        console.error('Failed to unlock treasure:', error);
     }
 };
 
 onMounted(() => {
     if (props.treasureData.unlocked) return;
-    treasureCheck(props.treasureData.id).then(
-        data => (treasureFetchedInfo.value = data)
-    );
-    emitter.on('treasure-unlocked', onTreasureUnlocked);
-});
-
-onUnmounted(() => {
-    emitter.off('treasure-unlocked', onTreasureUnlocked);
-});
-
-const infoBoxStyle = computed(() => {
-    return {
-        margin: 'auto',
-    };
+    treasureCheck(props.treasureData.id)
+        .then(data => (treasureFetchedInfo.value = data))
+        .catch(error => {
+            console.error('Failed to fetch treasure info:', error);
+        });
 });
 </script>
+
+<style scoped>
+.text-shadow {
+    text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.8);
+}
+</style>
