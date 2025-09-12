@@ -99,7 +99,7 @@
                     <button
                         v-if="offer.acceptable"
                         class="transition-transform duration-200 hover:scale-110 pointer-events-auto p-1 rounded-[5px] bg-[#fee685] text-[#5c3a21]"
-                        @pointerdown="acceptTrade(offer)"
+                        @pointerdown="acceptTrade(offer.id)"
                     >
                         انجام معامله
                     </button>
@@ -161,7 +161,7 @@
                         <div>{{ timeCommenter(offer.created_at) }}</div>
                         <button
                             class="transition-transform duration-200 hover:scale-110 pointer-events-auto p-1 rounded-[5px] bg-[#fee685] text-[#5c3a21]"
-                            @pointerdown="deleteTrade(offer)"
+                            @pointerdown="deleteTrade(offer.id)"
                         >
                             حذف معامله
                         </button>
@@ -174,7 +174,7 @@
 </template>
 
 <script setup>
-import { onMounted, ref } from 'vue';
+import { watch, ref } from 'vue';
 import { VueFinalModal, useModal } from 'vue-final-modal';
 import {
     acceptTradeOffer,
@@ -183,6 +183,7 @@ import {
 } from '@/services/api/index.js';
 import { useToast } from 'vue-toastification';
 import { useNow } from '@/composables/useNow.js';
+import { useMarketWebSocket } from '../../../services/marketwebsocket';
 import Trade from '@/components/features/market/Trade.vue';
 import CostlyButton from '@/components/common/CostlyButton.vue';
 
@@ -195,11 +196,11 @@ const myOffers = ref([]);
 const otherOffers = ref([]);
 const tradables = ref([]);
 const myPagesLimit = ref(12);
-const myPageNumber = ref(0);
+const mySyncTrade = ref('');
 const myPageIsLoading = ref(true);
 const myPageIsLoadedAll = ref(false);
 const otherPagesLimit = ref(12);
-const otherPageNumber = ref(0);
+const otherSyncTrade = ref('');
 const otherPageIsLoading = ref(true);
 const otherPageIsLoadedAll = ref(false);
 const isOffersYours = ref(false);
@@ -228,12 +229,12 @@ function handleClose() {
 async function loadMoreMyOffers() {
     myPageIsLoading.value = true;
     const newOffers = await getTradeOffers(
-        myPageNumber.value + 1,
+        mySyncTrade.value,
         myPagesLimit.value,
         'me'
     );
     if (newOffers.length) {
-        myPageNumber.value += 1;
+        mySyncTrade.value = newOffers[newOffers.length - 1].created_at;
         myOffers.value.push(...newOffers);
         myPageIsLoading.value = false;
     } else {
@@ -244,12 +245,12 @@ async function loadMoreMyOffers() {
 async function loadMoreOtherOffers() {
     otherPageIsLoading.value = true;
     const newOffers = await getTradeOffers(
-        otherPageNumber.value + 1,
+        otherSyncTrade.value,
         otherPagesLimit.value,
         'others'
     );
     if (newOffers.length) {
-        otherPageNumber.value += 1;
+        otherSyncTrade.value = newOffers[newOffers.length - 1].created_at;
         otherOffers.value.push(...newOffers);
         otherPageIsLoading.value = false;
     } else {
@@ -280,18 +281,18 @@ function handleOtherScroll() {
         loadMoreOtherOffers();
     }
 }
-const acceptTrade = offer => {
+const acceptTrade = async id => {
     try {
-        acceptTradeOffer(offer.id);
+        await acceptTradeOffer(id);
         toast.success('معامله جوش خورد.');
     } catch (err) {
         toast.error(err.message || 'در حین تایید معامله خطایی رخ داد');
     }
 };
 
-const deleteTrade = offer => {
+const deleteTrade = async id => {
     try {
-        deleteTradeOffer(offer.id);
+        await deleteTradeOffer(id);
         toast.success('معامله حذف شد.');
     } catch (err) {
         toast.error(err.message || 'در حین حذف معامله خطایی رخ داد');
@@ -307,25 +308,53 @@ const timeCommenter = time => {
     return Math.floor(diff / 60) + ' ساعت پیش';
 };
 
-onMounted(async () => {
-    try {
-        myOffers.value = await getTradeOffers(
-            myPageNumber.value,
-            myPagesLimit.value,
-            'me'
-        );
-        myPageIsLoading.value = false;
-        otherOffers.value = await getTradeOffers(
-            otherPageNumber.value,
-            otherPagesLimit.value,
-            'others'
-        );
-        otherPageIsLoading.value = false;
-        tradables.value = ['coin', 'redKey', 'blueKey', 'goldenKey'];
-    } catch (err) {
-        toast.error(err.message || 'در حین دریافت معاملات خطایی رخ داد');
+const loadMyOffers = watch(mySyncTrade, async newVal => {
+    if (newVal.length > 0) {
+        try {
+            myOffers.value = await getTradeOffers(
+                mySyncTrade.value,
+                myPagesLimit.value,
+                'me'
+            );
+            if (myOffers.value.length)
+                mySyncTrade.value =
+                    myOffers.value[myOffers.value.length - 1].created_at;
+            myPageIsLoading.value = false;
+            tradables.value = ['coin', 'redKey', 'blueKey', 'goldenKey'];
+        } catch (err) {
+            toast.error(err.message || 'در حین دریافت معاملات خطایی رخ داد');
+        }
     }
+    loadMyOffers();
 });
+
+const loadOtherOffers = watch(otherSyncTrade, async newVal => {
+    if (newVal.length > 0) {
+        try {
+            otherOffers.value = await getTradeOffers(
+                otherSyncTrade.value,
+                otherPagesLimit.value,
+                'others'
+            );
+            if (otherOffers.value.length)
+                otherSyncTrade.value =
+                    otherOffers.value[otherOffers.value.length - 1].created_at;
+            otherPageIsLoading.value = false;
+            tradables.value = ['coin', 'redKey', 'blueKey', 'goldenKey'];
+        } catch (err) {
+            toast.error(err.message || 'در حین دریافت معاملات خطایی رخ داد');
+        }
+    }
+    loadOtherOffers();
+});
+
+useMarketWebSocket(
+    mySyncTrade,
+    otherSyncTrade,
+    myOffers,
+    otherOffers,
+    props.username
+);
 </script>
 <style>
 ::-webkit-scrollbar {
