@@ -60,6 +60,7 @@ import {
     getTerritory,
 } from '@/services/api/index.js';
 import { usePlayerWebSocket } from '@/services/websocket.js';
+import inboxWebsocket from '@/services/inboxWebsocket.js';
 import eventBus from '@/services/eventBus.js';
 
 import MapView from '@/components/features/map/MapView.vue';
@@ -68,6 +69,7 @@ import PlayerInfo from '@/components/layout/PlayerInfo.vue';
 import LoadingBar from '@/components/common/LoadingBar.vue';
 import Toolbar from '@/components/layout/Toolbar.vue';
 import StarryNight from '@/components/common/StarryNight.vue';
+
 const route = useRoute();
 const router = useRouter();
 const mapViewComponentRef = ref(null);
@@ -241,11 +243,16 @@ onMounted(() => {
     eventBus.emit('set-audio-state', 'play');
     loadPageData(route.params.id);
     document.addEventListener('pointerdown', handleClickOutside);
+    const token = getToken();
+    if (token) {
+        inboxWebsocket.connect(token);
+    }
 });
 
 onUnmounted(() => {
     eventBus.emit('set-audio-state', 'stop');
     document.removeEventListener('pointerdown', handleClickOutside);
+    inboxWebsocket.disconnect();
 });
 
 watch(

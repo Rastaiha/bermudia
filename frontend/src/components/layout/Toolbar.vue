@@ -73,6 +73,7 @@ import { logout as apiLogout } from '@/services/api/index.js';
 import Backpack from '@/components/features/player/Backpack.vue';
 import Bookshelf from '@/components/features/player/Bookshelf.vue';
 import Market from '@/components/features/market/Market.vue';
+import Inbox from '@/components/features/player/Inbox.vue';
 import ConfirmModal from '@/components/common/ConfirmModal.vue';
 import MuteButton from '@/components/common/MuteButton.vue';
 
@@ -106,6 +107,15 @@ const { open: openLogoutModal, close: closeLogoutModal } = useModal({
     },
     slots: {
         content: '<p>آیا برای خروج از حساب کاربری خود اطمینان دارید؟</p>',
+    },
+});
+
+const { open: openInbox, close: closeInbox } = useModal({
+    component: Inbox,
+    attrs: {
+        onClose() {
+            closeInbox();
+        },
     },
 });
 
@@ -158,6 +168,12 @@ function getKeyDisplayName(key) {
 }
 
 const menuItems = [
+    {
+        id: 'inbox',
+        icon: '/images/icons/inbox.png',
+        alt: 'صندوق پیام',
+        action: openInbox,
+    },
     {
         id: 'backpack',
         icon: '/images/icons/backpack.png',

@@ -207,3 +207,14 @@ export const getTradeOffers = async (offset = 0, limit = 5, by = null) => {
     );
     return handleResponse(response);
 };
+
+export const getInboxMessages = async (offset = null, limit = 15) => {
+    const response = await fetch(
+        API_ENDPOINTS.getInboxMessages(offset, limit),
+        {
+            method: 'GET',
+            headers: getAuthHeaders(),
+        }
+    );
+    return handleResponse(response);
+};
