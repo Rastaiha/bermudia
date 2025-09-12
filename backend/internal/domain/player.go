@@ -30,10 +30,11 @@ type Player struct {
 	Anchored           bool      `json:"anchored"`
 	Fuel               int32     `json:"fuel"`
 	FuelCap            int32     `json:"fuelCap"`
-	Coins              int32     `json:"coins"`
-	BlueKeys           int32     `json:"blueKeys"`
-	RedKeys            int32     `json:"redKeys"`
-	GoldenKeys         int32     `json:"goldenKeys"`
+	Coin               int32     `json:"coin"`
+	BlueKey            int32     `json:"blueKey"`
+	RedKey             int32     `json:"redKey"`
+	GoldenKey          int32     `json:"goldenKey"`
+	MasterKey          int32     `json:"masterKey"`
 	VisitedTerritories []string  `json:"-"`
 	UpdatedAt          time.Time `json:"-"`
 }
@@ -78,10 +79,11 @@ func NewPlayer(userId int32, startingTerritory *Territory) Player {
 		Anchored:           true,
 		Fuel:               initialFuelAmount,
 		FuelCap:            fuelTankCapacity,
-		Coins:              initialCoinsAmount,
-		RedKeys:            initialKeyCount,
-		BlueKeys:           initialKeyCount,
-		GoldenKeys:         initialKeyCount,
+		Coin:               initialCoinsAmount,
+		RedKey:             initialKeyCount,
+		BlueKey:            initialKeyCount,
+		GoldenKey:          initialKeyCount,
+		MasterKey:          initialKeyCount,
 		VisitedTerritories: []string{startingTerritory.ID},
 	}
 }
@@ -162,7 +164,7 @@ func RefuelCheck(player Player, territory *Territory) (result RefuelCheckResult)
 	fuelCapBound := player.FuelCap - player.Fuel
 	coinBound := int32(math.MaxInt32)
 	if result.CoinCostPerUnit > 0 {
-		coinBound = player.Coins / result.CoinCostPerUnit
+		coinBound = player.Coin / result.CoinCostPerUnit
 	}
 	if coinBound < fuelCapBound {
 		result.MaxAvailableAmount = coinBound
@@ -189,7 +191,7 @@ func Refuel(player Player, territory *Territory, amount int32) (*PlayerUpdateEve
 		}
 	}
 	player.Fuel += amount
-	player.Coins -= amount * check.CoinCostPerUnit
+	player.Coin -= amount * check.CoinCostPerUnit
 	return &PlayerUpdateEvent{
 		Reason: PlayerUpdateEventRefuel,
 		Player: &player,

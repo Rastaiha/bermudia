@@ -10,6 +10,18 @@ const (
 	CostItemTypeBlueKey   = "blueKey"
 	CostItemTypeRedKey    = "redKey"
 	CostItemTypeGoldenKey = "goldenKey"
+	CostItemTypeMasterKey = "masterKey"
+)
+
+var (
+	allCostItemTypes = []string{
+		CostItemTypeFuel,
+		CostItemTypeCoin,
+		CostItemTypeBlueKey,
+		CostItemTypeRedKey,
+		CostItemTypeGoldenKey,
+		CostItemTypeMasterKey,
+	}
 )
 
 type CostItem struct {
@@ -27,13 +39,15 @@ func getItemField(player *Player, itemType string) *int32 {
 	case CostItemTypeFuel:
 		return &player.Fuel
 	case CostItemTypeCoin:
-		return &player.Coins
+		return &player.Coin
 	case CostItemTypeBlueKey:
-		return &player.BlueKeys
+		return &player.BlueKey
 	case CostItemTypeRedKey:
-		return &player.RedKeys
+		return &player.RedKey
 	case CostItemTypeGoldenKey:
-		return &player.GoldenKeys
+		return &player.GoldenKey
+	case CostItemTypeMasterKey:
+		return &player.MasterKey
 	default:
 		return nil
 	}
@@ -65,13 +79,7 @@ func addCost(player Player, cost Cost) Player {
 
 func Diff(old, updated Player) Cost {
 	result := Cost{}
-	for _, item := range []string{
-		CostItemTypeFuel,
-		CostItemTypeCoin,
-		CostItemTypeBlueKey,
-		CostItemTypeRedKey,
-		CostItemTypeGoldenKey,
-	} {
+	for _, item := range allCostItemTypes {
 		o := getItemField(&old, item)
 		u := getItemField(&updated, item)
 		if o != nil && u != nil && *o != *u {

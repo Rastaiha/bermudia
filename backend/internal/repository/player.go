@@ -17,10 +17,11 @@ CREATE TABLE IF NOT EXISTS players (
     anchored BOOLEAN NOT NULL,
 	fuel INT4 NOT NULL,
     fuel_cap INT4 NOT NULL,
-    coins INT4 NOT NULL,
-    red_keys INT4 NOT NULL,
-    blue_keys INT4 NOT NULL,
-    golden_keys INT4 NOT NULL,
+    coin INT4 NOT NULL,
+    red_key INT4 NOT NULL,
+    blue_key INT4 NOT NULL,
+    golden_key INT4 NOT NULL,
+    master_key INT4 NOT NULL,
     visited_territories TEXT NOT NULL,
     updated_at TIMESTAMP NOT NULL
 );
@@ -44,8 +45,8 @@ func (s sqlPlayerRepository) Create(ctx context.Context, player domain.Player) e
 		return fmt.Errorf("failed to marshal visited territories: %w", err)
 	}
 	_, err = s.db.ExecContext(ctx,
-		`INSERT INTO players (user_id, at_territory, at_island, anchored, fuel, fuel_cap, coins, red_keys, blue_keys, golden_keys, visited_territories, updated_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`,
-		n(player.UserId), n(player.AtTerritory), n(player.AtIsland), player.Anchored, n(player.Fuel), n(player.FuelCap), player.Coins, player.RedKeys, player.BlueKeys, player.GoldenKeys, visitedTerritories, time.Now().UTC(),
+		`INSERT INTO players (user_id, at_territory, at_island, anchored, fuel, fuel_cap, coin, red_key, blue_key, golden_key, master_key, visited_territories, updated_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)`,
+		n(player.UserId), n(player.AtTerritory), n(player.AtIsland), player.Anchored, n(player.Fuel), n(player.FuelCap), player.Coin, player.RedKey, player.BlueKey, player.GoldenKey, player.MasterKey, visitedTerritories, time.Now().UTC(),
 	)
 	return err
 }
@@ -54,9 +55,9 @@ func (s sqlPlayerRepository) Get(ctx context.Context, userId int32) (domain.Play
 	var visitedTerritories []byte
 	var p domain.Player
 	err := s.db.QueryRowContext(ctx,
-		`SELECT user_id, at_territory, at_island, anchored, fuel, fuel_cap, coins, red_keys, blue_keys, golden_keys, visited_territories, updated_at FROM players WHERE user_id = $1`,
+		`SELECT user_id, at_territory, at_island, anchored, fuel, fuel_cap, coin, red_key, blue_key, golden_key, master_key, visited_territories, updated_at FROM players WHERE user_id = $1`,
 		userId,
-	).Scan(&p.UserId, &p.AtTerritory, &p.AtIsland, &p.Anchored, &p.Fuel, &p.FuelCap, &p.Coins, &p.RedKeys, &p.BlueKeys, &p.GoldenKeys, &visitedTerritories, &p.UpdatedAt)
+	).Scan(&p.UserId, &p.AtTerritory, &p.AtIsland, &p.Anchored, &p.Fuel, &p.FuelCap, &p.Coin, &p.RedKey, &p.BlueKey, &p.GoldenKey, &p.MasterKey, &visitedTerritories, &p.UpdatedAt)
 
 	if err != nil {
 		return domain.Player{}, fmt.Errorf("failed to get player from db: %w", err)
@@ -80,9 +81,9 @@ func (s sqlPlayerRepository) Update(ctx context.Context, tx domain.Tx, old, upda
 	updated.UpdatedAt = time.Now().UTC()
 	cmd, err := tx.ExecContext(ctx,
 		`UPDATE players
-		 SET at_territory = $1, at_island = $2, anchored = $3, fuel = $4, fuel_cap = $5, coins = $6, red_keys = $7, blue_keys = $8, golden_keys = $9, visited_territories = $10, updated_at = $11
-		 WHERE user_id = $12 AND updated_at = $13`,
-		n(updated.AtTerritory), n(updated.AtIsland), updated.Anchored, updated.Fuel, n(updated.FuelCap), updated.Coins, updated.RedKeys, updated.BlueKeys, updated.GoldenKeys, visitedTerritories, updated.UpdatedAt,
+		 SET at_territory = $1, at_island = $2, anchored = $3, fuel = $4, fuel_cap = $5, coin = $6, red_key = $7, blue_key = $8, golden_key = $9, master_key = $10, visited_territories = $11, updated_at = $12
+		 WHERE user_id = $13 AND updated_at = $14`,
+		n(updated.AtTerritory), n(updated.AtIsland), updated.Anchored, updated.Fuel, n(updated.FuelCap), updated.Coin, updated.RedKey, updated.BlueKey, updated.GoldenKey, updated.MasterKey, visitedTerritories, updated.UpdatedAt,
 		old.UserId, old.UpdatedAt,
 	)
 	if err != nil {

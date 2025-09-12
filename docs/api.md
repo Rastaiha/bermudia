@@ -386,7 +386,7 @@ curl --request POST \
 
 _This endpoint **is authenticated** and needs an auth token for access._
 
-Creates a new trade offer in the marketplace. The offered items are immediately deducted from the player's inventory and will be returned if the offer is deleted or accepted.
+Creates a new trade offer in the marketplace. The offered items are immediately deducted from the player's inventory and will be returned if the offer is deleted.
 
 Receives a [MakeOfferRequest](#makeofferrequest) in body.
 
@@ -469,7 +469,7 @@ It contains an _offset_ that should be used to call [Get Trade Offers](#get-trad
 
 _This endpoint **is authenticated** and needs an auth token for access._
 
-Retrieves a paginated list of active trade offers from the marketplace, showing which offers the current player can accept.
+Retrieves a paginated list of active trade offers from the marketplace.
 
 **Parameters**:
 
@@ -597,9 +597,10 @@ curl --request GET \
 
 ### UnlockTreasureRequest
 
-| Field      | Type   | Description                 |
-|------------|--------|-----------------------------|
-| treasureID | string | The ID of the treasure      |
+| Field      | Type    | Description                                                                                                                                                        |
+|------------|---------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| treasureID | string  | The ID of the treasure                                                                                                                                             |
+| chosenCost | string? | The chosen option of unlocking the treasure. If missing or is equal to an empty string, the normal cost is chosen. If set to `alt`, the alternative cost is chosen |
 
 
 ### MakeOfferRequest
@@ -641,10 +642,11 @@ curl --request GET \
 | anchored      | boolean                         | `true` if player has anchored at _atIsland_, `false` otherwise |
 | fuel          | string                          | Current fuel level of player's vehicle                         |
 | fuelCap       | int                             | Current fuel capacity of player's vehicle                      |
-| coins         | int                             | Current number of coins of player                              |
-| blueKeys      | int                             | Current number of blue keys of player                          |
-| redKeys       | int                             | Current number of red keys of player                           |
-| goldenKeys    | int                             | Current number of golden keys of player                        |
+| coin          | int                             | Current number of coins of player                              |
+| blueKey       | int                             | Current number of blue keys of player                          |
+| redKey        | int                             | Current number of red keys of player                           |
+| goldenKey     | int                             | Current number of golden keys of player                        |
+| masterKey     | int                             | Current number of master keys of player                        |
 | knowledgeBars | [KnowledgeBar](#knowledgebar)[] | Current state of player's knowledge in each territory          |
 | books         | [Book](#book)[]                 | Player's books, sorted in the order they were achieved         |
 
@@ -785,10 +787,10 @@ curl --request GET \
 
 ### CostItem
 
-| Field  | Type   | Description                                                                      |
-|--------|--------|----------------------------------------------------------------------------------|
-| type   | string | Type of the needed item. One of `fuel`, `coin`, `blueKey`, `redKey`, `goldenKey` |
-| amount | int    | The number of items needed of this type                                          |
+| Field  | Type   | Description                                                                                   |
+|--------|--------|-----------------------------------------------------------------------------------------------|
+| type   | string | Type of the needed item. One of `fuel`, `coin`, `blueKey`, `redKey`, `goldenKey`, `masterKey` |
+| amount | int    | The number of items needed of this type                                                       |
 
 
 ### TravelCheckResult
@@ -820,11 +822,14 @@ curl --request GET \
 
 ### UnlockTreasureCheckResult
 
-| Field    | Type          | Description                                                   |
-|----------|---------------|---------------------------------------------------------------|
-| feasible | boolean       | True if the treasure can be unlocked, false otherwise         |
-| cost     | [Cost](#cost) | An object representing the needed items for unlocking         |
-| reason   | string?       | If _feasible_ is false, this field is present and reports why |
+| Field         | Type          | Description                                                            |
+|---------------|---------------|------------------------------------------------------------------------|
+| feasible      | boolean       | True if the treasure can be unlocked, false otherwise                  |
+| cost          | [Cost](#cost) | Cost of unlocking this treasure normally                               |
+| canPayCost    | boolean       | True if player affords the normal cost of unlocking this treasure      |
+| altCost       | [Cost](#cost) | Alternative cost of unlocking this treasure                            |
+| canPayAltCost | boolean       | True if player affords the alternative cost of unlocking this treasure |
+| reason        | string?       | If _feasible_ is false, this field is present and reports why          |
 
 
 ### MigrateCheckResult

@@ -438,7 +438,7 @@ func (p *Player) UnlockTreasureCheck(ctx context.Context, userId int32, treasure
 	return &check, nil
 }
 
-func (p *Player) UnlockTreasure(ctx context.Context, userId int32, treasureId string) (*domain.IslandTreasure, error) {
+func (p *Player) UnlockTreasure(ctx context.Context, userId int32, treasureId string, chosenCost string) (*domain.IslandTreasure, error) {
 	player, err := p.playerStore.Get(ctx, userId)
 	if err != nil {
 		return nil, err
@@ -458,7 +458,7 @@ func (p *Player) UnlockTreasure(ctx context.Context, userId int32, treasureId st
 	if err != nil {
 		return nil, err
 	}
-	event, updatedUserTreasure, err := domain.UnlockTreasure(player, treasure, userTreasure, bookId)
+	event, updatedUserTreasure, err := domain.UnlockTreasure(player, treasure, userTreasure, bookId, chosenCost)
 	if err != nil {
 		return nil, err
 	}
