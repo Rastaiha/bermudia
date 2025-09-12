@@ -42,7 +42,7 @@
                 "
                 @pointerdown="isOffersYours = false"
             >
-                معاملات درخواستی
+                درخواست‌های دیگران
             </button>
             <button
                 class="p-1 rounded-[5px]"
@@ -53,7 +53,7 @@
                 "
                 @pointerdown="isOffersYours = true"
             >
-                معاملات شما
+                درخواست‌های شما
             </button>
         </div>
 
@@ -301,7 +301,7 @@ const deleteTrade = offer => {
 const timeCommenter = time => {
     let diff = now.value - time;
     diff /= 1000;
-    if (diff < 60) return 'ثانیه‌هایی پیش';
+    if (diff < 60) return 'لحظاتی پیش';
     diff = Math.floor(diff / 60);
     if (diff < 60) return diff + ' دقیقه پیش';
     return Math.floor(diff / 60) + ' ساعت پیش';

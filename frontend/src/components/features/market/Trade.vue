@@ -51,7 +51,7 @@
                         v-model="offered[tradable]"
                         type="number"
                         :name="`offered_${tradable}`"
-                        class="w-10 border-[3px] border-[#fee685] rounded-[10px] text-center ltr"
+                        class="w-20 border-[3px] border-[#fee685] rounded-[10px] text-center ltr pr-[0.7rem]"
                     />
                 </div>
             </div>
@@ -72,7 +72,7 @@
                         v-model="requested[tradable]"
                         type="number"
                         :name="`requested_${tradable}`"
-                        class="w-10 border-[3px] border-[#fee685] rounded-[10px] text-center ltr"
+                        class="w-20 border-[3px] border-[#fee685] rounded-[10px] text-center ltr pr-[0.7rem]"
                     />
                 </div>
             </div>
