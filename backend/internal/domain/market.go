@@ -20,7 +20,7 @@ var (
 type TradeOfferView struct {
 	ID         string `json:"id"`
 	By         string `json:"by"`
-	ByMe       bool   `json:"byBe"`
+	ByMe       bool   `json:"byMe"`
 	Offered    Cost   `json:"offered"`
 	Requested  Cost   `json:"requested"`
 	CreatedAt  string `json:"created_at"`
