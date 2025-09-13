@@ -70,7 +70,7 @@
                 <div
                     v-for="(offer, index) in otherOffers"
                     :key="index"
-                    class="relative w-64 h-32 flex flex-col justify-between items-center p-2 bg-gradient-to-b from-yellow-600 via-yellow-700 to-yellow-800 border-l-2 border-yellow-900 rounded-sm shadow-md"
+                    class="relative w-64 h-48 flex flex-col justify-between items-center p-2 bg-gradient-to-b from-yellow-600 via-yellow-700 to-yellow-800 border-l-2 border-yellow-900 rounded-sm shadow-md"
                 >
                     <div
                         class="flex flex-row justify-between items-center w-full"
@@ -131,7 +131,7 @@
                     <div
                         v-for="(offer, index) in myOffers"
                         :key="index"
-                        class="relative w-64 h-32 flex flex-col justify-between items-center p-2 bg-gradient-to-b from-yellow-600 via-yellow-700 to-yellow-800 border-l-2 border-yellow-900 rounded-sm shadow-md"
+                        class="relative w-64 h-48 flex flex-col justify-between items-center p-2 bg-gradient-to-b from-yellow-600 via-yellow-700 to-yellow-800 border-l-2 border-yellow-900 rounded-sm shadow-md"
                     >
                         <div
                             class="flex flex-row justify-between items-center w-full"
@@ -194,7 +194,7 @@ const props = defineProps({
 
 const myOffers = ref([]);
 const otherOffers = ref([]);
-const tradables = ref([]);
+const tradables = ref({});
 const myPagesLimit = ref(12);
 const mySyncTrade = ref('');
 const myPageIsLoading = ref(true);
@@ -214,7 +214,6 @@ const createTrade = async () => {
     try {
         const makeOfferCheck = await makeTradeOfferCheck();
         if (makeOfferCheck.feasible) {
-            tradables.value.splice(0, tradables.value.length);
             tradables.value = makeOfferCheck.tradableItems;
             openTrade();
         } else {
