@@ -70,6 +70,7 @@ import {
     ChevronDownIcon,
 } from '@heroicons/vue/24/outline';
 import { formatDistanceToNow } from 'date-fns-jalali';
+import { COST_ITEMS_INFO } from '@/services/cost.js';
 
 const props = defineProps({
     message: {
@@ -91,20 +92,11 @@ const formattedDate = computed(() => {
     });
 });
 
-const itemDictionary = {
-    coin: { name: 'سکه', icon: '/images/icons/coin.png' },
-    blueKey: { name: 'کلید آبی', icon: '/images/icons/blueKeys.png' },
-    redKey: { name: 'کلید قرمز', icon: '/images/icons/redKeys.png' },
-    goldenKey: { name: 'کلید طلایی', icon: '/images/icons/goldenKeys.png' },
-    fuel: { name: 'سوخت', icon: '/images/icons/fuel.png' },
-    masterKey: { name: 'شاه کلید', icon: '/images/icons/masterKeys.png' },
-};
-
 const formatItemsToList = items => {
     if (!items || items.length === 0) return '';
     const listItems = items
         .map(item => {
-            const details = itemDictionary[item.type] || {
+            const details = COST_ITEMS_INFO[item.type] || {
                 name: item.type,
                 icon: '',
             };
@@ -118,14 +110,14 @@ const formatItemsToGrid = items => {
     if (!items || items.length === 0) return '<div>-</div>';
     return items
         .map(item => {
-            const details = itemDictionary[item.type] || {
+            const details = COST_ITEMS_INFO[item.type] || {
                 name: item.type,
                 icon: '',
             };
             return `<div class="flex items-center gap-2" title="${details.name}">
-                  <img src="${details.icon}" class="w-6 h-6" />
-                  <span class="font-semibold text-base text-gray-200">${item.amount}</span>
-                </div>`;
+                      <img src="${details.icon}" class="w-6 h-6" />
+                      <span class="font-semibold text-base text-gray-200">${item.amount}</span>
+                    </div>`;
         })
         .join('');
 };
