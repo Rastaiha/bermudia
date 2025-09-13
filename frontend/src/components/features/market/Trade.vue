@@ -43,7 +43,7 @@
                     class="flex flex-row-reverse"
                 >
                     <img
-                        :src="getIconByType(type)"
+                        :src="COST_ITEMS_INFO[type].icon"
                         :alt="type + ' Icon'"
                         class="w-5 h-5"
                     />
@@ -64,7 +64,7 @@
                     class="flex flex-row-reverse"
                 >
                     <img
-                        :src="getIconByType(type)"
+                        :src="COST_ITEMS_INFO[type].icon"
                         :alt="type + ' Icon'"
                         class="w-5 h-5"
                     />
@@ -92,6 +92,7 @@ import { onMounted, ref, watch } from 'vue';
 import { VueFinalModal } from 'vue-final-modal';
 import { useToast } from 'vue-toastification';
 import { makeTradeOffer } from '@/services/api/index.js';
+import { COST_ITEMS_INFO } from '../../../services/cost';
 
 const props = defineProps({
     player: Object,
@@ -107,18 +108,6 @@ const emit = defineEmits(['close']);
 function handleClose() {
     emit('close');
 }
-
-const getIconByType = type => {
-    switch (type) {
-        case 'blueKey':
-            return '/images/icons/blueKeys.png';
-        case 'goldenKey':
-            return '/images/icons/goldenKeys.png';
-        case 'redKey':
-            return '/images/icons/redKeys.png';
-    }
-    return '/images/icons/' + type + '.png';
-};
 
 function buildPayload(offered, requested) {
     const toItems = obj =>
