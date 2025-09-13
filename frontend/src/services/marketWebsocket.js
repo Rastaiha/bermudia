@@ -6,8 +6,7 @@ export function useMarketWebSocket(
     mySyncTrade,
     otherSyncTrade,
     myOffers,
-    otherOffers,
-    username
+    otherOffers
 ) {
     let socket = null;
     let reconnectTimeoutId = null;
@@ -58,7 +57,7 @@ export function useMarketWebSocket(
                     otherSyncTrade.value = data.sync.offset;
                 }
                 if (data.new_offer) {
-                    if (data.new_offer.offer.by == username) {
+                    if (data.new_offer.offer.byMe) {
                         myOffers.value.unshift(data.new_offer.offer);
                         mySyncTrade.value = data.new_offer.offer.created_at;
                     } else {
