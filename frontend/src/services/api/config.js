@@ -36,7 +36,14 @@ export const API_ENDPOINTS = {
             ? `${API_BASE_URL}/trade/offers?offset=${offset}&limit=${limit}`
             : `${API_BASE_URL}/trade/offers?offset=${offset}&limit=${limit}&by=${by}`,
 
-    // WebSocket - Assuming it must also go through the /api/v1 proxy path
+    // Inbox
+    getInboxMessages: (offset, limit) =>
+        offset == null
+            ? `${API_BASE_URL}/inbox/messages?limit=${limit}`
+            : `${API_BASE_URL}/inbox/messages?offset=${offset}&limit=${limit}`,
+
+    // WebSocket Endpoints
     events: `${WS_BASE_URL}/events`,
     marketEvents: `${WS_BASE_URL}/trade/events`,
+    inboxEvents: `${WS_BASE_URL}/inbox/events`,
 };

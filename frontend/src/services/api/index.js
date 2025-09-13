@@ -1,5 +1,3 @@
-// frontend/src/services/api.js
-
 import { API_ENDPOINTS } from '@/services/api/config.js';
 
 // --- Helper Functions ---
@@ -11,18 +9,28 @@ const getAuthHeaders = () => {
 const handleResponse = async response => {
     const data = await response.json();
     if (!response.ok || data.ok === false) {
+        if (response.status === 401) {
+            logout();
+        }
         throw new Error(data.error || 'An unknown error occurred');
     }
     return data.result;
 };
 
 // --- Token Management ---
-export const getToken = () =>
-    localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
+export const setToken = token => {
+    if (token) {
+        localStorage.setItem('authToken', token);
+    } else {
+        localStorage.removeItem('authToken');
+    }
+};
+
+export const getToken = () => localStorage.getItem('authToken');
 
 export const logout = () => {
-    localStorage.removeItem('authToken');
-    sessionStorage.removeItem('authToken');
+    setToken(null);
+    window.location.pathname = '/login';
 };
 
 // --- API Functions ---
@@ -32,7 +40,11 @@ export const login = async (username, password) => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, password }),
     });
-    return handleResponse(response);
+    const result = await handleResponse(response);
+    if (result.token) {
+        setToken(result.token);
+    }
+    return result;
 };
 
 export const getMe = async () => {
@@ -200,6 +212,17 @@ export const deleteTradeOffer = async offerID => {
 export const getTradeOffers = async (offset = 0, limit = 5, by = null) => {
     const response = await fetch(
         `${API_ENDPOINTS.getOffers(offset, limit, by)}`,
+        {
+            method: 'GET',
+            headers: getAuthHeaders(),
+        }
+    );
+    return handleResponse(response);
+};
+
+export const getInboxMessages = async (offset = null, limit = 15) => {
+    const response = await fetch(
+        API_ENDPOINTS.getInboxMessages(offset, limit),
         {
             method: 'GET',
             headers: getAuthHeaders(),
