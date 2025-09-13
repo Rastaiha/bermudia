@@ -190,7 +190,6 @@ import { makeTradeOfferCheck } from '../../../services/api';
 
 const props = defineProps({
     player: Object,
-    username: String,
 });
 
 const myOffers = ref([]);
@@ -230,7 +229,6 @@ const { open: openTrade, close: closeTrade } = useModal({
     component: Trade,
     attrs: {
         player: props.player,
-        username: props.username,
         tradables: tradables,
         onClose() {
             closeTrade();
@@ -324,7 +322,6 @@ const timeCommenter = time => {
     return Math.floor(diff / 60) + ' ساعت پیش';
 };
 
-
 const loadMyOffers = watch(mySyncTrade, async newVal => {
     if (newVal.length > 0) {
         try {
@@ -363,13 +360,7 @@ const loadOtherOffers = watch(otherSyncTrade, async newVal => {
     loadOtherOffers();
 });
 
-useMarketWebSocket(
-    mySyncTrade,
-    otherSyncTrade,
-    myOffers,
-    otherOffers,
-    props.username
-);
+useMarketWebSocket(mySyncTrade, otherSyncTrade, myOffers, otherOffers);
 </script>
 <style>
 ::-webkit-scrollbar {

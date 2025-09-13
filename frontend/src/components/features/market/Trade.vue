@@ -95,7 +95,6 @@ import { makeTradeOffer } from '@/services/api/index.js';
 
 const props = defineProps({
     player: Object,
-    username: String,
     tradables: Object,
 });
 
