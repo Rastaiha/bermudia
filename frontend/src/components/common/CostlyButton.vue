@@ -22,7 +22,7 @@
                             costItem.amount
                         }}</span>
                         <img
-                            :src="getIconByType(costItem.type)"
+                            :src="COST_ITEMS_INFO[costItem.type].icon"
                             :alt="costItem.type + ' Icon'"
                             class="w-5 h-5"
                         />
@@ -34,6 +34,8 @@
 </template>
 
 <script setup>
+import COST_ITEMS_INFO from '@/services/cost.js';
+
 defineProps({
     onClick: Function,
     cost: Object,
@@ -49,18 +51,6 @@ defineProps({
         default: 'white',
     },
 });
-
-const getIconByType = type => {
-    switch (type) {
-        case 'blueKey':
-            return '/images/icons/blueKeys.png';
-        case 'goldenKey':
-            return '/images/icons/goldenKeys.png';
-        case 'redKey':
-            return '/images/icons/redKeys.png';
-    }
-    return '/images/icons/' + type + '.png';
-};
 </script>
 <style>
 button {

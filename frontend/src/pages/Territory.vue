@@ -23,9 +23,11 @@
                 @map-transformed="updateInfoBoxPosition"
             />
 
-            <Toolbar :player="player" :username="username" />
+            <Toolbar :player="player" />
 
-            <PlayerInfo :player="player" :username="username" />
+            <UserProfile :username="username" />
+
+            <PlayerInfo :player="player" />
 
             <Transition name="popup-fade">
                 <IslandInfoBox
@@ -68,6 +70,8 @@ import PlayerInfo from '@/components/layout/PlayerInfo.vue';
 import LoadingBar from '@/components/common/LoadingBar.vue';
 import Toolbar from '@/components/layout/Toolbar.vue';
 import StarryNight from '@/components/common/StarryNight.vue';
+import UserProfile from '@/components/layout/UserProfile.vue';
+
 
 const route = useRoute();
 const router = useRouter();
