@@ -62,8 +62,8 @@ import COST_ITEMS_INFO from '@/services/cost.js';
 
 defineProps({
     rewards: {
-        type: Array,
-        default: () => [],
+        type: Object,
+        default: () => {},
     },
 });
 
