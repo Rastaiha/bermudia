@@ -5,7 +5,6 @@ const ITEM_NAMES = {
     goldenKey: { name: 'کلید طلایی' },
     fuel: { name: 'سوخت' },
     coin: { name: 'سکه' },
-    book: { name: 'کتاب' },
 };
 const INVENTORY_ITEMS = ['masterKey', 'blueKey', 'redKey', 'goldenKey'];
 

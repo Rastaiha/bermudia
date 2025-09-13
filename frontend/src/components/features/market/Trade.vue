@@ -92,7 +92,7 @@ import { onMounted, ref, watch } from 'vue';
 import { VueFinalModal } from 'vue-final-modal';
 import { useToast } from 'vue-toastification';
 import { makeTradeOffer } from '@/services/api/index.js';
-import { COST_ITEMS_INFO } from '../../../services/cost';
+import { COST_ITEMS_INFO } from '@/services/cost';
 
 const props = defineProps({
     player: Object,

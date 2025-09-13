@@ -58,7 +58,7 @@
 
 <script setup>
 import { VueFinalModal } from 'vue-final-modal';
-import { COST_ITEMS_INFO, INVENTORY_ITEMS } from '../../../services/cost';
+import { COST_ITEMS_INFO, INVENTORY_ITEMS } from '@/services/cost';
 
 defineProps({
     player: Object,
