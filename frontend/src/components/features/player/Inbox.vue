@@ -12,52 +12,54 @@
                 <h1 class="text-xl font-semibold text-gray-200">صندوق پیام</h1>
                 <button
                     class="p-1 rounded-full hover:bg-gray-700 transition-colors"
-                    @click="handleClose"
+                    @click="emit('close')"
                 >
                     <XMarkIcon class="h-6 w-6 text-gray-300" />
                 </button>
             </div>
             <p v-if="messages.length > 0" class="text-sm text-gray-400 mt-1">
-                {{ messages.length }} پیام جدید
+                {{ messages.length }} پیام
             </p>
         </div>
 
         <div
+            v-if="isLoading"
+            class="flex-grow flex items-center justify-center"
+        >
+            <p class="text-gray-400">در حال بارگذاری پیام‌ها...</p>
+        </div>
+
+        <div
+            v-else-if="messages.length === 0"
+            class="flex-grow flex items-center justify-center"
+        >
+            <p class="text-gray-400">صندوق پیام شما خالی است.</p>
+        </div>
+
+        <div
+            v-else
             ref="scrollContainer"
             class="scrollable-content flex-grow p-5 space-y-4 overflow-y-auto"
+            @scroll="handleScroll"
         >
-            <div v-if="isLoading" class="text-center py-10">
-                <p class="text-gray-400">در حال بارگذاری پیام‌ها...</p>
-            </div>
-
-            <div v-else-if="messages.length === 0" class="text-center py-10">
-                <p class="text-gray-400">صندوق پیام شما خالی است.</p>
-            </div>
-
             <NotificationItem
                 v-for="message in messages"
-                :key="message.createdAt"
+                :key="message.id"
                 :message="message"
             />
-
-            <div v-if="canLoadMore" class="text-center">
-                <button
-                    class="text-blue-400 hover:text-blue-300 text-sm"
-                    @click="loadMoreMessages"
-                >
-                    بارگذاری بیشتر
-                </button>
+            <div v-if="isFetchingMore" class="text-center py-2">
+                <p class="text-gray-400 text-sm">در حال بارگذاری بیشتر...</p>
             </div>
         </div>
     </VueFinalModal>
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue';
+import { ref, onMounted } from 'vue';
 import { VueFinalModal } from 'vue-final-modal';
 import { XMarkIcon } from '@heroicons/vue/24/outline';
 import { getInboxMessages } from '@/services/api/index.js';
-import eventBus from '@/services/eventBus.js';
+import { useInboxWebSocket } from '@/services/inboxWebsocket.js';
 import NotificationItem from './NotificationItem.vue';
 
 const emit = defineEmits(['close']);
@@ -65,59 +67,56 @@ const emit = defineEmits(['close']);
 const messages = ref([]);
 const syncOffset = ref(null);
 const isLoading = ref(true);
-const canLoadMore = ref(true);
+const isFetchingMore = ref(false);
+const hasMore = ref(true);
 const scrollContainer = ref(null);
 
+useInboxWebSocket(syncOffset, messages);
+
 const fetchMessages = async (offset = null) => {
-    if (!canLoadMore.value && offset) return;
-    isLoading.value = true;
+    if (offset && !hasMore.value) return;
+
+    if (offset) {
+        isFetchingMore.value = true;
+    } else {
+        isLoading.value = true;
+    }
+
     try {
-        const limit = 15;
-        const result = await getInboxMessages(offset, limit);
-        if (result.length < limit) {
-            canLoadMore.value = false;
+        const result = await getInboxMessages(offset, 15);
+        const newMessagesArray = result?.messages || result || [];
+
+        if (newMessagesArray.length < 15) {
+            hasMore.value = false;
         }
-        const newMessages = offset ? [...messages.value, ...result] : result;
-        messages.value = newMessages.sort((a, b) => b.createdAt - a.createdAt);
+
+        if (offset) {
+            messages.value.push(...newMessagesArray);
+        } else {
+            messages.value = newMessagesArray;
+        }
     } catch (error) {
         console.error('Failed to fetch inbox messages:', error);
     } finally {
         isLoading.value = false;
+        isFetchingMore.value = false;
     }
 };
 
-const handleNewMessage = newMessage => {
-    messages.value.unshift(newMessage);
-};
+const handleScroll = event => {
+    if (isFetchingMore.value || !hasMore.value) return;
 
-const handleSync = syncEvent => {
-    syncOffset.value = syncEvent.offset;
-    fetchMessages(syncOffset.value);
-};
-
-const loadMoreMessages = () => {
-    if (messages.value.length > 0) {
+    const { scrollTop, scrollHeight, clientHeight } = event.target;
+    if (scrollTop + clientHeight >= scrollHeight - 10) {
         const lastMessage = messages.value[messages.value.length - 1];
-        fetchMessages(lastMessage.createdAt);
+        if (lastMessage) {
+            fetchMessages(lastMessage.createdAt);
+        }
     }
 };
-
-function handleClose() {
-    emit('close');
-}
 
 onMounted(() => {
-    eventBus.on('inbox-sync', handleSync);
-    eventBus.on('inbox-new-message', handleNewMessage);
-
-    if (!syncOffset.value) {
-        fetchMessages();
-    }
-});
-
-onUnmounted(() => {
-    eventBus.off('inbox-sync', handleSync);
-    eventBus.off('inbox-new-message', handleNewMessage);
+    fetchMessages();
 });
 </script>
 

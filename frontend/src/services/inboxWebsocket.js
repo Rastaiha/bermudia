@@ -1,6 +1,6 @@
-import eventBus from './eventBus';
-import { getToken } from './api/index.js';
-import { API_ENDPOINTS } from './api/config.js';
+import { onMounted, onUnmounted } from 'vue';
+import { getToken } from '@/services/api/index.js';
+import { API_ENDPOINTS } from '@/services/api/config.js';
 
 let socket = null;
 let reconnectTimeoutId = null;
@@ -8,14 +8,7 @@ let reconnectAttempts = 0;
 const maxReconnectAttempts = 10;
 const baseReconnectDelay = 1000;
 
-function disconnect() {
-    if (reconnectTimeoutId) clearTimeout(reconnectTimeoutId);
-    if (socket) {
-        socket.onclose = null;
-        socket.close(1000, 'Connection closed by client');
-        socket = null;
-    }
-}
+const messageListeners = new Set();
 
 function scheduleReconnect() {
     if (reconnectAttempts >= maxReconnectAttempts) {
@@ -33,14 +26,29 @@ function scheduleReconnect() {
     reconnectTimeoutId = setTimeout(() => connect(), delay);
 }
 
-function connect() {
+function disconnect() {
+    if (reconnectTimeoutId) clearTimeout(reconnectTimeoutId);
     if (socket) {
+        socket.onclose = null;
+        socket.onmessage = null;
+        socket.onerror = null;
+        socket.onopen = null;
+        socket.close(1000, 'Connection closed: no active listeners.');
+        socket = null;
+        messageListeners.clear();
+    }
+}
+
+function connect() {
+    if (socket && socket.readyState < 2) {
         return;
     }
 
     const token = getToken();
     if (!token) {
-        console.error('Inbox WebSocket: No auth token found.');
+        console.error(
+            'Inbox WebSocket: No auth token found, connection aborted.'
+        );
         return;
     }
 
@@ -51,27 +59,7 @@ function connect() {
     };
 
     socket.onmessage = event => {
-        try {
-            const data = JSON.parse(event.data);
-
-            if (data.ok === false) {
-                console.error(
-                    'Received error in inbox websocket event:',
-                    data.error
-                );
-                return;
-            }
-
-            const inboxEvent = data.result || data;
-
-            if (inboxEvent.sync) {
-                eventBus.emit('inbox-sync', inboxEvent.sync);
-            } else if (inboxEvent.newMessage) {
-                eventBus.emit('inbox-new-message', inboxEvent.newMessage);
-            }
-        } catch (error) {
-            console.error('Error parsing Inbox WebSocket message:', error);
-        }
+        messageListeners.forEach(handler => handler(event));
     };
 
     socket.onclose = event => {
@@ -83,10 +71,48 @@ function connect() {
 
     socket.onerror = error => {
         console.error('Inbox WebSocket error:', error);
+        if (socket) {
+            socket.close();
+        }
     };
 }
 
-export default {
-    connect,
-    disconnect,
-};
+export function useInboxWebSocket(syncOffset, messages) {
+    const handleMessage = event => {
+        try {
+            const data = JSON.parse(event.data);
+
+            if (data.ok === false) {
+                console.error(
+                    'Received error in inbox websocket event:',
+                    data.error
+                );
+                return;
+            }
+
+            const inboxEvent = data;
+
+            if (inboxEvent.sync) {
+                syncOffset.value = inboxEvent.sync.offset;
+            }
+            if (inboxEvent.newMessage) {
+                messages.value.unshift(inboxEvent.newMessage);
+                syncOffset.value = inboxEvent.newMessage.createdAt;
+            }
+        } catch (error) {
+            console.error('Error parsing Inbox WebSocket message:', error);
+        }
+    };
+
+    onMounted(() => {
+        connect();
+        messageListeners.add(handleMessage);
+    });
+
+    onUnmounted(() => {
+        messageListeners.delete(handleMessage);
+        if (messageListeners.size === 0) {
+            disconnect();
+        }
+    });
+}

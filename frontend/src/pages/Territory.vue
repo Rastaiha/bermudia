@@ -60,7 +60,6 @@ import {
     getTerritory,
 } from '@/services/api/index.js';
 import { usePlayerWebSocket } from '@/services/websocket.js';
-import inboxWebsocket from '@/services/inboxWebsocket.js';
 import eventBus from '@/services/eventBus.js';
 
 import MapView from '@/components/features/map/MapView.vue';
@@ -243,16 +242,11 @@ onMounted(() => {
     eventBus.emit('set-audio-state', 'play');
     loadPageData(route.params.id);
     document.addEventListener('pointerdown', handleClickOutside);
-    const token = getToken();
-    if (token) {
-        inboxWebsocket.connect(token);
-    }
 });
 
 onUnmounted(() => {
     eventBus.emit('set-audio-state', 'stop');
     document.removeEventListener('pointerdown', handleClickOutside);
-    inboxWebsocket.disconnect();
 });
 
 watch(
