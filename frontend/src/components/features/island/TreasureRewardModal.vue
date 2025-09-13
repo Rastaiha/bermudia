@@ -58,7 +58,7 @@
 
 <script setup>
 import { VueFinalModal } from 'vue-final-modal';
-import COST_ITEMS_INFO from '@/services/cost.js';
+import { COST_ITEMS_INFO } from '@/services/cost.js';
 
 defineProps({
     rewards: {

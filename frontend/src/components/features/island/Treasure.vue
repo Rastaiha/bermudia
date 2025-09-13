@@ -63,7 +63,7 @@ import { useModal } from 'vue-final-modal';
 import { useToast } from 'vue-toastification';
 import { treasureCheck, treasureUnlock } from '@/services/api/index.js';
 import TreasureRewardModal from '@/components/features/island/TreasureRewardModal.vue';
-import COST_ITEMS_INFO from '@/services/cost.js';
+import { COST_ITEMS_INFO } from '@/services/cost.js';
 
 const props = defineProps({
     treasureData: { type: Object, required: true },
