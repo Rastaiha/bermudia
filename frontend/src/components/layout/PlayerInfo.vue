@@ -2,14 +2,8 @@
     <div
         v-if="player"
         dir="rtl"
-        class="fixed top-4 right-4 z-50 font-sans text-white p-3 rounded-lg w-64 pointer-events-none"
+        class="fixed top-20 right-4 z-50 font-sans text-white w-64 pointer-events-none space-y-2"
     >
-        <div class="flex justify-between items-center mb-3">
-            <h2 class="text-lg font-bold text-gray-200 drop-shadow-lg">
-                {{ username }}
-            </h2>
-        </div>
-
         <PlayerInventoryBar
             v-if="knowledgeBar"
             :bar-data="knowledgeBar"
@@ -33,10 +27,6 @@ const props = defineProps({
     player: {
         type: Object,
         required: true,
-    },
-    username: {
-        type: String,
-        default: '...',
     },
 });
 
