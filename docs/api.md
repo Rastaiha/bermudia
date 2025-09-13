@@ -747,9 +747,10 @@ curl --request GET \
 | Field       | Type    | Description                                                                                                          |
 |-------------|---------|----------------------------------------------------------------------------------------------------------------------|
 | submittable | boolean | True if the a new answer can be submitted, false otherwise.                                                          |
-| status      | string  | The status of answer; one of `empty`, `pending` (in process of correction) , `correct`, `wrong`                      |
+| status      | string  | The status of answer; one of `empty`, `pending` (in process of correction) , `correct`, `half-correct`, `wrong`      |
 | filename    | string? | If _status_ is not `empty` and [IslandInput](#islandinput) _type_ is `file`, the name of the last submitted file.    |
 | value       | string? | If _status_ is not `empty` and [IslandInput](#islandinput) _type_ is not `file`, the last submitted plain text value |
+| feedback    | string? | A human-readable text, written by the corrector as a feedback for  player                                            |
 | submittedAt | string? | If _status_ is not `empty`, the time of last submission in Unix milliseconds.                                        |
 
 

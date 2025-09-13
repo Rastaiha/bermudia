@@ -90,6 +90,7 @@ type SubmissionState struct {
 	Status      string `json:"status"`
 	Filename    string `json:"filename,omitempty"`
 	Value       string `json:"value,omitempty"`
+	Feedback    string `json:"feedback,omitempty"`
 	SubmittedAt int64  `json:"submittedAt,omitempty,string"`
 }
 

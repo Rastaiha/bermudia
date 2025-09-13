@@ -9,6 +9,7 @@ import (
 	"github.com/go-telegram/bot"
 	"github.com/go-telegram/bot/models"
 	"log/slog"
+	"regexp"
 	"strings"
 	"sync"
 	"time"
@@ -38,10 +39,12 @@ func NewBot(cfg config.Config, b *bot.Bot, islandService *service.Island, correc
 }
 
 const (
-	tagCB     = "tag|"
-	correctCB = "correct|"
-	wrongCB   = "wrong|"
-	revertCB  = "revert|"
+	tagCB         = "tag|"
+	correctCB     = "correct|"
+	halfCorrectCB = "half|"
+	wrongCB       = "wrong|"
+	revertCB      = "revert|"
+	finalizeCB    = "finalize|"
 )
 
 func prefix(cb string) bot.Middleware {
@@ -62,8 +65,11 @@ func (m *Bot) Start() {
 
 	m.bot.RegisterHandler(bot.HandlerTypeCallbackQueryData, tagCB, bot.MatchTypePrefix, m.handleTag, prefix(tagCB))
 	m.bot.RegisterHandler(bot.HandlerTypeCallbackQueryData, correctCB, bot.MatchTypePrefix, m.handleCorrect, prefix(correctCB))
+	m.bot.RegisterHandler(bot.HandlerTypeCallbackQueryData, halfCorrectCB, bot.MatchTypePrefix, m.handleHalfCorrect, prefix(halfCorrectCB))
 	m.bot.RegisterHandler(bot.HandlerTypeCallbackQueryData, wrongCB, bot.MatchTypePrefix, m.handleWrong, prefix(wrongCB))
 	m.bot.RegisterHandler(bot.HandlerTypeCallbackQueryData, revertCB, bot.MatchTypePrefix, m.handleRevert, prefix(revertCB))
+	m.bot.RegisterHandler(bot.HandlerTypeCallbackQueryData, finalizeCB, bot.MatchTypePrefix, m.handleFinalize, prefix(finalizeCB))
+	m.bot.RegisterHandler(bot.HandlerTypeMessageText, "", bot.MatchTypePrefix, m.handleFeedback)
 	ctx, cancel := context.WithCancel(context.Background())
 	m.cancel = cancel
 	m.wg.Add(1)
@@ -136,12 +142,16 @@ func (m *Bot) handleTag(ctx context.Context, b *bot.Bot, update *models.Update) 
 	keyboard := models.InlineKeyboardMarkup{
 		InlineKeyboard: [][]models.InlineKeyboardButton{
 			{{
-				Text:         "درست بود",
-				CallbackData: correctCB + update.CallbackQuery.Data,
-			}},
-			{{
 				Text:         "غلط بود",
 				CallbackData: wrongCB + update.CallbackQuery.Data,
+			}},
+			{{
+				Text:         "نصفش درست بود",
+				CallbackData: halfCorrectCB + update.CallbackQuery.Data,
+			}},
+			{{
+				Text:         "کاملاً درست بود",
+				CallbackData: correctCB + update.CallbackQuery.Data,
 			}},
 		},
 	}
@@ -173,7 +183,7 @@ func (m *Bot) handleTag(ctx context.Context, b *bot.Bot, update *models.Update) 
 	return
 }
 
-func (m *Bot) handleCorrection(ctx context.Context, b *bot.Bot, update *models.Update, isCorrect bool) {
+func (m *Bot) handleCorrection(ctx context.Context, b *bot.Bot, update *models.Update, newStatus domain.AnswerStatus) {
 	var userId int32
 	var questionId string
 	_, err := fmt.Sscanf(update.CallbackQuery.Data, "%d %s", &userId, &questionId)
@@ -183,47 +193,83 @@ func (m *Bot) handleCorrection(ctx context.Context, b *bot.Bot, update *models.U
 		slog.Error("failed to handle update", "error", err)
 		return
 	}
-	correctionId, err := m.correction.CreateCorrection(userId, questionId, isCorrect)
+	correctionId, err := m.correction.CreateCorrection(ctx, userId, questionId, newStatus)
 	if err != nil {
 		_, _ = b.AnswerCallbackQuery(ctx, &bot.AnswerCallbackQueryParams{CallbackQueryID: update.CallbackQuery.ID, Text: err.Error(), ShowAlert: true})
 		slog.Error("failed to handle update", "error", err)
 		return
 	}
 
-	m.showRevert(ctx, b, update, correctionId, isCorrect, false)
+	m.showRevert(ctx, b, update, correctionId, newStatus, false)
 	_, _ = b.AnswerCallbackQuery(ctx, &bot.AnswerCallbackQueryParams{CallbackQueryID: update.CallbackQuery.ID})
 }
 
 func (m *Bot) handleCorrect(ctx context.Context, b *bot.Bot, update *models.Update) {
-	m.handleCorrection(ctx, b, update, true)
+	m.handleCorrection(ctx, b, update, domain.AnswerStatusCorrect)
+}
+
+func (m *Bot) handleHalfCorrect(ctx context.Context, b *bot.Bot, update *models.Update) {
+	m.handleCorrection(ctx, b, update, domain.AnswerStatusHalfCorrect)
 }
 
 func (m *Bot) handleWrong(ctx context.Context, b *bot.Bot, update *models.Update) {
-	m.handleCorrection(ctx, b, update, false)
+	m.handleCorrection(ctx, b, update, domain.AnswerStatusWrong)
 }
 
-func (m *Bot) showRevert(ctx context.Context, b *bot.Bot, update *models.Update, correctionId string, isCorrect bool, fromRevert bool) {
-	buttonText := "تغییر نتیجه تصحیح به 'درست'"
-	if isCorrect {
-		buttonText = "تغییر نتیجه تصحیح به 'غلط'"
+func statusToString(status domain.AnswerStatus) string {
+	switch status {
+	case domain.AnswerStatusWrong:
+		return "غلط"
+	case domain.AnswerStatusHalfCorrect:
+		return "نیمه درست"
+	case domain.AnswerStatusCorrect:
+		return "کاملاً درست"
+	default:
+		return "unknown"
 	}
-	keyboard := models.InlineKeyboardMarkup{
-		InlineKeyboard: [][]models.InlineKeyboardButton{
-			{{
-				Text:         buttonText,
-				CallbackData: revertCB + fmt.Sprintf("%t %s", !isCorrect, correctionId),
-			}},
-		},
+}
+
+func statusToEmoji(status domain.AnswerStatus) string {
+	switch status {
+	case domain.AnswerStatusWrong:
+		return "🔴"
+	case domain.AnswerStatusHalfCorrect:
+		return "🟡"
+	case domain.AnswerStatusCorrect:
+		return "🟢"
+	default:
+		return "?"
 	}
-	suffix := "❎ نتیجه تصحیح: *غلط*"
-	if isCorrect {
-		suffix = "✅ نتیجه تصحیح: *درست*"
-	}
-	if fromRevert {
-		suffix = "↩️ نتیجه تصحیح به *غلط* تغییر کرد"
-		if isCorrect {
-			suffix = "↩️ نتیجه تصحیح به *درست* تغییر کرد"
+}
+
+func revertKeyboard(correctionId string, currentNewStatus domain.AnswerStatus) models.InlineKeyboardMarkup {
+	keyboard := models.InlineKeyboardMarkup{}
+	for _, a := range domain.CorrectionAllowedNewStatuses {
+		if currentNewStatus != a {
+			keyboard.InlineKeyboard = append(keyboard.InlineKeyboard, []models.InlineKeyboardButton{
+				{
+					Text:         fmt.Sprintf("تغییر نتیجه تصحیح به '%s'", statusToString(a)),
+					CallbackData: revertCB + fmt.Sprintf("%d %s", a, correctionId),
+				},
+			})
 		}
+	}
+	keyboard.InlineKeyboard = append(keyboard.InlineKeyboard, []models.InlineKeyboardButton{
+		{
+			Text:         "ثبت نهایی نتیجه تصحیح",
+			CallbackData: finalizeCB + fmt.Sprintf("%s", correctionId),
+		},
+	})
+	return keyboard
+}
+
+func (m *Bot) showRevert(ctx context.Context, b *bot.Bot, update *models.Update, correctionId string, currentNewStatus domain.AnswerStatus, fromRevert bool) {
+	keyboard := revertKeyboard(correctionId, currentNewStatus)
+
+	suffix := fmt.Sprintf("```[ID]%s```\n", correctionId) + "✍️ با ریپلای به این پیام، برای دانش آموز یک متن بازخورد ثبت کنید.\n\n" +
+		fmt.Sprintf("%s نتیجه تصحیح: *%s*", statusToEmoji(currentNewStatus), statusToString(currentNewStatus))
+	if fromRevert {
+		suffix = fmt.Sprintf("↩️%s نتیجه تصحیح به *%s* تغییر کرد", statusToEmoji(currentNewStatus), statusToString(currentNewStatus))
 	}
 	suffix = "\n\n" + suffix
 	var err error
@@ -249,9 +295,9 @@ func (m *Bot) showRevert(ctx context.Context, b *bot.Bot, update *models.Update,
 }
 
 func (m *Bot) handleRevert(ctx context.Context, b *bot.Bot, update *models.Update) {
-	var newIsCorrect bool
+	var newStatus domain.AnswerStatus
 	var correctionId string
-	_, err := fmt.Sscanf(update.CallbackQuery.Data, "%t %s", &newIsCorrect, &correctionId)
+	_, err := fmt.Sscanf(update.CallbackQuery.Data, "%d %s", &newStatus, &correctionId)
 	if err != nil {
 		err = fmt.Errorf("failed to parse callback query data: %w", err)
 		_, _ = b.AnswerCallbackQuery(ctx, &bot.AnswerCallbackQueryParams{CallbackQueryID: update.CallbackQuery.ID, Text: err.Error(), ShowAlert: true})
@@ -259,9 +305,9 @@ func (m *Bot) handleRevert(ctx context.Context, b *bot.Bot, update *models.Updat
 		return
 	}
 
-	ctx2, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	err = m.correction.UpdateCorrection(ctx2, correctionId, newIsCorrect)
+	err = m.correction.UpdateCorrectionNewStatus(ctx, correctionId, newStatus)
 	if err != nil {
 		err = fmt.Errorf("failed to update correction: %w", err)
 		_, _ = b.AnswerCallbackQuery(ctx, &bot.AnswerCallbackQueryParams{CallbackQueryID: update.CallbackQuery.ID, Text: err.Error(), ShowAlert: true})
@@ -269,6 +315,72 @@ func (m *Bot) handleRevert(ctx context.Context, b *bot.Bot, update *models.Updat
 		return
 	}
 
-	m.showRevert(ctx, b, update, correctionId, newIsCorrect, true)
+	m.showRevert(ctx, b, update, correctionId, newStatus, true)
 	_, _ = b.AnswerCallbackQuery(ctx, &bot.AnswerCallbackQueryParams{CallbackQueryID: update.CallbackQuery.ID})
+}
+
+func (m *Bot) handleFinalize(ctx context.Context, b *bot.Bot, update *models.Update) {
+	correctionId := update.CallbackQuery.Data
+	err := m.correction.FinalizeCorrection(ctx, correctionId)
+	if err != nil {
+		err = fmt.Errorf("failed to parse callback query data: %w", err)
+		_, _ = b.AnswerCallbackQuery(ctx, &bot.AnswerCallbackQueryParams{CallbackQueryID: update.CallbackQuery.ID, Text: err.Error(), ShowAlert: true})
+		slog.Error("failed to handle update", "error", err)
+		return
+	}
+	suffix := "☑️ نتیجه نهایی تصحیح ثبت شد."
+	suffix = "\n\n" + suffix
+	if update.CallbackQuery.Message.Message.Document != nil {
+		_, err = b.EditMessageCaption(ctx, &bot.EditMessageCaptionParams{
+			ChatID:    update.CallbackQuery.Message.Message.Chat.ID,
+			MessageID: update.CallbackQuery.Message.Message.ID,
+			Caption:   update.CallbackQuery.Message.Message.Caption + suffix,
+		})
+	} else {
+		_, err = b.EditMessageText(ctx, &bot.EditMessageTextParams{
+			ChatID:    update.CallbackQuery.Message.Message.Chat.ID,
+			MessageID: update.CallbackQuery.Message.Message.ID,
+			Text:      update.CallbackQuery.Message.Message.Text + suffix,
+		})
+	}
+}
+
+var correctionIdPattern = regexp.MustCompile("```\\[ID](\\w+)```")
+
+func (m *Bot) handleFeedback(ctx context.Context, b *bot.Bot, update *models.Update) {
+	if update.Message == nil || update.Message.Text == "" || update.Message.ReplyToMessage == nil {
+		return
+	}
+
+	groups := correctionIdPattern.FindStringSubmatch(update.Message.ReplyToMessage.Text)
+	if len(groups) < 2 {
+		return
+	}
+	id := groups[1]
+	if !domain.IdHasType(id, domain.ResourceTypeCorrection) {
+		return
+	}
+
+	currentNewStatus, err := m.correction.UpdateCorrectionFeedback(ctx, id, update.Message.Text)
+	if err != nil {
+		slog.Error("failed to update correction feedback", "error", err)
+		return
+	}
+	suffix := "🗒️ بازخورد شما ثبت شد."
+	suffix = "\n\n" + suffix
+	if update.Message.ReplyToMessage.Document != nil {
+		_, err = b.EditMessageCaption(ctx, &bot.EditMessageCaptionParams{
+			ChatID:      update.Message.ReplyToMessage.Chat.ID,
+			MessageID:   update.Message.ReplyToMessage.ID,
+			Caption:     update.Message.ReplyToMessage.Caption + suffix,
+			ReplyMarkup: revertKeyboard(id, currentNewStatus),
+		})
+	} else {
+		_, err = b.EditMessageText(ctx, &bot.EditMessageTextParams{
+			ChatID:      update.Message.ReplyToMessage.Chat.ID,
+			MessageID:   update.Message.ReplyToMessage.ID,
+			Text:        update.Message.ReplyToMessage.Text + suffix,
+			ReplyMarkup: revertKeyboard(id, currentNewStatus),
+		})
+	}
 }

@@ -27,6 +27,7 @@ type Answer struct {
 	FileID      sql.NullString
 	Filename    sql.NullString
 	TextContent sql.NullString
+	Feedback    sql.NullString
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
 }
@@ -34,10 +35,11 @@ type Answer struct {
 type AnswerStatus int
 
 const (
-	AnswerStatusEmpty   AnswerStatus = 0
-	AnswerStatusPending AnswerStatus = 1
-	AnswerStatusCorrect AnswerStatus = 2
-	AnswerStatusWrong   AnswerStatus = 3
+	AnswerStatusEmpty       AnswerStatus = 0
+	AnswerStatusPending     AnswerStatus = 1
+	AnswerStatusCorrect     AnswerStatus = 2
+	AnswerStatusWrong       AnswerStatus = 3
+	AnswerStatusHalfCorrect AnswerStatus = 4
 )
 
 func GetSubmissionStateFromAnswer(answer Answer) SubmissionState {
@@ -53,6 +55,8 @@ func GetSubmissionStateFromAnswer(answer Answer) SubmissionState {
 		status = "pending"
 	case AnswerStatusCorrect:
 		status = "correct"
+	case AnswerStatusHalfCorrect:
+		status = "half-correct"
 	case AnswerStatusWrong:
 		status = "wrong"
 	}
@@ -61,6 +65,7 @@ func GetSubmissionStateFromAnswer(answer Answer) SubmissionState {
 		Status:      status,
 		Filename:    answer.Filename.String,
 		Value:       answer.TextContent.String,
+		Feedback:    answer.Feedback.String,
 		SubmittedAt: submittedAt,
 	}
 }
@@ -90,10 +95,25 @@ type KnowledgeBar struct {
 	Total       int32  `json:"total"`
 }
 
+type CorrectionStatus int
+
+const (
+	CorrectionStatusDraft   CorrectionStatus = 0
+	CorrectionStatusPending CorrectionStatus = 1
+	CorrectionStatusApplied CorrectionStatus = 2
+)
+
+var CorrectionAllowedNewStatuses = []AnswerStatus{
+	AnswerStatusWrong,
+	AnswerStatusHalfCorrect,
+	AnswerStatusCorrect,
+}
+
 type Correction struct {
 	ID         string
 	QuestionId string
 	UserId     int32
-	IsCorrect  bool
-	CreatedAt  time.Time
+	NewStatus  AnswerStatus
+	Feedback   string
+	UpdatedAt  time.Time
 }

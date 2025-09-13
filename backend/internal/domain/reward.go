@@ -129,7 +129,7 @@ func giveRandomWorthOfCoins(player Player, worthOfCoins int32, rewardTypes []str
 	return player
 }
 
-func GiveRewardOfSource(player Player, rewardSource string) (Player, bool) {
+func giveRewardOfSource(player Player, rewardSource string) (Player, bool) {
 	source, ok := rewardSources[rewardSource]
 	if !ok {
 		return player, false
@@ -137,7 +137,7 @@ func GiveRewardOfSource(player Player, rewardSource string) (Player, bool) {
 	return source(player), true
 }
 
-func GiveRewardOfPool(player Player, poolId string) (Player, bool) {
+func giveRewardOfPool(player Player, poolId string) (Player, bool) {
 	switch poolId {
 	case PoolEasy:
 		return giveRandomWorthOfCoins(player, 20, pooledQuestionRewardTypes), true
@@ -147,6 +147,26 @@ func GiveRewardOfPool(player Player, poolId string) (Player, bool) {
 		return giveRandomWorthOfCoins(player, 80, pooledQuestionRewardTypes), true
 	}
 	return player, false
+}
+
+func GetRewardOfCorrection(player Player, question BookQuestion, correction Correction, pool string, hasPool bool) (*PlayerUpdateEvent, *Cost, bool) {
+	if correction.NewStatus != AnswerStatusCorrect && correction.NewStatus != AnswerStatusHalfCorrect {
+		return nil, nil, false
+	}
+	newPlayer, rewarded := giveRewardOfSource(player, question.RewardSource)
+	if hasPool {
+		var rewarded2 bool
+		newPlayer, rewarded2 = giveRewardOfPool(newPlayer, pool)
+		rewarded = rewarded || rewarded2
+	}
+	if !rewarded {
+		return nil, nil, false
+	}
+	reward := Diff(player, newPlayer)
+	return &PlayerUpdateEvent{
+		Reason: PlayerUpdateEventCorrection,
+		Player: &newPlayer,
+	}, &reward, true
 }
 
 const (

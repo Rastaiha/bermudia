@@ -83,7 +83,9 @@ type QuestionStore interface {
 	CreateCorrection(ctx context.Context, Correction Correction) error
 	ApplyCorrection(ctx context.Context, tx Tx, ifBefore time.Time, correction Correction) (Answer, bool, error)
 	GetUnappliedCorrections(ctx context.Context, before time.Time) ([]Correction, error)
-	UpdateCorrection(ctx context.Context, co string, newIsCorrect bool) error
+	UpdateCorrectionNewStatus(ctx context.Context, id string, newStatus AnswerStatus) error
+	UpdateCorrectionFeedback(ctx context.Context, id string, feedback string) (AnswerStatus, error)
+	FinalizeCorrection(ctx context.Context, id string) error
 }
 
 type TreasureStore interface {
