@@ -34,21 +34,21 @@
             class="flex flex-col items-center gap-4 max-h-96 overflow-y-auto p-2"
         >
             <div
-                v-for="(reward, index) in rewards"
+                v-for="(reward, index) in rewards.items"
                 :key="index"
                 class="flex items-center w-full bg-amber-800/50 p-3 rounded-lg border border-amber-700"
             >
                 <img
-                    :src="reward.icon"
-                    :alt="reward.name"
+                    :src="COST_ITEMS_INFO[reward.type].icon"
+                    :alt="reward.type + 'Icon'"
                     class="w-12 h-12 ml-4 drop-shadow-lg"
                 />
                 <div class="text-right">
                     <p class="text-lg font-bold text-white">
-                        {{ reward.name }}
+                        {{ COST_ITEMS_INFO[reward.type].name }}
                     </p>
                     <p class="text-md text-amber-200">
-                        تعداد: {{ reward.quantity }}
+                        تعداد: {{ reward.amount }}
                     </p>
                 </div>
             </div>
@@ -58,11 +58,12 @@
 
 <script setup>
 import { VueFinalModal } from 'vue-final-modal';
+import { COST_ITEMS_INFO } from '@/services/cost.js';
 
 defineProps({
     rewards: {
-        type: Array,
-        default: () => [],
+        type: Object,
+        default: () => {},
     },
 });
 

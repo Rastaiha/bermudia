@@ -143,29 +143,12 @@ const { open: openMarket, close: closeMarket } = useModal({
 const { open: openBackpack, close: closeBackpack } = useModal({
     component: Backpack,
     attrs: {
-        inventoryItems: computed(() => {
-            if (!props.player) return [];
-            const items = ['goldenKeys', 'redKeys', 'blueKeys'];
-            return items.map(key => ({
-                icon: `/images/icons/${key}.png`,
-                name: getKeyDisplayName(key),
-                quantity: props.player[key] || 0,
-            }));
-        }),
+        player: props.player,
         onClose() {
             closeBackpack();
         },
     },
 });
-
-function getKeyDisplayName(key) {
-    const displayNames = {
-        goldenKeys: 'کلید طلایی',
-        redKeys: 'کلید قرمز',
-        blueKeys: 'کلید آبی',
-    };
-    return displayNames[key] || key;
-}
 
 const menuItems = [
     {

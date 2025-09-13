@@ -30,14 +30,7 @@
                         />
                     </div>
 
-                    <div
-                        v-if="
-                            treasureFetchedInfo.cost &&
-                            treasureFetchedInfo.cost.items &&
-                            treasureFetchedInfo.cost.items.length > 0
-                        "
-                        class="mt-2 border-t-2 border-gray-600 pt-2"
-                    >
+                    <div class="mt-2 border-t-2 border-gray-600 pt-2">
                         <div
                             class="flex items-center justify-center gap-x-2 lg:gap-x-4 px-1 lg:px-2"
                         >
@@ -47,8 +40,8 @@
                                 class="flex flex-col items-center gap-y-1"
                             >
                                 <img
-                                    :src="itemMap[req.type]?.icon"
-                                    :alt="itemMap[req.type]?.name"
+                                    :src="COST_ITEMS_INFO[req.type].icon"
+                                    :alt="req.type + ' Icon'"
                                     class="h-7 w-7 lg:h-9 lg:w-9 object-contain"
                                 />
                                 <span
@@ -68,12 +61,9 @@
 import { onMounted, ref } from 'vue';
 import { useModal } from 'vue-final-modal';
 import { useToast } from 'vue-toastification';
-import {
-    treasureCheck,
-    treasureUnlock,
-    getPlayer,
-} from '@/services/api/index.js';
+import { treasureCheck, treasureUnlock } from '@/services/api/index.js';
 import TreasureRewardModal from '@/components/features/island/TreasureRewardModal.vue';
+import { COST_ITEMS_INFO } from '@/services/cost.js';
 
 const props = defineProps({
     treasureData: { type: Object, required: true },
@@ -86,22 +76,6 @@ const toast = useToast();
 const treasureFetchedInfo = ref(null);
 const receivedRewards = ref([]);
 
-const itemMap = {
-    blueKey: { name: 'کلید آبی', icon: '/images/icons/blueKeys.png' },
-    redKey: { name: 'کلید قرمز', icon: '/images/icons/redKeys.png' },
-    goldenKey: { name: 'کلید طلایی', icon: '/images/icons/goldenKeys.png' },
-    coins: { name: 'سکه', icon: '/images/icons/coin.png' },
-    books: { name: 'کتاب', icon: '/images/icons/book.png' },
-};
-
-const playerStateMap = {
-    blueKeys: 'blueKey',
-    redKeys: 'redKey',
-    goldenKeys: 'goldenKey',
-    coins: 'coins',
-    books: 'books',
-};
-
 const { open, close } = useModal({
     component: TreasureRewardModal,
     attrs: {
@@ -110,41 +84,19 @@ const { open, close } = useModal({
     },
 });
 
-function calculateRewards(oldPlayer, newPlayer) {
-    const rewards = [];
-    if (!oldPlayer || !newPlayer) return [];
-
-    for (const playerKey in playerStateMap) {
-        const itemType = playerStateMap[playerKey];
-        const oldValue = Array.isArray(oldPlayer[playerKey])
-            ? oldPlayer[playerKey].length
-            : oldPlayer[playerKey] || 0;
-        const newValue = Array.isArray(newPlayer[playerKey])
-            ? newPlayer[playerKey].length
-            : newPlayer[playerKey] || 0;
-
-        if (newValue > oldValue && itemMap[itemType]) {
-            rewards.push({
-                ...itemMap[itemType],
-                quantity: newValue - oldValue,
-            });
-        }
-    }
-    return rewards;
-}
-
 const handleTreasureClick = async () => {
     try {
-        const oldPlayerState = await getPlayer();
-        await treasureUnlock(props.treasureData.id);
-        const newPlayerState = await getPlayer();
+        const treasure = await treasureUnlock(props.treasureData.id);
 
-        emit('update:modelValue', { ...props.treasureData, unlocked: true });
-
-        const rewards = calculateRewards(oldPlayerState, newPlayerState);
-        if (rewards.length > 0) {
-            receivedRewards.value = rewards;
+        if (treasure.unlocked) {
+            receivedRewards.value = treasure.reward;
+            emit('update:modelValue', {
+                ...props.treasureData,
+                unlocked: true,
+            });
             open();
+        } else {
+            toast.error('گنج باز نشد.');
         }
     } catch (error) {
         toast.error(error.message || 'شرایط لازم برای باز کردن گنج را ندارید.');

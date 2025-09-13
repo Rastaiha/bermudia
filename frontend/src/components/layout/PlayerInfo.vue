@@ -22,6 +22,7 @@
 <script setup>
 import { computed } from 'vue';
 import PlayerInventoryBar from '@/components/common/PlayerInventoryBar.vue';
+import { COST_ITEMS_INFO } from '@/services/cost';
 
 const props = defineProps({
     player: {
@@ -57,11 +58,11 @@ const knowledgeBar = computed(() => {
 const fuelBar = computed(() => {
     if (!props.player) return null;
     return {
-        name: 'سوخت',
+        name: COST_ITEMS_INFO['fuel'].name,
         englishName: 'Fuel',
         total: props.player.fuelCap,
         value: props.player.fuel,
-        icon: '/images/icons/fuel.png',
+        icon: COST_ITEMS_INFO['fuel'].icon,
         shadowColor: '#6B7280',
         gradientFrom: '#364153',
         gradientTo: '#000',
@@ -71,12 +72,12 @@ const fuelBar = computed(() => {
 const coinBar = computed(() => {
     if (!props.player) return null;
     return {
-        name: 'سکه',
+        name: COST_ITEMS_INFO['coin'].name,
         englishName: 'Coin',
         total: -1,
-        value: props.player.coins,
+        value: props.player.coin,
         width: 0.75,
-        icon: '/images/icons/coin.png',
+        icon: COST_ITEMS_INFO['coin'].icon,
         shadowColor: '#6B7280',
         gradientFrom: '#364153',
         gradientTo: '#000',

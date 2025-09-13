@@ -5,8 +5,8 @@ const ITEM_NAMES = {
     goldenKey: { name: 'کلید طلایی' },
     fuel: { name: 'سوخت' },
     coin: { name: 'سکه' },
-    book: { name: 'کتاب' },
 };
+const INVENTORY_ITEMS = ['masterKey', 'blueKey', 'redKey', 'goldenKey'];
 
 function getItemIcon(type) {
     return `/images/icons/${type}.png`;
@@ -18,4 +18,5 @@ const COST_ITEMS_INFO = Object.fromEntries(
         { name, icon: getItemIcon(id) },
     ])
 );
-export default COST_ITEMS_INFO;
+
+export { COST_ITEMS_INFO, INVENTORY_ITEMS };

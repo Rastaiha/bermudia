@@ -34,22 +34,22 @@
 
         <div class="w-full flex flex-col space-y-4">
             <div
-                v-for="item in inventoryItems"
-                :key="item.name"
+                v-for="item in INVENTORY_ITEMS"
+                :key="item"
                 class="flex items-center justify-between p-3 bg-blue-900 bg-opacity-50 rounded-lg"
             >
                 <div class="flex items-center">
                     <img
-                        :src="item.icon"
+                        :src="COST_ITEMS_INFO[item].icon"
                         class="w-8 h-8 ml-3"
-                        :alt="item.name"
+                        :alt="item + 'icon'"
                     />
                     <span class="text-base font-medium text-white">{{
-                        item.name
+                        COST_ITEMS_INFO[item].name
                     }}</span>
                 </div>
                 <span class="text-lg font-bold text-blue-200"
-                    >x {{ item.quantity }}</span
+                    >x {{ player[item] }}</span
                 >
             </div>
         </div>
@@ -58,12 +58,10 @@
 
 <script setup>
 import { VueFinalModal } from 'vue-final-modal';
+import { COST_ITEMS_INFO, INVENTORY_ITEMS } from '@/services/cost';
 
 defineProps({
-    inventoryItems: {
-        type: Array,
-        default: () => [],
-    },
+    player: Object,
 });
 
 const emit = defineEmits(['close']);

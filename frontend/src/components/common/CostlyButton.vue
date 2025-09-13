@@ -34,7 +34,7 @@
 </template>
 
 <script setup>
-import COST_ITEMS_INFO from '@/services/cost.js';
+import { COST_ITEMS_INFO } from '@/services/cost.js';
 
 defineProps({
     onClick: Function,
