@@ -282,6 +282,15 @@ func (p *Player) applyCorrection(ctx context.Context, c domain.Correction) (ok b
 	if err != nil {
 		return false, fmt.Errorf("failed to begin transaction: %w", err)
 	}
+	var event *domain.PlayerUpdateEvent
+	defer func() {
+		if err != nil || event == nil {
+			return
+		}
+		if err := p.sendPlayerUpdateEventErr(ctx, event); err != nil {
+			err = fmt.Errorf("failed to send player update event: %w", err)
+		}
+	}()
 	defer func() {
 		if err != nil {
 			err = errors.Join(err, tx.Rollback())
@@ -304,34 +313,20 @@ func (p *Player) applyCorrection(ctx context.Context, c domain.Correction) (ok b
 		return false, err
 	}
 
-	var reward *domain.Cost
-	if c.IsCorrect {
-		pool, hasPool, err := p.islandStore.GetPoolOfBook(ctx, question.BookID)
-		if err != nil {
+	currentPlayer, err := p.playerStore.Get(ctx, c.UserId)
+	if err != nil {
+		return false, err
+	}
+
+	pool, hasPool, err := p.islandStore.GetPoolOfBook(ctx, question.BookID)
+	if err != nil {
+		return false, err
+	}
+
+	event, reward, rewarded := domain.GetRewardOfCorrection(currentPlayer, question, c, pool, hasPool)
+	if rewarded {
+		if err := p.playerStore.Update(ctx, tx, currentPlayer, *event.Player); err != nil {
 			return false, err
-		}
-		currentPlayer, err := p.playerStore.Get(ctx, c.UserId)
-		if err != nil {
-			return false, err
-		}
-		newPlayer, rewarded := domain.GiveRewardOfSource(currentPlayer, question.RewardSource)
-		if hasPool {
-			var rewarded2 bool
-			newPlayer, rewarded2 = domain.GiveRewardOfPool(newPlayer, pool)
-			rewarded = rewarded || rewarded2
-		}
-		if rewarded {
-			if err := p.playerStore.Update(ctx, tx, currentPlayer, newPlayer); err != nil {
-				return false, err
-			}
-			if err := p.sendPlayerUpdateEventErr(ctx, &domain.PlayerUpdateEvent{
-				Reason: domain.PlayerUpdateEventCorrection,
-				Player: &newPlayer,
-			}); err != nil {
-				return false, err
-			}
-			r := domain.Diff(currentPlayer, newPlayer)
-			reward = &r
 		}
 	}
 
