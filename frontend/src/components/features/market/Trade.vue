@@ -96,7 +96,6 @@ import { COST_ITEMS_INFO } from '@/services/cost';
 
 const props = defineProps({
     player: Object,
-    username: String,
     tradables: Object,
 });
 
