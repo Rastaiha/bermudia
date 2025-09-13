@@ -1,18 +1,17 @@
 <template>
     <VueFinalModal
-        class="flex justify-center items-center"
-        content-class="flex flex-col w-full h-full md:w-5/7 mx-4 p-6 
-                       bg-[#5C3A21] border-4 border-[#3E2A17] 
-                       rounded-xl shadow-xl space-y-4 text-amber-200"
+        class="flex justify-center items-center py-5"
+        content-class="flex flex-col h-full w-11/12 md:w-4/5 lg:w-3/5 max-w-4xl bg-slate-800 border border-slate-600 rounded-2xl shadow-2xl text-slate-100"
         overlay-transition="vfm-fade"
         content-transition="vfm-slide-up"
     >
         <div
-            class="flex items-center justify-between border-b-2 border-[#3E2A17] pb-2 mb-4"
+            class="flex-shrink-0 flex items-center justify-between p-6 pb-4 border-b border-slate-600"
         >
-            <h1 class="text-xl font-semibold">بازارچه بنزوئیلا</h1>
+            <h1 class="text-2xl font-bold text-amber-400">بازارچه بنزوئیلا</h1>
             <button
-                class="p-1 rounded-full hover:bg-[#3E2A17]"
+                class="p-2 rounded-full text-slate-400 hover:bg-slate-700 hover:text-white transition-colors"
+                aria-label="Close modal"
                 @click="handleClose"
             >
                 <svg
@@ -32,142 +31,85 @@
             </button>
         </div>
 
-        <div class="flex justify-around">
-            <button
-                class="p-1 rounded-[5px]"
-                :class="
-                    !isOffersYours
-                        ? 'bg-[#fee685] text-[#5c3a21]'
-                        : 'border-[5px] border-solid border-[#fee685]'
-                "
-                @pointerdown="isOffersYours = false"
-            >
-                درخواست‌های دیگران
-            </button>
-            <button
-                class="p-1 rounded-[5px]"
-                :class="
-                    isOffersYours
-                        ? 'bg-[#fee685] text-[#5c3a21]'
-                        : 'border-[5px] border-solid border-[#fee685]'
-                "
-                @pointerdown="isOffersYours = true"
-            >
-                درخواست‌های شما
-            </button>
+        <div
+            class="flex-shrink-0 flex justify-center items-center p-4 border-b border-slate-700 bg-slate-800/50"
+        >
+            <div class="flex p-1 space-x-1 reverse bg-slate-900/70 rounded-xl">
+                <button
+                    :class="tabClass(!isOffersYours)"
+                    @click="isOffersYours = false"
+                >
+                    درخواست‌های دیگران
+                </button>
+                <button
+                    :class="tabClass(isOffersYours)"
+                    @click="isOffersYours = true"
+                >
+                    درخواست‌های شما
+                </button>
+            </div>
         </div>
 
-        <div
-            v-if="!isOffersYours"
-            ref="otherOffersContainer"
-            class="w-full flex flex-col items-center justify-between space-y-2 overflow-y-auto max-h-[fit-content]"
-            @scroll="handleOtherScroll"
-        >
+        <div class="flex-1 overflow-y-auto relative">
             <div
-                v-if="otherOffers.length > 0"
-                class="w-full flex flex-wrap justify-around gap-y-4 pb-2"
+                v-if="!isOffersYours"
+                ref="otherOffersContainer"
+                class="p-4 md:p-6"
+                @scroll="handleOtherScroll"
             >
                 <div
-                    v-for="(offer, index) in otherOffers"
-                    :key="index"
-                    class="relative w-64 h-48 flex flex-col justify-between items-center p-2 bg-gradient-to-b from-yellow-600 via-yellow-700 to-yellow-800 border-l-2 border-yellow-900 rounded-sm shadow-md"
+                    v-if="otherOffers.length > 0"
+                    class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
                 >
-                    <div
-                        class="flex flex-row justify-between items-center w-full"
-                    >
-                        <div class="w-3/7">
-                            <CostlyButton
-                                :on-click="() => {}"
-                                :cost="offer.offered"
-                                label="داد"
-                                enabled
-                                :loading="false"
-                            />
-                        </div>
-                        <div class="w-3/7">
-                            <CostlyButton
-                                :on-click="() => {}"
-                                :cost="offer.requested"
-                                label="ستد"
-                                enabled
-                                :loading="false"
-                                background-color="#480202"
-                            />
-                        </div>
-                    </div>
-                    <div>{{ timeCommenter(offer.created_at) }}</div>
-                    <button
-                        v-if="offer.acceptable"
-                        class="transition-transform duration-200 hover:scale-110 pointer-events-auto p-1 rounded-[5px] bg-[#fee685] text-[#5c3a21]"
-                        @pointerdown="acceptTrade(offer.id)"
-                    >
-                        انجام معامله
-                    </button>
+                    <TradeOfferCard
+                        v-for="offer in otherOffers"
+                        :key="offer.id"
+                        :offer="offer"
+                        :is-mine="false"
+                        @accept="acceptTrade"
+                    />
+                </div>
+                <div
+                    v-else-if="!otherPageIsLoading"
+                    class="text-center text-slate-400 py-8"
+                >
+                    معامله‌ای برای نمایش وجود ندارد.
                 </div>
             </div>
-            <div v-else class="text-center w-full">معامله‌ای یافت نشد.</div>
-        </div>
 
-        <div
-            v-else
-            class="w-full h-full flex flex-col items-center justify-between space-y-2"
-        >
-            <button
-                class="transition-transform duration-200 hover:scale-110 pointer-events-auto p-1 rounded-[5px] bg-[#fee685] text-[#5c3a21]"
-                title="معامله جدید"
-                @click="createTrade"
-            >
-                معامله جدید
-            </button>
-            <div
-                ref="myOffersContainer"
-                class="w-full flex flex-col items-center justify-between space-y-2 overflow-y-auto max-h-[fit-content]"
-                @scroll="handleMyScroll"
-            >
+            <div v-else class="flex flex-col h-full">
+                <div class="p-4 flex-shrink-0">
+                    <button
+                        class="w-full md:w-auto md:px-6 flex-shrink-0 mx-auto flex justify-center items-center p-3 rounded-lg bg-amber-500 text-slate-900 font-bold text-lg transition-all duration-300 hover:bg-amber-400 hover:shadow-lg hover:scale-105"
+                        @click="createTrade"
+                    >
+                        + ساخت معامله جدید
+                    </button>
+                </div>
                 <div
-                    v-if="myOffers.length > 0"
-                    class="w-full flex flex-wrap justify-around gap-y-4 pb-2"
+                    ref="myOffersContainer"
+                    class="flex-1 overflow-y-auto p-4 md:p-6 pt-0"
+                    @scroll="handleMyScroll"
                 >
                     <div
-                        v-for="(offer, index) in myOffers"
-                        :key="index"
-                        class="relative w-64 h-48 flex flex-col justify-between items-center p-2 bg-gradient-to-b from-yellow-600 via-yellow-700 to-yellow-800 border-l-2 border-yellow-900 rounded-sm shadow-md"
+                        v-if="myOffers.length > 0"
+                        class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
                     >
-                        <div
-                            class="flex flex-row justify-between items-center w-full"
-                        >
-                            <div class="w-3/7">
-                                <CostlyButton
-                                    :on-click="() => {}"
-                                    :cost="offer.offered"
-                                    label="داد"
-                                    enabled
-                                    :loading="false"
-                                    background-color="#480202"
-                                >
-                                </CostlyButton>
-                            </div>
-                            <div class="w-3/7">
-                                <CostlyButton
-                                    :on-click="() => {}"
-                                    :cost="offer.requested"
-                                    label="ستد"
-                                    enabled
-                                    :loading="false"
-                                >
-                                </CostlyButton>
-                            </div>
-                        </div>
-                        <div>{{ timeCommenter(offer.created_at) }}</div>
-                        <button
-                            class="transition-transform duration-200 hover:scale-110 pointer-events-auto p-1 rounded-[5px] bg-[#fee685] text-[#5c3a21]"
-                            @pointerdown="deleteTrade(offer.id)"
-                        >
-                            حذف معامله
-                        </button>
+                        <TradeOfferCard
+                            v-for="offer in myOffers"
+                            :key="offer.id"
+                            :offer="offer"
+                            is-mine
+                            @delete="deleteTrade"
+                        />
+                    </div>
+                    <div
+                        v-else-if="!myPageIsLoading"
+                        class="text-center text-slate-400 py-8"
+                    >
+                        شما هنوز معامله‌ای ثبت نکرده‌اید.
                     </div>
                 </div>
-                <div v-else class="text-center w-full">معامله‌ای یافت نشد.</div>
             </div>
         </div>
     </VueFinalModal>
@@ -180,13 +122,12 @@ import {
     acceptTradeOffer,
     deleteTradeOffer,
     getTradeOffers,
+    makeTradeOfferCheck,
 } from '@/services/api/index.js';
 import { useToast } from 'vue-toastification';
-import { useNow } from '@/composables/useNow.js';
 import { useMarketWebSocket } from '@/services/marketWebsocket.js';
 import Trade from '@/components/features/market/Trade.vue';
-import CostlyButton from '@/components/common/CostlyButton.vue';
-import { makeTradeOfferCheck } from '@/services/api/index.js';
+import TradeOfferCard from '@/components/features/market/TradeOfferCard.vue';
 
 const props = defineProps({
     player: Object,
@@ -207,7 +148,6 @@ const isOffersYours = ref(false);
 const myOffersContainer = ref(null);
 const otherOffersContainer = ref(null);
 const toast = useToast();
-const { now } = useNow(60000);
 const emit = defineEmits(['close']);
 
 const createTrade = async () => {
@@ -238,6 +178,12 @@ const { open: openTrade, close: closeTrade } = useModal({
 function handleClose() {
     emit('close');
 }
+
+const tabClass = isActive => {
+    return isActive
+        ? 'w-full bg-amber-500 text-slate-900 rounded-lg px-4 py-2 text-sm font-bold transition-colors'
+        : 'w-full text-slate-300 hover:bg-slate-700/50 rounded-lg px-4 py-2 text-sm font-bold transition-colors';
+};
 
 async function loadMoreMyOffers() {
     myPageIsLoading.value = true;
@@ -312,15 +258,6 @@ const deleteTrade = async id => {
     }
 };
 
-const timeCommenter = time => {
-    let diff = now.value - time;
-    diff /= 1000;
-    if (diff < 60) return 'لحظاتی پیش';
-    diff = Math.floor(diff / 60);
-    if (diff < 60) return diff + ' دقیقه پیش';
-    return Math.floor(diff / 60) + ' ساعت پیش';
-};
-
 const loadMyOffers = watch(mySyncTrade, async newVal => {
     if (newVal.length > 0) {
         try {
@@ -366,23 +303,22 @@ useMarketWebSocket(mySyncTrade, otherSyncTrade, myOffers, otherOffers);
     width: 10px;
     height: 10px;
 }
-
 ::-webkit-scrollbar-track {
-    background: #3e2a17;
+    background: #1e293b;
     border-radius: 25px;
 }
-
 ::-webkit-scrollbar-thumb {
-    background: #fee685;
+    background: #f59e0b;
     border-radius: 25px;
-    border: 2px solid #3e2a17;
+    border: 2px solid #1e293b;
 }
-
 ::-webkit-scrollbar-thumb:hover {
     background: #fcd34d;
 }
-
 * {
-    scrollbar-color: #fee685 #3e2a17;
+    scrollbar-color: #f59e0b #1e293b;
+}
+.reverse {
+    direction: rtl;
 }
 </style>
