@@ -183,10 +183,10 @@ import {
 } from '@/services/api/index.js';
 import { useToast } from 'vue-toastification';
 import { useNow } from '@/composables/useNow.js';
-import { useMarketWebSocket } from '../../../services/marketwebsocket';
+import { useMarketWebSocket } from '@/services/marketWebsocket.js';
 import Trade from '@/components/features/market/Trade.vue';
 import CostlyButton from '@/components/common/CostlyButton.vue';
-import { makeTradeOfferCheck } from '../../../services/api';
+import { makeTradeOfferCheck } from '@/services/api/index.js';
 
 const props = defineProps({
     player: Object,
@@ -323,7 +323,6 @@ const timeCommenter = time => {
     if (diff < 60) return diff + ' دقیقه پیش';
     return Math.floor(diff / 60) + ' ساعت پیش';
 };
-
 
 const loadMyOffers = watch(mySyncTrade, async newVal => {
     if (newVal.length > 0) {
