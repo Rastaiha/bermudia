@@ -51,7 +51,7 @@ func (s sqlUser) Create(ctx context.Context, user *domain.User) error {
 		n(user.ID),
 		n(user.Username),
 		n(strings.ToLower(user.Username)),
-		n(user.MeetLink),
+		user.MeetLink, // TODO: wrap in n
 		user.HashedPassword,
 	)
 	return err
