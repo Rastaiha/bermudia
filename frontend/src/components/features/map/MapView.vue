@@ -33,7 +33,7 @@
                     fill="transparent"
                 />
                 <image
-                    :href="`/images/islands/${island.iconAsset}`"
+                    :href="island.iconAsset"
                     :x="island.x - island.width / 2"
                     :y="island.y - island.height / 2"
                     :width="island.width"

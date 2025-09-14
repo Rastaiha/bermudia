@@ -1,7 +1,7 @@
 {
   "id": "territory2",
   "name": "جزایر دور",
-  "backgroundAsset": "background1.jpg",
+  "backgroundAsset": "/images/backgrounds/territory/background1.jpg",
   "startIsland": "island_thompson",
   "islands": [
     {
@@ -11,7 +11,7 @@
       "y": 0.85,
       "width": 0.12,
       "height": 0.18,
-      "iconAsset": "educational/5.png"
+      "iconAsset": "/images/islands/educational/5.png"
     },
     {
       "id": "island_spectacle",
@@ -20,7 +20,7 @@
       "y": 0.75,
       "width": 0.14,
       "height": 0.14,
-      "iconAsset": "educational/6.png"
+      "iconAsset": "/images/islands/educational/6.png"
     },
     {
       "id": "island_deer",
@@ -29,7 +29,7 @@
       "y": 0.40,
       "width": 0.16,
       "height": 0.22,
-      "iconAsset": "challenge/1.png"
+      "iconAsset": "/images/islands/challenge/1.png"
     },
     {
       "id": "island_long_refuel",
@@ -38,7 +38,7 @@
       "y": 0.70,
       "width": 0.16,
       "height": 0.22,
-      "iconAsset": "challenge/2.png"
+      "iconAsset": "/images/islands/challenge/2.png"
     },
     {
       "id": "island_gallops",
@@ -47,7 +47,7 @@
       "y": 0.65,
       "width": 0.14,
       "height": 0.16,
-      "iconAsset": "challenge/3.png"
+      "iconAsset": "/images/islands/challenge/3.png"
     }
   ],
   "edges": [
