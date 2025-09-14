@@ -10,6 +10,7 @@
         "inputType": "number",
         "knowledgeAmount": 100,
         "rewardSource": "edu2",
+        "correctionHintMessage": "https://platform.kamva.academy/article/713",
         "text": "سوال اول"
       }
     },

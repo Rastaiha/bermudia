@@ -111,6 +111,7 @@ type IslandInputQuestion struct {
 	domain.Question
 	KnowledgeAmount int32  `json:"knowledgeAmount"`
 	RewardSource    string `json:"rewardSource,omitempty"`
+	Context         string `json:"correctionHintMessage,omitempty"`
 }
 
 func (a *Admin) SetBookAndBindToIsland(ctx context.Context, islandId string, input BookInput) (BookInput, error) {
@@ -188,6 +189,7 @@ func (a *Admin) setBook(ctx context.Context, input BookInput) (BookInput, error)
 				Text:            c.Question.Text,
 				KnowledgeAmount: c.Question.KnowledgeAmount,
 				RewardSource:    c.Question.RewardSource,
+				Context:         c.Question.Context,
 			})
 			book.Components = append(book.Components, domain.BookComponent{Question: &c.Question.Question})
 			continue

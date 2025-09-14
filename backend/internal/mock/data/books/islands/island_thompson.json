@@ -5,6 +5,7 @@
         "inputType": "number",
         "knowledgeAmount": 30,
         "rewardSource": "edu5",
+        "correctionHintMessage": "https://platform.kamva.academy/article/713",
         "text": "what year is it?"
       }
     },
