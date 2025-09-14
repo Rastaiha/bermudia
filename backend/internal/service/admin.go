@@ -280,7 +280,7 @@ func (a *Admin) SetTerritoryIslandBindings(ctx context.Context, bindings Territo
 	return bindings, nil
 }
 
-func (a *Admin) CreateUser(ctx context.Context, id int32, username, password, startingTerritoryID string) error {
+func (a *Admin) CreateUser(ctx context.Context, id int32, username, password, startingTerritoryID, meetLink string) error {
 	territories, err := a.territoryStore.ListTerritories(ctx)
 	if err != nil {
 		return err
@@ -304,6 +304,7 @@ func (a *Admin) CreateUser(ctx context.Context, id int32, username, password, st
 	user := domain.User{
 		ID:             id,
 		Username:       username,
+		MeetLink:       meetLink,
 		HashedPassword: hp,
 	}
 	if err := a.userStore.Create(ctx, &user); err != nil {

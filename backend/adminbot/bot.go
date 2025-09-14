@@ -45,6 +45,7 @@ const (
 	wrongCB       = "wrong|"
 	revertCB      = "revert|"
 	finalizeCB    = "finalize|"
+	iGoCB         = "iGo|"
 )
 
 func prefix(cb string) bot.Middleware {
@@ -62,6 +63,7 @@ func prefix(cb string) bot.Middleware {
 
 func (m *Bot) Start() {
 	m.islandService.OnNewAnswer(m.HandleNewAnswer)
+	m.islandService.OnHelpRequest(m.HandleHelpRequest)
 
 	m.bot.RegisterHandler(bot.HandlerTypeCallbackQueryData, tagCB, bot.MatchTypePrefix, m.handleTag, prefix(tagCB))
 	m.bot.RegisterHandler(bot.HandlerTypeCallbackQueryData, correctCB, bot.MatchTypePrefix, m.handleCorrect, prefix(correctCB))
@@ -70,6 +72,7 @@ func (m *Bot) Start() {
 	m.bot.RegisterHandler(bot.HandlerTypeCallbackQueryData, revertCB, bot.MatchTypePrefix, m.handleRevert, prefix(revertCB))
 	m.bot.RegisterHandler(bot.HandlerTypeCallbackQueryData, finalizeCB, bot.MatchTypePrefix, m.handleFinalize, prefix(finalizeCB))
 	m.bot.RegisterHandler(bot.HandlerTypeMessageText, "", bot.MatchTypePrefix, m.handleFeedback)
+	m.bot.RegisterHandler(bot.HandlerTypeCallbackQueryData, iGoCB, bot.MatchTypePrefix, m.handleIGo, prefix(iGoCB))
 	ctx, cancel := context.WithCancel(context.Background())
 	m.cancel = cancel
 	m.wg.Add(1)
@@ -100,14 +103,8 @@ func (m *Bot) HandleNewAnswer(username string, territory string, question domain
 			}},
 		}
 		var err error
-		if territory == "" {
-			territory = "challenge"
-		}
-		group := m.cfg.DefaultCorrectionGroup
-		if g, ok := m.cfg.CorrectionGroups[territory]; ok {
-			group = g
-		}
-		caption := fmt.Sprintf("#%s\nUser: #%s\nQuestion: #%s\n\nمتن سؤال:\n%s", territory, username, answer.QuestionID, question.Text)
+		territory, group := m.getGroup(territory)
+		caption := m.getMetaData(territory, username, question)
 		if answer.FileID.Valid {
 			_, err = m.bot.SendDocument(ctx, &bot.SendDocumentParams{
 				ChatID:      group,
@@ -136,6 +133,42 @@ func (m *Bot) HandleNewAnswer(username string, territory string, question domain
 			slog.Error("error sending answer by bot", "error", err)
 		}
 	}()
+}
+
+func (m *Bot) HandleHelpRequest(territory string, user *domain.User, question domain.BookQuestion) error {
+	territory, group := m.getGroup(territory)
+	msg := m.getMetaData(territory, user.Username, question)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	_, err := m.bot.SendMessage(ctx, &bot.SendMessageParams{
+		ChatID: group,
+		Text:   "☎️☎️☎️\n#درخواست_میت\n" + msg + fmt.Sprintf("\n\nMeet Link: %s", user.MeetLink),
+		ReplyMarkup: models.InlineKeyboardMarkup{
+			InlineKeyboard: [][]models.InlineKeyboardButton{{
+				{
+					Text:         "من جواب میدم",
+					CallbackData: iGoCB,
+				},
+			}},
+		},
+	})
+	return err
+}
+
+func (m *Bot) getGroup(territory string) (string, int64) {
+	if territory == "" {
+		territory = "challenge"
+	}
+	group := m.cfg.DefaultCorrectionGroup
+	if g, ok := m.cfg.CorrectionGroups[territory]; ok {
+		group = g
+	}
+	return territory, group
+}
+
+func (m *Bot) getMetaData(territory string, username string, question domain.BookQuestion) string {
+	return fmt.Sprintf("#%s\nUser: #%s\nQuestion: #%s\n\nمتن سؤال:\n%s", territory, username, question.QuestionID, question.Text)
 }
 
 func (m *Bot) handleTag(ctx context.Context, b *bot.Bot, update *models.Update) {
@@ -383,4 +416,18 @@ func (m *Bot) handleFeedback(ctx context.Context, b *bot.Bot, update *models.Upd
 			ReplyMarkup: revertKeyboard(id, currentNewStatus),
 		})
 	}
+}
+
+func (m *Bot) handleIGo(ctx context.Context, b *bot.Bot, update *models.Update) {
+	username := update.CallbackQuery.From.FirstName
+	if update.CallbackQuery.From.Username != "" {
+		username = "@" + update.CallbackQuery.From.Username
+	}
+	suffix := fmt.Sprintf("🤙 %s جواب میده", username)
+	suffix = "\n\n" + suffix
+	_, _ = b.EditMessageText(ctx, &bot.EditMessageTextParams{
+		ChatID:    update.CallbackQuery.Message.Message.Chat.ID,
+		MessageID: update.CallbackQuery.Message.Message.ID,
+		Text:      update.CallbackQuery.Message.Message.Text + suffix,
+	})
 }

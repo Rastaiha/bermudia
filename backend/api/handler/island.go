@@ -114,3 +114,27 @@ func (t *tempReadCloser) Read(p []byte) (n int, err error) {
 func (t *tempReadCloser) Close() error {
 	return t.r.Close()
 }
+
+func (h *Handler) GetAnswerHelp(w http.ResponseWriter, r *http.Request) {
+	user, err := getUser(r.Context())
+	if err != nil {
+		handleError(w, err)
+		return
+	}
+
+	id := chi.URLParam(r, "inputID")
+	if id == "" {
+		sendError(w, http.StatusBadRequest, "input ID is required")
+		return
+	}
+
+	meetLink, err := h.islandService.RequestHelpToAnswer(r.Context(), user, id)
+	if err != nil {
+		handleError(w, err)
+		return
+	}
+
+	sendResult(w, map[string]any{
+		"meetLink": meetLink,
+	})
+}

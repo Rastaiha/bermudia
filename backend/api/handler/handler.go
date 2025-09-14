@@ -71,6 +71,7 @@ func (h *Handler) Start() {
 			})
 			r.Get("/islands/{islandID}", h.GetIsland)
 			r.Post("/answer/{inputID}", h.SubmitAnswer)
+			r.Get("/answer/{inputID}/help", h.GetAnswerHelp)
 			r.Get("/player", h.GetPlayer)
 			r.Post("/travel_check", h.TravelCheck)
 			r.Post("/travel", h.Travel)

@@ -27,6 +27,7 @@ CREATE TABLE IF NOT EXISTS answers (
     user_id INT4 NOT NULL,
     question_id VARCHAR(255) NOT NULL,
     status INT4 NOT NULL,
+    requested_help BOOLEAN NOT NULL DEFAULT FALSE,
     file_id VARCHAR(255),
     filename VARCHAR(255),
     text_content TEXT,
@@ -100,11 +101,11 @@ func (s sqlQuestionRepository) BindQuestionsToBook(ctx context.Context, bookId s
 }
 
 func (s sqlQuestionRepository) answerColumnsToSelect() string {
-	return `user_id, question_id, status, file_id, filename, text_content, feedback, created_at, updated_at`
+	return `user_id, question_id, status, requested_help, file_id, filename, text_content, feedback, created_at, updated_at`
 }
 
 func (s sqlQuestionRepository) scanAnswer(row scannable, answer *domain.Answer) error {
-	return row.Scan(&answer.UserID, &answer.QuestionID, &answer.Status, &answer.FileID, &answer.Filename, &answer.TextContent, &answer.Feedback, &answer.CreatedAt, &answer.UpdatedAt)
+	return row.Scan(&answer.UserID, &answer.QuestionID, &answer.Status, &answer.RequestedHelp, &answer.FileID, &answer.Filename, &answer.TextContent, &answer.Feedback, &answer.CreatedAt, &answer.UpdatedAt)
 }
 
 func (s sqlQuestionRepository) GetOrCreateAnswer(ctx context.Context, userId int32, questionID string) (domain.Answer, error) {
@@ -143,6 +144,11 @@ func (s sqlQuestionRepository) GetAnswer(ctx context.Context, userId int32, ques
 	return answer, nil
 }
 
+func (s sqlQuestionRepository) MarkHelpRequest(ctx context.Context, userId int32, questionId string) error {
+	_, err := s.db.ExecContext(ctx, `UPDATE answers SET requested_help = TRUE WHERE user_id = $1 AND question_id = $2`, userId, questionId)
+	return err
+}
+
 func (s sqlQuestionRepository) SubmitAnswer(ctx context.Context, userId int32, questionId, fileID, filename, textContent string, lastUpdatedAt time.Time) (answer domain.Answer, err error) {
 	now := time.Now().UTC()
 	err = s.scanAnswer(s.db.QueryRowContext(ctx,
@@ -174,7 +180,7 @@ WITH territory_questions AS (
 SELECT 
     tq.territory_id,
     SUM(tq.knowledge_amount) AS total_knowledge,
-	SUM(CASE WHEN a.status = $1 THEN tq.knowledge_amount WHEN a.status = $2 THEN tq.knowledge_amount/2 ELSE 0 END) AS achieved_knowledge
+	SUM(CASE WHEN a.status = $1 OR a.requested_help THEN tq.knowledge_amount/2 WHEN a.status = $2 THEN tq.knowledge_amount ELSE 0 END) AS achieved_knowledge
 FROM territory_questions tq
 LEFT JOIN answers a 
     ON tq.question_id = a.question_id
@@ -183,7 +189,7 @@ GROUP BY tq.territory_id
 ORDER BY tq.territory_id;
 `
 
-	rows, err := s.db.QueryContext(ctx, query, domain.AnswerStatusCorrect, domain.AnswerStatusHalfCorrect, userId)
+	rows, err := s.db.QueryContext(ctx, query, domain.AnswerStatusHalfCorrect, domain.AnswerStatusCorrect, userId)
 	if err != nil {
 		return nil, err
 	}

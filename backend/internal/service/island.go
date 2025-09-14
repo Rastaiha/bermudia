@@ -18,11 +18,14 @@ type Island struct {
 	treasureStore       domain.TreasureStore
 	onNewAnswer         NewAnswerCallback
 	onNewPortableIsland NewPortableIslandCallback
+	onHelpRequest       HelpRequestCallback
 }
 
 type NewAnswerCallback func(username string, territory string, question domain.BookQuestion, answer domain.Answer)
 
 type NewPortableIslandCallback func(userId int32)
+
+type HelpRequestCallback func(territory string, user *domain.User, question domain.BookQuestion) error
 
 func NewIsland(bot *bot.Bot, islandStore domain.IslandStore, questionStore domain.QuestionStore, playerStore domain.PlayerStore, treasureStore domain.TreasureStore) *Island {
 	return &Island{
@@ -183,4 +186,38 @@ func (i *Island) OnNewAnswer(f NewAnswerCallback) {
 
 func (i *Island) OnNewPortableIsland(f NewPortableIslandCallback) {
 	i.onNewPortableIsland = f
+}
+
+func (i *Island) OnHelpRequest(f HelpRequestCallback) {
+	i.onHelpRequest = f
+}
+
+func (i *Island) RequestHelpToAnswer(ctx context.Context, user *domain.User, questionId string) (string, error) {
+	question, err := i.questionStore.GetQuestion(ctx, questionId)
+	if err != nil {
+		return "", err
+	}
+	answer, err := i.questionStore.GetAnswer(ctx, user.ID, questionId)
+	if err != nil {
+		return "", err
+	}
+	if err := domain.CheckRequestHelp(question, answer); err != nil {
+		return "", err
+	}
+
+	err = i.questionStore.MarkHelpRequest(ctx, user.ID, questionId)
+	if err != nil {
+		return "", err
+	}
+
+	islandHeader, err := i.islandStore.GetIslandHeaderByBookIdAndUserId(ctx, question.BookID, user.ID)
+	if err != nil {
+		return "", err
+	}
+	err = i.onHelpRequest(islandHeader.TerritoryID, user, question)
+	if err != nil {
+		return "", fmt.Errorf("failed to call help request callback: %w", err)
+	}
+
+	return user.MeetLink, nil
 }

@@ -21,15 +21,16 @@ type BookQuestion struct {
 }
 
 type Answer struct {
-	UserID      int32
-	QuestionID  string
-	Status      AnswerStatus
-	FileID      sql.NullString
-	Filename    sql.NullString
-	TextContent sql.NullString
-	Feedback    sql.NullString
-	CreatedAt   time.Time
-	UpdatedAt   time.Time
+	UserID        int32
+	QuestionID    string
+	Status        AnswerStatus
+	RequestedHelp bool
+	FileID        sql.NullString
+	Filename      sql.NullString
+	TextContent   sql.NullString
+	Feedback      sql.NullString
+	CreatedAt     time.Time
+	UpdatedAt     time.Time
 }
 
 type AnswerStatus int
@@ -55,6 +56,20 @@ func CheckSubmit(question BookQuestion, answer Answer) error {
 	return nil
 }
 
+func CheckRequestHelp(question BookQuestion, answer Answer) error {
+	err := CheckSubmit(question, answer)
+	if err != nil {
+		return err
+	}
+	if question.KnowledgeAmount <= 0 {
+		return Error{
+			text:   "برای این سؤال نمی توانید درخواست راهنمایی کنید.",
+			reason: ErrorReasonRuleViolation,
+		}
+	}
+	return nil
+}
+
 func GetSubmissionState(question BookQuestion, answer Answer) SubmissionState {
 	submittedAt := answer.UpdatedAt.UnixMilli()
 	if answer.Status == AnswerStatusEmpty {
@@ -74,12 +89,14 @@ func GetSubmissionState(question BookQuestion, answer Answer) SubmissionState {
 		status = "wrong"
 	}
 	return SubmissionState{
-		Submittable: CheckSubmit(question, answer) == nil,
-		Status:      status,
-		Filename:    answer.Filename.String,
-		Value:       answer.TextContent.String,
-		Feedback:    answer.Feedback.String,
-		SubmittedAt: submittedAt,
+		Submittable:      CheckSubmit(question, answer) == nil,
+		CanRequestHelp:   CheckRequestHelp(question, answer) == nil,
+		HasRequestedHelp: answer.RequestedHelp,
+		Status:           status,
+		Filename:         answer.Filename.String,
+		Value:            answer.TextContent.String,
+		Feedback:         answer.Feedback.String,
+		SubmittedAt:      submittedAt,
 	}
 }
 

@@ -8,6 +8,7 @@ import (
 type User struct {
 	ID             int32  `json:"id"`
 	Username       string `json:"username"`
+	MeetLink       string `json:"-"`
 	HashedPassword []byte `json:"-"`
 }
 
