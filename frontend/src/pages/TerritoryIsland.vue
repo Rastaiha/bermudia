@@ -97,7 +97,7 @@ const fetchIslandData = async id => {
         ]);
 
         player.value = playerData;
-        backgroundImage.value = `/images/island/background.png`;
+        backgroundImage.value = `/images/backgrounds/island/background.png`;
         components.value = islandData.components;
         treasures.value = islandData.treasures;
         isLoaded.value = true;
