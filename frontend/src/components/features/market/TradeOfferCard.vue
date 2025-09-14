@@ -19,7 +19,7 @@
                     >
                         <img
                             :src="COST_ITEMS_INFO[item.type].icon"
-                            class="w-6 h-6"
+                            class="w-10 h-10"
                         />
                         <span class="font-semibold text-base text-slate-200">{{
                             item.amount
@@ -62,7 +62,7 @@
                     >
                         <img
                             :src="COST_ITEMS_INFO[item.type].icon"
-                            class="w-6 h-6"
+                            class="w-10 h-10"
                         />
                         <span class="font-semibold text-base text-slate-200">{{
                             item.amount
