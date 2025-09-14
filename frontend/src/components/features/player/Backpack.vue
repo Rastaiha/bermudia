@@ -41,7 +41,7 @@
                 <div class="flex items-center">
                     <img
                         :src="COST_ITEMS_INFO[item].icon"
-                        class="w-8 h-8 ml-3"
+                        class="w-12 h-12 ml-3"
                         :alt="item + 'icon'"
                     />
                     <span class="text-base font-medium text-white">{{

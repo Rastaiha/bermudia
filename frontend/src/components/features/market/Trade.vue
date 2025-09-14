@@ -47,7 +47,7 @@
                         <img
                             :src="COST_ITEMS_INFO[type].icon"
                             :alt="type"
-                            class="w-8 h-8 flex-shrink-0"
+                            class="w-10 h-10 flex-shrink-0"
                         />
                         <div class="flex-grow text-right">
                             <span class="font-semibold">{{
@@ -95,7 +95,7 @@
                         <img
                             :src="COST_ITEMS_INFO[type].icon"
                             :alt="type"
-                            class="w-8 h-8 flex-shrink-0"
+                            class="w-10 h-10 flex-shrink-0"
                         />
                         <span class="font-semibold flex-grow text-right">{{
                             COST_ITEMS_INFO[type].name
