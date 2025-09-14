@@ -394,97 +394,101 @@
                 islandPrerequisites: {},
             };
 
-            // Dynamically discovered background images
-            const availableBackgrounds = [
-                'background1.jpg',
-                'background2.jpg',
-                'background3.jpg',
-            ];
+            // Directory structure configuration
+            const imageConfig = {
+                backgrounds: {
+                    territory: 'images/backgrounds/territory/',
+                },
+                assets: {
+                    arterial: 'images/islands/arterial/',
+                    challenge: 'images/islands/challenge/',
+                    educational: 'images/islands/educational/',
+                    refuel: 'images/islands/refuel/',
+                },
+            };
 
-            // Dynamically discovered asset images
-            const availableAssets = [
-                'islands/island1.png',
-                'islands/island1.svg',
-                'islands/island2.png',
-                'islands/island2.svg',
-                'islands/island3.png',
-                'islands/island3.svg',
-                'islands/island4.png',
-                'islands/island4.svg',
-                'islands/island5.png',
-                'islands/island5.svg',
-                'islands/island6.png',
-                'islands/island6.svg',
-                'islands/island7.png',
-                'islands/island7.svg',
-                'islands/planet1.png',
-                'islands/planet10.png',
-                'islands/planet11.png',
-                'islands/planet12.png',
-                'islands/planet13.png',
-                'islands/planet14.png',
-                'islands/planet15.png',
-                'islands/planet16.png',
-                'islands/planet17.png',
-                'islands/planet18.png',
-                'islands/planet19.png',
-                'islands/planet2.png',
-                'islands/planet20.png',
-                'islands/planet21.png',
-                'islands/planet22.png',
-                'islands/planet23.png',
-                'islands/planet24.png',
-                'islands/planet25.png',
-                'islands/planet26.png',
-                'islands/planet27.png',
-                'islands/planet28.png',
-                'islands/planet29.png',
-                'islands/planet3.png',
-                'islands/planet30.png',
-                'islands/planet31.png',
-                'islands/planet32.png',
-                'islands/planet33.png',
-                'islands/planet34.png',
-                'islands/planet35.png',
-                'islands/planet36.png',
-                'islands/planet37.png',
-                'islands/planet38.png',
-                'islands/planet39.png',
-                'islands/planet4.png',
-                'islands/planet40.png',
-                'islands/planet41.png',
-                'islands/planet42.png',
-                'islands/planet43.png',
-                'islands/planet44.png',
-                'islands/planet45.png',
-                'islands/planet46.png',
-                'islands/planet47.png',
-                'islands/planet48.png',
-                'islands/planet49.png',
-                'islands/planet5.png',
-                'islands/planet50.png',
-                'islands/planet51.png',
-                'islands/planet52.png',
-                'islands/planet53.png',
-                'islands/planet54.png',
-                'islands/planet55.png',
-                'islands/planet56.png',
-                'islands/planet6.png',
-                'islands/planet7.png',
-                'islands/planet8.png',
-                'islands/planet9.png',
-            ];
+            // Dynamically discovered images (will be populated)
+            let availableBackgrounds = [];
+            let availableAssets = [];
 
-            // Initialize the app
-            function init() {
-                loadBackgrounds();
-                loadAssets();
-                setupEventListeners();
-                setTool('select');
+            // Function to check if an image exists
+            function imageExists(url) {
+                return new Promise(resolve => {
+                    const img = new Image();
+                    img.onload = () => resolve(true);
+                    img.onerror = () => resolve(false);
+                    img.src = url;
+                });
             }
 
+            // Function to discover images in a directory (1.png to n.png)
+            async function discoverImages(basePath, prefix = '') {
+                const images = [];
+                let index = 1;
+
+                const extensions = ['png', 'jpg'];
+                while (true) {
+                    let found = false;
+                    let imagePath;
+                    for (const ext of extensions) {
+                        const probablePath = `${basePath}${prefix}${index}.${ext}`;
+                        const exists = await imageExists(probablePath);
+                        if (exists) {
+                            found = true;
+                            imagePath = probablePath;
+                            break;
+                        }
+                    }
+
+                    if (!found) {
+                        break;
+                    }
+                    images.push(imagePath);
+                    index++;
+                }
+
+                return images;
+            }
+
+            // Load all background images
+            async function loadBackgroundImages() {
+                availableBackgrounds = [];
+
+                for (const [category, path] of Object.entries(
+                    imageConfig.backgrounds
+                )) {
+                    console.log(path);
+                    console.log(category);
+                    const images = await discoverImages(path);
+                    availableBackgrounds.push(...images);
+                }
+
+                console.log(
+                    `Discovered ${availableBackgrounds.length} background images`
+                );
+            }
+
+            // Load all asset images
+            async function loadAssetImages() {
+                availableAssets = [];
+
+                for (const [category, path] of Object.entries(
+                    imageConfig.assets
+                )) {
+                    const images = await discoverImages(path);
+                    availableAssets.push(...images);
+                }
+
+                console.log(
+                    `Discovered ${availableAssets.length} asset images`
+                );
+            }
+
+            // Initialize backgrounds in the UI
             function loadBackgrounds() {
                 const grid = document.getElementById('backgroundGrid');
+                grid.innerHTML = ''; // Clear existing items
+
                 availableBackgrounds.forEach((bg, index) => {
                     const item = document.createElement('div');
                     item.className = 'background-item';
@@ -494,8 +498,11 @@
                 });
             }
 
+            // Initialize assets in the UI
             function loadAssets() {
                 const grid = document.getElementById('assetGrid');
+                grid.innerHTML = ''; // Clear existing items
+
                 availableAssets.forEach((asset, index) => {
                     const item = document.createElement('div');
                     item.className = 'asset-item';
@@ -507,6 +514,55 @@
                 });
             }
 
+            // Initialize the app
+            async function init() {
+                // Show loading indicator if you have one
+                console.log('Loading images...');
+
+                // Load images dynamically
+                await Promise.all([loadBackgroundImages(), loadAssetImages()]);
+
+                // Initialize UI components
+                loadBackgrounds();
+                loadAssets();
+                setupEventListeners();
+                setTool('select');
+
+                console.log('App initialized successfully');
+            }
+
+            // Alternative version if you want to load images with different extensions
+            async function discoverImagesWithExtensions(
+                basePath,
+                extensions = ['png', 'jpg', 'jpeg', 'svg']
+            ) {
+                const images = [];
+                let index = 1;
+
+                while (true) {
+                    let foundImage = false;
+
+                    for (const ext of extensions) {
+                        const imagePath = `${basePath}${index}.${ext}`;
+                        const exists = await imageExists(imagePath);
+
+                        if (exists) {
+                            images.push(imagePath);
+                            foundImage = true;
+                            break; // Found one, move to next index
+                        }
+                    }
+
+                    if (!foundImage) {
+                        break; // No image found with any extension at this index
+                    }
+
+                    index++;
+                }
+
+                return images;
+            }
+
             function selectBackground(bgPath, element) {
                 // Remove previous selection
                 document.querySelectorAll('.background-item').forEach(item => {
@@ -516,7 +572,7 @@
                 // Select new background
                 element.classList.add('selected');
                 selectedBackground = bgPath;
-                mapData.backgroundAsset = bgPath.split('/').pop();
+                mapData.backgroundAsset = `/${bgPath}`;
 
                 // Apply background to canvas
                 document.getElementById('mapCanvas').style.backgroundImage =
@@ -579,7 +635,7 @@
                         y: y / rect.height,
                         width: 80 / rect.width,
                         height: 80 / rect.height,
-                        iconAsset: assetPath.split('/').pop(),
+                        iconAsset: `/${assetPath}`,
                     };
                     mapData.islands.push(island);
                 }
@@ -959,7 +1015,7 @@
 
                 // Set background
                 if (data.backgroundAsset) {
-                    const bgPath = `backgrounds/${data.backgroundAsset}`;
+                    const bgPath = data.backgroundAsset.substring(1);
                     document.getElementById('mapCanvas').style.backgroundImage =
                         `url(${bgPath})`;
                 }
@@ -971,7 +1027,7 @@
                 data.islands.forEach(island => {
                     const x = island.x * rect.width;
                     const y = island.y * rect.height;
-                    const assetPath = `islands/${island.iconAsset}`;
+                    const assetPath = island.iconAsset.substring(1);
 
                     const asset = createAssetElement(assetPath, x, y, island);
 

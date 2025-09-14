@@ -107,7 +107,7 @@ const fetchPlayerAndUserData = async () => {
 };
 
 const setupTerritoryData = territoryData => {
-    backgroundImage.value = `/images/backgrounds/territory/${territoryData.backgroundAsset}`;
+    backgroundImage.value = territoryData.backgroundAsset;
     territoryName.value = territoryData.name;
     islands.value = territoryData.islands;
     edges.value = territoryData.edges;
