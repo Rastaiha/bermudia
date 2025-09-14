@@ -42,7 +42,20 @@ const (
 	AnswerStatusHalfCorrect AnswerStatus = 4
 )
 
-func GetSubmissionStateFromAnswer(answer Answer) SubmissionState {
+func CheckSubmit(question BookQuestion, answer Answer) error {
+	if answer.Status == AnswerStatusCorrect || answer.Status == AnswerStatusHalfCorrect {
+		return ErrSubmitToCorrectAnswer
+	}
+	if answer.Status == AnswerStatusPending {
+		return ErrSubmitToPendingAnswer
+	}
+	if answer.Status == AnswerStatusWrong && question.KnowledgeAmount <= 0 {
+		return ErrOneTimeSubmit
+	}
+	return nil
+}
+
+func GetSubmissionState(question BookQuestion, answer Answer) SubmissionState {
 	submittedAt := answer.UpdatedAt.UnixMilli()
 	if answer.Status == AnswerStatusEmpty {
 		submittedAt = 0
@@ -61,7 +74,7 @@ func GetSubmissionStateFromAnswer(answer Answer) SubmissionState {
 		status = "wrong"
 	}
 	return SubmissionState{
-		Submittable: answer.Status == AnswerStatusEmpty || answer.Status == AnswerStatusWrong,
+		Submittable: CheckSubmit(question, answer) == nil,
 		Status:      status,
 		Filename:    answer.Filename.String,
 		Value:       answer.TextContent.String,
@@ -75,7 +88,7 @@ var (
 		text:   "question not found",
 		reason: ErrorReasonResourceNotFound,
 	}
-	ErrSubmitToNonExistingAnswer = Error{
+	ErrAnswerNotFound = Error{
 		text:   "answer id does not exist",
 		reason: ErrorReasonResourceNotFound,
 	}
@@ -85,6 +98,10 @@ var (
 	}
 	ErrSubmitToPendingAnswer = Error{
 		text:   "در حال حاضر یک پاسخ بررسی نشده برای این سؤال وجود دارد.",
+		reason: ErrorReasonRuleViolation,
+	}
+	ErrOneTimeSubmit = Error{
+		text:   "برای این سؤال تنها یک بار می توانید پاسخ ارسال کنید.",
 		reason: ErrorReasonRuleViolation,
 	}
 )

@@ -126,47 +126,33 @@ func (s sqlQuestionRepository) GetOrCreateAnswer(ctx context.Context, userId int
 	return answer, nil
 }
 
-func (s sqlQuestionRepository) SubmitAnswer(ctx context.Context, userId int32, questionId, fileID, filename, textContent string) (answer domain.Answer, err error) {
-	tx, err := s.db.BeginTx(ctx, nil)
-	if err != nil {
-		return domain.Answer{}, fmt.Errorf("start transaction: %w", err)
-	}
-	defer func() {
-		if err != nil {
-			err = errors.Join(err, tx.Rollback())
-		} else {
-			err = tx.Commit()
-		}
-	}()
-
-	var status domain.AnswerStatus
-	err = tx.QueryRowContext(ctx, `SELECT status FROM answers WHERE user_id = $1 AND question_id = $2`,
-		userId, questionId).Scan(&status)
-	if errors.Is(err, sql.ErrNoRows) {
-		return domain.Answer{}, domain.ErrSubmitToNonExistingAnswer
-	}
-	if err != nil {
-		return answer, err
-	}
-
-	if status == domain.AnswerStatusCorrect || status == domain.AnswerStatusHalfCorrect {
-		return domain.Answer{}, domain.ErrSubmitToCorrectAnswer
-	}
-
-	if answer.Status == domain.AnswerStatusPending {
-		return domain.Answer{}, domain.ErrSubmitToPendingAnswer
-	}
-
-	now := time.Now().UTC()
-
-	err = s.scanAnswer(tx.QueryRowContext(ctx,
-		`UPDATE answers SET status = $1, file_id = $2, filename = $3, text_content = $4, updated_at = $5
-		 WHERE user_id = $6 AND question_id = $7 RETURNING `+s.answerColumnsToSelect(),
-		domain.AnswerStatusPending, n(fileID), n(filename), n(textContent), now, userId, questionId,
+func (s sqlQuestionRepository) GetAnswer(ctx context.Context, userId int32, questionId string) (domain.Answer, error) {
+	var answer domain.Answer
+	err := s.scanAnswer(s.db.QueryRowContext(ctx,
+		`SELECT `+s.answerColumnsToSelect()+` FROM answers WHERE user_id = $1 AND question_id = $2`,
+		userId, questionId,
 	), &answer)
 
 	if errors.Is(err, sql.ErrNoRows) {
-		return domain.Answer{}, domain.ErrSubmitToNonExistingAnswer
+		return answer, domain.ErrAnswerNotFound
+	}
+	if err != nil {
+		return domain.Answer{}, fmt.Errorf("failed to get answer: %w", err)
+	}
+
+	return answer, nil
+}
+
+func (s sqlQuestionRepository) SubmitAnswer(ctx context.Context, userId int32, questionId, fileID, filename, textContent string, lastUpdatedAt time.Time) (answer domain.Answer, err error) {
+	now := time.Now().UTC()
+	err = s.scanAnswer(s.db.QueryRowContext(ctx,
+		`UPDATE answers SET status = $1, file_id = $2, filename = $3, text_content = $4, updated_at = $5
+		 WHERE user_id = $6 AND question_id = $7 AND updated_at = $8 RETURNING `+s.answerColumnsToSelect(),
+		domain.AnswerStatusPending, n(fileID), n(filename), n(textContent), now, userId, questionId, lastUpdatedAt.UTC(),
+	), &answer)
+
+	if errors.Is(err, sql.ErrNoRows) {
+		return domain.Answer{}, domain.ErrAnswerNotFound
 	}
 	if err != nil {
 		return domain.Answer{}, fmt.Errorf("db: failed to submit answer: %w", err)

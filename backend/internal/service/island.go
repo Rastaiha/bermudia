@@ -81,6 +81,10 @@ func (i *Island) GetIsland(ctx context.Context, userId int32, islandId string) (
 			continue
 		}
 		if c.Question != nil {
+			question, err := i.questionStore.GetQuestion(ctx, c.Question.ID)
+			if err != nil {
+				return nil, err
+			}
 			answer, err := i.questionStore.GetOrCreateAnswer(ctx, userId, c.Question.ID)
 			if err != nil {
 				return nil, err
@@ -91,7 +95,7 @@ func (i *Island) GetIsland(ctx context.Context, userId int32, islandId string) (
 					Type:            c.Question.InputType,
 					Accept:          c.Question.InputAccept,
 					Description:     c.Question.Text,
-					SubmissionState: domain.GetSubmissionStateFromAnswer(answer),
+					SubmissionState: domain.GetSubmissionState(question, answer),
 				},
 			})
 			continue
@@ -135,6 +139,15 @@ func (i *Island) SubmitAnswer(ctx context.Context, user *domain.User, questionId
 		return nil, err
 	}
 
+	answer, err := i.questionStore.GetAnswer(ctx, user.ID, questionId)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := domain.CheckSubmit(question, answer); err != nil {
+		return nil, err
+	}
+
 	fileId := ""
 	if file != nil {
 		msg, err := i.bot.SendDocument(ctx, &bot.SendDocumentParams{
@@ -153,14 +166,14 @@ func (i *Island) SubmitAnswer(ctx context.Context, user *domain.User, questionId
 		fileId = msg.Document.FileID
 	}
 
-	answer, err := i.questionStore.SubmitAnswer(ctx, user.ID, questionId, fileId, filename, textContent)
+	answer, err = i.questionStore.SubmitAnswer(ctx, user.ID, questionId, fileId, filename, textContent, answer.UpdatedAt)
 	if err != nil {
 		return nil, err
 	}
 
 	i.onNewAnswer(user.Username, territoryID, question, answer)
 
-	r := domain.GetSubmissionStateFromAnswer(answer)
+	r := domain.GetSubmissionState(question, answer)
 	return &r, nil
 }
 
