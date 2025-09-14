@@ -17,6 +17,7 @@ CREATE TABLE IF NOT EXISTS questions (
     question_id VARCHAR(255) PRIMARY KEY,
     book_id VARCHAR(255) NOT NULL,
     text TEXT NOT NULL,
+    context TEXT NOT NULL,
     knowledge_amount INT4 NOT NULL,
     reward_source VARCHAR(255)
 );
@@ -90,8 +91,8 @@ func (s sqlQuestionRepository) BindQuestionsToBook(ctx context.Context, bookId s
 		return fmt.Errorf("delete questions: %w", err)
 	}
 	for _, q := range questions {
-		_, err = tx.ExecContext(ctx, `INSERT INTO questions (question_id, book_id, text, knowledge_amount, reward_source) VALUES ($1, $2, $3, $4, $5) ;`,
-			n(q.QuestionID), n(bookId), n(q.Text), q.KnowledgeAmount, n(q.RewardSource),
+		_, err = tx.ExecContext(ctx, `INSERT INTO questions (question_id, book_id, text, context, knowledge_amount, reward_source) VALUES ($1, $2, $3, $4, $5, $6) ;`,
+			n(q.QuestionID), n(bookId), n(q.Text), q.Context, q.KnowledgeAmount, n(q.RewardSource),
 		)
 		if err != nil {
 			return fmt.Errorf("insert questions: %w", err)
@@ -230,8 +231,8 @@ WHERE i.id = $4 ;
 func (s sqlQuestionRepository) GetQuestion(ctx context.Context, questionId string) (domain.BookQuestion, error) {
 	var question domain.BookQuestion
 	var rewardSource sql.NullString
-	err := s.db.QueryRowContext(ctx, `SELECT question_id, book_id, text, knowledge_amount, reward_source FROM questions WHERE question_id = $1 ;`,
-		questionId).Scan(&question.QuestionID, &question.BookID, &question.Text, &question.KnowledgeAmount, &rewardSource)
+	err := s.db.QueryRowContext(ctx, `SELECT question_id, book_id, text, context, knowledge_amount, reward_source FROM questions WHERE question_id = $1 ;`,
+		questionId).Scan(&question.QuestionID, &question.BookID, &question.Text, &question.Context, &question.KnowledgeAmount, &rewardSource)
 	question.RewardSource = rewardSource.String
 	if errors.Is(err, sql.ErrNoRows) {
 		return question, domain.ErrQuestionNotFound

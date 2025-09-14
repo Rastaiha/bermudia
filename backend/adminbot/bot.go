@@ -168,7 +168,11 @@ func (m *Bot) getGroup(territory string) (string, int64) {
 }
 
 func (m *Bot) getMetaData(territory string, username string, question domain.BookQuestion) string {
-	return fmt.Sprintf("#%s\nUser: #%s\nQuestion: #%s\n\nمتن سؤال:\n%s", territory, username, question.QuestionID, question.Text)
+	ctx := question.Context
+	if ctx != "" {
+		ctx = "\n\n" + ctx
+	}
+	return fmt.Sprintf("#%s\nUser: #%s\nQuestion: #%s%s\n\nمتن سؤال:\n%s", territory, username, question.QuestionID, ctx, question.Text)
 }
 
 func (m *Bot) handleTag(ctx context.Context, b *bot.Bot, update *models.Update) {
@@ -289,7 +293,7 @@ func revertKeyboard(correctionId string, currentNewStatus domain.AnswerStatus) m
 	}
 	keyboard.InlineKeyboard = append(keyboard.InlineKeyboard, []models.InlineKeyboardButton{
 		{
-			Text:         "ثبت نهایی نتیجه تصحیح",
+			Text:         "ثبت نهایی و ارسال نتیجه تصحیح",
 			CallbackData: finalizeCB + fmt.Sprintf("%s", correctionId),
 		},
 	})

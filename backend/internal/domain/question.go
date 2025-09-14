@@ -18,6 +18,7 @@ type BookQuestion struct {
 	Text            string
 	KnowledgeAmount int32
 	RewardSource    string
+	Context         string
 }
 
 type Answer struct {
