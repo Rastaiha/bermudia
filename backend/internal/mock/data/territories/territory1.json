@@ -11,7 +11,7 @@
       "y": 0.35,
       "width": 0.12,
       "height": 0.18,
-      "iconAsset": "island1.png"
+      "iconAsset": "educational/1.png"
     },
     {
       "id": "island_math1",
@@ -20,7 +20,7 @@
       "y": 0.42,
       "width": 0.14,
       "height": 0.16,
-      "iconAsset": "island6.png"
+      "iconAsset": "educational/2.png"
     },
     {
       "id": "island_math2",
@@ -29,7 +29,7 @@
       "y": 0.25,
       "width": 0.13,
       "height": 0.20,
-      "iconAsset": "island2.png"
+      "iconAsset": "challenge/3.png"
     },
     {
       "id": "island_science1",
@@ -38,7 +38,7 @@
       "y": 0.68,
       "width": 0.15,
       "height": 0.17,
-      "iconAsset": "island3.png"
+      "iconAsset": "challenge/4.png"
     },
     {
       "id": "island_final",
@@ -47,7 +47,7 @@
       "y": 0.62,
       "width": 0.16,
       "height": 0.22,
-      "iconAsset": "island7.png"
+      "iconAsset": "challenge/5.png"
     },
     {
       "id": "island_refuel",
@@ -56,7 +56,7 @@
       "y": 0.62,
       "width": 0.16,
       "height": 0.22,
-      "iconAsset": "island3.png"
+      "iconAsset": "challenge/6.png"
     },
     {
       "id": "island_terminal",
@@ -65,7 +65,7 @@
       "y": 0.38,
       "width": 0.14,
       "height": 0.16,
-      "iconAsset": "island4.png"
+      "iconAsset": "educational/7.png"
     }
   ],
   "edges": [

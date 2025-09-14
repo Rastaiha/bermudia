@@ -11,7 +11,7 @@
       "y": 0.85,
       "width": 0.12,
       "height": 0.18,
-      "iconAsset": "island5.png"
+      "iconAsset": "educational/5.png"
     },
     {
       "id": "island_spectacle",
@@ -20,7 +20,7 @@
       "y": 0.75,
       "width": 0.14,
       "height": 0.14,
-      "iconAsset": "island2.png"
+      "iconAsset": "educational/6.png"
     },
     {
       "id": "island_deer",
@@ -29,7 +29,7 @@
       "y": 0.40,
       "width": 0.16,
       "height": 0.22,
-      "iconAsset": "island6.png"
+      "iconAsset": "challenge/1.png"
     },
     {
       "id": "island_long_refuel",
@@ -38,7 +38,7 @@
       "y": 0.70,
       "width": 0.16,
       "height": 0.22,
-      "iconAsset": "island3.png"
+      "iconAsset": "challenge/2.png"
     },
     {
       "id": "island_gallops",
@@ -47,7 +47,7 @@
       "y": 0.65,
       "width": 0.14,
       "height": 0.16,
-      "iconAsset": "island4.png"
+      "iconAsset": "challenge/3.png"
     }
   ],
   "edges": [

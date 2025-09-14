@@ -11,7 +11,7 @@
       "y": 0.41730038022813687,
       "width": 0.07935483870967742,
       "height": 0.11692015209125475,
-      "iconAsset": "planet22.png"
+      "iconAsset": "educational/10.png"
     },
     {
       "id": "asset_1757105027669",
@@ -20,7 +20,7 @@
       "y": 0.3574144486692015,
       "width": 0.08580645161290322,
       "height": 0.12642585551330798,
-      "iconAsset": "planet6.png"
+      "iconAsset": "educational/11.png"
     },
     {
       "id": "asset_1757105036317",
@@ -29,7 +29,7 @@
       "y": 0.3678707224334601,
       "width": 0.08516129032258064,
       "height": 0.12547528517110265,
-      "iconAsset": "planet17.png"
+      "iconAsset": "educational/12.png"
     },
     {
       "id": "asset_1757105057389",
@@ -38,7 +38,7 @@
       "y": 0.4134980988593156,
       "width": 0.08903225806451613,
       "height": 0.1311787072243346,
-      "iconAsset": "planet3.png"
+      "iconAsset": "educational/13.png"
     },
     {
       "id": "asset_1757105080853",
@@ -47,7 +47,7 @@
       "y": 0.43346007604562736,
       "width": 0.08645161290322581,
       "height": 0.12737642585551331,
-      "iconAsset": "planet15.png"
+      "iconAsset": "educational/14.png"
     },
     {
       "id": "asset_1757105101817",
@@ -56,7 +56,7 @@
       "y": 0.32509505703422054,
       "width": 0.08838709677419355,
       "height": 0.13022813688212928,
-      "iconAsset": "planet5.png"
+      "iconAsset": "educational/15.png"
     },
     {
       "id": "asset_1757105170927",
@@ -65,7 +65,7 @@
       "y": 0.8174904942965779,
       "width": 0.08193548387096775,
       "height": 0.12072243346007605,
-      "iconAsset": "planet14.png"
+      "iconAsset": "refuel/1.png"
     },
     {
       "id": "asset_1757105179599",
@@ -74,7 +74,7 @@
       "y": 0.05228136882129278,
       "width": 0.1064516129032258,
       "height": 0.15684410646387834,
-      "iconAsset": "planet19.png"
+      "iconAsset": "arterial/1.png"
     },
     {
       "id": "asset_1757105186752",
@@ -83,7 +83,7 @@
       "y": 0.6596958174904943,
       "width": 0.07161290322580645,
       "height": 0.10551330798479087,
-      "iconAsset": "planet11.png"
+      "iconAsset": "challenge/1.png"
     },
     {
       "id": "asset_1757105230212",
@@ -92,7 +92,7 @@
       "y": 0.5741444866920152,
       "width": 0.08451612903225807,
       "height": 0.12452471482889733,
-      "iconAsset": "planet7.png"
+      "iconAsset": "challenge/2.png"
     },
     {
       "id": "asset_1757105286513",
@@ -101,7 +101,7 @@
       "y": 0.7861216730038023,
       "width": 0.09806451612903226,
       "height": 0.1444866920152091,
-      "iconAsset": "planet13.png"
+      "iconAsset": "challenge/3.png"
     },
     {
       "id": "asset_1757105316302",
@@ -110,7 +110,7 @@
       "y": 0.5484790874524715,
       "width": 0.11096774193548387,
       "height": 0.1634980988593156,
-      "iconAsset": "planet24.png"
+      "iconAsset": "challenge/4.png"
     },
     {
       "id": "asset_1757105330626",
@@ -119,7 +119,7 @@
       "y": 0.7328897338403042,
       "width": 0.09096774193548388,
       "height": 0.13403041825095058,
-      "iconAsset": "planet2.png"
+      "iconAsset": "challenge/5.png"
     },
     {
       "id": "asset_1757105367858",
@@ -128,7 +128,7 @@
       "y": 0.034220532319391636,
       "width": 0.10258064516129033,
       "height": 0.15114068441064638,
-      "iconAsset": "planet12.png"
+      "iconAsset": "challenge/6.png"
     }
   ],
   "edges": [
