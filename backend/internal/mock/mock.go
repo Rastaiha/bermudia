@@ -81,6 +81,7 @@ type mockUser struct {
 	Username          string `json:"username"`
 	Password          string `json:"password"`
 	StartingTerritory string `json:"startingTerritory"`
+	MeetLink          string `json:"meetLink"`
 }
 
 func createMockUsers(adminService *service.Admin, usersJson []byte, defaultPass string) error {
@@ -96,7 +97,7 @@ func createMockUsers(adminService *service.Admin, usersJson []byte, defaultPass 
 		if password == "" {
 			password = defaultPass
 		}
-		errs = append(errs, adminService.CreateUser(ctx, int32(1001+i), u.Username, password, u.StartingTerritory))
+		errs = append(errs, adminService.CreateUser(ctx, int32(1001+i), u.Username, password, u.StartingTerritory, u.MeetLink))
 	}
 	if err := errors.Join(errs...); err != nil {
 		return fmt.Errorf("failed to create mock users: %w", err)

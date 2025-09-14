@@ -38,7 +38,6 @@ func defaultConfig() *Config {
 		Postgres: Postgres{
 			SSLMode: "disable",
 		},
-		CorrectionJobInterval:  10 * time.Second,
-		CorrectionRevertWindow: 10 * time.Second,
+		CorrectionJobInterval: 10 * time.Second,
 	}
 }

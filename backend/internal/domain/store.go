@@ -73,10 +73,12 @@ type QuestionStore interface {
 	// GetOrCreateAnswer gets the Answer if it exists
 	// otherwise creates an Answer with the given ID and zero value for other fields (except timestamps).
 	GetOrCreateAnswer(ctx context.Context, userId int32, questionID string) (Answer, error)
+	GetAnswer(ctx context.Context, userId int32, questionId string) (Answer, error)
+	MarkHelpRequest(ctx context.Context, userId int32, questionId string) error
 	// SubmitAnswer updates the existing Answer with the given args and sets the answer status to AnswerStatusPending.
 	// If the answer is in AnswerStatusCorrect status, it returns ErrSubmitToCorrectAnswer error.
 	// If the answer is in AnswerStatusPending status, it returns ErrSubmitToPendingAnswer error.
-	SubmitAnswer(ctx context.Context, userId int32, questionId string, fileID, filename, textContent string) (Answer, error)
+	SubmitAnswer(ctx context.Context, userId int32, questionId, fileID, filename, textContent string, lastUpdatedAt time.Time) (Answer, error)
 	GetKnowledgeBars(ctx context.Context, userId int32) ([]KnowledgeBar, error)
 	HasAnsweredIsland(ctx context.Context, userId int32, islandId string) (bool, error)
 	GetQuestion(ctx context.Context, questionId string) (BookQuestion, error)

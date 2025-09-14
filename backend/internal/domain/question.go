@@ -21,15 +21,16 @@ type BookQuestion struct {
 }
 
 type Answer struct {
-	UserID      int32
-	QuestionID  string
-	Status      AnswerStatus
-	FileID      sql.NullString
-	Filename    sql.NullString
-	TextContent sql.NullString
-	Feedback    sql.NullString
-	CreatedAt   time.Time
-	UpdatedAt   time.Time
+	UserID        int32
+	QuestionID    string
+	Status        AnswerStatus
+	RequestedHelp bool
+	FileID        sql.NullString
+	Filename      sql.NullString
+	TextContent   sql.NullString
+	Feedback      sql.NullString
+	CreatedAt     time.Time
+	UpdatedAt     time.Time
 }
 
 type AnswerStatus int
@@ -42,7 +43,34 @@ const (
 	AnswerStatusHalfCorrect AnswerStatus = 4
 )
 
-func GetSubmissionStateFromAnswer(answer Answer) SubmissionState {
+func CheckSubmit(question BookQuestion, answer Answer) error {
+	if answer.Status == AnswerStatusCorrect || answer.Status == AnswerStatusHalfCorrect {
+		return ErrSubmitToCorrectAnswer
+	}
+	if answer.Status == AnswerStatusPending {
+		return ErrSubmitToPendingAnswer
+	}
+	if answer.Status == AnswerStatusWrong && question.KnowledgeAmount <= 0 {
+		return ErrOneTimeSubmit
+	}
+	return nil
+}
+
+func CheckRequestHelp(question BookQuestion, answer Answer) error {
+	err := CheckSubmit(question, answer)
+	if err != nil {
+		return err
+	}
+	if question.KnowledgeAmount <= 0 {
+		return Error{
+			text:   "برای این سؤال نمی توانید درخواست راهنمایی کنید.",
+			reason: ErrorReasonRuleViolation,
+		}
+	}
+	return nil
+}
+
+func GetSubmissionState(question BookQuestion, answer Answer) SubmissionState {
 	submittedAt := answer.UpdatedAt.UnixMilli()
 	if answer.Status == AnswerStatusEmpty {
 		submittedAt = 0
@@ -61,12 +89,14 @@ func GetSubmissionStateFromAnswer(answer Answer) SubmissionState {
 		status = "wrong"
 	}
 	return SubmissionState{
-		Submittable: answer.Status == AnswerStatusEmpty || answer.Status == AnswerStatusWrong,
-		Status:      status,
-		Filename:    answer.Filename.String,
-		Value:       answer.TextContent.String,
-		Feedback:    answer.Feedback.String,
-		SubmittedAt: submittedAt,
+		Submittable:      CheckSubmit(question, answer) == nil,
+		CanRequestHelp:   CheckRequestHelp(question, answer) == nil,
+		HasRequestedHelp: answer.RequestedHelp,
+		Status:           status,
+		Filename:         answer.Filename.String,
+		Value:            answer.TextContent.String,
+		Feedback:         answer.Feedback.String,
+		SubmittedAt:      submittedAt,
 	}
 }
 
@@ -75,7 +105,7 @@ var (
 		text:   "question not found",
 		reason: ErrorReasonResourceNotFound,
 	}
-	ErrSubmitToNonExistingAnswer = Error{
+	ErrAnswerNotFound = Error{
 		text:   "answer id does not exist",
 		reason: ErrorReasonResourceNotFound,
 	}
@@ -85,6 +115,10 @@ var (
 	}
 	ErrSubmitToPendingAnswer = Error{
 		text:   "در حال حاضر یک پاسخ بررسی نشده برای این سؤال وجود دارد.",
+		reason: ErrorReasonRuleViolation,
+	}
+	ErrOneTimeSubmit = Error{
+		text:   "برای این سؤال تنها یک بار می توانید پاسخ ارسال کنید.",
 		reason: ErrorReasonRuleViolation,
 	}
 )

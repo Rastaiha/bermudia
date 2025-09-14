@@ -86,12 +86,14 @@ type IslandInput struct {
 }
 
 type SubmissionState struct {
-	Submittable bool   `json:"submittable"`
-	Status      string `json:"status"`
-	Filename    string `json:"filename,omitempty"`
-	Value       string `json:"value,omitempty"`
-	Feedback    string `json:"feedback,omitempty"`
-	SubmittedAt int64  `json:"submittedAt,omitempty,string"`
+	Submittable      bool   `json:"submittable"`
+	CanRequestHelp   bool   `json:"canRequestHelp"`
+	HasRequestedHelp bool   `json:"hasRequestedHelp"`
+	Status           string `json:"status"`
+	Filename         string `json:"filename,omitempty"`
+	Value            string `json:"value,omitempty"`
+	Feedback         string `json:"feedback,omitempty"`
+	SubmittedAt      int64  `json:"submittedAt,omitempty,string"`
 }
 
 const (

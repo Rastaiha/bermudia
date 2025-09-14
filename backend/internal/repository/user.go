@@ -15,6 +15,7 @@ CREATE TABLE IF NOT EXISTS users (
     id INT4 PRIMARY KEY,
     username_display VARCHAR(255) NOT NULL,
     username VARCHAR(255) NOT NULL UNIQUE,
+    meet_link VARCHAR(255) NOT NULL,
     hashed_password BYTEA NOT NULL
 );`
 )
@@ -34,11 +35,11 @@ func NewSqlUser(db *sql.DB) (domain.UserStore, error) {
 }
 
 func (s sqlUser) columns() string {
-	return "SELECT id, username_display, hashed_password FROM users"
+	return "SELECT id, username_display, meet_link, hashed_password FROM users"
 }
 
 func (s sqlUser) scan(row *sql.Row, user *domain.User) error {
-	err := row.Scan(&user.ID, &user.Username, &user.HashedPassword)
+	err := row.Scan(&user.ID, &user.Username, &user.MeetLink, &user.HashedPassword)
 	if errors.Is(err, sql.ErrNoRows) {
 		return domain.ErrUserNotFound
 	}
@@ -46,10 +47,11 @@ func (s sqlUser) scan(row *sql.Row, user *domain.User) error {
 }
 
 func (s sqlUser) Create(ctx context.Context, user *domain.User) error {
-	_, err := s.db.ExecContext(ctx, `INSERT INTO users (id, username_display, username, hashed_password) VALUES ($1, $2, $3, $4)`,
+	_, err := s.db.ExecContext(ctx, `INSERT INTO users (id, username_display, username, meet_link, hashed_password) VALUES ($1, $2, $3, $4, $5)`,
 		n(user.ID),
 		n(user.Username),
 		n(strings.ToLower(user.Username)),
+		user.MeetLink, // TODO: wrap in n
 		user.HashedPassword,
 	)
 	return err

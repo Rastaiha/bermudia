@@ -350,7 +350,7 @@ func (p *Player) applyCorrection(ctx context.Context, c domain.Correction) (ok b
 				IslandID:      islandHeader.ID,
 				IslandName:    islandHeader.Name,
 				InputID:       answer.QuestionID,
-				NewState:      domain.GetSubmissionStateFromAnswer(answer),
+				NewState:      domain.GetSubmissionState(question, answer),
 				Reward:        reward,
 			},
 		},

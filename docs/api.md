@@ -102,8 +102,6 @@ Receives the input that the user enters into a [IslandInput](#islandinput) compo
 
 Returns the updated [SubmissionState](#submissionstate) field of the [IslandInput](#islandinput) component in response.
 
-**Preconditions:** The player must be at the corresponding island and also must have anchored.
-
 **Endpoint:** `POST /answer/{inputID}`
 
 **Parameters:**
@@ -120,6 +118,22 @@ curl --request POST \
   --header 'Content-Type: multipart/form-data' \
   --form data=@/path/to/file.txt
 ```
+
+---
+
+### Get Help to Answer
+
+_This endpoint **is authenticated** and needs an auth token for access._
+
+Called when user wants to get help for answering the question.
+
+Returns a [GetHelpResult](#gethelpresult) in response.
+
+**Endpoint:** `GET /answer/{inputID}/help`
+
+**Parameters:**
+
+- `inputID` (path parameter, required): The _id_ of the [IslandInput](#islandinput) component.
 
 ---
 
@@ -744,14 +758,17 @@ curl --request GET \
 
 ### SubmissionState
 
-| Field       | Type    | Description                                                                                                          |
-|-------------|---------|----------------------------------------------------------------------------------------------------------------------|
-| submittable | boolean | True if the a new answer can be submitted, false otherwise.                                                          |
-| status      | string  | The status of answer; one of `empty`, `pending` (in process of correction) , `correct`, `half-correct`, `wrong`      |
-| filename    | string? | If _status_ is not `empty` and [IslandInput](#islandinput) _type_ is `file`, the name of the last submitted file.    |
-| value       | string? | If _status_ is not `empty` and [IslandInput](#islandinput) _type_ is not `file`, the last submitted plain text value |
-| feedback    | string? | A human-readable text, written by the corrector as a feedback for  player                                            |
-| submittedAt | string? | If _status_ is not `empty`, the time of last submission in Unix milliseconds.                                        |
+| Field            | Type    | Description                                                                                                          |
+|------------------|---------|----------------------------------------------------------------------------------------------------------------------|
+| submittable      | boolean | True if the a new answer can be submitted, false otherwise.                                                          |
+| canRequestHelp   | boolean | True if player can request help from by calling [Get Help to Answer](#get-help-to-answer), false otherwise.          |
+| hasRequestedHelp | boolean | True if player has requested help for this question before.                                                          |
+| submittable      | boolean | True if the a new answer can be submitted, false otherwise.                                                          |
+| status           | string  | The status of answer; one of `empty`, `pending` (in process of correction) , `correct`, `half-correct`, `wrong`      |
+| filename         | string? | If _status_ is not `empty` and [IslandInput](#islandinput) _type_ is `file`, the name of the last submitted file.    |
+| value            | string? | If _status_ is not `empty` and [IslandInput](#islandinput) _type_ is not `file`, the last submitted plain text value |
+| feedback         | string? | A human-readable text, written by the corrector as a feedback for  player                                            |
+| submittedAt      | string? | If _status_ is not `empty`, the time of last submission in Unix milliseconds.                                        |
 
 
 ### Book
@@ -831,6 +848,13 @@ curl --request GET \
 | altCost       | [Cost](#cost) | Alternative cost of unlocking this treasure                            |
 | canPayAltCost | boolean       | True if player affords the alternative cost of unlocking this treasure |
 | reason        | string?       | If _feasible_ is false, this field is present and reports why          |
+
+
+### GetHelpResult
+
+| Field    | Type   | Description                       |
+|----------|--------|-----------------------------------|
+| meetLink | string | URL of a video call with a mentor |
 
 
 ### MigrateCheckResult
