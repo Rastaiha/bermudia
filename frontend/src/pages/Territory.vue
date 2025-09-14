@@ -72,7 +72,6 @@ import Toolbar from '@/components/layout/Toolbar.vue';
 import StarryNight from '@/components/common/StarryNight.vue';
 import UserProfile from '@/components/layout/UserProfile.vue';
 
-
 const route = useRoute();
 const router = useRouter();
 const mapViewComponentRef = ref(null);
@@ -108,7 +107,7 @@ const fetchPlayerAndUserData = async () => {
 };
 
 const setupTerritoryData = territoryData => {
-    backgroundImage.value = `/images/${territoryData.backgroundAsset}`;
+    backgroundImage.value = `/images/backgrounds/territory/${territoryData.backgroundAsset}`;
     territoryName.value = territoryData.name;
     islands.value = territoryData.islands;
     edges.value = territoryData.edges;

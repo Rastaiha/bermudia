@@ -5,7 +5,7 @@
         >
             <div v-if="treasureData.unlocked" class="flex justify-center">
                 <img
-                    src="/images/island/opened_treasure.png"
+                    src="/images/icons/opened_treasure.png"
                     alt="گنج باز شده"
                     class="h-20 w-20 lg:h-28 lg:w-28 object-contain cursor-not-allowed"
                 />
@@ -14,7 +14,7 @@
             <div v-else>
                 <div v-if="!treasureFetchedInfo" class="flex justify-center">
                     <img
-                        src="/images/island/closed_treasure.png"
+                        src="/images/icons/closed_treasure.png"
                         alt="در حال بارگذاری..."
                         class="h-20 w-20 lg:h-28 lg:w-28 object-contain opacity-60"
                     />
@@ -23,7 +23,7 @@
                 <div v-else>
                     <div class="flex justify-center">
                         <img
-                            src="/images/island/closed_treasure.png"
+                            src="/images/icons/closed_treasure.png"
                             alt="گنج بسته"
                             class="h-20 w-20 lg:h-28 lg:w-28 object-contain transition-transform duration-300 cursor-pointer hover:scale-115"
                             @click="handleTreasureClick"
