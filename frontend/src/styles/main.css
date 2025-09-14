@@ -1,29 +1,53 @@
-@import "tailwindcss";
+@import 'tailwindcss';
 
 @font-face {
-  font-family: Vazirmatn;
-  src: url('../assets/fonts/Vazirmatn-Regular.ttf') format('truetype');
-  font-weight: 400;
-  font-style: normal;
-  font-display: swap;
+    font-family: Vazirmatn;
+    src: url('../assets/fonts/Vazirmatn-Regular.ttf') format('truetype');
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
 }
 
 @font-face {
-  font-family: Vazirmatn;
-  src: url('../assets/fonts/Vazirmatn-Bold.ttf') format('truetype');
-  font-weight: 700;
-  font-style: normal;
-  font-display: swap;
+    font-family: Pelak;
+    src: url('../assets/fonts/Pelak-Regular.ttf') format('truetype');
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: Vazirmatn;
+    src: url('../assets/fonts/Vazirmatn-Bold.ttf') format('truetype');
+    font-weight: 700;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: Pelak;
+    src: url('../assets/fonts/Pelak-Black.ttf') format('truetype');
+    font-weight: 700;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: Pelak;
+    src: url('../assets/fonts/Pelak-ExtraBold.ttf') format('truetype');
+    font-weight: 900;
+    font-style: normal;
+    font-display: swap;
 }
 
 @theme {
-  --font-vazir: Vazirmatn;
-  --color-rasta-green: #008A00;
-  --color-rasta-yellow: #F9D104;
+    --font-vazir: Vazirmatn;
+    --color-rasta-green: #008a00;
+    --color-rasta-yellow: #f9d104;
 }
 
 .Vue-Toastification__toast-body {
-  font-family: Vazirmatn, sans-serif !important;
-  text-align: right;
-  direction: rtl;
+    font-family: Vazirmatn, sans-serif !important;
+    text-align: right;
+    direction: rtl;
 }
