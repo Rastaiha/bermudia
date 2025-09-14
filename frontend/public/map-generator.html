@@ -38,6 +38,16 @@
                 padding-bottom: 5px;
             }
 
+            .sidebar h4 {
+                color: #ff9800;
+                margin-bottom: 10px;
+                margin-top: 20px;
+                border-bottom: 1px solid #ff9800;
+                padding-bottom: 3px;
+                font-size: 0.9em;
+                text-transform: uppercase;
+            }
+
             .map-container {
                 flex: 1;
                 position: relative;
@@ -239,6 +249,14 @@
                 cursor: pointer;
                 font-size: 12px;
             }
+
+            .section {
+                margin-bottom: 25px;
+            }
+
+            .category-grid {
+                margin-bottom: 15px;
+            }
         </style>
     </head>
     <body>
@@ -297,17 +315,17 @@
                     </button>
                 </div>
 
-                <div>
+                <div class="section">
                     <h3>Backgrounds</h3>
-                    <div class="asset-grid" id="backgroundGrid">
-                        <!-- Background images will be loaded here -->
+                    <div id="backgroundSections">
+                        <!-- Background sections will be loaded here -->
                     </div>
                 </div>
 
-                <div>
+                <div class="section">
                     <h3>Assets</h3>
-                    <div class="asset-grid" id="assetGrid">
-                        <!-- Asset images will be loaded here -->
+                    <div id="assetSections">
+                        <!-- Asset sections will be loaded here -->
                     </div>
                 </div>
 
@@ -400,16 +418,16 @@
                     territory: 'images/backgrounds/territory/',
                 },
                 assets: {
-                    arterial: 'images/islands/arterial/',
-                    challenge: 'images/islands/challenge/',
                     educational: 'images/islands/educational/',
+                    challenge: 'images/islands/challenge/',
+                    terminal: 'images/islands/terminal/',
                     refuel: 'images/islands/refuel/',
                 },
             };
 
             // Dynamically discovered images (will be populated)
-            let availableBackgrounds = [];
-            let availableAssets = [];
+            let availableBackgrounds = {};
+            let availableAssets = {};
 
             // Function to check if an image exists
             function imageExists(url) {
@@ -452,66 +470,105 @@
 
             // Load all background images
             async function loadBackgroundImages() {
-                availableBackgrounds = [];
+                availableBackgrounds = {};
 
                 for (const [category, path] of Object.entries(
                     imageConfig.backgrounds
                 )) {
-                    console.log(path);
-                    console.log(category);
                     const images = await discoverImages(path);
-                    availableBackgrounds.push(...images);
+                    availableBackgrounds[category] = images;
                 }
 
+                const totalBackgrounds = Object.values(
+                    availableBackgrounds
+                ).reduce((sum, arr) => sum + arr.length, 0);
                 console.log(
-                    `Discovered ${availableBackgrounds.length} background images`
+                    `Discovered ${totalBackgrounds} background images across ${Object.keys(availableBackgrounds).length} categories`
                 );
             }
 
             // Load all asset images
             async function loadAssetImages() {
-                availableAssets = [];
+                availableAssets = {};
 
                 for (const [category, path] of Object.entries(
                     imageConfig.assets
                 )) {
                     const images = await discoverImages(path);
-                    availableAssets.push(...images);
+                    availableAssets[category] = images;
                 }
 
+                const totalAssets = Object.values(availableAssets).reduce(
+                    (sum, arr) => sum + arr.length,
+                    0
+                );
                 console.log(
-                    `Discovered ${availableAssets.length} asset images`
+                    `Discovered ${totalAssets} asset images across ${Object.keys(availableAssets).length} categories`
                 );
             }
 
             // Initialize backgrounds in the UI
             function loadBackgrounds() {
-                const grid = document.getElementById('backgroundGrid');
-                grid.innerHTML = ''; // Clear existing items
+                const container = document.getElementById('backgroundSections');
+                container.innerHTML = ''; // Clear existing items
 
-                availableBackgrounds.forEach((bg, index) => {
-                    const item = document.createElement('div');
-                    item.className = 'background-item';
-                    item.style.backgroundImage = `url(${bg})`;
-                    item.onclick = () => selectBackground(bg, item);
-                    grid.appendChild(item);
-                });
+                Object.entries(availableBackgrounds).forEach(
+                    ([category, images]) => {
+                        if (images.length === 0) return;
+
+                        // Create category header
+                        const categoryHeader = document.createElement('h4');
+                        categoryHeader.textContent = category;
+                        container.appendChild(categoryHeader);
+
+                        // Create grid for this category
+                        const grid = document.createElement('div');
+                        grid.className = 'asset-grid category-grid';
+
+                        images.forEach((bg, index) => {
+                            const item = document.createElement('div');
+                            item.className = 'background-item';
+                            item.style.backgroundImage = `url(${bg})`;
+                            item.onclick = () => selectBackground(bg, item);
+                            grid.appendChild(item);
+                        });
+
+                        container.appendChild(grid);
+                    }
+                );
             }
 
             // Initialize assets in the UI
             function loadAssets() {
-                const grid = document.getElementById('assetGrid');
-                grid.innerHTML = ''; // Clear existing items
+                const container = document.getElementById('assetSections');
+                container.innerHTML = ''; // Clear existing items
 
-                availableAssets.forEach((asset, index) => {
-                    const item = document.createElement('div');
-                    item.className = 'asset-item';
-                    item.style.backgroundImage = `url(${asset})`;
-                    item.draggable = true;
-                    item.ondragstart = e => startDragAsset(e, asset);
-                    item.onclick = () => placeAsset(asset);
-                    grid.appendChild(item);
-                });
+                Object.entries(availableAssets).forEach(
+                    ([category, images]) => {
+                        if (images.length === 0) return;
+
+                        // Create category header
+                        const categoryHeader = document.createElement('h4');
+                        categoryHeader.textContent = category;
+                        container.appendChild(categoryHeader);
+
+                        // Create grid for this category
+                        const grid = document.createElement('div');
+                        grid.className = 'asset-grid category-grid';
+
+                        images.forEach((asset, index) => {
+                            const item = document.createElement('div');
+                            item.className = 'asset-item';
+                            item.style.backgroundImage = `url(${asset})`;
+                            item.draggable = true;
+                            item.ondragstart = e => startDragAsset(e, asset);
+                            item.onclick = () => placeAsset(asset);
+                            grid.appendChild(item);
+                        });
+
+                        container.appendChild(grid);
+                    }
+                );
             }
 
             // Initialize the app
@@ -607,6 +664,16 @@
                     (existingData?.height * canvas.offsetHeight || 80) + 'px';
                 asset.dataset.assetPath = assetPath;
                 asset.dataset.assetId = assetId;
+
+                if (assetPath.includes('/refuel/'))
+                    mapData.refuelIslands.push({ id: assetId });
+                if (assetPath.includes('/terminal/'))
+                    mapData.terminalIslands.push({ id: assetId });
+                if (
+                    assetPath.includes('/educational/') &
+                    (mapData.startIsland === '')
+                )
+                    mapData.startIsland = assetId;
 
                 // Add resize handle
                 const resizeHandle = document.createElement('div');
@@ -1082,12 +1149,14 @@
 
             async function refreshImages() {
                 // Clear existing grids
-                document.getElementById('backgroundGrid').innerHTML = '';
-                document.getElementById('assetGrid').innerHTML = '';
+                document.getElementById('backgroundSections').innerHTML = '';
+                document.getElementById('assetSections').innerHTML = '';
 
                 // Reload images
-                await loadBackgrounds();
-                await loadAssets();
+                await loadBackgroundImages();
+                await loadAssetImages();
+                loadBackgrounds();
+                loadAssets();
             }
 
             function setupEventListeners() {
