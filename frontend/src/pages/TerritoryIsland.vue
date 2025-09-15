@@ -1,6 +1,6 @@
 <template>
     <div
-        class="w-full min-h-screen p-8 box-border flex justify-center items-center bg-cover bg-fixed bg-center font-sans text-gray-200"
+        class="w-full min-h-screen p-8 box-border flex justify-center items-center bg-cover bg-fixed bg-center font-main text-gray-200"
         :style="{ backgroundImage: `url(${backgroundImage})` }"
         @mousemove="updateMousePosition"
     >

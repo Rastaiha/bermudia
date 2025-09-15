@@ -41,13 +41,17 @@
 }
 
 @theme {
-    --font-vazir: Vazirmatn;
+    --font-main: Pelak, Vazir, sans-serifs;
     --color-rasta-green: #008a00;
     --color-rasta-yellow: #f9d104;
 }
 
 .Vue-Toastification__toast-body {
-    font-family: Vazirmatn, sans-serif !important;
+    font-family: Pelak, sans-serif !important;
     text-align: right;
     direction: rtl;
+}
+
+body {
+    font-family: Pelak, Vazir, sans-serif;
 }
