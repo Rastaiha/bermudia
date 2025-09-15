@@ -57,24 +57,82 @@
                         ></PlayerInventoryBar>
                     </div>
                 </div>
-                <div
-                    class="w-full grid grid-cols-2 md:flex md:flex-wrap md:justify-center gap-2"
-                >
-                    <div
-                        v-for="territory in migrate.territoryMigrationOptions"
-                        :key="territory.territoryId"
+                <div class="grid grid-cols-2 gap-4">
+                    <button
+                        v-for="option in migrate.territoryMigrationOptions"
+                        :key="option.territoryId"
+                        class="relative rounded-lg overflow-hidden group text-center border-0 p-0 bg-transparent"
+                        :class="
+                            option.feasible
+                                ? 'cursor-pointer'
+                                : 'cursor-not-allowed'
+                        "
+                        :disabled="!option.feasible"
+                        @pointerdown="handleMigrationClick($event, option)"
                     >
-                        <IslandInfoBox
-                            v-if="territory"
-                            :info-box-style="migrateBoxStyle"
-                            :selected-island="selectedIsland"
-                            :player="player"
-                            :refuel-islands="refuelIslands"
-                            :terminal-islands="terminalIslands"
-                            :territory-id="territory.territoryId"
-                            :migrate-info="territory"
+                        <img
+                            src="/images/territories/territory1.jfif"
+                            class="w-full h-24 object-cover"
                         />
-                    </div>
+                        <div
+                            class="absolute inset-0 transition-colors pointer-events-none"
+                            :class="
+                                option.feasible
+                                    ? 'bg-black/40 md:bg-transparent md:group-hover:bg-black/40'
+                                    : 'bg-black/60'
+                            "
+                        ></div>
+                        <div
+                            class="absolute inset-0 flex flex-col items-center justify-center text-white p-2 transition-opacity pointer-events-none"
+                            :class="
+                                option.feasible
+                                    ? 'md:opacity-0 group-hover:opacity-100'
+                                    : ''
+                            "
+                        >
+                            <h4 class="font-bold text-base mb-1">
+                                {{ option.territoryName }}
+                            </h4>
+                            <div v-if="option.feasible">
+                                <p v-if="option.mustPayCost" class="text-sm">
+                                    مهاجرت پولی
+                                </p>
+                                <p
+                                    v-else-if="option.status === 'untouched'"
+                                    class="text-sm"
+                                >
+                                    مهاجرت علمی
+                                </p>
+                                <p
+                                    v-else-if="option.status === 'visited'"
+                                    class="text-sm"
+                                >
+                                    سفر به منظومه
+                                </p>
+                                <p
+                                    v-else-if="option.status === 'resident'"
+                                    class="text-sm"
+                                >
+                                    منظومه‌ی فعلی!
+                                </p>
+                                <div
+                                    v-if="option.mustPayCost"
+                                    class="flex items-center justify-center text-xs mt-1"
+                                >
+                                    <span>{{
+                                        option.migrationCost.items[0].amount
+                                    }}</span>
+                                    <img
+                                        src="/images/icons/coin.png"
+                                        class="w-4 h-4 mr-1"
+                                    />
+                                </div>
+                            </div>
+                            <p v-else class="text-red-400 text-xs px-1">
+                                {{ option.reason }}
+                            </p>
+                        </div>
+                    </button>
                 </div>
             </div>
             <div
@@ -176,12 +234,6 @@ const focusFuelInput = () => {
 const buyFuelFromIsland = () => {
     if (fuelCount.value > 0) buyFuel(fuelCount.value);
 };
-
-const migrateBoxStyle = computed(() => {
-    return {
-        height: `100%`,
-    };
-});
 
 const isCurrentIsland = computed(
     () =>
@@ -402,6 +454,13 @@ const actionOnClick = () => {
     }
     debugger;
     return;
+};
+
+const handleMigrationClick = (event, option) => {
+    if (!option.feasible) return;
+    event.preventDefault();
+    event.stopPropagation();
+    migrateTo(option.territoryId);
 };
 
 const knowledgeBar = computed(() => {
