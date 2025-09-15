@@ -98,9 +98,7 @@ func giveRandomWorthOfCoins(player Player, worthOfCoins int32, rewardTypes []str
 
 		// special case
 		if len(validRewards) == 1 && validRewards[0].worthOfCoins == 1 {
-			if field := getItemField(&player, validRewards[0].kind); field != nil {
-				*field += remaining
-			}
+			player = addCost(player, Cost{Items: []CostItem{{Type: validRewards[0].kind, Amount: remaining}}})
 			break
 		}
 
@@ -120,9 +118,7 @@ func giveRandomWorthOfCoins(player Player, worthOfCoins int32, rewardTypes []str
 			choice -= r.weight
 		}
 
-		if field := getItemField(&player, pick.kind); field != nil {
-			*field++
-		}
+		player = addCost(player, Cost{Items: []CostItem{{Type: pick.kind, Amount: 1}}})
 		remaining -= pick.worthOfCoins
 	}
 
