@@ -7,22 +7,22 @@ import (
 
 var rewardSources = map[string]func(player Player) Player{
 	"edu1": func(player Player) Player {
-		return giveRandomWorthOfCoins(player, 10, eduQuestionRewardTypes)
+		return giveRandomWorthOfCoins(player, 35, eduQuestionRewardTypes)
 	},
 	"edu2": func(player Player) Player {
-		return giveRandomWorthOfCoins(player, 20, eduQuestionRewardTypes)
-	},
-	"edu3": func(player Player) Player {
-		return giveRandomWorthOfCoins(player, 30, eduQuestionRewardTypes)
-	},
-	"edu4": func(player Player) Player {
-		return giveRandomWorthOfCoins(player, 40, eduQuestionRewardTypes)
-	},
-	"edu5": func(player Player) Player {
 		return giveRandomWorthOfCoins(player, 50, eduQuestionRewardTypes)
 	},
+	"edu3": func(player Player) Player {
+		return giveRandomWorthOfCoins(player, 65, eduQuestionRewardTypes)
+	},
+	"edu4": func(player Player) Player {
+		return giveRandomWorthOfCoins(player, 80, eduQuestionRewardTypes)
+	},
+	"edu5": func(player Player) Player {
+		return giveRandomWorthOfCoins(player, 95, eduQuestionRewardTypes)
+	},
 	"edu6": func(player Player) Player {
-		return giveRandomWorthOfCoins(player, 60, eduQuestionRewardTypes)
+		return giveRandomWorthOfCoins(player, 110, eduQuestionRewardTypes)
 	},
 }
 
@@ -34,28 +34,11 @@ func IsValidRewardSource(rewardSource string) bool {
 	return ok
 }
 
-type rewardParam struct {
-	worthOfCoins int32
-	weight       int
-}
-
-var rewardParams = map[string]rewardParam{
-	CostItemTypeCoin: {
-		worthOfCoins: 1,
-		weight:       40,
-	},
-	CostItemTypeBlueKey: {
-		worthOfCoins: 20,
-		weight:       6,
-	},
-	CostItemTypeRedKey: {
-		worthOfCoins: 30,
-		weight:       3,
-	},
-	CostItemTypeGoldenKey: {
-		worthOfCoins: 50,
-		weight:       1,
-	},
+var rewardParams = map[string]int32{
+	CostItemTypeCoin:      1,
+	CostItemTypeBlueKey:   20,
+	CostItemTypeRedKey:    30,
+	CostItemTypeGoldenKey: 50,
 }
 
 var eduQuestionRewardTypes = []string{
@@ -79,18 +62,18 @@ var treasureCostRewardTypes = []string{
 
 func giveRandomWorthOfCoins(player Player, worthOfCoins int32, rewardTypes []string) Player {
 	type rkp struct {
-		kind string
-		rewardParam
+		kind         string
+		worthOfCoins int32
 	}
 
 	// Build validRewards once before the loop
 	var validRewards []rkp
 	for _, t := range rewardTypes {
-		p, ok := rewardParams[t]
+		worthOfCoins, ok := rewardParams[t]
 		if ok {
 			validRewards = append(validRewards, rkp{
-				kind:        t,
-				rewardParam: p,
+				kind:         t,
+				worthOfCoins: worthOfCoins,
 			})
 		}
 	}
@@ -102,21 +85,21 @@ func giveRandomWorthOfCoins(player Player, worthOfCoins int32, rewardTypes []str
 	remaining := worthOfCoins
 
 	for remaining > 0 {
-
-		// pick with weighted randomness
+		// Calculate total weight (inverse of worthOfCoins, scaled by 1000)
 		totalWeight := 0
 		for _, r := range validRewards {
-			totalWeight += r.weight
+			totalWeight += int(1000 / r.worthOfCoins)
 		}
 
 		choice := rand.Intn(totalWeight)
 		var pick rkp
 		for _, r := range validRewards {
-			if choice < r.weight {
+			weight := int(1000 / r.worthOfCoins)
+			if choice < weight {
 				pick = r
 				break
 			}
-			choice -= r.weight
+			choice -= weight
 		}
 
 		player = addCost(player, Cost{Items: []CostItem{{Type: pick.kind, Amount: 1}}})
@@ -137,11 +120,11 @@ func giveRewardOfSource(player Player, rewardSource string) (Player, bool) {
 func giveRewardOfPool(player Player, poolId string) (Player, bool) {
 	switch poolId {
 	case PoolEasy:
-		return giveRandomWorthOfCoins(player, 20, pooledQuestionRewardTypes), true
+		return giveRandomWorthOfCoins(player, 50, pooledQuestionRewardTypes), true
 	case PoolMedium:
-		return giveRandomWorthOfCoins(player, 40, pooledQuestionRewardTypes), true
+		return giveRandomWorthOfCoins(player, 75, pooledQuestionRewardTypes), true
 	case PoolHard:
-		return giveRandomWorthOfCoins(player, 80, pooledQuestionRewardTypes), true
+		return giveRandomWorthOfCoins(player, 125, pooledQuestionRewardTypes), true
 	}
 	return player, false
 }
@@ -175,11 +158,11 @@ const (
 func getRewardOfTreasure(treasure UserTreasure) Cost {
 	worthOfCoins := int32(0)
 	for _, item := range treasure.Cost.Items {
-		worthOfCoins += item.Amount * rewardParams[item.Type].worthOfCoins
+		worthOfCoins += item.Amount * rewardParams[item.Type]
 	}
 
 	reward := Cost{}
-	masterKeyRoughValue := int32(treasureMinCost) + int32(0.6 * float64(treasureMaxCost - treasureMinCost))
+	masterKeyRoughValue := int32(treasureMinCost) + int32(0.6*float64(treasureMaxCost-treasureMinCost))
 	if worthOfCoins >= masterKeyRoughValue && rand.Float64() < chanceOfGettingMasterKey {
 		worthOfCoins -= masterKeyRoughValue / 2
 		reward.Items = append(reward.Items,
@@ -204,7 +187,7 @@ func getRewardOfTreasure(treasure UserTreasure) Cost {
 func generateTreasureCost(worthOfCoins int32) Cost {
 	// Create a dummy player to use with giveRandomWorthOfCoins
 	dummyPlayer := Player{}
-	updatedPlayer := giveRandomWorthOfCoins(dummyPlayer, worthOfCoins, treasureCostRewardTypes)	
+	updatedPlayer := giveRandomWorthOfCoins(dummyPlayer, worthOfCoins, treasureCostRewardTypes)
 	return Diff(Player{}, updatedPlayer)
 }
 
