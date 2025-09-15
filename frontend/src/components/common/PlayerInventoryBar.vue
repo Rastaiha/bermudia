@@ -1,5 +1,11 @@
 <template>
-    <div class="mb-3">
+    <div
+        class="mb-3 transition-all duration-300"
+        :class="{
+            'drop-shadow-[0_0_8px_rgba(239,68,68,0.7)]':
+                barData.englishName === 'Coin' && barData.value < 0,
+        }"
+    >
         <div
             class="flex justify-between px-1 mb-1 text-xs text-gray-300 drop-shadow-md"
         >
@@ -27,7 +33,12 @@
             }"
         ></div>
         <div
-            class="relative flex items-center h-6 rounded-md bg-black/30 shadow-inner"
+            class="relative flex items-center h-6 rounded-md shadow-inner"
+            :class="[
+                barData.englishName === 'Coin' && barData.value < 0
+                    ? 'bg-red-800/50'
+                    : 'bg-black/30',
+            ]"
             :style="{
                 width: barData.width ? barData.width * 100 + '%' : '100%',
             }"
@@ -72,9 +83,13 @@ const props = defineProps({
 });
 
 const barPercentage = computed(() => {
-    if (!props.barData.value || props.barData.total === 0) return 0;
-    if (props.barData.total === -1) return 0;
-    return (props.barData.value / props.barData.total) * 100;
+    const value = props.barData.value;
+    const total = props.barData.total;
+
+    if (total === 0 || total === -1) return 0;
+
+    const percentage = (value / total) * 100;
+    return Math.max(0, percentage);
 });
 
 const requiredLineClass = computed(() => {
