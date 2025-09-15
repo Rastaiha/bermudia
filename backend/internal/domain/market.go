@@ -67,6 +67,7 @@ func TradeOfferViewForPlayer(userID int32, offererUsername string, offer TradeOf
 }
 
 var tradableItems = []string{
+	CostItemTypeFuel,
 	CostItemTypeCoin,
 	CostItemTypeBlueKey,
 	CostItemTypeRedKey,

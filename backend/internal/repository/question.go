@@ -321,8 +321,8 @@ func (s sqlQuestionRepository) UpdateCorrectionNewStatus(ctx context.Context, id
 func (s sqlQuestionRepository) UpdateCorrectionFeedback(ctx context.Context, id string, feedback string) (domain.AnswerStatus, error) {
 	var newStatus domain.AnswerStatus
 	now := time.Now().UTC()
-	err := s.db.QueryRowContext(ctx, `UPDATE corrections SET feedback = $1, updated_at = $2 WHERE id = $3 AND status = $4 RETURNING new_status;`,
-		feedback, now, id, domain.CorrectionStatusDraft).Scan(&newStatus)
+	err := s.db.QueryRowContext(ctx, `UPDATE corrections SET feedback = $1, updated_at = $2 WHERE id = $3 AND status != $4 RETURNING new_status;`,
+		feedback, now, id, domain.CorrectionStatusApplied).Scan(&newStatus)
 	if errors.Is(err, sql.ErrNoRows) {
 		return newStatus, domain.ErrAlreadyApplied
 	}

@@ -72,6 +72,9 @@ func addCost(player Player, cost Cost) Player {
 		field := getItemField(&player, o.Type)
 		if field != nil {
 			*field += o.Amount
+			if o.Type == CostItemTypeFuel {
+				*field = min(player.FuelCap, *field)
+			}
 		}
 	}
 	return player
