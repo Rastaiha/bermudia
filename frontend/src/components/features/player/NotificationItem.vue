@@ -176,7 +176,11 @@ const notification = computed(() => {
             details += `<div class="my-2.5 border-t border-gray-600"></div><span>بازخورد:</span><div class="mt-1 text-gray-300">${correction.newState.feedback}</div>`;
         }
 
-        if (correction.reward && correction.reward.items.length > 0) {
+        if (
+            correction.reward &&
+            correction.reward.items &&
+            correction.reward.items.length > 0
+        ) {
             const rewardList = formatItemsToList(correction.reward.items);
             details += `<div class="my-2.5"></div><span>جایزه شما:</span>${rewardList}`;
         }

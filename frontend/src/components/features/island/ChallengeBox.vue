@@ -16,20 +16,10 @@
         >
             <transition name="popup-fade" mode="out-in">
                 <div
-                    v-if="
-                        challenge.submissionState.status === 'empty' ||
-                        challenge.submissionState.status === 'wrong'
-                    "
+                    v-if="challenge.submissionState.status === 'empty'"
                     key="form"
                     class="w-full max-w-lg"
                 >
-                    <p
-                        v-if="challenge.submissionState.status === 'wrong'"
-                        class="text-center text-red-400 mb-4"
-                    >
-                        پاسخ اشتباه بود، دوباره تلاش کنید.
-                    </p>
-
                     <div
                         v-if="challenge.type !== 'file'"
                         class="flex items-center gap-3"
@@ -80,6 +70,36 @@
                             ارسال
                         </button>
                     </div>
+                </div>
+
+                <div
+                    v-else-if="challenge.submissionState.status === 'wrong'"
+                    key="wrong"
+                    class="flex flex-col items-center justify-center text-center"
+                >
+                    <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        class="h-12 w-12 text-red-400"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                        stroke-width="2"
+                    >
+                        <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"
+                        />
+                    </svg>
+                    <p class="mt-4 text-xl font-semibold text-red-400">
+                        پاسخ شما اشتباه است
+                    </p>
+                    <p
+                        v-if="challenge.submissionState.feedback"
+                        class="mt-2 text-sm text-gray-300 max-w-md"
+                    >
+                        {{ challenge.submissionState.feedback }}
+                    </p>
                 </div>
 
                 <div
