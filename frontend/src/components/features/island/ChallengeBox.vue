@@ -96,7 +96,7 @@
                     </p>
                     <p
                         v-if="challenge.submissionState.feedback"
-                        class="mt-2 text-sm text-gray-300 max-w-md"
+                        class="mt-2 text-sm text-gray-300 max-w-md text-justify"
                     >
                         {{ challenge.submissionState.feedback }}
                     </p>
@@ -178,7 +178,7 @@
                     </p>
                     <p
                         v-if="challenge.submissionState.feedback"
-                        class="mt-2 text-sm text-gray-300 max-w-md"
+                        class="mt-2 text-sm text-gray-300 max-w-md text-justify"
                     >
                         {{ challenge.submissionState.feedback }}
                     </p>

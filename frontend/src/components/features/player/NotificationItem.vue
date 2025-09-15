@@ -173,7 +173,7 @@ const notification = computed(() => {
         let details = `پاسخ شما برای سوال در جزیره <strong>${correction.islandName}</strong> در قلمرو <strong>${correction.territoryName}</strong> تصحیح شد. <br/> وضعیت: <strong>${statusText}</strong>.`;
 
         if (correction.newState.feedback) {
-            details += `<div class="my-2.5 border-t border-gray-600"></div><span>بازخورد:</span><div class="mt-1 text-gray-300">${correction.newState.feedback}</div>`;
+            details += `<div class="my-2.5 border-t border-gray-600"></div><span>بازخورد:</span><div class="mt-1 text-justify text-gray-300">${correction.newState.feedback}</div>`;
         }
 
         if (
