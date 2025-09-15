@@ -71,6 +71,12 @@ var pooledQuestionRewardTypes = []string{
 	CostItemTypeGoldenKey,
 }
 
+var treasureCostRewardTypes = []string{
+	CostItemTypeBlueKey,
+	CostItemTypeRedKey,
+	CostItemTypeGoldenKey,
+}
+
 func giveRandomWorthOfCoins(player Player, worthOfCoins int32, rewardTypes []string) Player {
 	type rkp struct {
 		kind string
@@ -166,8 +172,9 @@ func GetRewardOfCorrection(player Player, question BookQuestion, correction Corr
 }
 
 const (
-	roughValueOfMasterKey    = 80
-	chanceOfGettingMasterKey = 0.3
+	chanceOfGettingMasterKey = 0.1
+	treasureMinCost         = 20  // minimum cost for a treasure
+	treasureMaxCost         = 100 // maximum cost for a treasure
 )
 
 func getRewardOfTreasure(treasure UserTreasure) Cost {
@@ -177,8 +184,9 @@ func getRewardOfTreasure(treasure UserTreasure) Cost {
 	}
 
 	reward := Cost{}
-	if worthOfCoins >= roughValueOfMasterKey && rand.Float64() < chanceOfGettingMasterKey {
-		worthOfCoins -= roughValueOfMasterKey
+	masterKeyRoughValue := int32(treasureMinCost) + int32(0.6 * float64(treasureMaxCost - treasureMinCost))
+	if worthOfCoins >= masterKeyRoughValue && rand.Float64() < chanceOfGettingMasterKey {
+		worthOfCoins -= masterKeyRoughValue / 2
 		reward.Items = append(reward.Items,
 			CostItem{
 				Type:   CostItemTypeMasterKey,
@@ -198,29 +206,16 @@ func getRewardOfTreasure(treasure UserTreasure) Cost {
 	return reward
 }
 
-func utc(blue, red, golden int32) Cost {
-	cost := Cost{}
-	if blue > 0 {
-		cost.Items = append(cost.Items, CostItem{Type: CostItemTypeBlueKey, Amount: blue})
-	}
-	if red > 0 {
-		cost.Items = append(cost.Items, CostItem{Type: CostItemTypeRedKey, Amount: red})
-	}
-	if golden > 0 {
-		cost.Items = append(cost.Items, CostItem{Type: CostItemTypeGoldenKey, Amount: golden})
-	}
-	return cost
+func generateTreasureCost(worthOfCoins int32) Cost {
+	// Create a dummy player to use with giveRandomWorthOfCoins
+	dummyPlayer := Player{}
+	updatedPlayer := giveRandomWorthOfCoins(dummyPlayer, worthOfCoins, treasureCostRewardTypes)	
+	return Diff(Player{}, updatedPlayer)
 }
 
 func GenerateUserTreasure(userId int32, treasureId string) UserTreasure {
-	blueC := rand.Float64() * 0.3
-	redC := rand.Float64() * (1 - blueC)
-	goldenC := rand.Float64() * (1.2 - redC - blueC)
-
-	blue := int32(blueC * 10)
-	red := int32(redC * 6)
-	golden := int32(goldenC * 4)
-	cost := utc(blue, red, golden)
+	costValue := int32(treasureMinCost + rand.Intn(treasureMaxCost-treasureMinCost+1))
+	cost := generateTreasureCost(costValue)
 
 	reward := &Cost{}
 	if len(cost.Items) > 0 {
