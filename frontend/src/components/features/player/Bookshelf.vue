@@ -43,7 +43,7 @@
                 :key="territoryId"
                 class="w-full"
             >
-                <div class="flex gap-1 items-end pb-2">
+                <div class="flex gap-1 items-end pb-2 overflow-auto">
                     <div
                         v-for="(book, bookIndex) in booksInTerritory"
                         :key="bookIndex"
