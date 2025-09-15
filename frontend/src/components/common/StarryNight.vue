@@ -3,7 +3,8 @@
         ref="starsContainer"
         class="fixed top-0 left-0 w-full h-full -z-10"
         :style="{
-            background: 'linear-gradient(90deg, #01041F 0%, #082B33 100%)',
+            background:
+                'linear-gradient(180deg, rgb(1, 4, 31) 50%, rgb(8, 43, 51) 100%)',
         }"
     ></div>
 </template>
@@ -17,7 +18,7 @@ let resizeObserver = null;
 const props = defineProps({
     starDensity: {
         type: Number,
-        default: 0.0001, // Stars per pixel (adjust this value to control density)
+        default: 0.0005, // Stars per pixel (adjust this value to control density)
     },
 });
 
@@ -31,12 +32,14 @@ const calculateStarCount = () => {
 
 const createStar = () => {
     const star = document.createElement('div');
+    const starContainer = document.createElement('div');
+    starContainer.appendChild(star);
     star.className = 'star';
-    star.style.cssText = `
+    starContainer.className = 'starContainer';
+    starContainer.style.cssText = `
         position: absolute;
         top: ${Math.random() * 100}%;
         left: ${Math.random() * 100}%;
-        blur(1px) drop-shadow(0px 0px 10px yellow);
     `;
     const size = 6 + Math.random() * 8; // between 6px and 14px
     star.style.width = `${size}px`;
@@ -52,8 +55,7 @@ const createStar = () => {
 
     star.style.animation = `starTwinkle 3s infinite`;
     star.style.animationDelay = `${Math.random() * 2}s`;
-
-    return star;
+    return starContainer;
 };
 
 const clearStars = () => {
@@ -146,3 +148,19 @@ onUnmounted(() => {
     cleanupStyles();
 });
 </script>
+<style>
+.star {
+    filter: drop-shadow(0 0 5px rgba(255, 255, 201, 0.564)) blur(1px);
+}
+.starContainer {
+    padding: 10px;
+    border-radius: 50%;
+    background: radial-gradient(
+        #8c8c8530,
+        #8c8c8501,
+        #8c8c8501,
+        #8c8c8501,
+        transparent
+    );
+}
+</style>
