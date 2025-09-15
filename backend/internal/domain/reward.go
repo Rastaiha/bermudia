@@ -120,11 +120,11 @@ func giveRewardOfSource(player Player, rewardSource string) (Player, bool) {
 func giveRewardOfPool(player Player, poolId string) (Player, bool) {
 	switch poolId {
 	case PoolEasy:
-		return giveRandomWorthOfCoins(player, 25, pooledQuestionRewardTypes), true
-	case PoolMedium:
 		return giveRandomWorthOfCoins(player, 50, pooledQuestionRewardTypes), true
-	case PoolHard:
+	case PoolMedium:
 		return giveRandomWorthOfCoins(player, 75, pooledQuestionRewardTypes), true
+	case PoolHard:
+		return giveRandomWorthOfCoins(player, 125, pooledQuestionRewardTypes), true
 	}
 	return player, false
 }
