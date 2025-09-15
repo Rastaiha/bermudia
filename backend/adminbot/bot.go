@@ -279,7 +279,7 @@ func statusToEmoji(status domain.AnswerStatus) string {
 	}
 }
 
-func revertKeyboard(correctionId string, currentNewStatus domain.AnswerStatus) models.InlineKeyboardMarkup {
+func revertKeyboard(correctionId string, currentNewStatus domain.AnswerStatus, gottenFeedback bool) models.InlineKeyboardMarkup {
 	keyboard := models.InlineKeyboardMarkup{}
 	for _, a := range domain.CorrectionAllowedNewStatuses {
 		if currentNewStatus != a {
@@ -291,9 +291,13 @@ func revertKeyboard(correctionId string, currentNewStatus domain.AnswerStatus) m
 			})
 		}
 	}
+	finalizeButton := "ثبت نهایی و ارسال نتیجه تصحیح"
+	if !gottenFeedback {
+		finalizeButton = "بازخورد نمیدم؛ ثبت نهایی و ارسال"
+	}
 	keyboard.InlineKeyboard = append(keyboard.InlineKeyboard, []models.InlineKeyboardButton{
 		{
-			Text:         "ثبت نهایی و ارسال نتیجه تصحیح",
+			Text:         finalizeButton,
 			CallbackData: finalizeCB + fmt.Sprintf("%s", correctionId),
 		},
 	})
@@ -301,7 +305,11 @@ func revertKeyboard(correctionId string, currentNewStatus domain.AnswerStatus) m
 }
 
 func (m *Bot) showRevert(ctx context.Context, b *bot.Bot, update *models.Update, correctionId string, currentNewStatus domain.AnswerStatus, fromRevert bool) {
-	keyboard := revertKeyboard(correctionId, currentNewStatus)
+	keyboard := revertKeyboard(
+		correctionId,
+		currentNewStatus,
+		strings.Contains(update.CallbackQuery.Message.Message.Caption, feedbackSavedText) || strings.Contains(update.CallbackQuery.Message.Message.Text, feedbackSavedText),
+	)
 
 	suffix := fmt.Sprintf("```[ID]%s```\n", correctionId) + "✍️ با ریپلای به این پیام، برای دانش آموز یک متن بازخورد ثبت کنید.\n\n" +
 		fmt.Sprintf("%s نتیجه تصحیح: *%s*", statusToEmoji(currentNewStatus), statusToString(currentNewStatus))
@@ -384,12 +392,20 @@ func (m *Bot) handleFinalize(ctx context.Context, b *bot.Bot, update *models.Upd
 
 var correctionIdPattern = regexp.MustCompile("```\\[ID](\\w+)```")
 
+const (
+	feedbackSavedText = "🗒️ بازخورد شما ثبت شد."
+)
+
 func (m *Bot) handleFeedback(ctx context.Context, b *bot.Bot, update *models.Update) {
 	if update.Message == nil || update.Message.Text == "" || update.Message.ReplyToMessage == nil {
 		return
 	}
 
-	groups := correctionIdPattern.FindStringSubmatch(update.Message.ReplyToMessage.Text)
+	text := update.Message.ReplyToMessage.Text
+	if text == "" {
+		text = update.Message.ReplyToMessage.Caption
+	}
+	groups := correctionIdPattern.FindStringSubmatch(text)
 	if len(groups) < 2 {
 		return
 	}
@@ -403,21 +419,20 @@ func (m *Bot) handleFeedback(ctx context.Context, b *bot.Bot, update *models.Upd
 		slog.Error("failed to update correction feedback", "error", err)
 		return
 	}
-	suffix := "🗒️ بازخورد شما ثبت شد."
-	suffix = "\n\n" + suffix
+	suffix := "\n\n" + feedbackSavedText
 	if update.Message.ReplyToMessage.Document != nil {
 		_, err = b.EditMessageCaption(ctx, &bot.EditMessageCaptionParams{
 			ChatID:      update.Message.ReplyToMessage.Chat.ID,
 			MessageID:   update.Message.ReplyToMessage.ID,
 			Caption:     update.Message.ReplyToMessage.Caption + suffix,
-			ReplyMarkup: revertKeyboard(id, currentNewStatus),
+			ReplyMarkup: revertKeyboard(id, currentNewStatus, true),
 		})
 	} else {
 		_, err = b.EditMessageText(ctx, &bot.EditMessageTextParams{
 			ChatID:      update.Message.ReplyToMessage.Chat.ID,
 			MessageID:   update.Message.ReplyToMessage.ID,
 			Text:        update.Message.ReplyToMessage.Text + suffix,
-			ReplyMarkup: revertKeyboard(id, currentNewStatus),
+			ReplyMarkup: revertKeyboard(id, currentNewStatus, true),
 		})
 	}
 }
