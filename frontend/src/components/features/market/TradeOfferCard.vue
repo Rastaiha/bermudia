@@ -1,12 +1,14 @@
 <template>
     <div
-        class="flex flex-col bg-slate-900/70 rounded-xl border border-slate-700 shadow-lg p-4 space-y-4 transition-transform hover:scale-105"
+        class="flex justify-between flex-col bg-slate-900/70 rounded-xl border border-slate-700 shadow-lg p-4 space-y-4 transition-transform hover:scale-105"
     >
+        <div class="flex flex-row justify-around gap-2.5 items-center">
+            <span class="text-sm font-bold text-green-400 mb-1">می‌دهد</span>
+            <span></span>
+            <span class="text-sm font-bold text-red-400 mb-1">می‌خواهد</span>
+        </div>
         <div class="flex items-center justify-center text-center">
             <div class="flex-1 flex flex-col gap-2.5 items-center">
-                <span class="text-sm font-bold text-green-400 mb-1"
-                    >می‌دهد</span
-                >
                 <div
                     v-if="offer.offered.items.length > 0"
                     class="flex flex-col items-center gap-2"
@@ -47,9 +49,6 @@
             </div>
 
             <div class="flex-1 flex flex-col gap-2.5 items-center">
-                <span class="text-sm font-bold text-red-400 mb-1"
-                    >می‌خواهد</span
-                >
                 <div
                     v-if="offer.requested.items.length > 0"
                     class="flex flex-col items-center gap-2"
