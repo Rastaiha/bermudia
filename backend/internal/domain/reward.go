@@ -83,30 +83,25 @@ func giveRandomWorthOfCoins(player Player, worthOfCoins int32, rewardTypes []str
 		rewardParam
 	}
 
+	// Build validRewards once before the loop
+	var validRewards []rkp
+	for _, t := range rewardTypes {
+		p, ok := rewardParams[t]
+		if ok {
+			validRewards = append(validRewards, rkp{
+				kind:        t,
+				rewardParam: p,
+			})
+		}
+	}
+
+	if len(validRewards) == 0 {
+		return player
+	}
+
 	remaining := worthOfCoins
 
 	for remaining > 0 {
-		// filter rewards that can still fit in remaining
-		var validRewards []rkp
-		for _, t := range rewardTypes {
-			p, ok := rewardParams[t]
-			if ok && p.worthOfCoins <= remaining {
-				validRewards = append(validRewards, rkp{
-					kind:        t,
-					rewardParam: p,
-				})
-			}
-		}
-
-		if len(validRewards) == 0 {
-			break
-		}
-
-		// special case
-		if len(validRewards) == 1 && validRewards[0].worthOfCoins == 1 {
-			player = addCost(player, Cost{Items: []CostItem{{Type: validRewards[0].kind, Amount: remaining}}})
-			break
-		}
 
 		// pick with weighted randomness
 		totalWeight := 0
@@ -173,8 +168,8 @@ func GetRewardOfCorrection(player Player, question BookQuestion, correction Corr
 
 const (
 	chanceOfGettingMasterKey = 0.1
-	treasureMinCost         = 20  // minimum cost for a treasure
-	treasureMaxCost         = 100 // maximum cost for a treasure
+	treasureMinCost          = 20
+	treasureMaxCost          = 100
 )
 
 func getRewardOfTreasure(treasure UserTreasure) Cost {
