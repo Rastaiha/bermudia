@@ -66,6 +66,7 @@ import { ref, computed } from 'vue';
 import {
     CheckCircleIcon,
     XCircleIcon,
+    InformationCircleIcon,
     CurrencyDollarIcon,
     ChevronDownIcon,
 } from '@heroicons/vue/24/outline';
@@ -126,35 +127,66 @@ const notification = computed(() => {
     const content = props.message.content;
     if (content.newCorrection) {
         const correction = content.newCorrection;
-        const isCorrect = correction.newState.status === 'correct';
+        const status = correction.newState.status;
 
-        let details = `پاسخ شما برای سوال در جزیره <strong>${correction.islandName}</strong> در قلمرو <strong>${correction.territoryName}</strong> تصحیح شد. <br/> وضعیت: <strong>${isCorrect ? 'صحیح' : 'غلط'}</strong>.`;
+        let title, icon, style, statusText;
 
-        if (
-            isCorrect &&
-            correction.reward &&
-            correction.reward.items.length > 0
-        ) {
+        switch (status) {
+            case 'correct':
+                title = 'پاسخ شما صحیح بود';
+                icon = CheckCircleIcon;
+                statusText = 'صحیح';
+                style = {
+                    border: 'border-r-4 border-green-500',
+                    bg: 'bg-green-800',
+                    icon: 'text-green-300',
+                    text: 'text-green-400 hover:text-green-300',
+                    detailsBg: 'bg-green-900/50',
+                };
+                break;
+            case 'half-correct':
+                title = 'پاسخ شما نیمه‌درست بود';
+                icon = InformationCircleIcon;
+                statusText = 'نیمه‌درست';
+                style = {
+                    border: 'border-r-4 border-amber-500',
+                    bg: 'bg-amber-800',
+                    icon: 'text-amber-300',
+                    text: 'text-amber-400 hover:text-amber-300',
+                    detailsBg: 'bg-amber-900/50',
+                };
+                break;
+            default: // wrong
+                title = 'پاسخ شما صحیح نبود';
+                icon = XCircleIcon;
+                statusText = 'غلط';
+                style = {
+                    border: 'border-r-4 border-red-500',
+                    bg: 'bg-red-800',
+                    icon: 'text-red-300',
+                    text: 'text-red-400 hover:text-red-300',
+                    detailsBg: 'bg-red-900/50',
+                };
+                break;
+        }
+
+        let details = `پاسخ شما برای سوال در جزیره <strong>${correction.islandName}</strong> در قلمرو <strong>${correction.territoryName}</strong> تصحیح شد. <br/> وضعیت: <strong>${statusText}</strong>.`;
+
+        if (correction.newState.feedback) {
+            details += `<div class="my-2.5 border-t border-gray-600"></div><span>بازخورد:</span><div class="mt-1 text-gray-300">${correction.newState.feedback}</div>`;
+        }
+
+        if (correction.reward && correction.reward.items.length > 0) {
             const rewardList = formatItemsToList(correction.reward.items);
             details += `<div class="my-2.5"></div><span>جایزه شما:</span>${rewardList}`;
         }
 
         return {
-            title: isCorrect ? 'پاسخ شما صحیح بود' : 'پاسخ شما صحیح نبود',
+            title,
             summary: `در جزیره «${correction.islandName}»`,
             details: details,
-            icon: isCorrect ? CheckCircleIcon : XCircleIcon,
-            style: {
-                border: isCorrect
-                    ? 'border-r-4 border-green-500'
-                    : 'border-r-4 border-red-500',
-                bg: isCorrect ? 'bg-green-800' : 'bg-red-800',
-                icon: isCorrect ? 'text-green-300' : 'text-red-300',
-                text: isCorrect
-                    ? 'text-green-400 hover:text-green-300'
-                    : 'text-red-400 hover:text-red-300',
-                detailsBg: isCorrect ? 'bg-green-900/50' : 'bg-red-900/50',
-            },
+            icon,
+            style,
         };
     }
     if (content.ownOfferAccepted) {
