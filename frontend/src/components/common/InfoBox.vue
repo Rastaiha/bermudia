@@ -4,7 +4,7 @@
             width: `calc(var(--spacing) * ${boxWidth})`,
             ...infoBoxStyle,
         }"
-        class="bg-[rgb(121,200,237,0.8)] text-[#310f0f] p-4 rounded-xl font-vazir text-base z-[10000] flex flex-col items-center pointer-events-auto"
+        class="bg-[rgb(121,200,237,0.8)] text-[#310f0f] p-4 rounded-xl font-main text-base z-[10000] flex flex-col items-center pointer-events-auto"
         @pointerdown.stop
     >
         <h3 class="text-lg font-bold text-center shrink-0">

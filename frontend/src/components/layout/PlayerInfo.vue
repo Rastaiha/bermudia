@@ -2,7 +2,7 @@
     <div
         v-if="player"
         dir="rtl"
-        class="fixed top-20 right-4 z-50 font-sans text-white w-64 pointer-events-none space-y-2"
+        class="fixed top-20 right-4 z-50 font-main text-white w-64 pointer-events-none space-y-2"
     >
         <PlayerInventoryBar
             v-if="knowledgeBar"

@@ -1,6 +1,6 @@
 <template>
     <div
-        class="relative min-h-screen flex items-center justify-center overflow-hidden font-vazirmatn"
+        class="relative min-h-screen flex items-center justify-center overflow-hidden font-main"
     >
         <div class="animate-fade-in-scale w-full max-w-md mx-4 relative z-10">
             <div
