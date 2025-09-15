@@ -38,7 +38,7 @@
                                 src="/images/icons/closed_treasure.png"
                                 alt="گنج بسته"
                                 class="h-20 w-20 lg:h-28 lg:w-28 object-contain transition-transform duration-300 cursor-pointer hover:scale-115"
-                                @pointerdown="handleTreasureClick"
+                                @pointerdown="handleTreasureClick($event)"
                             />
                         </div>
 
@@ -125,7 +125,10 @@ const { open, close } = useModal({
     },
 });
 
-const handleTreasureClick = async () => {
+const handleTreasureClick = async event => {
+    event.preventDefault();
+    event.stopPropagation();
+
     try {
         const treasure = await treasureUnlock(props.treasureData.id);
 
