@@ -128,7 +128,7 @@ const setupPlayerAndUserData = (playerAndUserData, currentTerritoryId) => {
         throw new Error('Redirecting to correct territory');
     }
 
-    username.value = meData.username;
+    username.value = meData.name;
     player.value = playerData;
 };
 
