@@ -286,6 +286,7 @@ func (a *Admin) SetTerritoryIslandBindings(ctx context.Context, bindings Territo
 }
 
 type User struct {
+	Name              string `json:"name"`
 	Username          string `json:"username"`
 	Password          string `json:"password"`
 	StartingTerritory string `json:"startingTerritory"`
@@ -328,6 +329,7 @@ func (a *Admin) CreateUser(ctx context.Context, user User) (User, error) {
 	u := &domain.User{
 		ID:             id,
 		Username:       user.Username,
+		Name:           user.Name,
 		MeetLink:       user.MeetLink,
 		HashedPassword: hp,
 	}
