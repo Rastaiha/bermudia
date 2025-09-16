@@ -30,6 +30,7 @@
                     v-else-if="componentData.input"
                     :challenge="componentData.input"
                     @submit="handleChallengeSubmit"
+                    @help-requested="handleHelpRequested"
                 />
             </template>
             <template
@@ -58,7 +59,12 @@
 import { ref, onMounted, toRef } from 'vue';
 import { useToast } from 'vue-toastification';
 import { useRouter } from 'vue-router';
-import { getIsland, submitAnswer, getPlayer } from '@/services/api';
+import {
+    getIsland,
+    submitAnswer,
+    getPlayer,
+    requestHelp,
+} from '@/services/api';
 import { usePlayerWebSocket } from '@/services/websocket.js';
 import { useModal } from 'vue-final-modal';
 import eventBus from '@/services/eventBus.js';
@@ -133,6 +139,19 @@ const handleChallengeSubmit = async ({ inputId, data }) => {
     } catch (error) {
         console.error('Error submitting answer:', error);
         toast.error(error.message || 'خطا در ارسال پاسخ!');
+    }
+};
+
+const handleHelpRequested = async challenge => {
+    try {
+        const response = await requestHelp(challenge.id);
+        if (challenge.submissionState.hasRequestedHelp) {
+            window.open(response.meetLink, '_blank');
+        } else {
+            await fetchIslandData(props.islandId);
+        }
+    } catch (err) {
+        toast.error(err.message);
     }
 };
 
