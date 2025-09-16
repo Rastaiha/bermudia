@@ -191,7 +191,7 @@ func writeBackData(writeBack string, path string, data any) error {
 	if err != nil {
 		return err
 	}
-	err = os.WriteFile(filepath.Join(writeBack, path), j, os.FileMode(os.O_TRUNC|os.O_WRONLY))
+	err = os.WriteFile(filepath.Join(writeBack, path), j, 0755)
 	if err != nil {
 		return fmt.Errorf("failed to write back to %q: %w", path, err)
 	}
