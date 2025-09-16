@@ -136,7 +136,7 @@
                                         option.migrationCost.items[0].amount
                                     }}</span>
                                     <img
-                                        src="/images/icons/coin.png"
+                                        :src="COST_ITEMS_INFO['coin'].icon"
                                         class="w-4 h-4 mr-1"
                                     />
                                 </div>
@@ -178,6 +178,7 @@ import {
 import InfoBox from '@/components/common/InfoBox.vue';
 import PlayerInventoryBar from '@/components/common/PlayerInventoryBar.vue';
 import { glossary } from '@/services/glossary.js';
+import { COST_ITEMS_INFO } from '@/services/cost.js';
 
 defineOptions({
     name: 'IslandInfoBox',
