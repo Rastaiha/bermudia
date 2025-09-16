@@ -4,7 +4,8 @@
     >
         <div class="flex flex-row justify-around gap-2.5 items-center">
             <span class="text-sm font-bold text-green-400 mb-1">می‌دهد</span>
-            <span></span>
+            <span v-if="offer.byMe"></span>
+            <span v-else>{{ offer.by }}</span>
             <span class="text-sm font-bold text-red-400 mb-1">می‌خواهد</span>
         </div>
         <div class="flex items-center justify-center text-center">
@@ -103,7 +104,3 @@ defineProps({
 
 defineEmits(['accept', 'delete']);
 </script>
-
-<style scoped>
-/* No styles needed here*/
-</style>
