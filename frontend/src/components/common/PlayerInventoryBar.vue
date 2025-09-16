@@ -19,20 +19,6 @@
             >
         </div>
         <div
-            v-if="barData.required"
-            class="border-l-6 h-8 absolute z-20 transform -translate-y-1"
-            :class="requiredLineClass"
-            :style="{
-                right:
-                    2.5 +
-                    ((barData.width ? barData.width : 1) *
-                        barData.required *
-                        94.5) /
-                        barData.total +
-                    '%',
-            }"
-        ></div>
-        <div
             class="relative flex items-center h-6 rounded-md shadow-inner"
             :class="[
                 barData.englishName === 'Coin' && barData.value < 0
@@ -43,6 +29,19 @@
                 width: barData.width ? barData.width * 100 + '%' : '100%',
             }"
         >
+            <div
+                v-if="barData.required"
+                class="border-l-6 h-8 absolute z-20"
+                :class="requiredLineClass"
+                :style="{
+                    right:
+                        ((barData.width ? barData.width : 1) *
+                            barData.required *
+                            99) /
+                            barData.total +
+                        '%',
+                }"
+            ></div>
             <div
                 class="absolute inset-0 flex items-center justify-end w-full h-full z-11 gap-2 flex-row-reverse pr-2"
             >
