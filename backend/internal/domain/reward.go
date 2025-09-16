@@ -54,7 +54,7 @@ var pooledQuestionRewardTypes = []string{
 }
 
 var pooledQuestionCoinType = []string{
-	CostItemTypeCoin
+	CostItemTypeCoin,
 }
 
 var treasureCostRewardTypes = []string{
