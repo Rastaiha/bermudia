@@ -23,6 +23,7 @@
 import { computed } from 'vue';
 import PlayerInventoryBar from '@/components/common/PlayerInventoryBar.vue';
 import { COST_ITEMS_INFO } from '@/services/cost';
+import { glossary } from '@/services/glossary.js';
 
 const props = defineProps({
     player: {
@@ -44,7 +45,7 @@ const knowledgeBar = computed(() => {
             bar => bar.territoryId === props.player.atTerritory
         ) || props.player.knowledgeBars[0];
     return {
-        name: 'دانش',
+        name: glossary.knowledge,
         englishName: 'Knowledge',
         total: fetchedKnowledgeBar.total,
         value: fetchedKnowledgeBar.value,

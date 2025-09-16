@@ -164,6 +164,7 @@ import {
 } from '@/services/api/index.js';
 import InfoBox from '@/components/common/InfoBox.vue';
 import PlayerInventoryBar from '@/components/common/PlayerInventoryBar.vue';
+import { glossary } from '@/services/glossary.js';
 
 defineOptions({
     name: 'IslandInfoBox',
@@ -365,7 +366,8 @@ const buttonText = computed(() => {
             debugger;
         }
         return null;
-    } else if (checkRefuelIsland() && !refuelError.value) return 'خرید سوخت';
+    } else if (checkRefuelIsland() && !refuelError.value)
+        return glossary.buyFuel;
     else if (checkMigrate() && !migrateError.value) return null;
     else if (checkNonAnchoredIsland() && anchor.value && !anchorError.value)
         return 'فرود آمدن';
@@ -468,7 +470,7 @@ const knowledgeBar = computed(() => {
         bar => bar.territoryId === migrate.value.knowledgeCriteriaTerritory
     );
     return {
-        name: 'دانش مورد نیاز',
+        name: glossary.requiredKnowledge,
         englishName: 'Knowledge',
         total: fetchedKnowledgeBar.total,
         required: migrate.value.minAcceptableKnowledge,

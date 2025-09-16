@@ -15,7 +15,7 @@
                 <div v-if="treasureData.unlocked" class="flex justify-center">
                     <img
                         src="/images/icons/opened_treasure.png"
-                        alt="گنج باز شده"
+                        :alt="glossary.openedTreasure"
                         class="h-20 w-20 lg:h-28 lg:w-28 object-contain cursor-not-allowed"
                     />
                 </div>
@@ -36,7 +36,7 @@
                         <div class="flex justify-center">
                             <img
                                 src="/images/icons/closed_treasure.png"
-                                alt="گنج بسته"
+                                :alt="glossary.closedTreasure"
                                 class="h-20 w-20 lg:h-28 lg:w-28 object-contain transition-transform duration-300 cursor-pointer hover:scale-115"
                                 @pointerdown="handleTreasureClick($event)"
                             />
@@ -149,6 +149,7 @@ import { useToast } from 'vue-toastification';
 import { treasureCheck, treasureUnlock } from '@/services/api/index.js';
 import TreasureRewardModal from '@/components/features/island/TreasureRewardModal.vue';
 import { COST_ITEMS_INFO } from '@/services/cost.js';
+import { glossary } from '@/services/glossary.js';
 
 const props = defineProps({
     treasureData: { type: Object, required: true },
@@ -193,10 +194,13 @@ const handleTreasureClick = async event => {
             });
             open();
         } else {
-            toast.error('گنج باز نشد.');
+            toast.error(glossary.treasure + ' باز نشد.');
         }
     } catch (error) {
-        toast.error(error.message || 'شرایط لازم برای باز کردن گنج را ندارید.');
+        toast.error(
+            error.message ||
+                'شرایط لازم برای باز کردن ' + glossary.treasure + ' را ندارید.'
+        );
         console.error('Failed to unlock treasure:', error);
     }
 };

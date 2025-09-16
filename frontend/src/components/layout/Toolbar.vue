@@ -76,6 +76,7 @@ import Market from '@/components/features/market/Market.vue';
 import Inbox from '@/components/features/player/Inbox.vue';
 import ConfirmModal from '@/components/common/ConfirmModal.vue';
 import MuteButton from '@/components/common/MuteButton.vue';
+import { glossary } from '@/services/glossary.js';
 
 const props = defineProps({
     player: {
@@ -166,7 +167,7 @@ const menuItems = [
     {
         id: 'bookshelf',
         icon: '/images/icons/book.png',
-        alt: 'کتابخانه',
+        alt: glossary.library,
         action: openBookshelf,
     },
     {
