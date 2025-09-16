@@ -1,7 +1,8 @@
 import { onUnmounted, watch } from 'vue';
-import { getToken } from '@/services/api/index.js';
+import { getToken, getInboxMessages } from '@/services/api/index.js';
 import { API_ENDPOINTS } from '@/services/api/config.js';
 import emitter from '@/services/eventBus.js';
+import { notificationService } from '@/services/notificationService.js';
 
 export function usePlayerWebSocket(player, territoryId, router) {
     let socket = null;
@@ -43,12 +44,33 @@ export function usePlayerWebSocket(player, territoryId, router) {
             reconnectAttempts = 0;
         };
 
-        socket.onmessage = event => {
+        socket.onmessage = async event => {
             try {
                 const data = JSON.parse(event.data);
                 console.log('WebSocket message received:', data);
 
                 if (data.playerUpdate) {
+                    const reason = data.playerUpdate.reason;
+                    // These events might correspond to a new inbox message.
+                    if (
+                        reason === 'correction' ||
+                        reason === 'ownOfferAccepted'
+                    ) {
+                        try {
+                            const result = await getInboxMessages(null, 20);
+                            const allMessages =
+                                result?.messages || result || [];
+                            notificationService.setReceivedMessages(
+                                allMessages
+                            );
+                        } catch (apiError) {
+                            console.error(
+                                'Failed to fetch inbox messages after playerUpdate event:',
+                                apiError
+                            );
+                        }
+                    }
+
                     const oldPlayerState = JSON.parse(
                         JSON.stringify(player.value)
                     );
@@ -56,7 +78,7 @@ export function usePlayerWebSocket(player, territoryId, router) {
 
                     player.value = newPlayerState;
 
-                    if (data.playerUpdate.reason === 'unlockTreasure') {
+                    if (reason === 'unlockTreasure') {
                         emitter.emit('treasure-unlocked', {
                             oldPlayerState,
                             newPlayerState,

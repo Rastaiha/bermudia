@@ -1,6 +1,7 @@
 import { onMounted, onUnmounted } from 'vue';
-import { getToken } from '@/services/api/index.js';
+import { getToken, getInboxMessages } from '@/services/api/index.js';
 import { API_ENDPOINTS } from '@/services/api/config.js';
+import { notificationService } from '@/services/notificationService';
 
 let socket = null;
 let reconnectTimeoutId = null;
@@ -78,7 +79,7 @@ function connect() {
 }
 
 export function useInboxWebSocket(syncOffset, messages) {
-    const handleMessage = event => {
+    const handleMessage = async event => {
         try {
             const data = JSON.parse(event.data);
 
@@ -95,7 +96,22 @@ export function useInboxWebSocket(syncOffset, messages) {
             if (inboxEvent.sync) {
                 syncOffset.value = inboxEvent.sync.offset;
             }
+
             if (inboxEvent.newMessage) {
+                // As per user request: fetch the full message list on new message event.
+                try {
+                    const result = await getInboxMessages(null, 20); // Fetch latest 20
+                    const allMessages = result?.messages || result || [];
+                    notificationService.setReceivedMessages(allMessages);
+                } catch (apiError) {
+                    console.error(
+                        '[WebSocket] Failed to fetch inbox messages after WS event:',
+                        apiError
+                    );
+                }
+
+                // This part is for the inbox modal itself, if it's open.
+                // It ensures the new message appears instantly at the top.
                 messages.value.unshift(inboxEvent.newMessage);
                 syncOffset.value = inboxEvent.newMessage.createdAt;
             }

@@ -61,6 +61,7 @@ import { XMarkIcon } from '@heroicons/vue/24/outline';
 import { getInboxMessages } from '@/services/api/index.js';
 import { useInboxWebSocket } from '@/services/inboxWebsocket.js';
 import NotificationItem from './NotificationItem.vue';
+import { notificationService } from '@/services/notificationService';
 
 const emit = defineEmits(['close']);
 
@@ -94,6 +95,7 @@ const fetchMessages = async (offset = null) => {
             messages.value.push(...newMessagesArray);
         } else {
             messages.value = newMessagesArray;
+            notificationService.setReceivedMessages(messages.value);
         }
     } catch (error) {
         console.error('Failed to fetch inbox messages:', error);
@@ -115,8 +117,9 @@ const handleScroll = event => {
     }
 };
 
-onMounted(() => {
-    fetchMessages();
+onMounted(async () => {
+    await fetchMessages();
+    notificationService.markAllAsSeen();
 });
 </script>
 
