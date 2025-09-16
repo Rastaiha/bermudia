@@ -1,10 +1,10 @@
 const ITEM_NAMES = {
-    masterKey: { name: 'شاه‌کلید' },
-    blueKey: { name: 'کلید آبی' },
-    redKey: { name: 'کلید قرمز' },
-    goldenKey: { name: 'کلید طلایی' },
+    masterKey: { name: 'دینامیت' },
+    blueKey: { name: 'چکش آهنی' },
+    redKey: { name: 'چکش نقره‌ای' },
+    goldenKey: { name: 'چکش طلایی' },
     fuel: { name: 'سوخت' },
-    coin: { name: 'سکه' },
+    coin: { name: 'کلاه' },
 };
 const INVENTORY_ITEMS = ['masterKey', 'blueKey', 'redKey', 'goldenKey'];
 

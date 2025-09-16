@@ -8,7 +8,9 @@
         <div
             class="flex-shrink-0 flex items-center justify-between p-6 pb-4 border-b border-slate-600"
         >
-            <h1 class="text-2xl font-bold text-amber-400">بازارچه بنزوئیلا</h1>
+            <h1 class="text-2xl font-bold text-amber-400">
+                {{ glossary.benzuelaMarketplace }}
+            </h1>
             <button
                 class="p-2 rounded-full text-slate-400 hover:bg-slate-700 hover:text-white transition-colors"
                 aria-label="Close modal"
@@ -128,6 +130,7 @@ import { useToast } from 'vue-toastification';
 import { useMarketWebSocket } from '@/services/marketWebsocket.js';
 import Trade from '@/components/features/market/Trade.vue';
 import TradeOfferCard from '@/components/features/market/TradeOfferCard.vue';
+import { glossary } from '@/services/glossary.js';
 
 const props = defineProps({
     player: Object,

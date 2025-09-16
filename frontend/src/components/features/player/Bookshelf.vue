@@ -11,7 +11,7 @@
             class="flex items-center justify-between border-b-2 border-[#3E2A17] pb-2 mb-4"
         >
             <h1 class="text-xl font-semibold text-amber-200">
-                کتابخانه بنزوئیلا
+                {{ glossary.benzuelaLibrary }}
             </h1>
             <button
                 class="p-1 rounded-full hover:bg-[#3E2A17]"
@@ -68,7 +68,7 @@
             v-else
             class="w-full flex justify-center items-center h-48 text-amber-200 text-lg"
         >
-            <p>هنوز هیچ کتابی دریافت نکرده اید</p>
+            <p>هنوز هیچ {{ glossary.book }}ی دریافت نکرده اید</p>
         </div>
     </VueFinalModal>
 </template>
@@ -77,6 +77,7 @@
 import { computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { VueFinalModal } from 'vue-final-modal';
+import { glossary } from '@/services/glossary.js';
 
 const props = defineProps({
     books: {

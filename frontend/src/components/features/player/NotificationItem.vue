@@ -72,6 +72,7 @@ import {
 } from '@heroicons/vue/24/outline';
 import { formatDistanceToNow } from 'date-fns-jalali';
 import { COST_ITEMS_INFO } from '@/services/cost.js';
+import { glossary } from '@/services/glossary.js';
 
 const props = defineProps({
     message: {
@@ -170,7 +171,7 @@ const notification = computed(() => {
                 break;
         }
 
-        let details = `پاسخ شما برای سوال در جزیره <strong>${correction.islandName}</strong> در قلمرو <strong>${correction.territoryName}</strong> تصحیح شد. <br/> وضعیت: <strong>${statusText}</strong>.`;
+        let details = `پاسخ شما برای سوال در ${glossary.island} <strong>${correction.islandName}</strong> در ${glossary.territory} <strong>${correction.territoryName}</strong> تصحیح شد. <br/> وضعیت: <strong>${statusText}</strong>.`;
 
         if (correction.newState.feedback) {
             details += `<div class="my-2.5 border-t border-gray-600"></div><span>بازخورد:</span><div class="mt-1 text-justify text-gray-300">${correction.newState.feedback}</div>`;
@@ -187,7 +188,7 @@ const notification = computed(() => {
 
         return {
             title,
-            summary: `در جزیره «${correction.islandName}»`,
+            summary: `در ${glossary.island} «${correction.islandName}»`,
             details: details,
             icon,
             style,

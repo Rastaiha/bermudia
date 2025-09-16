@@ -32,6 +32,7 @@
 
 <script setup>
 import { ref, computed, watch, nextTick } from 'vue';
+import { glossary } from '@/services/glossary.js';
 
 const props = defineProps({
     refuel: Object,
@@ -45,9 +46,9 @@ const fuelCount = ref(0);
 
 const fuelPriceText = computed(() => {
     if (!props.refuel || !fuelCount.value || fuelCount.value <= 0)
-        return 'خرید سوخت';
+        return glossary.buyFuel;
     const totalCost = props.refuel.coinCostPerUnit * fuelCount.value;
-    return `خرید (${totalCost} سکه)`;
+    return `${glossary.buy} (${totalCost} ${glossary.coin})`;
 });
 
 const focusFuelInput = () => {
