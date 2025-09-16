@@ -52,7 +52,7 @@ ON CONFLICT (username) DO UPDATE SET username_display = $2, username = $3, meet_
 		n(user.ID),
 		n(user.Username),
 		n(strings.ToLower(user.Username)),
-		user.MeetLink, // TODO: wrap in n
+		user.MeetLink,
 		user.HashedPassword,
 	).Scan(&user.ID)
 	return err

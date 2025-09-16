@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"github.com/Rastaiha/bermudia/api/hub"
+	"github.com/Rastaiha/bermudia/internal/config"
 	"github.com/Rastaiha/bermudia/internal/service"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -17,6 +18,7 @@ import (
 )
 
 type Handler struct {
+	cfg              config.Config
 	server           *http.Server
 	wsUpgrader       websocket.Upgrader
 	authService      *service.Auth
@@ -28,8 +30,9 @@ type Handler struct {
 	inboxHub         *hub.Hub
 }
 
-func New(authService *service.Auth, territoryService *service.Territory, islandService *service.Island, playerService *service.Player) *Handler {
+func New(cfg config.Config, authService *service.Auth, territoryService *service.Territory, islandService *service.Island, playerService *service.Player) *Handler {
 	return &Handler{
+		cfg:              cfg,
 		authService:      authService,
 		territoryService: territoryService,
 		islandService:    islandService,
@@ -43,14 +46,13 @@ func New(authService *service.Auth, territoryService *service.Territory, islandS
 func (h *Handler) Start() {
 	r := chi.NewRouter()
 
-	r.Use(logger())
+	r.Use(logger(h.cfg.DevMode))
 	r.Use(corsMiddleware)
 	r.Use(middleware.Recoverer)
 	r.Use(middleware.Timeout(30 * time.Second))
 
 	// Routes
 	r.Route("/api/v1", func(r chi.Router) {
-		r.Get("/territories/{territoryID}", h.GetTerritory) // TODO: make it authenticated
 		r.Post("/login", h.Login)
 
 		// ws endpoints
@@ -69,6 +71,7 @@ func (h *Handler) Start() {
 				}
 				sendResult(w, user)
 			})
+			r.Get("/territories/{territoryID}", h.GetTerritory)
 			r.Get("/islands/{islandID}", h.GetIsland)
 			r.Post("/answer/{inputID}", h.SubmitAnswer)
 			r.Get("/answer/{inputID}/help", h.GetAnswerHelp)
@@ -145,7 +148,11 @@ func corsMiddleware(next http.Handler) http.Handler {
 
 var tokenPattern = regexp.MustCompile(`token?=(\S+) `)
 
-func logger() func(http.Handler) http.Handler {
+func logger(devMode bool) func(http.Handler) http.Handler {
+	level := slog.LevelWarn
+	if devMode {
+		level = slog.LevelDebug
+	}
 	return middleware.RequestLogger(&middleware.DefaultLogFormatter{
 		Logger: slog.NewLogLogger(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
 			ReplaceAttr: func(_ []string, a slog.Attr) slog.Attr {
@@ -162,6 +169,6 @@ func logger() func(http.Handler) http.Handler {
 				tokenRemoved = append(tokenRemoved, msg[submatch[3]:]...)
 				return slog.String(a.Key, string(tokenRemoved))
 			},
-		}), slog.LevelInfo),
+		}), level),
 	})
 }
