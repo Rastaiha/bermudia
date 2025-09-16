@@ -36,9 +36,9 @@ func IsValidRewardSource(rewardSource string) bool {
 
 var rewardParams = map[string]int32{
 	CostItemTypeCoin:      1,
-	CostItemTypeBlueKey:   20,
-	CostItemTypeRedKey:    30,
-	CostItemTypeGoldenKey: 50,
+	CostItemTypeBlueKey:   10,
+	CostItemTypeRedKey:    20,
+	CostItemTypeGoldenKey: 30,
 }
 
 var eduQuestionRewardTypes = []string{
@@ -154,7 +154,7 @@ func GetRewardOfCorrection(player Player, question BookQuestion, correction Corr
 }
 
 const (
-	chanceOfGettingMasterKey = 0.1
+	chanceOfGettingMasterKey = 0.2
 	treasureMinCost          = 20
 	treasureMaxCost          = 100
 )
