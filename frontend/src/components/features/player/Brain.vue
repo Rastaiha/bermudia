@@ -2,19 +2,19 @@
     <VueFinalModal
         class="flex justify-center items-center"
         content-class="flex flex-col w-full md:w-1/2 mx-4 p-6 
-                       bg-[#5C3A21] border-4 border-[#3E2A17] 
+                       bg-[#5C2A21] border-4 border-[#3E1A17] 
                        rounded-xl shadow-xl space-y-4"
         overlay-transition="vfm-fade"
         content-transition="vfm-slide-up"
     >
         <div
-            class="flex items-center justify-between border-b-2 border-[#3E2A17] pb-2 mb-4"
+            class="flex items-center justify-between border-b-2 border-[#3E1A17] pb-2 mb-4"
         >
             <h1 class="text-xl font-semibold text-amber-200">
                 {{ glossary.brain }}
             </h1>
             <button
-                class="p-1 rounded-full hover:bg-[#3E2A17]"
+                class="p-1 rounded-full hover:bg-[#3E1A17]"
                 @click="handleClose"
             >
                 <svg
