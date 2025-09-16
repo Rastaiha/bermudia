@@ -184,7 +184,7 @@ WITH territory_questions AS (
 SELECT 
     tq.territory_id,
     SUM(tq.knowledge_amount) AS total_knowledge,
-	SUM(CASE WHEN a.status = $1 OR a.requested_help THEN tq.knowledge_amount/2 WHEN a.status = $2 THEN tq.knowledge_amount ELSE 0 END) AS achieved_knowledge
+	SUM(CASE WHEN a.status = $1 OR (a.status = $2 AND a.requested_help) THEN tq.knowledge_amount/2 WHEN a.status = $2 THEN tq.knowledge_amount ELSE 0 END) AS achieved_knowledge
 FROM territory_questions tq
 LEFT JOIN answers a 
     ON tq.question_id = a.question_id
