@@ -82,8 +82,9 @@ func (s sqlQuestionRepository) BindQuestionsToBook(ctx context.Context, bookId s
 	}
 	defer func() {
 		if err != nil {
-			err2 := tx.Rollback()
-			err = errors.Join(err, err2)
+			err = errors.Join(err, tx.Rollback())
+		} else {
+			err = tx.Commit()
 		}
 	}()
 	_, err = tx.ExecContext(ctx, `DELETE FROM questions WHERE book_id = $1`, bookId)
@@ -91,14 +92,16 @@ func (s sqlQuestionRepository) BindQuestionsToBook(ctx context.Context, bookId s
 		return fmt.Errorf("delete questions: %w", err)
 	}
 	for _, q := range questions {
-		_, err = tx.ExecContext(ctx, `INSERT INTO questions (question_id, book_id, text, context, knowledge_amount, reward_source) VALUES ($1, $2, $3, $4, $5, $6) ;`,
+		_, err = tx.ExecContext(ctx,
+			`INSERT INTO questions (question_id, book_id, text, context, knowledge_amount, reward_source) VALUES ($1, $2, $3, $4, $5, $6)
+					ON CONFLICT (question_id) DO UPDATE SET book_id = $2, text = $3, context = $4, knowledge_amount = $5, reward_source = $6`,
 			n(q.QuestionID), n(bookId), n(q.Text), q.Context, q.KnowledgeAmount, n(q.RewardSource),
 		)
 		if err != nil {
 			return fmt.Errorf("insert questions: %w", err)
 		}
 	}
-	return tx.Commit()
+	return nil
 }
 
 func (s sqlQuestionRepository) answerColumnsToSelect() string {

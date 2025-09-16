@@ -1,66 +1,82 @@
 [
   {
-    "meetLink": "https://www.aparat.com/v/x855e2s",
-    "username": "alice"
+    "username": "alice",
+    "startingTerritory": "territory3",
+    "meetLink": "https://www.aparat.com/v/x855e2s"
   },
   {
-    "meetLink": "https://www.aparat.com/v/x855e2s",
-    "username": "test1"
+    "username": "test1",
+    "startingTerritory": "territory1",
+    "meetLink": "https://www.aparat.com/v/x855e2s"
   },
   {
-    "meetLink": "https://www.aparat.com/v/x855e2s",
-    "username": "test2"
+    "username": "test2",
+    "startingTerritory": "territory2",
+    "meetLink": "https://www.aparat.com/v/x855e2s"
   },
   {
-    "meetLink": "https://www.aparat.com/v/x855e2s",
-    "username": "test3"
+    "username": "test3",
+    "startingTerritory": "territory3",
+    "meetLink": "https://www.aparat.com/v/x855e2s"
   },
   {
-    "meetLink": "https://www.aparat.com/v/x855e2s",
-    "username": "test4"
+    "username": "test4",
+    "startingTerritory": "territory1",
+    "meetLink": "https://www.aparat.com/v/x855e2s"
   },
   {
-    "meetLink": "https://www.aparat.com/v/x855e2s",
-    "username": "test5"
+    "username": "test5",
+    "startingTerritory": "territory2",
+    "meetLink": "https://www.aparat.com/v/x855e2s"
   },
   {
-    "meetLink": "https://www.aparat.com/v/x855e2s",
-    "username": "test6"
+    "username": "test6",
+    "startingTerritory": "territory3",
+    "meetLink": "https://www.aparat.com/v/x855e2s"
   },
   {
-    "meetLink": "https://www.aparat.com/v/x855e2s",
-    "username": "test7"
+    "username": "test7",
+    "startingTerritory": "territory1",
+    "meetLink": "https://www.aparat.com/v/x855e2s"
   },
   {
-    "meetLink": "https://www.aparat.com/v/x855e2s",
-    "username": "test8"
+    "username": "test8",
+    "startingTerritory": "territory2",
+    "meetLink": "https://www.aparat.com/v/x855e2s"
   },
   {
-    "meetLink": "https://www.aparat.com/v/x855e2s",
-    "username": "test9"
+    "username": "test9",
+    "startingTerritory": "territory3",
+    "meetLink": "https://www.aparat.com/v/x855e2s"
   },
   {
-    "meetLink": "https://www.aparat.com/v/x855e2s",
-    "username": "test10"
+    "username": "test10",
+    "startingTerritory": "territory1",
+    "meetLink": "https://www.aparat.com/v/x855e2s"
   },
   {
-    "meetLink": "https://www.aparat.com/v/x855e2s",
-    "username": "test11"
+    "username": "test11",
+    "startingTerritory": "territory2",
+    "meetLink": "https://www.aparat.com/v/x855e2s"
   },
   {
-    "meetLink": "https://www.aparat.com/v/x855e2s",
-    "username": "test12"
+    "username": "test12",
+    "startingTerritory": "territory3",
+    "meetLink": "https://www.aparat.com/v/x855e2s"
   },
   {
-    "meetLink": "https://www.aparat.com/v/x855e2s",
-    "username": "test13"
+    "username": "test13",
+    "startingTerritory": "territory1",
+    "meetLink": "https://www.aparat.com/v/x855e2s"
   },
   {
-    "meetLink": "https://www.aparat.com/v/x855e2s",
-    "username": "test14"
+    "username": "test14",
+    "startingTerritory": "territory2",
+    "meetLink": "https://www.aparat.com/v/x855e2s"
   },
   {
-    "meetLink": "https://www.aparat.com/v/x855e2s",
-    "username": "test15"
+    "username": "test15",
+    "startingTerritory": "territory3",
+    "meetLink": "https://www.aparat.com/v/x855e2s"
   }
 ]

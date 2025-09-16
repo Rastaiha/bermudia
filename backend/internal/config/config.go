@@ -14,6 +14,7 @@ type Config struct {
 	ContentFileID          string        `config:"content_file_id"`
 	CorrectionGroups       map[string]int64
 	CorrectionRevertWindow time.Duration `config:"correction_revert_window"`
+	CreateMock             bool          `config:"create_mock"`
 }
 
 func (c Config) MinCorrectionDelay() time.Duration {
