@@ -8,28 +8,28 @@ export const glossary = {
     //
     // Keys
     //
-    blueKey: 'چکش آهنی',
+    blueKey: 'چکش فولادی',
     redKey: 'چکش نقره‌ای',
     goldenKey: 'چکش طلایی',
-    masterKey: 'دینامیت',
+    masterKey: 'TNT',
 
     //
     // Game Concepts
     //
     knowledge: 'دانش',
     book: 'کتاب',
-    treasure: 'شهاب‌سنگ',
+    treasure: 'شهاب‌شانسی',
     island: 'سیاره',
     territory: 'منظومه',
     library: 'کتابخانه',
-    brain: 'مغز',
+    brain: 'دانش‌ها',
     benzuela: 'بنزوئیلا',
 
     //
     // Compound Phrases
     //
-    openedTreasure: 'شهاب‌سنگ باز شده',
-    closedTreasure: 'شهاب‌سنگ بسته',
+    openedTreasure: 'شهاب‌شانسی باز شده',
+    closedTreasure: 'شهاب‌شانسی بسته',
     buyFuel: 'خرید سوخت',
     requiredKnowledge: 'دانش مورد نیاز',
     buy: 'خرید',
