@@ -16,7 +16,14 @@
             @action="actionOnClick"
         >
             <div v-if="checkSubMigration()" class="w-full">
-                <img src="/images/territories/territory1.jfif" />
+                <img
+                    v-if="migrateInfo.status == 'untouched'"
+                    :src="`/images/territories/${migrateInfo.territoryId}_locked.png`"
+                />
+                <img
+                    v-else
+                    :src="`/images/territories/${migrateInfo.territoryId}_unlocked.png`"
+                />
             </div>
             <div
                 v-else-if="checkRefuelIsland() && refuel"
@@ -71,7 +78,13 @@
                         @pointerdown="handleMigrationClick($event, option)"
                     >
                         <img
-                            src="/images/territories/territory1.jfif"
+                            v-if="option.status == 'untouched'"
+                            :src="`/images/territories/${option.territoryId}_locked.png`"
+                            class="w-full h-24 object-cover"
+                        />
+                        <img
+                            v-else
+                            :src="`/images/territories/${option.territoryId}_unlocked.png`"
                             class="w-full h-24 object-cover"
                         />
                         <div
