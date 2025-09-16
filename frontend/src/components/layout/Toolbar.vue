@@ -77,6 +77,7 @@ import Inbox from '@/components/features/player/Inbox.vue';
 import ConfirmModal from '@/components/common/ConfirmModal.vue';
 import MuteButton from '@/components/common/MuteButton.vue';
 import Brain from '@/components/features/player/Brain.vue';
+import Casino from '@/components/features/player/Casino.vue';
 import { glossary } from '@/services/glossary.js';
 
 const props = defineProps({
@@ -152,6 +153,15 @@ const { open: openBrain, close: closeBrain } = useModal({
     },
 });
 
+const { open: openCasino, close: closeCasino } = useModal({
+    component: Casino,
+    attrs: {
+        onClose() {
+            closeCasino();
+        },
+    },
+});
+
 const { open: openBackpack, close: closeBackpack } = useModal({
     component: Backpack,
     attrs: {
@@ -192,6 +202,12 @@ const menuItems = [
         icon: '/images/icons/knowledge.png',
         alt: 'مغز',
         action: openBrain,
+    },
+    {
+        id: 'casino',
+        icon: '/images/icons/casino.png',
+        alt: 'قمارخانه',
+        action: openCasino,
     },
 ];
 
