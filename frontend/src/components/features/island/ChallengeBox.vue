@@ -185,11 +185,37 @@
                 </div>
             </transition>
         </div>
+        <div class="flex flex-col items-center">
+            <div v-if="helpURL">
+                <button
+                    class="btn-hover px-6 py-3 text-lg font-semibold text-white bg-[#07458bb5] rounded-lg shrink-0"
+                    @click="goToHelp"
+                >
+                    بزن تا نجات پیدا کنی!
+                </button>
+            </div>
+            <div v-else-if="challenge.submissionState.canRequestHelp">
+                <button
+                    class="btn-hover px-6 py-3 text-lg font-semibold text-white bg-[#07458bb5] rounded-lg shrink-0"
+                    @click="help"
+                >
+                    درخواست کمک
+                </button>
+            </div>
+
+            <div v-if="challenge.submissionState.hasRequestedHelp">
+                <button class="px-6 py-3 text-lg font-semibold">
+                    قبلا برای این مسئله درخواست کمک داشته‌اید.
+                </button>
+            </div>
+        </div>
     </div>
 </template>
 
 <script setup>
 import { ref, computed } from 'vue';
+import { useToast } from 'vue-toastification';
+import { requestHelp } from '@/services/api';
 
 const props = defineProps({
     challenge: {
@@ -199,6 +225,8 @@ const props = defineProps({
 });
 
 const emit = defineEmits(['submit']);
+const helpURL = ref(null);
+const toast = useToast();
 
 const inputValue = ref(
     props.challenge.type === 'file'
@@ -230,6 +258,19 @@ const submit = () => {
             data: inputValue.value,
         });
     }
+};
+
+const help = async () => {
+    try {
+        const response = await requestHelp(props.challenge.id);
+        helpURL.value = response.meetLink;
+    } catch (err) {
+        toast.error(err.message);
+    }
+};
+
+const goToHelp = () => {
+    window.open(helpURL.value, '_blank');
 };
 </script>
 

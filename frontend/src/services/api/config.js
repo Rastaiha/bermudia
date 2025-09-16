@@ -27,6 +27,7 @@ export const API_ENDPOINTS = {
     submitAnswer: id => `${API_BASE_URL}/answer/${id}`,
     treasureCheck: `${API_BASE_URL}/unlock_treasure_check`,
     treasureUnlock: `${API_BASE_URL}/unlock_treasure`,
+    requestHelp: id => `${API_BASE_URL}/answer/${id}/help`,
 
     // Market
     makeOfferCheck: `${API_BASE_URL}/trade/make_offer_check`,
