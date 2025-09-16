@@ -550,11 +550,11 @@ func (p *Player) MakeOffer(ctx context.Context, offerer *domain.User, offered, r
 	p.tradeEventBroadcastHandler(func(userId int32) *domain.TradeEvent {
 		return &domain.TradeEvent{
 			NewOffer: &domain.NewOfferTradeEvent{
-				Offer: domain.TradeOfferViewForPlayer(userId, offerer.Username, tradeOffer),
+				Offer: domain.TradeOfferViewForPlayer(userId, offerer.Name, tradeOffer),
 			},
 		}
 	})
-	view := domain.TradeOfferViewForPlayer(offerer.ID, offerer.Username, tradeOffer)
+	view := domain.TradeOfferViewForPlayer(offerer.ID, offerer.Name, tradeOffer)
 	return &view, nil
 }
 
@@ -716,7 +716,7 @@ func (p *Player) GetTradeOffers(ctx context.Context, userId int32, filter domain
 			return nil, fmt.Errorf("failed to get offerer user: %w", err)
 		}
 
-		tradeOfferView := domain.TradeOfferViewForPlayer(userId, offererUser.Username, offer)
+		tradeOfferView := domain.TradeOfferViewForPlayer(userId, offererUser.Name, offer)
 		result = append(result, tradeOfferView)
 	}
 

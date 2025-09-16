@@ -645,6 +645,7 @@ curl --request GET \
 |----------|--------|-----------------------------|
 | id       | int    | Unique numeric id of user   |
 | username | string | Unique username of the user |
+| name     | string | Name of the user            |
 
 
 ### Player

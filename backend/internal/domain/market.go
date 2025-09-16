@@ -54,10 +54,10 @@ type DeletedOfferTradeEvent struct {
 	ByMe    bool   `json:"byMe"`
 }
 
-func TradeOfferViewForPlayer(userID int32, offererUsername string, offer TradeOffer) TradeOfferView {
+func TradeOfferViewForPlayer(userID int32, offererName string, offer TradeOffer) TradeOfferView {
 	return TradeOfferView{
 		ID:         offer.ID,
-		By:         offererUsername,
+		By:         offererName,
 		ByMe:       userID == offer.By,
 		Offered:    offer.Offered,
 		Requested:  offer.Requested,

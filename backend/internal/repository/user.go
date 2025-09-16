@@ -16,8 +16,10 @@ CREATE TABLE IF NOT EXISTS users (
     username_display VARCHAR(255) NOT NULL,
     username VARCHAR(255) NOT NULL UNIQUE,
     meet_link VARCHAR(255) NOT NULL,
+    name TEXT NOT NULL,
     hashed_password BYTEA NOT NULL
-);`
+);
+`
 )
 
 type sqlUser struct {
@@ -35,11 +37,11 @@ func NewSqlUser(db *sql.DB) (domain.UserStore, error) {
 }
 
 func (s sqlUser) columns() string {
-	return "SELECT id, username_display, meet_link, hashed_password FROM users"
+	return "SELECT id, username_display, meet_link, hashed_password, name FROM users"
 }
 
 func (s sqlUser) scan(row *sql.Row, user *domain.User) error {
-	err := row.Scan(&user.ID, &user.Username, &user.MeetLink, &user.HashedPassword)
+	err := row.Scan(&user.ID, &user.Username, &user.MeetLink, &user.HashedPassword, &user.Name)
 	if errors.Is(err, sql.ErrNoRows) {
 		return domain.ErrUserNotFound
 	}
@@ -47,13 +49,14 @@ func (s sqlUser) scan(row *sql.Row, user *domain.User) error {
 }
 
 func (s sqlUser) Create(ctx context.Context, user *domain.User) error {
-	err := s.db.QueryRowContext(ctx, `INSERT INTO users (id, username_display, username, meet_link, hashed_password) VALUES ($1, $2, $3, $4, $5)
-ON CONFLICT (username) DO UPDATE SET username_display = $2, username = $3, meet_link = $4, hashed_password = $5 RETURNING id`,
+	err := s.db.QueryRowContext(ctx, `INSERT INTO users (id, username_display, username, meet_link, hashed_password, name) VALUES ($1, $2, $3, $4, $5, $6)
+ON CONFLICT (username) DO UPDATE SET username_display = $2, username = $3, meet_link = $4, hashed_password = $5, name = $6 RETURNING id`,
 		n(user.ID),
 		n(user.Username),
 		n(strings.ToLower(user.Username)),
 		user.MeetLink,
 		user.HashedPassword,
+		user.Name,
 	).Scan(&user.ID)
 	return err
 }
