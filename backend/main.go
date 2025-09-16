@@ -88,7 +88,7 @@ func main() {
 		}
 	}
 
-	adminBot := adminbot.NewBot(cfg, theBot, islandService, correctionService, adminService, userRepo)
+	adminBot := adminbot.NewBot(cfg, theBot, islandService, correctionService, playerService, adminService, userRepo)
 
 	h := handler.New(cfg, authService, territoryService, islandService, playerService)
 

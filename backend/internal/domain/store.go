@@ -66,6 +66,7 @@ type PlayerStore interface {
 	Create(ctx context.Context, player Player) error
 	Get(ctx context.Context, userId int32) (Player, error)
 	Update(ctx context.Context, tx Tx, old, updated Player) error
+	GetAll(ctx context.Context) ([]int32, error)
 }
 
 type QuestionStore interface {
