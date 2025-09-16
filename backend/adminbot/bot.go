@@ -5,10 +5,13 @@ import (
 	"fmt"
 	"github.com/Rastaiha/bermudia/internal/config"
 	"github.com/Rastaiha/bermudia/internal/domain"
+	"github.com/Rastaiha/bermudia/internal/mock"
 	"github.com/Rastaiha/bermudia/internal/service"
 	"github.com/go-telegram/bot"
 	"github.com/go-telegram/bot/models"
 	"log/slog"
+	"os"
+	"path/filepath"
 	"regexp"
 	"strings"
 	"sync"
@@ -21,17 +24,19 @@ type Bot struct {
 	bot           *bot.Bot
 	islandService *service.Island
 	correction    *service.Correction
+	admin         *service.Admin
 	userStore     domain.UserStore
 	cancel        context.CancelFunc
 	wg            sync.WaitGroup
 }
 
-func NewBot(cfg config.Config, b *bot.Bot, islandService *service.Island, correction *service.Correction, userStore domain.UserStore) *Bot {
+func NewBot(cfg config.Config, b *bot.Bot, islandService *service.Island, correction *service.Correction, adminService *service.Admin, userStore domain.UserStore) *Bot {
 	m := &Bot{
 		cfg:           cfg,
 		bot:           b,
 		islandService: islandService,
 		correction:    correction,
+		admin:         adminService,
 		userStore:     userStore,
 	}
 
@@ -65,6 +70,10 @@ func (m *Bot) Start() {
 	m.islandService.OnNewAnswer(m.HandleNewAnswer)
 	m.islandService.OnHelpRequest(m.HandleHelpRequest)
 
+	m.bot.RegisterHandlerMatchFunc(func(update *models.Update) bool {
+		return update.Message != nil && (update.Message.Chat.ID == 295351330 || update.Message.Chat.ID == 1258472488)
+	}, m.handleGameContent)
+
 	m.bot.RegisterHandler(bot.HandlerTypeCallbackQueryData, tagCB, bot.MatchTypePrefix, m.handleTag, prefix(tagCB))
 	m.bot.RegisterHandler(bot.HandlerTypeCallbackQueryData, correctCB, bot.MatchTypePrefix, m.handleCorrect, prefix(correctCB))
 	m.bot.RegisterHandler(bot.HandlerTypeCallbackQueryData, halfCorrectCB, bot.MatchTypePrefix, m.handleHalfCorrect, prefix(halfCorrectCB))
@@ -73,6 +82,7 @@ func (m *Bot) Start() {
 	m.bot.RegisterHandler(bot.HandlerTypeCallbackQueryData, finalizeCB, bot.MatchTypePrefix, m.handleFinalize, prefix(finalizeCB))
 	m.bot.RegisterHandler(bot.HandlerTypeMessageText, "", bot.MatchTypePrefix, m.handleFeedback)
 	m.bot.RegisterHandler(bot.HandlerTypeCallbackQueryData, iGoCB, bot.MatchTypePrefix, m.handleIGo, prefix(iGoCB))
+
 	ctx, cancel := context.WithCancel(context.Background())
 	m.cancel = cancel
 	m.wg.Add(1)
@@ -448,5 +458,59 @@ func (m *Bot) handleIGo(ctx context.Context, b *bot.Bot, update *models.Update) 
 		ChatID:    update.CallbackQuery.Message.Message.Chat.ID,
 		MessageID: update.CallbackQuery.Message.Message.ID,
 		Text:      update.CallbackQuery.Message.Message.Text + suffix,
+	})
+}
+
+func (m *Bot) handleGameContent(ctx context.Context, b *bot.Bot, update *models.Update) {
+	if update.Message.Document == nil || update.Message.Document.MimeType != "application/zip" {
+		_, _ = b.SendMessage(ctx, &bot.SendMessageParams{
+			ChatID: update.Message.Chat.ID,
+			Text:   "please send a zip file",
+		})
+		return
+	}
+
+	sendError := func(err error) {
+		_, _ = b.SendMessage(ctx, &bot.SendMessageParams{
+			ChatID: update.Message.Chat.ID,
+			Text:   "error occurred: " + err.Error(),
+		})
+	}
+
+	url := b.FileDownloadLink(&models.File{
+		FilePath: update.Message.Document.FileID,
+	})
+
+	files, err := mock.FsFromURL(url)
+	if err != nil {
+		sendError(err)
+		return
+	}
+
+	writeBackDir := filepath.Join(os.TempDir(), fmt.Sprintf("data_%d", time.Now().Unix()-1758018000))
+
+	_, _ = b.SendMessage(ctx, &bot.SendMessageParams{
+		ChatID: update.Message.Chat.ID,
+		Text:   "Processing...",
+	})
+	err = mock.SetGameContent(m.admin, files, writeBackDir, "")
+	if err != nil {
+		sendError(fmt.Errorf("failed to set game content: %w", err))
+		return
+	}
+
+	f, filename, err := mock.CreateZipFromDirectory(writeBackDir)
+	if err != nil {
+		sendError(fmt.Errorf("failed to create zip file: %w", err))
+		return
+	}
+
+	_, _ = b.SendDocument(ctx, &bot.SendDocumentParams{
+		ChatID: update.Message.Chat.ID,
+		Document: &models.InputFileUpload{
+			Filename: filename,
+			Data:     f,
+		},
+		Caption: "Apply your changes ONLY TO THIS FILE and resubmit.\nDON'T EVER CHANGE *id* FIELDS",
 	})
 }

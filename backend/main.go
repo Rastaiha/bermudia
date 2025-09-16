@@ -84,25 +84,15 @@ func main() {
 
 	islandService.OnNewPortableIsland(playerService.HandleNewPortableIsland)
 
-	if cfg.DevMode {
-		writeBackDir := filepath.Join(os.TempDir(), fmt.Sprintf("data_%d", time.Now().Unix()-1758007770))
-		err = mock.CreateMockData(adminService, mock.DataFiles, writeBackDir, cfg.MockUsersPassword)
+	if cfg.DevMode && cfg.CreateMock {
+		writeBackDir := filepath.Join(os.TempDir(), fmt.Sprintf("data_%d", time.Now().Unix()-1758018000))
+		err = mock.SetGameContent(adminService, mock.DataFiles, writeBackDir, cfg.MockUsersPassword)
 		if err != nil {
 			log.Fatal("failed to create mock data: ", err)
 		}
 	}
-	if cfg.ContentFileID != "" {
-		contentFs, err := mock.FsFromURL(fmt.Sprintf("https://tapi.bale.ai/file/bot%s/%s", cfg.BotToken, cfg.ContentFileID))
-		if err != nil {
-			log.Fatal("failed to load content file: ", err)
-		}
-		err = mock.CreateMockData(adminService, contentFs, "", "")
-		if err != nil {
-			log.Fatal("failed to create mock data from downloaded content: ", err)
-		}
-	}
 
-	adminBot := adminbot.NewBot(cfg, theBot, islandService, correctionService, userRepo)
+	adminBot := adminbot.NewBot(cfg, theBot, islandService, correctionService, adminService, userRepo)
 
 	h := handler.New(authService, territoryService, islandService, playerService)
 

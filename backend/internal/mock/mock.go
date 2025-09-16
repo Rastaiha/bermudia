@@ -11,6 +11,7 @@ import (
 	"io"
 	"io/fs"
 	"log/slog"
+	"math/rand"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -23,7 +24,7 @@ func FsFromURL(url string) (fs.FS, error) {
 		return nil, err
 	}
 	defer resp.Body.Close()
-	f, err := os.Create(filepath.Join(os.TempDir(), "content.zip"))
+	f, err := os.Create(filepath.Join(os.TempDir(), fmt.Sprintf("content_%d.zip", rand.Int31())))
 	if err != nil {
 		return nil, err
 	}
@@ -38,19 +39,20 @@ func FsFromURL(url string) (fs.FS, error) {
 		return nil, err
 	}
 
-	err = ExtractZip(f, stat.Size(), "./content")
+	dir := filepath.Join(os.TempDir(), "content_"+fmt.Sprint(rand.Int31())+"/")
+	err = ExtractZip(f, stat.Size(), dir)
 	if err != nil {
 		return nil, err
 	}
-	root := os.DirFS("./content")
+	root := os.DirFS(dir)
 	return root, nil
 }
 
 //go:embed data
 var DataFiles embed.FS
 
-func CreateMockData(adminService *service.Admin, files fs.FS, writeBackPath string, defaultPass string) error {
-	slog.Info("Creating mock data...")
+func SetGameContent(adminService *service.Admin, files fs.FS, writeBackPath string, defaultPass string) error {
+	slog.Info("Setting game content...")
 	if writeBackPath != "" {
 		err := os.CopyFS(writeBackPath, DataFiles)
 		if err != nil {
