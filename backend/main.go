@@ -2,7 +2,6 @@ package main
 
 import (
 	"database/sql"
-	"fmt"
 	"github.com/Rastaiha/bermudia/adminbot"
 	"github.com/Rastaiha/bermudia/api/handler"
 	"github.com/Rastaiha/bermudia/internal/config"
@@ -15,9 +14,7 @@ import (
 	"log/slog"
 	"os"
 	"os/signal"
-	"path/filepath"
 	"syscall"
-	"time"
 )
 
 func main() {
@@ -85,8 +82,7 @@ func main() {
 	islandService.OnNewPortableIsland(playerService.HandleNewPortableIsland)
 
 	if cfg.DevMode && cfg.CreateMock {
-		writeBackDir := filepath.Join(os.TempDir(), fmt.Sprintf("data_%d", time.Now().Unix()-1758018000))
-		err = mock.SetGameContent(adminService, mock.DataFiles, writeBackDir, cfg.MockUsersPassword)
+		err = mock.SetGameContent(adminService, mock.DataFiles, "", cfg.MockUsersPassword)
 		if err != nil {
 			log.Fatal("failed to create mock data: ", err)
 		}
