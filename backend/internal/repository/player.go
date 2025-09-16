@@ -40,13 +40,15 @@ func NewSqlPlayerRepository(db *sql.DB) (domain.PlayerStore, error) {
 }
 
 func (s sqlPlayerRepository) Create(ctx context.Context, player domain.Player) error {
+	initialUpdatedAt := time.Time{}
 	visitedTerritories, err := json.Marshal(player.VisitedTerritories)
 	if err != nil {
 		return fmt.Errorf("failed to marshal visited territories: %w", err)
 	}
 	_, err = s.db.ExecContext(ctx,
-		`INSERT INTO players (user_id, at_territory, at_island, anchored, fuel, fuel_cap, coin, red_key, blue_key, golden_key, master_key, visited_territories, updated_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)`,
-		n(player.UserId), n(player.AtTerritory), n(player.AtIsland), player.Anchored, n(player.Fuel), n(player.FuelCap), player.Coin, player.RedKey, player.BlueKey, player.GoldenKey, player.MasterKey, visitedTerritories, time.Now().UTC(),
+		`INSERT INTO players (user_id, at_territory, at_island, anchored, fuel, fuel_cap, coin, red_key, blue_key, golden_key, master_key, visited_territories, updated_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+ON CONFLICT (user_id) DO UPDATE SET at_territory = CASE WHEN players.updated_at = EXCLUDED.updated_at THEN EXCLUDED.at_territory ELSE players.at_territory END, at_island = CASE WHEN players.updated_at = EXCLUDED.updated_at THEN EXCLUDED.at_island ELSE players.at_island END ;`,
+		n(player.UserId), n(player.AtTerritory), n(player.AtIsland), player.Anchored, n(player.Fuel), n(player.FuelCap), player.Coin, player.RedKey, player.BlueKey, player.GoldenKey, player.MasterKey, visitedTerritories, initialUpdatedAt,
 	)
 	return err
 }

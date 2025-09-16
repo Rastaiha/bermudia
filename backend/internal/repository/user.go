@@ -47,13 +47,14 @@ func (s sqlUser) scan(row *sql.Row, user *domain.User) error {
 }
 
 func (s sqlUser) Create(ctx context.Context, user *domain.User) error {
-	_, err := s.db.ExecContext(ctx, `INSERT INTO users (id, username_display, username, meet_link, hashed_password) VALUES ($1, $2, $3, $4, $5)`,
+	err := s.db.QueryRowContext(ctx, `INSERT INTO users (id, username_display, username, meet_link, hashed_password) VALUES ($1, $2, $3, $4, $5)
+ON CONFLICT (username) DO UPDATE SET username_display = $2, username = $3, meet_link = $4, hashed_password = $5 RETURNING id`,
 		n(user.ID),
 		n(user.Username),
 		n(strings.ToLower(user.Username)),
 		user.MeetLink, // TODO: wrap in n
 		user.HashedPassword,
-	)
+	).Scan(&user.ID)
 	return err
 }
 

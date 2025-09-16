@@ -49,65 +49,60 @@ func FsFromURL(url string) (fs.FS, error) {
 //go:embed data
 var DataFiles embed.FS
 
-func CreateMockData(adminService *service.Admin, mockUsersPassword string, root fs.FS) error {
+func CreateMockData(adminService *service.Admin, files fs.FS, writeBackPath string, defaultPass string) error {
 	slog.Info("Creating mock data...")
-	territoryFiles, err1 := fs.Sub(root, "data/territories")
-	booksFiles, err2 := fs.Sub(root, "data/books")
-	poolSettingsFiles, err3 := fs.Sub(root, "data/pool_settings")
-	usersFile, err4 := fs.ReadFile(root, "data/users.json")
-	err := errors.Join(err1, err2, err3, err4)
-	if err != nil {
-		return fmt.Errorf("bad file structure: %w", err)
+	if writeBackPath != "" {
+		err := os.CopyFS(writeBackPath, DataFiles)
+		if err != nil {
+			return fmt.Errorf("could not copy fs: %w", err)
+		}
 	}
-	if mockUsersPassword == "" {
-		return errors.New("mock users password is empty")
-	}
-	if err := createMockTerritories(adminService, territoryFiles); err != nil {
+	if err := createMockTerritories(adminService, files); err != nil {
 		return fmt.Errorf("failed to create mock territories: %w", err)
 	}
-	if err := createMockBooks(adminService, booksFiles); err != nil {
+	if err := createMockBooks(adminService, files, writeBackPath); err != nil {
 		return fmt.Errorf("failed to create mock islands: %w", err)
 	}
-	if err := createPoolSettings(adminService, poolSettingsFiles); err != nil {
+	if err := createPoolSettings(adminService, files, writeBackPath); err != nil {
 		return fmt.Errorf("failed to create mock pool settings: %w", err)
 	}
-	if err := createMockUsers(adminService, usersFile, mockUsersPassword); err != nil {
+	if err := createMockUsers(adminService, files, writeBackPath, defaultPass); err != nil {
 		return fmt.Errorf("failed to create mock users: %w", err)
 	}
 	return nil
 }
 
-type mockUser struct {
-	Username          string `json:"username"`
-	Password          string `json:"password"`
-	StartingTerritory string `json:"startingTerritory"`
-	MeetLink          string `json:"meetLink"`
-}
-
-func createMockUsers(adminService *service.Admin, usersJson []byte, defaultPass string) error {
-	var users []mockUser
-	err := json.Unmarshal(usersJson, &users)
+func createMockUsers(adminService *service.Admin, files fs.FS, writeBack string, defaultPass string) error {
+	path := "data/users.json"
+	usersJson, err := fs.ReadFile(files, path)
+	if err != nil {
+		return err
+	}
+	var users []service.User
+	err = json.Unmarshal(usersJson, &users)
 	if err != nil {
 		return err
 	}
 	ctx := context.Background()
 	var errs []error
-	for i, u := range users {
-		password := u.Password
-		if password == "" {
-			password = defaultPass
+	result := make([]service.User, 0, len(users))
+	for _, u := range users {
+		if u.Password == "" && defaultPass != "" {
+			u.Password = defaultPass
 		}
-		errs = append(errs, adminService.CreateUser(ctx, int32(1001+i), u.Username, password, u.StartingTerritory, u.MeetLink))
+		u, err := adminService.CreateUser(ctx, u)
+		errs = append(errs, err)
+		result = append(result, u)
 	}
 	if err := errors.Join(errs...); err != nil {
 		return fmt.Errorf("failed to create mock users: %w", err)
 	}
-	return nil
+	return writeBackData(writeBack, path, result)
 }
 
 func createMockTerritories(adminService *service.Admin, territoryFiles fs.FS) error {
 	ctx := context.Background()
-	return fs.WalkDir(territoryFiles, ".", func(path string, d fs.DirEntry, err error) error {
+	return fs.WalkDir(territoryFiles, "data/territories", func(path string, d fs.DirEntry, err error) error {
 		if d.IsDir() {
 			return nil
 		}
@@ -126,9 +121,12 @@ func createMockTerritories(adminService *service.Admin, territoryFiles fs.FS) er
 	})
 }
 
-func createMockBooks(adminService *service.Admin, booksFiles fs.FS) error {
+func createMockBooks(adminService *service.Admin, booksFiles fs.FS, writeBack string) error {
+	root := "data/books"
 	ctx := context.Background()
-	return fs.WalkDir(booksFiles, ".", func(path string, d fs.DirEntry, err error) error {
+	islandsDir := filepath.Join(root, "islands/")
+	poolDir := filepath.Join(root, "pool/")
+	return fs.WalkDir(booksFiles, root, func(path string, d fs.DirEntry, err error) error {
 		if d.IsDir() {
 			return nil
 		}
@@ -141,23 +139,29 @@ func createMockBooks(adminService *service.Admin, booksFiles fs.FS) error {
 			return err
 		}
 		dir, file := filepath.Split(path)
-		if dir == "islands/" {
+		if filepath.Clean(dir) == islandsDir {
 			islandId := strings.TrimSuffix(file, filepath.Ext(file))
 			book, err = adminService.SetBookAndBindToIsland(ctx, islandId, book)
-			return err
-		}
-		if pool, ok := strings.CutPrefix(dir, "pool/"); ok {
+			if err != nil {
+				return err
+			}
+		} else if pool, ok := strings.CutPrefix(dir, poolDir); ok {
 			pool = strings.Trim(pool, "/")
 			book, err = adminService.SetBookAndBindToPool(ctx, pool, book)
-			return err
+			if err != nil {
+				return err
+			}
+		} else {
+			return errors.New("unknown book with path " + path)
 		}
-		return errors.New("unknown book with path " + path)
+
+		return writeBackData(writeBack, path, book)
 	})
 }
 
-func createPoolSettings(adminService *service.Admin, poolSettingsFiles fs.FS) error {
+func createPoolSettings(adminService *service.Admin, poolSettingsFiles fs.FS, writeBack string) error {
 	ctx := context.Background()
-	return fs.WalkDir(poolSettingsFiles, ".", func(path string, d fs.DirEntry, err error) error {
+	return fs.WalkDir(poolSettingsFiles, "data/pool_settings", func(path string, d fs.DirEntry, err error) error {
 		if d.IsDir() {
 			return nil
 		}
@@ -169,7 +173,25 @@ func createPoolSettings(adminService *service.Admin, poolSettingsFiles fs.FS) er
 		if err := json.Unmarshal(content, &bindings); err != nil {
 			return err
 		}
-		_, err = adminService.SetTerritoryIslandBindings(ctx, bindings)
-		return err
+		bindings, err = adminService.SetTerritoryIslandBindings(ctx, bindings)
+		if err != nil {
+			return err
+		}
+		return writeBackData(writeBack, path, bindings)
 	})
+}
+
+func writeBackData(writeBack string, path string, data any) error {
+	if writeBack == "" {
+		return nil
+	}
+	j, err := json.MarshalIndent(data, "", "  ")
+	if err != nil {
+		return err
+	}
+	err = os.WriteFile(filepath.Join(writeBack, path), j, os.FileMode(os.O_TRUNC|os.O_WRONLY))
+	if err != nil {
+		return fmt.Errorf("failed to write back to %q: %w", path, err)
+	}
+	return nil
 }

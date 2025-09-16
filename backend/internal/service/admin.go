@@ -2,10 +2,13 @@ package service
 
 import (
 	"context"
+	cRand "crypto/rand"
+	"encoding/base64"
 	"errors"
 	"fmt"
 	"github.com/Rastaiha/bermudia/internal/config"
 	"github.com/Rastaiha/bermudia/internal/domain"
+	"math/rand"
 	"slices"
 )
 
@@ -282,35 +285,54 @@ func (a *Admin) SetTerritoryIslandBindings(ctx context.Context, bindings Territo
 	return bindings, nil
 }
 
-func (a *Admin) CreateUser(ctx context.Context, id int32, username, password, startingTerritoryID, meetLink string) error {
+type User struct {
+	Username          string `json:"username"`
+	Password          string `json:"password"`
+	StartingTerritory string `json:"startingTerritory"`
+	MeetLink          string `json:"meetLink"`
+}
+
+func (a *Admin) CreateUser(ctx context.Context, user User) (User, error) {
+	if user.Username == "" {
+		return User{}, fmt.Errorf("username is required")
+	}
+	if user.Password == "" {
+		b := make([]byte, 8)
+		_, _ = cRand.Read(b)
+		user.Password = base64.RawURLEncoding.EncodeToString(b)
+	}
 	territories, err := a.territoryStore.ListTerritories(ctx)
 	if err != nil {
-		return err
+		return user, err
 	}
 	if len(territories) == 0 {
-		return errors.New("no territory found")
+		return user, errors.New("no territory found")
 	}
+
+	id := rand.Int31()
 	startingTerritory := territories[int(id)%len(territories)]
 	if startingTerritory.ID != "" {
 		for _, t := range territories {
-			if t.ID == startingTerritoryID {
+			if t.ID == user.StartingTerritory {
 				startingTerritory = t
 				break
 			}
 		}
 	}
-	hp, err := domain.HashPassword(password)
+	user.StartingTerritory = startingTerritory.ID
+
+	hp, err := domain.HashPassword(user.Password)
 	if err != nil {
-		return err
+		return user, err
 	}
-	user := domain.User{
+	u := &domain.User{
 		ID:             id,
-		Username:       username,
-		MeetLink:       meetLink,
+		Username:       user.Username,
+		MeetLink:       user.MeetLink,
 		HashedPassword: hp,
 	}
-	if err := a.userStore.Create(ctx, &user); err != nil {
-		return err
+	if err := a.userStore.Create(ctx, u); err != nil {
+		return user, err
 	}
-	return a.playerStore.Create(ctx, domain.NewPlayer(user.ID, &startingTerritory))
+	return user, a.playerStore.Create(ctx, domain.NewPlayer(u.ID, &startingTerritory))
 }

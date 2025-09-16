@@ -209,7 +209,7 @@ func (s sqlIslandRepository) GetIslandHeaderByBookIdAndUserId(ctx context.Contex
 func (s sqlIslandRepository) ReserveIDForTerritory(ctx context.Context, territoryId, islandId, islandName string) error {
 	var actualTerritoryId string
 	err := s.db.QueryRowContext(ctx,
-		`INSERT INTO islands (id, territory_id, name) VALUES ($1, $2, $3) ON CONFLICT (id) DO UPDATE SET name = CASE WHEN $2 = territory_id THEN $3 ELSE name END RETURNING territory_id ;`,
+		`INSERT INTO islands (id, territory_id, name) VALUES ($1, $2, $3) ON CONFLICT (id) DO UPDATE SET name = CASE WHEN islands.territory_id = $2 THEN $3 ELSE islands.name END RETURNING territory_id ;`,
 		n(islandId), n(territoryId), n(islandName)).Scan(&actualTerritoryId)
 	if err != nil {
 		return err

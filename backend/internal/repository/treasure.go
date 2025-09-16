@@ -59,8 +59,9 @@ func (s sqlTreasureRepository) BindTreasuresToBook(ctx context.Context, bookId s
 	}
 	defer func() {
 		if err != nil {
-			err2 := tx.Rollback()
-			err = errors.Join(err, err2)
+			err = errors.Join(err, tx.Rollback())
+		} else {
+			err = tx.Commit()
 		}
 	}()
 	_, err = tx.ExecContext(ctx, `DELETE FROM treasures WHERE book_id = $1`, bookId)
@@ -68,14 +69,14 @@ func (s sqlTreasureRepository) BindTreasuresToBook(ctx context.Context, bookId s
 		return fmt.Errorf("delete treasures: %w", err)
 	}
 	for _, t := range treasures {
-		_, err = tx.ExecContext(ctx, `INSERT INTO treasures (id, book_id) VALUES ($1, $2)`,
+		_, err = tx.ExecContext(ctx, `INSERT INTO treasures (id, book_id) VALUES ($1, $2) ON CONFLICT (id) DO UPDATE SET book_id = $2`,
 			n(t.ID), n(bookId),
 		)
 		if err != nil {
 			return fmt.Errorf("insert treasures: %w", err)
 		}
 	}
-	return tx.Commit()
+	return nil
 }
 
 func (s sqlTreasureRepository) userTreasureColumnsToSelect() string {

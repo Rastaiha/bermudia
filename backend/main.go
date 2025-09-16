@@ -15,7 +15,9 @@ import (
 	"log/slog"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"syscall"
+	"time"
 )
 
 func main() {
@@ -83,7 +85,8 @@ func main() {
 	islandService.OnNewPortableIsland(playerService.HandleNewPortableIsland)
 
 	if cfg.DevMode {
-		err = mock.CreateMockData(adminService, cfg.MockUsersPassword, mock.DataFiles)
+		writeBackDir := filepath.Join(os.TempDir(), fmt.Sprintf("data_%d", time.Now().Unix()-1758007770))
+		err = mock.CreateMockData(adminService, mock.DataFiles, writeBackDir, cfg.MockUsersPassword)
 		if err != nil {
 			log.Fatal("failed to create mock data: ", err)
 		}
@@ -93,7 +96,7 @@ func main() {
 		if err != nil {
 			log.Fatal("failed to load content file: ", err)
 		}
-		err = mock.CreateMockData(adminService, cfg.MockUsersPassword, contentFs)
+		err = mock.CreateMockData(adminService, contentFs, "", "")
 		if err != nil {
 			log.Fatal("failed to create mock data from downloaded content: ", err)
 		}
