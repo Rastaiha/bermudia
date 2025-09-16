@@ -48,10 +48,13 @@ var eduQuestionRewardTypes = []string{
 }
 
 var pooledQuestionRewardTypes = []string{
-	CostItemTypeCoin,
 	CostItemTypeBlueKey,
 	CostItemTypeRedKey,
 	CostItemTypeGoldenKey,
+}
+
+var pooledQuestionCoinType = []string{
+	CostItemTypeCoin
 }
 
 var treasureCostRewardTypes = []string{
@@ -118,13 +121,14 @@ func giveRewardOfSource(player Player, rewardSource string) (Player, bool) {
 }
 
 func giveRewardOfPool(player Player, poolId string) (Player, bool) {
+	player = giveRandomWorthOfCoins(player, 50, pooledQuestionRewardTypes)
 	switch poolId {
 	case PoolEasy:
-		return giveRandomWorthOfCoins(player, 50, pooledQuestionRewardTypes), true
+		return giveRandomWorthOfCoins(player, 25, pooledQuestionCoinType), true
 	case PoolMedium:
-		return giveRandomWorthOfCoins(player, 75, pooledQuestionRewardTypes), true
+		return giveRandomWorthOfCoins(player, 50, pooledQuestionCoinType), true
 	case PoolHard:
-		return giveRandomWorthOfCoins(player, 125, pooledQuestionRewardTypes), true
+		return giveRandomWorthOfCoins(player, 75, pooledQuestionCoinType), true
 	}
 	return player, false
 }
