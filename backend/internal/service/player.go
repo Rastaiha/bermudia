@@ -63,11 +63,16 @@ func (p *Player) Start() {
 	}
 	if p.cfg.DevMode {
 		_, _ = p.cron.NewJob(gocron.DurationJob(1*time.Minute), gocron.NewTask(func() {
-			now := time.Now().UTC()
-			_, _ = p.BroadcastMessage(
-				context.Background(),
-				fmt.Sprintf("ساعت %s به وقت لندن است.\nامروز %s", now.Format(time.TimeOnly), now.Weekday().String()),
-			)
+			go func() {
+				now := time.Now().UTC()
+				_, err := p.BroadcastMessage(
+					context.Background(),
+					fmt.Sprintf("ساعت %s به وقت لندن است.\nامروز %s", now.Format(time.TimeOnly), now.Weekday().String()),
+				)
+				if err != nil {
+					slog.Error("failed to send mock broadcast message", "error", err)
+				}
+			}()
 		}))
 	}
 	p.cron.Start()

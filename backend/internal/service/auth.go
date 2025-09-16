@@ -72,7 +72,7 @@ func (a *Auth) ValidateToken(ctx context.Context, tokenStr string) (*domain.User
 	}
 	user, err := a.userStore.Get(ctx, userId)
 	if err != nil {
-		slog.Error("failed to find valid user by id", userId)
+		slog.Error("failed to find valid user by id", "user_id", userId)
 		return nil, false
 	}
 	return user, true
