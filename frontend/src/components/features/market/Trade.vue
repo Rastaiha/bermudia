@@ -218,7 +218,7 @@ const isSubmitDisabled = computed(() => {
         (sum, entry) => sum + (entry.current || 0),
         0
     );
-    return totalOffered === 0 && totalRequested === 0;
+    return totalOffered === 0 || totalRequested === 0;
 });
 
 const clamp = (val, min, max) => Math.max(min, Math.min(val, max));
