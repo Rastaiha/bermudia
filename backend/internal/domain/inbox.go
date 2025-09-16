@@ -20,6 +20,7 @@ type InboxMessage struct {
 type InboxMessageContent struct {
 	NewCorrection    *InboxMessageNewCorrection    `json:"newCorrection,omitempty"`
 	OwnOfferAccepted *InboxMessageOwnOfferAccepted `json:"ownOfferAccepted,omitempty"`
+	Announcement     *InboxMessageAnnouncement     `json:"announcement,omitempty"`
 }
 
 type InboxEvent struct {
@@ -51,4 +52,8 @@ type InboxMessageNewCorrection struct {
 
 type InboxMessageOwnOfferAccepted struct {
 	Offer TradeOfferView `json:"offer"`
+}
+
+type InboxMessageAnnouncement struct {
+	Text string `json:"text"`
 }

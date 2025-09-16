@@ -15,6 +15,7 @@ type Config struct {
 	CorrectionGroups       map[string]int64
 	CorrectionRevertWindow time.Duration `config:"correction_revert_window"`
 	CreateMock             bool          `config:"create_mock"`
+	AdminsGroup            int64         `config:"admins_group"`
 }
 
 func (c Config) MinCorrectionDelay() time.Duration {

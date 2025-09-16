@@ -92,3 +92,12 @@ func (h *Handler) StreamInboxEvents(w http.ResponseWriter, r *http.Request) {
 	}
 	h.inboxHub.SendOnConn(c, user.ID, event, eventSendTimeout)
 }
+
+func (h *Handler) HandleBroadcastMessage(eventProvider func(userId int32) *domain.InboxMessageView) {
+	h.inboxHub.Broadcast(func(userId int32, c *hub.Connection) {
+		event := eventProvider(userId)
+		if event != nil {
+			go h.inboxHub.SendOnConn(c, userId, event, eventSendTimeout)
+		}
+	})
+}
