@@ -22,6 +22,7 @@ export const glossary = {
     island: 'سیاره',
     territory: 'منظومه',
     library: 'کتابخانه',
+    benzuela: 'بنزوئیلا',
 
     //
     // Compound Phrases
@@ -31,5 +32,6 @@ export const glossary = {
     buyFuel: 'خرید سوخت',
     requiredKnowledge: 'دانش مورد نیاز',
     buy: 'خرید',
-    benzuela: 'بنزوئیلا',
+    benzuelaMarketplace: 'بازارچه بنزوئیلا',
+    benzuelaLibrary: 'کتابخانه بنزوئیلا',
 };

@@ -9,7 +9,7 @@
             class="flex-shrink-0 flex items-center justify-between p-6 pb-4 border-b border-slate-600"
         >
             <h1 class="text-2xl font-bold text-amber-400">
-                بازارچه {{ glossary.benzuela }}
+                {{ glossary.benzuelaMarketplace }}
             </h1>
             <button
                 class="p-2 rounded-full text-slate-400 hover:bg-slate-700 hover:text-white transition-colors"
