@@ -54,7 +54,7 @@ var DataFiles embed.FS
 func SetGameContent(adminService *service.Admin, files fs.FS, writeBackPath string, defaultPass string) error {
 	slog.Info("Setting game content...")
 	if writeBackPath != "" {
-		err := os.CopyFS(writeBackPath, DataFiles)
+		err := os.CopyFS(writeBackPath, files)
 		if err != nil {
 			return fmt.Errorf("could not copy fs: %w", err)
 		}
