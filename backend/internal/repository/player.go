@@ -45,7 +45,8 @@ func (s sqlPlayerRepository) Create(ctx context.Context, player domain.Player) (
 
 	current, err := s.Get(ctx, player.UserId)
 	if err == nil && current.UpdatedAt.UTC().UnixMilli() == initialUpdatedAt.UTC().UnixMilli() {
-		err = s.Update(ctx, nil, current, player)
+		player.UpdatedAt = initialUpdatedAt
+		err = s.update(ctx, nil, current, player)
 		if errors.Is(err, domain.ErrPlayerConflict) {
 			return nil
 		}
@@ -84,9 +85,14 @@ func (s sqlPlayerRepository) Get(ctx context.Context, userId int32) (domain.Play
 	return p, nil
 }
 
+func (s sqlPlayerRepository) Update(ctx context.Context, tx domain.Tx, old, updated domain.Player) error {
+	updated.UpdatedAt = time.Now().UTC()
+	return s.update(ctx, tx, old, updated)
+}
+
 // Update updates a player row if and only if all fields match "old".
 // UserId is never updated.
-func (s sqlPlayerRepository) Update(ctx context.Context, tx domain.Tx, old, updated domain.Player) error {
+func (s sqlPlayerRepository) update(ctx context.Context, tx domain.Tx, old, updated domain.Player) error {
 	if tx == nil {
 		tx = s.db
 	}
@@ -94,7 +100,6 @@ func (s sqlPlayerRepository) Update(ctx context.Context, tx domain.Tx, old, upda
 	if err != nil {
 		return fmt.Errorf("failed to marshal visited territories: %w", err)
 	}
-	updated.UpdatedAt = time.Now().UTC()
 	cmd, err := tx.ExecContext(ctx,
 		`UPDATE players
 		 SET at_territory = $1, at_island = $2, anchored = $3, fuel = $4, fuel_cap = $5, coin = $6, red_key = $7, blue_key = $8, golden_key = $9, master_key = $10, visited_territories = $11, updated_at = $12
