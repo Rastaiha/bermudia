@@ -76,6 +76,7 @@ import Market from '@/components/features/market/Market.vue';
 import Inbox from '@/components/features/player/Inbox.vue';
 import ConfirmModal from '@/components/common/ConfirmModal.vue';
 import MuteButton from '@/components/common/MuteButton.vue';
+import Brain from '@/components/features/player/Brain.vue';
 import { glossary } from '@/services/glossary.js';
 
 const props = defineProps({
@@ -141,6 +142,16 @@ const { open: openMarket, close: closeMarket } = useModal({
     },
 });
 
+const { open: openBrain, close: closeBrain } = useModal({
+    component: Brain,
+    attrs: {
+        knowledgeBars: computed(() => props.player.knowledgeBars),
+        onClose() {
+            closeBrain();
+        },
+    },
+});
+
 const { open: openBackpack, close: closeBackpack } = useModal({
     component: Backpack,
     attrs: {
@@ -175,6 +186,12 @@ const menuItems = [
         icon: '/images/icons/market.png',
         alt: 'بازار',
         action: openMarket,
+    },
+    {
+        id: 'brain',
+        icon: '/images/icons/knowledge.png',
+        alt: 'مغز',
+        action: openBrain,
     },
 ];
 
