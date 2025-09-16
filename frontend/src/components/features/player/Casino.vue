@@ -36,29 +36,29 @@
 
         <div class="w-full flex flex-col justify-between items-end space-y-2">
             <div
-                class="w-full h-full flex items-center justify-center text-[15vmin]"
+                class="w-full h-full flex items-center justify-center text-[3.75vmin]"
             >
                 <div
-                    class="relative w-[75vmin] h-[55vmin] m-5 shrink-0 origin-[center_2.5vmin] animate-[init_1000ms_forwards,init-sign-move_1000ms_ease-out_1000ms,sign-move_3000ms_2000ms_infinite]"
+                    class="relative w-[18.75vmin] h-[13.75vmin] m-5 shrink-0 origin-[center_0.625vmin] animate-[init_1000ms_forwards,init-sign-move_1000ms_ease-out_1000ms,sign-move_3000ms_2000ms_infinite]"
                 >
                     <div
-                        class="absolute bottom-0 w-full h-[35vmin] flex items-center justify-center font-montserrat font-bold text-white bg-[#ff5625] rounded-[4vmin] shadow-[0_-0.015em_0_#992100]"
+                        class="absolute bottom-0 w-full h-[8.75vmin] flex items-center justify-center font-montserrat font-bold text-white bg-[#ff5625] rounded-[1vmin] shadow-[0_-0.015em_0_#992100]"
                     >
                         Closed
                     </div>
 
                     <div
-                        class="absolute left-1/2 w-[30vmin] h-[30vmin] border-[0.9vmin] border-[#893d00] border-b-0 border-r-0 origin-top-left rotate-45"
+                        class="absolute left-1/2 w-[7.5vmin] h-[7.5vmin] border-[0.225vmin] border-[#893d00] border-b-0 border-r-0 origin-top-left rotate-45"
                     ></div>
 
                     <div
-                        class="absolute top-0 left-1/2 -ml-[2.5vmin] w-[5vmin] h-[5vmin] rounded-full bg-[#9f9f9f]"
+                        class="absolute top-0 left-1/2 -ml-[0.625vmin] w-[1.25vmin] h-[1.25vmin] rounded-full bg-[#9f9f9f]"
                     ></div>
                     <div
-                        class="absolute top-[21.5vmin] left-[13vmin] w-[5vmin] h-[5vmin] rounded-full bg-[#e63300]"
+                        class="absolute top-[5.375vmin] left-[3.25vmin] w-[1.25vmin] h-[1.25vmin] rounded-full bg-[#e63300]"
                     ></div>
                     <div
-                        class="absolute top-[21.5vmin] right-[13vmin] w-[5vmin] h-[5vmin] rounded-full bg-[#e63300]"
+                        class="absolute top-[5.375vmin] right-[3.25vmin] w-[1.25vmin] h-[1.25vmin] rounded-full bg-[#e63300]"
                     ></div>
                 </div>
             </div>
