@@ -122,6 +122,14 @@ export const submitAnswer = async (id, formData) => {
     return handleResponse(response);
 };
 
+export const requestHelp = async inputId => {
+    const response = await fetch(`${API_ENDPOINTS.requestHelp(inputId)}`, {
+        method: 'GET',
+        headers: getAuthHeaders(),
+    });
+    return handleResponse(response);
+};
+
 export const refuelCheck = async () => {
     const response = await fetch(API_ENDPOINTS.refuelCheck, {
         method: 'POST',
