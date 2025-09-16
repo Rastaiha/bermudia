@@ -106,6 +106,7 @@ func (h *Handler) Start() {
 	h.playerService.OnPlayerUpdate(h.HandlePlayerUpdateEvent)
 	h.playerService.OnTradeEventBroadcast(h.HandleTradeEventBroadcast)
 	h.playerService.OnInboxEvent(h.HandleInboxEvent)
+	h.playerService.OnBroadcastMessage(h.HandleBroadcastMessage)
 
 	slog.Info("Server starting")
 	h.server = &http.Server{
