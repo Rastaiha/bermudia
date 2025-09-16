@@ -173,11 +173,14 @@ export const treasureCheck = async treasureId => {
     return handleResponse(response);
 };
 
-export const treasureUnlock = async treasureId => {
+export const treasureUnlock = async (treasureId, chosenCost) => {
     const response = await fetch(API_ENDPOINTS.treasureUnlock, {
         method: 'POST',
         headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
-        body: JSON.stringify({ treasureID: treasureId }),
+        body: JSON.stringify({
+            treasureID: treasureId,
+            chosenCost: chosenCost,
+        }),
     });
     return handleResponse(response);
 };

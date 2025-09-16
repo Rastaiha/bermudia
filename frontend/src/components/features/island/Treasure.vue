@@ -44,10 +44,34 @@
 
                         <div class="mt-2 border-t-2 border-gray-600 pt-2">
                             <div
+                                v-if="!isAltCost"
                                 class="flex items-center justify-center gap-x-2 lg:gap-x-4 px-1 lg:px-2"
+                                @click="isAltCost = true"
                             >
                                 <div
                                     v-for="req in treasureFetchedInfo.cost
+                                        .items"
+                                    :key="req.type"
+                                    class="flex flex-col items-center gap-y-1"
+                                >
+                                    <img
+                                        :src="COST_ITEMS_INFO[req.type].icon"
+                                        :alt="req.type + ' Icon'"
+                                        class="h-7 w-7 lg:h-9 lg:w-9 object-contain"
+                                    />
+                                    <span
+                                        class="text-sm lg:text-md font-bold text-white text-shadow"
+                                        >x{{ req.amount }}</span
+                                    >
+                                </div>
+                            </div>
+                            <div
+                                v-else
+                                class="flex w-full items-center justify-center gap-x-2 lg:gap-x-4 px-1 lg:px-2"
+                                @click="isAltCost = false"
+                            >
+                                <div
+                                    v-for="req in treasureFetchedInfo.altCost
                                         .items"
                                     :key="req.type"
                                     class="flex flex-col items-center gap-y-1"
@@ -89,6 +113,31 @@
                     />
                 </svg>
             </button>
+            <button
+                v-if="
+                    !treasureData.unlocked &&
+                    treasureFetchedInfo &&
+                    treasureFetchedInfo.canPayAltCost
+                "
+                class="absolute bottom-2 right-0 translate-x-full h-15 w-10 rounded-r-xl bg-gray-900/75 p-1 shadow-lg altCostToggler"
+                @click.stop="isAltCost = !isAltCost"
+            >
+                <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke-width="2"
+                    stroke="currentColor"
+                    class="h-6 w-6 text-white transition-transform duration-300 mx-auto"
+                    :class="{ 'rotate-180': isAltCost }"
+                >
+                    <path d="M6 12a6 6 0 0 1 10 -4" />
+                    <polyline points="16,6 18,8 16,10" />
+
+                    <path d="M18 12a6 6 0 0 1 -10 4" />
+                    <polyline points="8,18 6,16 8,14" />
+                </svg>
+            </button>
         </div>
     </div>
 </template>
@@ -111,6 +160,7 @@ const toast = useToast();
 
 const isMobile = ref(false);
 const isOpen = ref(false);
+const isAltCost = ref(false);
 const treasureContainer = ref(null);
 const toggleButton = ref(null);
 
@@ -130,7 +180,10 @@ const handleTreasureClick = async event => {
     event.stopPropagation();
 
     try {
-        const treasure = await treasureUnlock(props.treasureData.id);
+        const treasure = await treasureUnlock(
+            props.treasureData.id,
+            isAltCost.value ? 'alt' : ''
+        );
 
         if (treasure.unlocked) {
             receivedRewards.value = treasure.reward;
@@ -158,17 +211,6 @@ const checkScreenSize = () => {
     }
 };
 
-const handleClickOutside = event => {
-    if (
-        treasureContainer.value &&
-        !treasureContainer.value.contains(event.target) &&
-        isOpen.value &&
-        isMobile.value
-    ) {
-        isOpen.value = false;
-    }
-};
-
 onMounted(() => {
     if (props.treasureData.unlocked) {
         isOpen.value = true;
@@ -189,12 +231,10 @@ onMounted(() => {
 
     checkScreenSize();
     window.addEventListener('resize', checkScreenSize);
-    document.addEventListener('click', handleClickOutside);
 });
 
 onUnmounted(() => {
     window.removeEventListener('resize', checkScreenSize);
-    document.removeEventListener('click', handleClickOutside);
 });
 
 const shouldBeOpen = computed(() => {
@@ -229,5 +269,8 @@ const shouldBeOpen = computed(() => {
 
 .shake-animation {
     animation: shake 1s ease-in-out;
+}
+.altCostToggler:hover svg {
+    transform: rotate(90deg);
 }
 </style>
