@@ -75,6 +75,7 @@ type QuestionStore interface {
 	// otherwise creates an Answer with the given ID and zero value for other fields (except timestamps).
 	GetOrCreateAnswer(ctx context.Context, userId int32, questionID string) (Answer, error)
 	GetAnswer(ctx context.Context, userId int32, questionId string) (Answer, error)
+	GetPendingAnswers(ctx context.Context, ifBefore time.Time) ([]Answer, error)
 	MarkHelpRequest(ctx context.Context, userId int32, questionId string) error
 	// SubmitAnswer updates the existing Answer with the given args and sets the answer status to AnswerStatusPending.
 	// If the answer is in AnswerStatusCorrect status, it returns ErrSubmitToCorrectAnswer error.
