@@ -274,7 +274,7 @@ func (s sqlIslandRepository) GetTerritoryPoolSettings(ctx context.Context, terri
 }
 
 func (s sqlIslandRepository) AddBookToPool(ctx context.Context, poolId string, bookId string) error {
-	_, err := s.db.ExecContext(ctx, `INSERT INTO book_pools (pool_id, book_id) VALUES ($1, $2) ;`, n(poolId), n(bookId))
+	_, err := s.db.ExecContext(ctx, `INSERT INTO book_pools (pool_id, book_id) VALUES ($1, $2) ON CONFLICT (book_id) DO UPDATE SET pool_id = EXCLUDED.pool_id ;`, n(poolId), n(bookId))
 	return err
 }
 
