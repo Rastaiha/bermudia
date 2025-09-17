@@ -212,20 +212,30 @@ func (p *Player) applyAndSendPlayerUpdateEvent(ctx context.Context, oldPlayer do
 }
 
 func (p *Player) sendPlayerUpdateEventErr(ctx context.Context, event *domain.PlayerUpdateEvent) error {
-	if p.playerUpdateEventHandler != nil {
-		fullPlayer, err := p.getFullPlayer(ctx, *event.Player)
+	fullPlayer, err := p.getFullPlayer(ctx, *event.Player)
+	if err != nil {
+		slog.Error("failed to send player update event",
+			slog.String("error", err.Error()),
+			slog.Int("userId", int(event.Player.UserId)),
+		)
+		return fmt.Errorf("failed to send player update event: %w", err)
+	}
+
+	if event.Reason != domain.PlayerUpdateEventInitial {
+		err = p.playerStore.CreatePlayerEvent(ctx, event.Player.UserId, time.Now().UTC(), event.Reason, fullPlayer)
 		if err != nil {
-			slog.Error("failed to send player update event",
+			slog.Error("failed to create player event",
 				slog.String("error", err.Error()),
 				slog.Int("userId", int(event.Player.UserId)),
 			)
-			return fmt.Errorf("failed to send player update event: %w", err)
+			return fmt.Errorf("failed to create player event: %w", err)
 		}
-		p.playerUpdateEventHandler(&domain.FullPlayerUpdateEvent{
-			Reason: event.Reason,
-			Player: &fullPlayer,
-		})
 	}
+
+	p.playerUpdateEventHandler(&domain.FullPlayerUpdateEvent{
+		Reason: event.Reason,
+		Player: &fullPlayer,
+	})
 	return nil
 }
 
