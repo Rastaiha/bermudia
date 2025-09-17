@@ -3,6 +3,8 @@ import { getToken, getInboxMessages } from '@/services/api/index.js';
 import { API_ENDPOINTS } from '@/services/api/config.js';
 import emitter from '@/services/eventBus.js';
 import { notificationService } from '@/services/notificationService.js';
+import { uiState } from '@/services/uiState.js';
+import { messages as inboxMessages } from '@/services/inboxWebsocket.js';
 
 export function usePlayerWebSocket(player, territoryId, router) {
     let socket = null;
@@ -60,9 +62,19 @@ export function usePlayerWebSocket(player, territoryId, router) {
                             const result = await getInboxMessages(null, 20);
                             const allMessages =
                                 result?.messages || result || [];
+
+                            // Update the global message list for instant UI update in inbox
+                            inboxMessages.value = allMessages;
+
+                            // Update notification service state
                             notificationService.setReceivedMessages(
                                 allMessages
                             );
+
+                            // If inbox is open, mark as seen immediately
+                            if (uiState.isInboxOpen) {
+                                notificationService.markAllAsSeen();
+                            }
                         } catch (apiError) {
                             console.error(
                                 'Failed to fetch inbox messages after playerUpdate event:',

@@ -1,11 +1,13 @@
 <template>
     <VueFinalModal
+        v-bind="$attrs"
         class="flex justify-center items-center"
         content-class="flex flex-col w-full md:w-[450px] max-h-[80vh] mx-4 
                        bg-gray-800 border-4 border-gray-700 
                        rounded-xl shadow-xl"
         overlay-transition="vfm-fade"
         content-transition="vfm-slide-up"
+        @update:model-value="val => (uiState.isInboxOpen = val)"
     >
         <div class="flex-shrink-0 p-5 border-b-2 border-gray-700">
             <div class="flex items-center justify-between">
@@ -59,20 +61,17 @@ import { ref, onMounted } from 'vue';
 import { VueFinalModal } from 'vue-final-modal';
 import { XMarkIcon } from '@heroicons/vue/24/outline';
 import { getInboxMessages } from '@/services/api/index.js';
-import { useInboxWebSocket } from '@/services/inboxWebsocket.js';
+import { messages } from '@/services/inboxWebsocket.js';
 import NotificationItem from './NotificationItem.vue';
 import { notificationService } from '@/services/notificationService';
+import { uiState } from '@/services/uiState.js';
 
 const emit = defineEmits(['close']);
 
-const messages = ref([]);
-const syncOffset = ref(null);
 const isLoading = ref(true);
 const isFetchingMore = ref(false);
 const hasMore = ref(true);
 const scrollContainer = ref(null);
-
-useInboxWebSocket(syncOffset, messages);
 
 const fetchMessages = async (offset = null) => {
     if (offset && !hasMore.value) return;

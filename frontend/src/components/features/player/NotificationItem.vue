@@ -171,17 +171,13 @@ const notification = computed(() => {
                 break;
         }
 
-        let details = `پاسخ شما برای سوال در ${glossary.island} <strong>${correction.islandName}</strong> در ${glossary.territory} <strong>${correction.territoryName}</strong> تصحیح شد. <br/> وضعیت: <strong>${statusText}</strong>.`;
+        let details = `پاسخ شما برای سوال در ${glossary.island} <strong>${correction.islandName || 'نامشخص'}</strong> در ${glossary.territory} <strong>${correction.territoryName || 'نامشخص'}</strong> تصحیح شد. <br/> وضعیت: <strong>${statusText}</strong>.`;
 
         if (correction.newState.feedback) {
             details += `<div class="my-2.5 border-t border-gray-600"></div><span>بازخورد:</span><div class="mt-1 text-justify text-gray-300">${correction.newState.feedback}</div>`;
         }
 
-        if (
-            correction.reward &&
-            correction.reward.items &&
-            correction.reward.items.length > 0
-        ) {
+        if (correction.reward?.items?.length > 0) {
             const rewardList = formatItemsToList(correction.reward.items);
             details += `<div class="my-2.5"></div><span>جایزه شما:</span>${rewardList}`;
         }
@@ -192,6 +188,21 @@ const notification = computed(() => {
             details: details,
             icon,
             style,
+        };
+    }
+    if (content.announcement) {
+        return {
+            title: 'اعلامیه',
+            summary: content.announcement.text,
+            details: null,
+            icon: InformationCircleIcon,
+            style: {
+                border: 'border-r-4 border-teal-500',
+                bg: 'bg-teal-800',
+                icon: 'text-teal-300',
+                text: 'text-teal-400 hover:text-teal-300',
+                detailsBg: 'bg-teal-900/50',
+            },
         };
     }
     if (content.ownOfferAccepted) {

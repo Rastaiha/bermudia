@@ -1,134 +1,116 @@
-import { onMounted, onUnmounted } from 'vue';
+import { ref, onMounted, onUnmounted } from 'vue';
 import { getToken, getInboxMessages } from '@/services/api/index.js';
 import { API_ENDPOINTS } from '@/services/api/config.js';
-import { notificationService } from '@/services/notificationService';
+import { notificationService } from '@/services/notificationService.js';
+import { uiState } from '@/services/uiState.js';
 
+// --- Global State ---
+// These are exported and used by Inbox.vue directly.
+export const messages = ref([]);
+export const syncOffset = ref(null);
+
+// --- Private Singleton Logic ---
 let socket = null;
 let reconnectTimeoutId = null;
 let reconnectAttempts = 0;
 const maxReconnectAttempts = 10;
 const baseReconnectDelay = 1000;
 
-const messageListeners = new Set();
-
-function scheduleReconnect() {
-    if (reconnectAttempts >= maxReconnectAttempts) {
-        console.error(
-            'Max Inbox WebSocket reconnection attempts reached. Giving up.'
-        );
-        return;
-    }
-    const delay = Math.min(
-        baseReconnectDelay * Math.pow(2, reconnectAttempts),
-        30000
-    );
-    reconnectAttempts++;
-
-    reconnectTimeoutId = setTimeout(() => connect(), delay);
-}
-
-function disconnect() {
-    if (reconnectTimeoutId) clearTimeout(reconnectTimeoutId);
-    if (socket) {
-        socket.onclose = null;
-        socket.onmessage = null;
-        socket.onerror = null;
-        socket.onopen = null;
-        socket.close(1000, 'Connection closed: no active listeners.');
-        socket = null;
-        messageListeners.clear();
-    }
-}
-
-function connect() {
-    if (socket && socket.readyState < 2) {
-        return;
-    }
-
-    const token = getToken();
-    if (!token) {
-        console.error(
-            'Inbox WebSocket: No auth token found, connection aborted.'
-        );
-        return;
-    }
-
-    socket = new WebSocket(`${API_ENDPOINTS.inboxEvents}?token=${token}`);
-
-    socket.onopen = () => {
-        reconnectAttempts = 0;
-    };
-
-    socket.onmessage = event => {
-        messageListeners.forEach(handler => handler(event));
-    };
-
-    socket.onclose = event => {
-        socket = null;
-        if (event.code !== 1000) {
-            scheduleReconnect();
+async function triggerNotificationCheck() {
+    try {
+        const result = await getInboxMessages(null, 20);
+        const allMessages = result?.messages || result || [];
+        notificationService.setReceivedMessages(allMessages);
+        if (uiState.isInboxOpen) {
+            notificationService.markAllAsSeen();
         }
+    } catch (apiError) {
+        console.error(
+            '[Inbox WS] Failed to fetch inbox messages after WS event:',
+            apiError
+        );
+    }
+}
+
+function handleMessage(event) {
+    try {
+        const data = JSON.parse(event.data);
+        if (data.ok === false) {
+            console.error('[InboxWS] Received error event:', data.error);
+            return;
+        }
+        const eventData = data;
+        if (eventData.sync) {
+            syncOffset.value = eventData.sync.offset;
+            return;
+        }
+        const newMessage = eventData.newMessage || eventData;
+        if (newMessage.content && newMessage.createdAt) {
+            messages.value.unshift(newMessage);
+            triggerNotificationCheck();
+        }
+    } catch (error) {
+        console.error('[InboxWS] Error parsing message:', error);
+    }
+}
+
+// --- Composable Function ---
+export function useInboxWebSocket() {
+    const scheduleReconnect = () => {
+        if (reconnectAttempts >= maxReconnectAttempts) {
+            console.error(
+                '[InboxWS] Max reconnection attempts reached. Giving up.'
+            );
+            return;
+        }
+        const delay = Math.min(
+            baseReconnectDelay * Math.pow(2, reconnectAttempts),
+            30000
+        );
+        reconnectAttempts++;
+        reconnectTimeoutId = setTimeout(connect, delay);
     };
 
-    socket.onerror = error => {
-        console.error('Inbox WebSocket error:', error);
+    const disconnect = () => {
+        if (reconnectTimeoutId) clearTimeout(reconnectTimeoutId);
         if (socket) {
-            socket.close();
+            socket.onclose = null;
+            socket.close(1000, 'Connection closed by client.');
+            socket = null;
         }
     };
-}
 
-export function useInboxWebSocket(syncOffset, messages) {
-    const handleMessage = async event => {
-        try {
-            const data = JSON.parse(event.data);
-
-            if (data.ok === false) {
-                console.error(
-                    'Received error in inbox websocket event:',
-                    data.error
-                );
-                return;
-            }
-
-            const inboxEvent = data;
-
-            if (inboxEvent.sync) {
-                syncOffset.value = inboxEvent.sync.offset;
-            }
-
-            if (inboxEvent.newMessage) {
-                // As per user request: fetch the full message list on new message event.
-                try {
-                    const result = await getInboxMessages(null, 20); // Fetch latest 20
-                    const allMessages = result?.messages || result || [];
-                    notificationService.setReceivedMessages(allMessages);
-                } catch (apiError) {
-                    console.error(
-                        '[WebSocket] Failed to fetch inbox messages after WS event:',
-                        apiError
-                    );
-                }
-
-                // This part is for the inbox modal itself, if it's open.
-                // It ensures the new message appears instantly at the top.
-                messages.value.unshift(inboxEvent.newMessage);
-                syncOffset.value = inboxEvent.newMessage.createdAt;
-            }
-        } catch (error) {
-            console.error('Error parsing Inbox WebSocket message:', error);
+    const connect = () => {
+        if (socket && socket.readyState < 2) {
+            return; // Already connecting/connected
         }
+        const token = getToken();
+        if (!token) {
+            return; // No token, do nothing
+        }
+
+        socket = new WebSocket(`${API_ENDPOINTS.inboxEvents}?token=${token}`);
+
+        socket.onopen = () => {
+            reconnectAttempts = 0;
+        };
+        socket.onmessage = handleMessage;
+        socket.onclose = event => {
+            socket = null;
+            if (event.code !== 1000) {
+                scheduleReconnect();
+            }
+        };
+        socket.onerror = error => {
+            console.error('[InboxWS] WebSocket error:', error);
+        };
     };
 
     onMounted(() => {
         connect();
-        messageListeners.add(handleMessage);
     });
 
     onUnmounted(() => {
-        messageListeners.delete(handleMessage);
-        if (messageListeners.size === 0) {
-            disconnect();
-        }
+        disconnect();
     });
 }
