@@ -124,7 +124,7 @@ const { open: confirmAccept, close: closeAccept } = useModal({
         },
     },
     slots: {
-        content: () => (tradeCard.value ? tradeCard.value.outerHTML : ''),
+        content: () => (tradeCard.value ? tradeCard.value : ''),
     },
 });
 </script>
