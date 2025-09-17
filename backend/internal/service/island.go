@@ -46,7 +46,7 @@ func (i *Island) Start() {
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second*60)
 		defer cancel()
 
-		answers, err := i.questionStore.GetPendingAnswers(ctx, now.UTC().Add(20*time.Minute))
+		answers, err := i.questionStore.GetPendingAnswers(ctx, now.UTC().Add(-20*time.Minute))
 		if err != nil {
 			slog.Error("failed to get pending answers", slog.String("error", err.Error()))
 			return
