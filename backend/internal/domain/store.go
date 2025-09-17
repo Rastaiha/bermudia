@@ -120,3 +120,8 @@ type InboxStore interface {
 	CreateMessage(ctx context.Context, tx Tx, msg InboxMessage) error
 	GetMessages(ctx context.Context, userId int32, before time.Time, limit int) ([]InboxMessage, error)
 }
+
+type GameStateStore interface {
+	GetIsPaused(ctx context.Context) (bool, error)
+	SetIsPaused(ctx context.Context, isPaused bool) error
+}

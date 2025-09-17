@@ -28,11 +28,12 @@ type Bot struct {
 	player        *service.Player
 	admin         *service.Admin
 	userStore     domain.UserStore
+	gameState     domain.GameStateStore
 	cancel        context.CancelFunc
 	wg            sync.WaitGroup
 }
 
-func NewBot(cfg config.Config, b *bot.Bot, islandService *service.Island, correction *service.Correction, player *service.Player, adminService *service.Admin, userStore domain.UserStore) *Bot {
+func NewBot(cfg config.Config, b *bot.Bot, islandService *service.Island, correction *service.Correction, player *service.Player, adminService *service.Admin, userStore domain.UserStore, gameState domain.GameStateStore) *Bot {
 	m := &Bot{
 		cfg:           cfg,
 		bot:           b,
@@ -41,6 +42,7 @@ func NewBot(cfg config.Config, b *bot.Bot, islandService *service.Island, correc
 		player:        player,
 		admin:         adminService,
 		userStore:     userStore,
+		gameState:     gameState,
 	}
 
 	return m
@@ -78,6 +80,8 @@ func (m *Bot) Start() {
 	}, m.handleGameContent)
 
 	m.bot.RegisterHandler(bot.HandlerTypeMessageText, "broadcast_message", bot.MatchTypeCommand, m.broadcastMessage)
+	m.bot.RegisterHandler(bot.HandlerTypeMessageText, "pause_game", bot.MatchTypeCommand, m.pause)
+	m.bot.RegisterHandler(bot.HandlerTypeMessageText, "resume_game", bot.MatchTypeCommand, m.resume)
 
 	m.bot.RegisterHandler(bot.HandlerTypeCallbackQueryData, tagCB, bot.MatchTypePrefix, m.handleTag, prefix(tagCB))
 	m.bot.RegisterHandler(bot.HandlerTypeCallbackQueryData, correctCB, bot.MatchTypePrefix, m.handleCorrect, prefix(correctCB))
@@ -552,4 +556,40 @@ func (m *Bot) broadcastMessage(ctx context.Context, b *bot.Bot, update *models.U
 		ChatID: update.Message.Chat.ID,
 		Text:   fmt.Sprintf("sent message to %d users.%s", count, suffix),
 	})
+}
+
+func (m *Bot) pause(ctx context.Context, b *bot.Bot, update *models.Update) {
+	if update.Message.Chat.ID != m.cfg.AdminsGroup {
+		return
+	}
+	err := m.gameState.SetIsPaused(ctx, true)
+	if err != nil {
+		_, _ = b.SendMessage(ctx, &bot.SendMessageParams{
+			ChatID: update.Message.Chat.ID,
+			Text:   "error occurred: " + err.Error(),
+		})
+	} else {
+		_, _ = b.SendMessage(ctx, &bot.SendMessageParams{
+			ChatID: update.Message.Chat.ID,
+			Text:   "game paused successfully",
+		})
+	}
+}
+
+func (m *Bot) resume(ctx context.Context, b *bot.Bot, update *models.Update) {
+	if update.Message.Chat.ID != m.cfg.AdminsGroup {
+		return
+	}
+	err := m.gameState.SetIsPaused(ctx, false)
+	if err != nil {
+		_, _ = b.SendMessage(ctx, &bot.SendMessageParams{
+			ChatID: update.Message.Chat.ID,
+			Text:   "error occurred: " + err.Error(),
+		})
+	} else {
+		_, _ = b.SendMessage(ctx, &bot.SendMessageParams{
+			ChatID: update.Message.Chat.ID,
+			Text:   "game resumed successfully",
+		})
+	}
 }

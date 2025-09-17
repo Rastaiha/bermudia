@@ -71,8 +71,12 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	gameStateRepo, err := repository.NewSqlGameStateRepository(db)
+	if err != nil {
+		log.Fatal(err)
+	}
 
-	authService := service.NewAuth(cfg, userRepo)
+	authService := service.NewAuth(cfg, userRepo, gameStateRepo)
 	territoryService := service.NewTerritory(territoryRepo)
 	islandService := service.NewIsland(theBot, islandRepo, questionStore, playerRepo, treasureRepo)
 	playerService := service.NewPlayer(cfg, db, userRepo, playerRepo, territoryRepo, questionStore, islandRepo, treasureRepo, marketRepo, inboxRepo)
@@ -88,7 +92,7 @@ func main() {
 		}
 	}
 
-	adminBot := adminbot.NewBot(cfg, theBot, islandService, correctionService, playerService, adminService, userRepo)
+	adminBot := adminbot.NewBot(cfg, theBot, islandService, correctionService, playerService, adminService, userRepo, gameStateRepo)
 
 	h := handler.New(cfg, authService, territoryService, islandService, playerService)
 

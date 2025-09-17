@@ -64,7 +64,7 @@ func (h *Handler) Start() {
 
 		// Authenticated endpoints
 		r.Group(func(r chi.Router) {
-			r.Use(h.authMiddleware)
+			r.Use(h.authMiddleware, h.pauseCheckMiddleware)
 			r.Get("/me", func(w http.ResponseWriter, r *http.Request) {
 				user, err := getUser(r.Context())
 				if err != nil {
