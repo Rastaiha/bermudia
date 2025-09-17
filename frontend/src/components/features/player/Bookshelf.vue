@@ -8,7 +8,7 @@
         content-transition="vfm-slide-up"
     >
         <div
-            class="flex items-center justify-between border-b-2 border-[#3E2A17] pb-2 mb-4"
+            class="flex items-center justify-between border-b-2 border-[#3E2A17] mb-2"
         >
             <h1 class="text-xl font-semibold text-amber-200">
                 {{ glossary.benzuelaLibrary }}
@@ -43,6 +43,9 @@
                 :key="territoryId"
                 class="w-full"
             >
+                <h3 class="text-amber-100 font-semibold mb-2 text-right">
+                    {{ booksInTerritory[0].territoryName }}
+                </h3>
                 <div class="flex gap-1 items-end pb-2 overflow-auto">
                     <div
                         v-for="(book, bookIndex) in booksInTerritory"
