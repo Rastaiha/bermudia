@@ -59,7 +59,7 @@
 <script setup>
 import { ref, onMounted, toRef } from 'vue';
 import { useToast } from 'vue-toastification';
-import { useRouter } from 'vue-router';
+import { useRouter, useRoute } from 'vue-router';
 import {
     getIsland,
     submitAnswer,
@@ -93,9 +93,10 @@ const treasures = ref([]);
 const player = ref(null);
 const toast = useToast();
 const router = useRouter();
+const route = useRoute();
 const territoryId = toRef(props, 'id');
 
-usePlayerWebSocket(player, territoryId, router);
+usePlayerWebSocket(player, territoryId, route, router);
 useInboxWebSocket();
 
 const fetchIslandData = async id => {

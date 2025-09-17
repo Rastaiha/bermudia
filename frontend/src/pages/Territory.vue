@@ -275,7 +275,7 @@ watch(
     { deep: true }
 );
 
-usePlayerWebSocket(player, territoryId, router);
+usePlayerWebSocket(player, territoryId, route, router);
 useInboxWebSocket();
 </script>
 

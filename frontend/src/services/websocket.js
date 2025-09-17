@@ -6,7 +6,7 @@ import { notificationService } from '@/services/notificationService.js';
 import { uiState } from '@/services/uiState.js';
 import { messages as inboxMessages } from '@/services/inboxWebsocket.js';
 
-export function usePlayerWebSocket(player, territoryId, router) {
+export function usePlayerWebSocket(player, territoryId, route, router) {
     let socket = null;
     let reconnectTimeoutId = null;
     let reconnectAttempts = 0;
@@ -98,9 +98,12 @@ export function usePlayerWebSocket(player, territoryId, router) {
                     }
 
                     if (
+                        router &&
+                        route &&
                         territoryId &&
                         territoryId.value &&
-                        newPlayerState.atTerritory != territoryId.value
+                        newPlayerState.atTerritory != territoryId.value &&
+                        !route.params.islandId
                     ) {
                         router.push({
                             name: 'Territory',
