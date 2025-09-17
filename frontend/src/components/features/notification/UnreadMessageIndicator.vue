@@ -13,19 +13,18 @@ const hasUnread = notificationService.hasUnreadMessages;
 <style scoped>
 .notification-indicator {
     position: fixed;
-    /* Adjust top and left to position it near your toolbar */
     top: 80px;
     left: 20px;
-    background-color: #4caf50; /* A pleasant green */
+    background-color: #4b5563; /* gray-600 */
     color: white;
-    padding: 10px 15px;
+    padding: 12px 16px;
     border-radius: 8px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-    z-index: 1000; /* Ensure it's above other content */
-    font-family:
-        'Pelak', sans-serif; /* Assuming Pelak font is globally available */
+    z-index: 1000;
+    font-family: 'Pelak', sans-serif;
     font-size: 1rem;
     animation: fadeIn 0.5s ease-out;
+    text-align: center;
 }
 
 @keyframes fadeIn {
