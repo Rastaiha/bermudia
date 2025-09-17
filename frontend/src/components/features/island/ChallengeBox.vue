@@ -11,7 +11,7 @@
             >
                 <QuestionMarkCircleIcon
                     v-if="helpButtonIcon === 'QuestionMarkCircleIcon'"
-                    class="w-8 h-8"
+                    class="w-16 h-16"
                 />
                 <ArrowTopRightOnSquareIcon v-else class="w-8 h-8" />
             </button>
