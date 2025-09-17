@@ -32,7 +32,7 @@ func (a *Auth) Login(ctx context.Context, username, password string) (string, er
 		"user_id": fmt.Sprint(user.ID),
 		"iat":     float64(time.Now().UTC().UnixNano()) / 1e9,
 	})
-	tokenString, err := token.SignedString(a.cfg.TokenSigningKey)
+	tokenString, err := token.SignedString(a.cfg.TokenSigningKeyBytes())
 	if err != nil {
 		return "", fmt.Errorf("failed to sign token: %w", err)
 	}
@@ -43,7 +43,7 @@ func (a *Auth) ValidateToken(ctx context.Context, tokenStr string) (*domain.User
 	token, err := jwt.Parse(
 		tokenStr,
 		func(token *jwt.Token) (interface{}, error) {
-			return a.cfg.TokenSigningKey, nil
+			return a.cfg.TokenSigningKeyBytes(), nil
 		},
 		jwt.WithValidMethods([]string{jwt.SigningMethodHS512.Alg()}),
 		jwt.WithIssuedAt(),

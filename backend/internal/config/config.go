@@ -1,13 +1,17 @@
 package config
 
-import "time"
+import (
+	"encoding/base64"
+	"time"
+)
 
 type Config struct {
 	DevMode                bool          `config:"dev_mode"`
 	Postgres               Postgres      `config:"postgres"`
-	TokenSigningKey        []byte        `config:"token_signing_key"`
+	TokenSigningKey        string        `config:"token_signing_key"`
 	MockUsersPassword      string        `config:"mock_users_password"`
 	BotToken               string        `config:"bot_token"`
+	MinCorrectionDelay     time.Duration `config:"min_correction_delay"`
 	CorrectionJobInterval  time.Duration `config:"correction_job_interval"`
 	DefaultCorrectionGroup int64         `config:"default_correction_group"`
 	CorrectionGroupsStr    string        `config:"correction_groups"`
@@ -18,11 +22,12 @@ type Config struct {
 	AdminsGroup            int64         `config:"admins_group"`
 }
 
-func (c Config) MinCorrectionDelay() time.Duration {
-	if c.DevMode {
-		return 10 * time.Second
+func (c Config) TokenSigningKeyBytes() []byte {
+	b, err := base64.StdEncoding.DecodeString(c.TokenSigningKey)
+	if err != nil {
+		return nil
 	}
-	return 3 * time.Minute
+	return b
 }
 
 type Postgres struct {
@@ -40,6 +45,7 @@ func defaultConfig() *Config {
 		Postgres: Postgres{
 			SSLMode: "disable",
 		},
+		MinCorrectionDelay:    10 * time.Second,
 		CorrectionJobInterval: 10 * time.Second,
 	}
 }
