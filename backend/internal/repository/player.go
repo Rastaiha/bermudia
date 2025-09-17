@@ -28,6 +28,20 @@ CREATE TABLE IF NOT EXISTS players (
 );
 `
 
+const playerEventsSchema = `
+CREATE TABLE IF NOT EXISTS player_events (
+	id SERIAL PRIMARY KEY,
+	user_id INT4 NOT NULL,
+	created_at TIMESTAMP NOT NULL,
+	reason VARCHAR(255) NOT NULL,
+	player_data JSONB NOT NULL,
+	FOREIGN KEY (user_id) REFERENCES players(user_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_player_events_user_id_created_at ON player_events(user_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_player_events_user_id_reason_created_at ON player_events(user_id, reason, created_at DESC);
+`
+
 type sqlPlayerRepository struct {
 	db *sql.DB
 }
@@ -37,6 +51,12 @@ func NewSqlPlayerRepository(db *sql.DB) (domain.PlayerStore, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to create players table: %w", err)
 	}
+
+	_, err = db.Exec(playerEventsSchema)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create player_events table: %w", err)
+	}
+
 	return sqlPlayerRepository{db: db}, nil
 }
 
@@ -115,7 +135,7 @@ func (s sqlPlayerRepository) update(ctx context.Context, tx domain.Tx, old, upda
 		return err
 	}
 	if rows == 0 {
-		// nothing updated -> either player not found, or old didn’t match
+		// nothing updated -> either player not found, or old didn't match
 		return domain.ErrPlayerConflict
 	}
 	return nil
@@ -136,4 +156,21 @@ func (s sqlPlayerRepository) GetAll(ctx context.Context) ([]int32, error) {
 		result = append(result, userId)
 	}
 	return result, rows.Err()
+}
+
+func (s sqlPlayerRepository) CreatePlayerEvent(ctx context.Context, userId int32, createdAt time.Time, reason string, player domain.FullPlayer) error {
+	playerData, err := json.Marshal(player)
+	if err != nil {
+		return fmt.Errorf("failed to marshal player data: %w", err)
+	}
+
+	_, err = s.db.ExecContext(ctx,
+		`INSERT INTO player_events (user_id, created_at, reason, player_data) VALUES ($1, $2, $3, $4)`,
+		userId, createdAt, reason, playerData,
+	)
+	if err != nil {
+		return fmt.Errorf("failed to create player event: %w", err)
+	}
+
+	return nil
 }
