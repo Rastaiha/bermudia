@@ -8,7 +8,10 @@
             <span v-else>{{ offer.by }}</span>
             <span class="text-sm font-bold text-red-400 mb-1">می‌خواهد</span>
         </div>
-        <div class="flex items-center justify-center text-center">
+        <div
+            ref="tradeCard"
+            class="flex items-center justify-center text-center"
+        >
             <div class="flex-1 flex flex-col gap-2.5 items-center">
                 <div
                     v-if="offer.offered.items.length > 0"
@@ -64,9 +67,9 @@
                             :src="COST_ITEMS_INFO[item.type].icon"
                             class="w-10 h-10"
                         />
-                        <span class="font-semibold text-base text-slate-200">{{
-                            item.amount
-                        }}</span>
+                        <span class="font-semibold text-base text-slate-200">
+                            {{ item.amount }}
+                        </span>
                     </div>
                 </div>
                 <div v-else class="text-slate-500">-</div>
@@ -79,7 +82,7 @@
             <button
                 v-if="!isMine && offer.acceptable"
                 class="px-4 py-1.5 rounded-md text-white text-sm font-bold transition-colors bg-green-500 hover:bg-green-400"
-                @click="$emit('accept', offer.id)"
+                @click="confirmAccept"
             >
                 انجام معامله
             </button>
@@ -96,11 +99,31 @@
 
 <script setup>
 import { COST_ITEMS_INFO } from '@/services/cost';
+import { ref, useModel } from 'vue';
+import ConfirmModal from '@/components/common/ConfirmModal.vue';
 
-defineProps({
-    offer: Object,
-    isMine: Boolean,
-});
+// const props = defineProps({
+//     offer: Object,
+//     isMine: Boolean,
+// });
 
 defineEmits(['accept', 'delete']);
+const tradeCard = ref(null);
+
+const { open: confirmAccept, close: closeAccept } = useModel({
+    component: ConfirmModal,
+    attrs: {
+        title: 'تایید معامله',
+        onConfirm() {
+            // $emit('accept', props.offer.id)
+            closeAccept();
+        },
+        onCancel() {
+            closeAccept();
+        },
+    },
+    slots: {
+        content: '<p>ss</p>',
+    },
+});
 </script>
