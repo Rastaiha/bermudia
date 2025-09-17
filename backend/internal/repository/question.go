@@ -150,7 +150,7 @@ func (s sqlQuestionRepository) GetAnswer(ctx context.Context, userId int32, ques
 
 func (s sqlQuestionRepository) GetPendingAnswers(ctx context.Context, ifBefore time.Time) ([]domain.Answer, error) {
 	var answers []domain.Answer
-	rows, err := s.db.QueryContext(ctx, `SELECT `+s.answerColumnsToSelect()+` FROM answers WHERE updated_at < $1`, ifBefore.UTC())
+	rows, err := s.db.QueryContext(ctx, `SELECT `+s.answerColumnsToSelect()+` FROM answers WHERE status = $1 updated_at < $2`, domain.AnswerStatusPending, ifBefore.UTC())
 	if err != nil {
 		return nil, err
 	}
