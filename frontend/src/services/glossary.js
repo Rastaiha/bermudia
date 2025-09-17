@@ -23,6 +23,7 @@ export const glossary = {
     territory: 'منظومه',
     library: 'کتابخانه',
     brain: 'دانش‌ها',
+    casino: 'قمارخانه بنزوئیلا',
     benzuela: 'بنزوئیلا',
 
     //
