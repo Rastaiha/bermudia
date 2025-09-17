@@ -209,18 +209,19 @@ func (i *Island) RequestHelpToAnswer(ctx context.Context, user *domain.User, que
 		return "", err
 	}
 
-	err = i.questionStore.MarkHelpRequest(ctx, user.ID, questionId)
-	if err != nil {
-		return "", err
-	}
-
-	islandHeader, err := i.islandStore.GetIslandHeaderByBookIdAndUserId(ctx, question.BookID, user.ID)
-	if err != nil {
-		return "", err
-	}
-	err = i.onHelpRequest(islandHeader.TerritoryID, user, question)
-	if err != nil {
-		return "", fmt.Errorf("failed to call help request callback: %w", err)
+	if !answer.RequestedHelp {
+		islandHeader, err := i.islandStore.GetIslandHeaderByBookIdAndUserId(ctx, question.BookID, user.ID)
+		if err != nil {
+			return "", err
+		}
+		err = i.onHelpRequest(islandHeader.TerritoryID, user, question)
+		if err != nil {
+			return "", fmt.Errorf("failed to call help request callback: %w", err)
+		}
+		err = i.questionStore.MarkHelpRequest(ctx, user.ID, questionId)
+		if err != nil {
+			return "", err
+		}
 	}
 
 	return user.MeetLink, nil

@@ -43,7 +43,7 @@ type FullPlayer struct {
 	Player
 	KnowledgeBars []KnowledgeBar `json:"knowledgeBars"`
 	// Books is the term the client uses for portable islands :)
-	Books []PortableIsland `json:"books"`
+	Books []FullPortableIsland `json:"books"`
 }
 
 const (

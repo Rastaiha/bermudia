@@ -774,11 +774,12 @@ curl --request GET \
 
 ### Book
 
-| Field       | Type   | Description                          |
-|-------------|--------|--------------------------------------|
-| territoryId | string | ID of territory this book belongs to |
-| islandId    | string | ID of island this book belongs to    |
-| name        | string | Name of the book                     |
+| Field         | Type   | Description                          |
+|---------------|--------|--------------------------------------|
+| territoryId   | string | ID of territory this book belongs to |
+| islandId      | string | ID of island this book belongs to    |
+| name          | string | Name of the book                     |
+| territoryName | string | ID of territory this book belongs to |
 
 
 ### KnowledgeBar

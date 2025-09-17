@@ -245,6 +245,24 @@ func (p *Player) getFullPlayer(ctx context.Context, player domain.Player) (domai
 	if err != nil {
 		return domain.FullPlayer{}, fmt.Errorf("failed to get portable islands: %w", err)
 	}
+	territories, err := p.territoryStore.ListTerritories(ctx)
+	if err != nil {
+		return domain.FullPlayer{}, fmt.Errorf("failed to get territories: %w", err)
+	}
+	books := make([]domain.FullPortableIsland, 0, len(portableIslands))
+	for _, pi := range portableIslands {
+		territoryName := ""
+		for _, t := range territories {
+			if t.ID == pi.TerritoryID {
+				territoryName = t.Name
+				break
+			}
+		}
+		books = append(books, domain.FullPortableIsland{
+			PortableIsland: pi,
+			TerritoryName:  territoryName,
+		})
+	}
 	knowledgeBars, err := p.questionStore.GetKnowledgeBars(ctx, player.UserId)
 	if err != nil {
 		return domain.FullPlayer{}, fmt.Errorf("failed to get knowledge bars: %w", err)
@@ -252,7 +270,7 @@ func (p *Player) getFullPlayer(ctx context.Context, player domain.Player) (domai
 	return domain.FullPlayer{
 		Player:        player,
 		KnowledgeBars: knowledgeBars,
-		Books:         portableIslands,
+		Books:         books,
 	}, nil
 }
 
