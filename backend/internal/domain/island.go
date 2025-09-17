@@ -14,6 +14,11 @@ type PortableIsland struct {
 	TerritoryID string `json:"territoryId"`
 }
 
+type FullPortableIsland struct {
+	PortableIsland
+	TerritoryName string `json:"territoryName"`
+}
+
 func CheckPlayerAccessToIslandContent(player Player, islandID string, isPortable bool) error {
 	if (player.AtIsland == islandID && player.Anchored) || isPortable {
 		return nil
