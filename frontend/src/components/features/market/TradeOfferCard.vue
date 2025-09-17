@@ -2,10 +2,10 @@
     <div
         class="flex justify-between flex-col bg-slate-900/70 rounded-xl border border-slate-700 shadow-lg p-4 space-y-4 transition-transform hover:scale-105"
     >
-        <div class="flex flex-row justify-around gap-2.5 items-center">
+        <div class="flex flex-row justify-between gap-2.5 items-center px-6">
             <span class="text-sm font-bold text-green-400 mb-1">می‌دهد</span>
             <span v-if="offer.byMe"></span>
-            <span v-else>{{ offer.by }}</span>
+            <span v-else class="text-center">{{ offer.by }}</span>
             <span class="text-sm font-bold text-red-400 mb-1">می‌خواهد</span>
         </div>
         <div class="flex items-center justify-center text-center">
@@ -17,7 +17,7 @@
                     <div
                         v-for="item in offer.offered.items"
                         :key="item.type"
-                        class="flex items-center gap-2"
+                        class="flex flex-row-reverse items-center gap-2"
                         :title="COST_ITEMS_INFO[item.type].name"
                     >
                         <img
