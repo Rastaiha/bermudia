@@ -29,6 +29,7 @@ CREATE TABLE IF NOT EXISTS answers (
     question_id VARCHAR(255) NOT NULL,
     status INT4 NOT NULL,
     requested_help BOOLEAN NOT NULL DEFAULT FALSE,
+    help_state INT NOT NULL DEFAULT 0,
     file_id VARCHAR(255),
     filename VARCHAR(255),
     text_content TEXT,
@@ -105,11 +106,11 @@ func (s sqlQuestionRepository) BindQuestionsToBook(ctx context.Context, bookId s
 }
 
 func (s sqlQuestionRepository) answerColumnsToSelect() string {
-	return `user_id, question_id, status, requested_help, file_id, filename, text_content, feedback, created_at, updated_at`
+	return `user_id, question_id, status, requested_help, help_state, file_id, filename, text_content, feedback, created_at, updated_at`
 }
 
 func (s sqlQuestionRepository) scanAnswer(row scannable, answer *domain.Answer) error {
-	return row.Scan(&answer.UserID, &answer.QuestionID, &answer.Status, &answer.RequestedHelp, &answer.FileID, &answer.Filename, &answer.TextContent, &answer.Feedback, &answer.CreatedAt, &answer.UpdatedAt)
+	return row.Scan(&answer.UserID, &answer.QuestionID, &answer.Status, &answer.RequestedHelp, &answer.HelpState, &answer.FileID, &answer.Filename, &answer.TextContent, &answer.Feedback, &answer.CreatedAt, &answer.UpdatedAt)
 }
 
 func (s sqlQuestionRepository) GetOrCreateAnswer(ctx context.Context, userId int32, questionID string) (domain.Answer, error) {
@@ -150,7 +151,7 @@ func (s sqlQuestionRepository) GetAnswer(ctx context.Context, userId int32, ques
 
 func (s sqlQuestionRepository) GetPendingAnswers(ctx context.Context, ifBefore time.Time) ([]domain.Answer, error) {
 	var answers []domain.Answer
-	rows, err := s.db.QueryContext(ctx, `SELECT `+s.answerColumnsToSelect()+` FROM answers WHERE status = $1 updated_at < $2`, domain.AnswerStatusPending, ifBefore.UTC())
+	rows, err := s.db.QueryContext(ctx, `SELECT `+s.answerColumnsToSelect()+` FROM answers WHERE status = $1 AND updated_at < $2`, domain.AnswerStatusPending, ifBefore.UTC())
 	if err != nil {
 		return nil, err
 	}
@@ -168,6 +169,11 @@ func (s sqlQuestionRepository) GetPendingAnswers(ctx context.Context, ifBefore t
 
 func (s sqlQuestionRepository) MarkHelpRequest(ctx context.Context, userId int32, questionId string) error {
 	_, err := s.db.ExecContext(ctx, `UPDATE answers SET requested_help = TRUE WHERE user_id = $1 AND question_id = $2`, userId, questionId)
+	return err
+}
+
+func (s sqlQuestionRepository) SetHelpState(ctx context.Context, userId int32, questionId string, state domain.HelpState) error {
+	_, err := s.db.ExecContext(ctx, `UPDATE answers SET help_state = $1 WHERE user_id = $2 AND question_id = $3`, state, userId, questionId)
 	return err
 }
 
@@ -202,16 +208,16 @@ WITH territory_questions AS (
 SELECT 
     tq.territory_id,
     SUM(tq.knowledge_amount) AS total_knowledge,
-	SUM(CASE WHEN a.status = $1 OR (a.status = $2 AND a.requested_help) THEN tq.knowledge_amount/2 WHEN a.status = $2 THEN tq.knowledge_amount ELSE 0 END) AS achieved_knowledge
+	SUM(CASE WHEN a.status = $1 OR (a.status = $2 AND a.help_state = $3) THEN tq.knowledge_amount/2 WHEN a.status = $2 THEN tq.knowledge_amount ELSE 0 END) AS achieved_knowledge
 FROM territory_questions tq
 LEFT JOIN answers a 
     ON tq.question_id = a.question_id
-   AND a.user_id = $3
+   AND a.user_id = $4
 GROUP BY tq.territory_id
 ORDER BY tq.territory_id;
 `
 
-	rows, err := s.db.QueryContext(ctx, query, domain.AnswerStatusHalfCorrect, domain.AnswerStatusCorrect, userId)
+	rows, err := s.db.QueryContext(ctx, query, domain.AnswerStatusHalfCorrect, domain.AnswerStatusCorrect, domain.AnswerHelpStateGotHelp, userId)
 	if err != nil {
 		return nil, err
 	}

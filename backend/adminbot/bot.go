@@ -59,6 +59,8 @@ const (
 	revertCB      = "revert|"
 	finalizeCB    = "finalize|"
 	iGoCB         = "iGo|"
+	didHelpCB     = "didHelp|"
+	didNotHelpCB  = "didNotHelp|"
 )
 
 func prefix(cb string) bot.Middleware {
@@ -95,6 +97,8 @@ func (m *Bot) Start() {
 	m.bot.RegisterHandler(bot.HandlerTypeCallbackQueryData, finalizeCB, bot.MatchTypePrefix, m.handleFinalize, prefix(finalizeCB))
 	m.bot.RegisterHandler(bot.HandlerTypeMessageText, "", bot.MatchTypePrefix, m.handleFeedback)
 	m.bot.RegisterHandler(bot.HandlerTypeCallbackQueryData, iGoCB, bot.MatchTypePrefix, m.handleIGo, prefix(iGoCB))
+	m.bot.RegisterHandler(bot.HandlerTypeCallbackQueryData, didHelpCB, bot.MatchTypePrefix, m.handleDidHelp, prefix(didHelpCB))
+	m.bot.RegisterHandler(bot.HandlerTypeCallbackQueryData, didNotHelpCB, bot.MatchTypePrefix, m.handleDidNotHelp, prefix(didNotHelpCB))
 
 	ctx, cancel := context.WithCancel(context.Background())
 	m.cancel = cancel
@@ -171,7 +175,7 @@ func (m *Bot) HandleHelpRequest(territory string, user *domain.User, question do
 			InlineKeyboard: [][]models.InlineKeyboardButton{{
 				{
 					Text:         "من جواب میدم",
-					CallbackData: iGoCB,
+					CallbackData: iGoCB + fmt.Sprintf("%d %s", user.ID, question.QuestionID),
 				},
 			}},
 		},
@@ -471,6 +475,50 @@ func (m *Bot) handleIGo(ctx context.Context, b *bot.Bot, update *models.Update) 
 		ChatID:    update.CallbackQuery.Message.Message.Chat.ID,
 		MessageID: update.CallbackQuery.Message.Message.ID,
 		Text:      update.CallbackQuery.Message.Message.Text + suffix,
+		ReplyMarkup: models.InlineKeyboardMarkup{
+			InlineKeyboard: [][]models.InlineKeyboardButton{
+				{{
+					Text:         "کمکش کردم. جایزه شو نصف کن.",
+					CallbackData: didHelpCB + update.CallbackQuery.Data,
+				}},
+				{{
+					Text:         "کمکش نکردم",
+					CallbackData: didNotHelpCB + update.CallbackQuery.Data,
+				}},
+			},
+		},
+	})
+}
+
+func (m *Bot) handleDidHelp(ctx context.Context, b *bot.Bot, update *models.Update) {
+	m.handleHelpState(ctx, b, update, domain.AnswerHelpStateGotHelp)
+}
+
+func (m *Bot) handleDidNotHelp(ctx context.Context, b *bot.Bot, update *models.Update) {
+	m.handleHelpState(ctx, b, update, domain.AnswerHelpStateDidNotGetHelp)
+}
+
+func (m *Bot) handleHelpState(ctx context.Context, b *bot.Bot, update *models.Update, state domain.HelpState) {
+	var userId int32
+	var questionId string
+	_, err := fmt.Sscanf(update.CallbackQuery.Data, "%d %s", &userId, &questionId)
+	if err != nil {
+		err = fmt.Errorf("failed to parse callback query data: %w", err)
+		_, _ = b.AnswerCallbackQuery(ctx, &bot.AnswerCallbackQueryParams{CallbackQueryID: update.CallbackQuery.ID, Text: err.Error(), ShowAlert: true})
+		slog.Error("failed to handle update", "error", err)
+		return
+	}
+	err = m.islandService.SetHelpState(ctx, userId, questionId, state)
+	if err != nil {
+		err = fmt.Errorf("failed to mark help received: %w", err)
+		_, _ = b.AnswerCallbackQuery(ctx, &bot.AnswerCallbackQueryParams{CallbackQueryID: update.CallbackQuery.ID, Text: err.Error(), ShowAlert: true})
+		slog.Error("failed to handle update", "error", err)
+		return
+	}
+	_, _ = b.EditMessageText(ctx, &bot.EditMessageTextParams{
+		ChatID:    update.CallbackQuery.Message.Message.Chat.ID,
+		MessageID: update.CallbackQuery.Message.Message.ID,
+		Text:      update.CallbackQuery.Message.Message.Text + "\n\n✅",
 	})
 }
 
