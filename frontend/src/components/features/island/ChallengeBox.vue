@@ -246,56 +246,6 @@
                     >
                         {{ challenge.submissionState.feedback }}
                     </p>
-                    <div
-                        v-if="challenge.type !== 'file'"
-                        class="flex items-center gap-3"
-                    >
-                        <input
-                            v-model="inputValue"
-                            :type="challenge.type"
-                            placeholder="پاسخ..."
-                            class="w-full p-3 text-lg text-center text-gray-100 bg-slate-800/70 rounded-lg border-2 border-slate-600 focus:border-cyan-500 focus:ring-0 outline-none transition-colors"
-                            :disabled="!challenge.submissionState.submittable"
-                            @keyup.enter="submit"
-                        />
-                        <button
-                            :disabled="!challenge.submissionState.submittable"
-                            class="btn-hover px-6 py-3 text-lg font-semibold text-white bg-[#07458bb5] rounded-lg shrink-0"
-                            @click="submit"
-                        >
-                            ارسال
-                        </button>
-                    </div>
-
-                    <div v-else class="flex items-center justify-center gap-3">
-                        <label
-                            :for="fileInputId"
-                            class="btn-hover flex-grow text-center px-5 py-3 text-lg font-medium text-gray-200 bg-slate-700/80 rounded-lg border-2 border-transparent hover:border-cyan-500 cursor-pointer"
-                        >
-                            <span v-if="!selectedFileName">انتخاب فایل</span>
-                            <span v-else class="text-cyan-400">{{
-                                selectedFileName
-                            }}</span>
-                        </label>
-                        <input
-                            :id="fileInputId"
-                            type="file"
-                            class="hidden"
-                            :accept="challenge.accept?.join(',')"
-                            :disabled="!challenge.submissionState.submittable"
-                            @change="handleFileChange"
-                        />
-                        <button
-                            :disabled="
-                                !challenge.submissionState.submittable ||
-                                !inputValue
-                            "
-                            class="btn-hover px-6 py-3 text-lg font-semibold text-white bg-green-600 rounded-lg disabled:bg-gray-600 disabled:opacity-50 disabled:transform-none disabled:filter-none shrink-0"
-                            @click="submit"
-                        >
-                            ارسال
-                        </button>
-                    </div>
                 </div>
             </transition>
         </div>
