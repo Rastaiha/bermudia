@@ -99,7 +99,7 @@
 
 <script setup>
 import { COST_ITEMS_INFO } from '@/services/cost';
-import { ref } from 'vue';
+import { ref, h } from 'vue';
 import { useModal } from 'vue-final-modal';
 import ConfirmModal from '@/components/common/ConfirmModal.vue';
 
@@ -114,6 +114,7 @@ const tradeCard = ref(null);
 const { open: confirmAccept, close: closeAccept } = useModal({
     component: ConfirmModal,
     attrs: {
+        dark: true,
         title: 'تایید معامله',
         onConfirm() {
             emit('accept', props.offer.id);
@@ -124,7 +125,13 @@ const { open: confirmAccept, close: closeAccept } = useModal({
         },
     },
     slots: {
-        content: () => (tradeCard.value ? tradeCard.value : ''),
+        content: () =>
+            h('div', { class: 'w-full' }, [
+                h('div', {
+                    class: 'flex',
+                    innerHTML: tradeCard.value?.innerHTML || '',
+                }),
+            ]),
     },
 });
 </script>
