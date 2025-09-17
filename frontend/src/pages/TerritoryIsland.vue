@@ -38,6 +38,7 @@
                 :key="treasureData.id"
             >
                 <Treasure
+                    v-if="treasureData.visible"
                     v-model="treasures[index]"
                     :treasure-data="treasureData"
                     :player="player"
