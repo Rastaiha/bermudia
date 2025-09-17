@@ -206,7 +206,7 @@ const menuItems = [
     {
         id: 'casino',
         icon: '/images/icons/casino.png',
-        alt: 'قمارخانه',
+        alt: 'بورس',
         action: openCasino,
     },
 ];
