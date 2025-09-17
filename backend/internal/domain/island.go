@@ -1,5 +1,7 @@
 package domain
 
+import "strings"
+
 var (
 	ErrMeetUnavailable = Error{
 		text:   "این قابلیت فعلاً در دسترس نیست.",
@@ -37,6 +39,10 @@ func CheckPlayerAccessToIslandContent(player Player, islandID string, isPortable
 }
 
 func ShouldBeMadePortableOnAccess(header IslandHeader) bool {
+	// TODO: this is temporary solution. fix later :)
+	if strings.Contains(header.ID, "game") {
+		return false
+	}
 	return header.BookID != "" && !header.FromPool
 }
 
