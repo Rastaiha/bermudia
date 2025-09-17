@@ -66,6 +66,7 @@ import {
     requestHelp,
 } from '@/services/api';
 import { usePlayerWebSocket } from '@/services/websocket.js';
+import { useInboxWebSocket } from '@/services/inboxWebsocket.js';
 import { useModal } from 'vue-final-modal';
 import eventBus from '@/services/eventBus.js';
 
@@ -94,6 +95,7 @@ const router = useRouter();
 const territoryId = toRef(props, 'id');
 
 usePlayerWebSocket(player, territoryId, router);
+useInboxWebSocket();
 
 const fetchIslandData = async id => {
     try {

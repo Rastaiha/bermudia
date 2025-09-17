@@ -62,6 +62,7 @@ import {
     getTerritory,
 } from '@/services/api/index.js';
 import { usePlayerWebSocket } from '@/services/websocket.js';
+import { useInboxWebSocket } from '@/services/inboxWebsocket.js';
 import eventBus from '@/services/eventBus.js';
 
 import MapView from '@/components/features/map/MapView.vue';
@@ -272,6 +273,7 @@ watch(
 );
 
 usePlayerWebSocket(player, territoryId, router);
+useInboxWebSocket();
 </script>
 
 <style scoped>
