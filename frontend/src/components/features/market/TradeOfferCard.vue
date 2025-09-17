@@ -99,23 +99,24 @@
 
 <script setup>
 import { COST_ITEMS_INFO } from '@/services/cost';
-import { ref, useModel } from 'vue';
+import { ref } from 'vue';
+import { useModal } from 'vue-final-modal';
 import ConfirmModal from '@/components/common/ConfirmModal.vue';
 
-// const props = defineProps({
-//     offer: Object,
-//     isMine: Boolean,
-// });
+const props = defineProps({
+    offer: Object,
+    isMine: Boolean,
+});
 
-defineEmits(['accept', 'delete']);
+const emit = defineEmits(['accept', 'delete']);
 const tradeCard = ref(null);
 
-const { open: confirmAccept, close: closeAccept } = useModel({
+const { open: confirmAccept, close: closeAccept } = useModal({
     component: ConfirmModal,
     attrs: {
         title: 'تایید معامله',
         onConfirm() {
-            // $emit('accept', props.offer.id)
+            emit('accept', props.offer.id);
             closeAccept();
         },
         onCancel() {
@@ -123,7 +124,7 @@ const { open: confirmAccept, close: closeAccept } = useModel({
         },
     },
     slots: {
-        content: '<p>ss</p>',
+        content: () => (tradeCard.value ? tradeCard.value.outerHTML : ''),
     },
 });
 </script>
