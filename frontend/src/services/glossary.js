@@ -34,6 +34,6 @@ export const glossary = {
     buyFuel: 'خرید سوخت',
     requiredKnowledge: 'دانش مورد نیاز',
     buy: 'خرید',
-    benzuelaMarketplace: 'بازارچه بنزوئیلا',
+    benzuelaMarketplace: 'منطقه آزاد بنزوئیلا',
     benzuelaLibrary: 'کتابخانه بنزوئیلا',
 };
