@@ -47,17 +47,17 @@ func UnlockTreasureCheck(player Player, treasure Treasure, userTreasure UserTrea
 	result.CanPayAltCost = canAfford(player, userTreasure.AltCost)
 
 	if currentIslandBook == "" || treasure.BookID != currentIslandBook {
-		result.Reason = "شما باید وارد سیاره شوید تا بتوانید گنج را باز کنید."
+		result.Reason = "شما باید وارد سیاره شوید تا بتوانید شهاب شانسی را بشکنید."
 		return
 	}
 
 	if userTreasure.Unlocked {
-		result.Reason = "این گنج قبلاً باز شده است."
+		result.Reason = "این شهاب شانسی قبلاً شکسته شده است."
 		return
 	}
 
 	if !result.CanPayCost && !result.CanPayAltCost {
-		result.Reason = "شما کلید کافی برای باز کردن این گنج ندارید. "
+		result.Reason = "شما چکش کافی برای شکستن این شهاب شانسی ندارید. "
 		return
 	}
 
@@ -88,7 +88,7 @@ func UnlockTreasure(player Player, treasure Treasure, userTreasure UserTreasure,
 	}
 	if !couldAfford {
 		return nil, UserTreasure{}, Error{
-			text:   "شما دارایی کافی برای بازکردن گنج با این روش را ندارید.",
+			text:   "شما دارایی کافی برای شکستن این شهاب شانسی ندارید.",
 			reason: ErrorReasonRuleViolation,
 		}
 	}
