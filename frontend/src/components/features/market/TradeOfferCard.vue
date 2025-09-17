@@ -128,7 +128,7 @@ const { open: confirmAccept, close: closeAccept } = useModal({
         content: () =>
             h('div', { class: 'w-full' }, [
                 h('div', {
-                    class: 'flex',
+                    class: 'flex items-center',
                     innerHTML: tradeCard.value?.innerHTML || '',
                 }),
             ]),
