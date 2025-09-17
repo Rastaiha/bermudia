@@ -335,7 +335,7 @@ func (p *Player) applyCorrection(ctx context.Context, c domain.Correction) (ok b
 	}()
 
 	var answer domain.Answer
-	answer, ok, err = p.questionStore.ApplyCorrection(ctx, tx, time.Now().Add(-p.cfg.MinCorrectionDelay()).UTC(), c)
+	answer, ok, err = p.questionStore.ApplyCorrection(ctx, tx, time.Now().Add(-p.cfg.MinCorrectionDelay).UTC(), c)
 	if err != nil {
 		return false, err
 	}

@@ -1,15 +1,12 @@
 package config
 
 import (
-	"encoding/base64"
 	"fmt"
-	"github.com/go-viper/mapstructure/v2"
 	"github.com/knadh/koanf/providers/env"
 	"github.com/knadh/koanf/providers/structs"
 	"github.com/knadh/koanf/v2"
 	"log"
 	"log/slog"
-	"reflect"
 	"strings"
 )
 
@@ -40,27 +37,6 @@ func Load() Config {
 	var instance Config
 	err := k.UnmarshalWithConf("", &instance, koanf.UnmarshalConf{
 		Tag: tag,
-		DecoderConfig: &mapstructure.DecoderConfig{
-			DecodeHook: mapstructure.ComposeDecodeHookFunc(
-				mapstructure.StringToBoolHookFunc(),
-				mapstructure.StringToFloat32HookFunc(),
-				mapstructure.StringToFloat64HookFunc(),
-				mapstructure.StringToIntHookFunc(),
-				mapstructure.StringToInt32HookFunc(),
-				mapstructure.StringToInt64HookFunc(),
-				mapstructure.StringToTimeDurationHookFunc(),
-				mapstructure.StringToSliceHookFunc(","),
-				func(f reflect.Type, t reflect.Type, data any) (any, error) {
-					if f.Kind() != reflect.String {
-						return data, nil
-					}
-					if t != reflect.TypeFor[[]byte]() {
-						return data, nil
-					}
-					return base64.StdEncoding.DecodeString(data.(string))
-				},
-			),
-		},
 	})
 
 	if err != nil {
