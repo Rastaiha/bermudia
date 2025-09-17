@@ -101,7 +101,7 @@ type IslandInput struct {
 
 type SubmissionState struct {
 	Submittable      bool   `json:"submittable"`
-	CanRequestHelp   bool   `json:"canRequestHelp"`
+	ShowHelp         bool   `json:"showHelp"`
 	HasRequestedHelp bool   `json:"hasRequestedHelp"`
 	Status           string `json:"status"`
 	Filename         string `json:"filename,omitempty"`

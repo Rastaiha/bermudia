@@ -641,11 +641,12 @@ curl --request GET \
 
 ### Me
 
-| Field    | Type   | Description                 |
-|----------|--------|-----------------------------|
-| id       | int    | Unique numeric id of user   |
-| username | string | Unique username of the user |
-| name     | string | Name of the user            |
+| Field    | Type    | Description                          |
+|----------|---------|--------------------------------------|
+| id       | int     | Unique numeric id of user            |
+| username | string  | Unique username of the user          |
+| name     | string  | Name of the user                     |
+| meetLink | string? | Meet link for question help requests |
 
 
 ### Player
@@ -763,9 +764,8 @@ curl --request GET \
 | Field            | Type    | Description                                                                                                          |
 |------------------|---------|----------------------------------------------------------------------------------------------------------------------|
 | submittable      | boolean | True if the a new answer can be submitted, false otherwise.                                                          |
-| canRequestHelp   | boolean | True if player can request help from by calling [Get Help to Answer](#get-help-to-answer), false otherwise.          |
+| showHelp         | boolean | True if help button should be visible to user. False otherwise.                                                      |
 | hasRequestedHelp | boolean | True if player has requested help for this question before.                                                          |
-| submittable      | boolean | True if the a new answer can be submitted, false otherwise.                                                          |
 | status           | string  | The status of answer; one of `empty`, `pending` (in process of correction) , `correct`, `half-correct`, `wrong`      |
 | filename         | string? | If _status_ is not `empty` and [IslandInput](#islandinput) _type_ is `file`, the name of the last submitted file.    |
 | value            | string? | If _status_ is not `empty` and [IslandInput](#islandinput) _type_ is not `file`, the last submitted plain text value |

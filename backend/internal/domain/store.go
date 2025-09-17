@@ -77,6 +77,7 @@ type QuestionStore interface {
 	GetAnswer(ctx context.Context, userId int32, questionId string) (Answer, error)
 	GetPendingAnswers(ctx context.Context, ifBefore time.Time) ([]Answer, error)
 	MarkHelpRequest(ctx context.Context, userId int32, questionId string) error
+	SetHelpState(ctx context.Context, userId int32, questionId string, state HelpState) error
 	// SubmitAnswer updates the existing Answer with the given args and sets the answer status to AnswerStatusPending.
 	// If the answer is in AnswerStatusCorrect status, it returns ErrSubmitToCorrectAnswer error.
 	// If the answer is in AnswerStatusPending status, it returns ErrSubmitToPendingAnswer error.

@@ -9,7 +9,7 @@ type User struct {
 	ID             int32  `json:"id"`
 	Username       string `json:"username"`
 	Name           string `json:"name"`
-	MeetLink       string `json:"-"`
+	MeetLink       string `json:"meetLink,omitempty"`
 	HashedPassword []byte `json:"-"`
 }
 

@@ -19,6 +19,7 @@ type Island struct {
 	questionStore       domain.QuestionStore
 	playerStore         domain.PlayerStore
 	treasureStore       domain.TreasureStore
+	gameStateStore      domain.GameStateStore
 	onNewAnswer         NewAnswerCallback
 	onNewPortableIsland NewPortableIslandCallback
 	onHelpRequest       HelpRequestCallback
@@ -30,14 +31,15 @@ type NewPortableIslandCallback func(userId int32)
 
 type HelpRequestCallback func(territory string, user *domain.User, question domain.BookQuestion) error
 
-func NewIsland(bot *bot.Bot, userStore domain.UserStore, islandStore domain.IslandStore, questionStore domain.QuestionStore, playerStore domain.PlayerStore, treasureStore domain.TreasureStore) *Island {
+func NewIsland(bot *bot.Bot, userStore domain.UserStore, islandStore domain.IslandStore, questionStore domain.QuestionStore, playerStore domain.PlayerStore, treasureStore domain.TreasureStore, gameStateStore domain.GameStateStore) *Island {
 	return &Island{
-		bot:           bot,
-		userStore:     userStore,
-		islandStore:   islandStore,
-		questionStore: questionStore,
-		playerStore:   playerStore,
-		treasureStore: treasureStore,
+		bot:            bot,
+		userStore:      userStore,
+		islandStore:    islandStore,
+		questionStore:  questionStore,
+		playerStore:    playerStore,
+		treasureStore:  treasureStore,
+		gameStateStore: gameStateStore,
 	}
 }
 
@@ -45,6 +47,10 @@ func (i *Island) Start() {
 	resend := func(now time.Time) {
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second*60)
 		defer cancel()
+
+		if paused, err := i.gameStateStore.GetIsPaused(ctx); err != nil || paused {
+			return
+		}
 
 		answers, err := i.questionStore.GetPendingAnswers(ctx, now.UTC().Add(-20*time.Minute))
 		if err != nil {
@@ -266,4 +272,8 @@ func (i *Island) RequestHelpToAnswer(ctx context.Context, user *domain.User, que
 	}
 
 	return user.MeetLink, nil
+}
+
+func (i *Island) SetHelpState(ctx context.Context, userId int32, questionId string, state domain.HelpState) error {
+	return i.questionStore.SetHelpState(ctx, userId, questionId, state)
 }

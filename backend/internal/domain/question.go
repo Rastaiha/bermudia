@@ -26,6 +26,7 @@ type Answer struct {
 	QuestionID    string
 	Status        AnswerStatus
 	RequestedHelp bool
+	HelpState     HelpState
 	FileID        sql.NullString
 	Filename      sql.NullString
 	TextContent   sql.NullString
@@ -42,6 +43,14 @@ const (
 	AnswerStatusCorrect     AnswerStatus = 2
 	AnswerStatusWrong       AnswerStatus = 3
 	AnswerStatusHalfCorrect AnswerStatus = 4
+)
+
+type HelpState int
+
+const (
+	AnswerHelpStateEmpty         HelpState = 0
+	AnswerHelpStateDidNotGetHelp HelpState = 1
+	AnswerHelpStateGotHelp       HelpState = 2
 )
 
 func CheckSubmit(question BookQuestion, answer Answer) error {
@@ -68,6 +77,12 @@ func CheckRequestHelp(question BookQuestion, answer Answer) error {
 			reason: ErrorReasonRuleViolation,
 		}
 	}
+	if answer.HelpState != AnswerHelpStateEmpty {
+		return Error{
+			text:   "به درخواست کمک شما پاسخ داده شده است.",
+			reason: ErrorReasonRuleViolation,
+		}
+	}
 	return nil
 }
 
@@ -91,7 +106,7 @@ func GetSubmissionState(question BookQuestion, answer Answer) SubmissionState {
 	}
 	return SubmissionState{
 		Submittable:      CheckSubmit(question, answer) == nil,
-		CanRequestHelp:   CheckRequestHelp(question, answer) == nil,
+		ShowHelp:         CheckRequestHelp(question, answer) == nil,
 		HasRequestedHelp: answer.RequestedHelp,
 		Status:           status,
 		Filename:         answer.Filename.String,
