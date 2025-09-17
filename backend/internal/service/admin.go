@@ -154,7 +154,7 @@ func (a *Admin) SetBookAndBindToPool(ctx context.Context, poolId string, input B
 }
 
 func (a *Admin) setBook(ctx context.Context, input BookInput) (BookInput, error) {
-	if input.BookId == "" || domain.IdHasType(input.BookId, domain.ResourceTypeBook) {
+	if input.BookId == "" || !domain.IdHasType(input.BookId, domain.ResourceTypeBook) {
 		input.BookId = domain.NewID(domain.ResourceTypeBook)
 	}
 	book := domain.Book{ID: input.BookId, Components: make([]domain.BookComponent, 0)}
