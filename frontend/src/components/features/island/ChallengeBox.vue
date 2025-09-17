@@ -2,7 +2,21 @@
     <div
         class="relative bg-slate-900/90 border border-slate-700 rounded-2xl shadow-xl p-8 transition-all duration-500"
     >
-        <div class="text-center">
+        <div class="absolute top-4 right-4">
+            <button
+                :class="[helpButtonClass, helpButtonAnimationClass]"
+                :disabled="isHelpButtonDisabled"
+                class="p-2 rounded-full"
+                @click="handleHelpClick"
+            >
+                <QuestionMarkCircleIcon
+                    v-if="helpButtonIcon === 'QuestionMarkCircleIcon'"
+                    class="w-8 h-8"
+                />
+                <ArrowTopRightOnSquareIcon v-else class="w-8 h-8" />
+            </button>
+        </div>
+        <div class="text-center pt-12">
             <p
                 class="text-xl md:text-2xl font-light text-gray-200 leading-relaxed"
             >
@@ -185,37 +199,17 @@
                 </div>
             </transition>
         </div>
-        <div class="flex flex-col items-center">
-            <div v-if="helpURL">
-                <button
-                    class="btn-hover px-6 py-3 text-lg font-semibold text-white bg-[#07458bb5] rounded-lg shrink-0"
-                    @click="goToHelp"
-                >
-                    بزن تا نجات پیدا کنی!
-                </button>
-            </div>
-            <div v-else-if="challenge.submissionState.canRequestHelp">
-                <button
-                    class="btn-hover px-6 py-3 text-lg font-semibold text-white bg-[#07458bb5] rounded-lg shrink-0"
-                    @click="help"
-                >
-                    درخواست کمک
-                </button>
-            </div>
-
-            <div v-if="challenge.submissionState.hasRequestedHelp">
-                <button class="px-6 py-3 text-lg font-semibold">
-                    قبلا برای این مسئله درخواست کمک داشته‌اید.
-                </button>
-            </div>
-        </div>
     </div>
 </template>
 
 <script setup>
 import { ref, computed } from 'vue';
-import { useToast } from 'vue-toastification';
-import { requestHelp } from '@/services/api';
+import { useModal } from 'vue-final-modal';
+import ConfirmModal from '@/components/common/ConfirmModal.vue';
+import {
+    QuestionMarkCircleIcon,
+    ArrowTopRightOnSquareIcon,
+} from '@heroicons/vue/24/outline';
 
 const props = defineProps({
     challenge: {
@@ -224,9 +218,65 @@ const props = defineProps({
     },
 });
 
-const emit = defineEmits(['submit']);
-const helpURL = ref(null);
-const toast = useToast();
+const emit = defineEmits(['submit', 'help-requested']);
+
+const { open: openHelpModal, close: closeHelpModal } = useModal({
+    component: ConfirmModal,
+    attrs: {
+        title: 'درخواست کمک',
+        onConfirm() {
+            emit('help-requested', props.challenge);
+            closeHelpModal();
+        },
+        onCancel() {
+            closeHelpModal();
+        },
+    },
+    slots: {
+        content: '<p>با درخواست کمک دانش دریافتی از حل این سوال نصف میشه</p>',
+    },
+});
+
+const helpButtonIcon = computed(() => {
+    return props.challenge.submissionState.hasRequestedHelp
+        ? 'ArrowTopRightOnSquareIcon'
+        : 'QuestionMarkCircleIcon';
+});
+
+const helpButtonClass = computed(() => {
+    if (props.challenge.submissionState.hasRequestedHelp) {
+        return 'text-green-400';
+    }
+    if (props.challenge.submissionState.canRequestHelp) {
+        return 'text-blue-400';
+    }
+    return 'text-gray-500';
+});
+
+const helpButtonAnimationClass = computed(() => {
+    if (isHelpButtonDisabled.value) {
+        return '';
+    }
+    if (props.challenge.submissionState.hasRequestedHelp) {
+        return 'animate-pulse-green';
+    }
+    return 'animate-pulse-blue';
+});
+
+const isHelpButtonDisabled = computed(() => {
+    return (
+        !props.challenge.submissionState.canRequestHelp &&
+        !props.challenge.submissionState.hasRequestedHelp
+    );
+});
+
+const handleHelpClick = async () => {
+    if (props.challenge.submissionState.hasRequestedHelp) {
+        emit('help-requested', props.challenge);
+    } else {
+        openHelpModal();
+    }
+};
 
 const inputValue = ref(
     props.challenge.type === 'file'
@@ -259,19 +309,6 @@ const submit = () => {
         });
     }
 };
-
-const help = async () => {
-    try {
-        const response = await requestHelp(props.challenge.id);
-        helpURL.value = response.meetLink;
-    } catch (err) {
-        toast.error(err.message);
-    }
-};
-
-const goToHelp = () => {
-    window.open(helpURL.value, '_blank');
-};
 </script>
 
 <style scoped>
@@ -297,5 +334,31 @@ const goToHelp = () => {
 .btn-hover:hover:not(:disabled) {
     transform: scale(1.05);
     filter: brightness(1.1);
+}
+
+@keyframes pulse-blue {
+    0% {
+        box-shadow: 0 0 0 0 rgba(96, 165, 250, 0.7);
+    }
+    100% {
+        box-shadow: 0 0 0 1rem rgba(96, 165, 250, 0);
+    }
+}
+
+@keyframes pulse-green {
+    0% {
+        box-shadow: 0 0 0 0 rgba(74, 222, 128, 0.7);
+    }
+    100% {
+        box-shadow: 0 0 0 1rem rgba(74, 222, 128, 0);
+    }
+}
+
+.animate-pulse-blue {
+    animation: pulse-blue 2s infinite;
+}
+
+.animate-pulse-green {
+    animation: pulse-green 2s infinite;
 }
 </style>

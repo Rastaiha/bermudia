@@ -28,10 +28,13 @@ type Player struct {
 	playerUpdateEventHandler   func(event *domain.FullPlayerUpdateEvent)
 	tradeEventBroadcastHandler TradeEventBroadcastHandler
 	inboxEventHandler          func(e *domain.InboxEvent)
+	broadcastMessageHandler    MessageBroadcastHandler
 	cron                       gocron.Scheduler
 }
 
 type TradeEventBroadcastHandler func(func(userId int32) *domain.TradeEvent)
+
+type MessageBroadcastHandler func(func(userId int32) *domain.InboxMessageView)
 
 func NewPlayer(cfg config.Config, db *sql.DB, userStore domain.UserStore, playerStore domain.PlayerStore, territoryStore domain.TerritoryStore, questionStore domain.QuestionStore, islandStore domain.IslandStore, treasureStore domain.TreasureStore, marketStore domain.MarketStore, inboxStore domain.InboxStore) *Player {
 	return &Player{
@@ -57,6 +60,20 @@ func (p *Player) Start() {
 	_, err = p.cron.NewJob(gocron.DurationJob(p.cfg.CorrectionJobInterval), gocron.NewTask(p.applyCorrections))
 	if err != nil {
 		panic(err)
+	}
+	if p.cfg.DevMode {
+		_, _ = p.cron.NewJob(gocron.DurationJob(1*time.Minute), gocron.NewTask(func() {
+			go func() {
+				now := time.Now().UTC()
+				_, err := p.BroadcastMessage(
+					context.Background(),
+					fmt.Sprintf("ساعت %s به وقت لندن است.\nامروز %s", now.Format(time.TimeOnly), now.Weekday().String()),
+				)
+				if err != nil {
+					slog.Error("failed to send mock broadcast message", "error", err)
+				}
+			}()
+		}))
 	}
 	p.cron.Start()
 }
@@ -538,11 +555,11 @@ func (p *Player) MakeOffer(ctx context.Context, offerer *domain.User, offered, r
 	p.tradeEventBroadcastHandler(func(userId int32) *domain.TradeEvent {
 		return &domain.TradeEvent{
 			NewOffer: &domain.NewOfferTradeEvent{
-				Offer: domain.TradeOfferViewForPlayer(userId, offerer.Username, tradeOffer),
+				Offer: domain.TradeOfferViewForPlayer(userId, offerer.Name, tradeOffer),
 			},
 		}
 	})
-	view := domain.TradeOfferViewForPlayer(offerer.ID, offerer.Username, tradeOffer)
+	view := domain.TradeOfferViewForPlayer(offerer.ID, offerer.Name, tradeOffer)
 	return &view, nil
 }
 
@@ -704,7 +721,7 @@ func (p *Player) GetTradeOffers(ctx context.Context, userId int32, filter domain
 			return nil, fmt.Errorf("failed to get offerer user: %w", err)
 		}
 
-		tradeOfferView := domain.TradeOfferViewForPlayer(userId, offererUser.Username, offer)
+		tradeOfferView := domain.TradeOfferViewForPlayer(userId, offererUser.Name, offer)
 		result = append(result, tradeOfferView)
 	}
 
@@ -764,4 +781,45 @@ func (p *Player) GetInboxMessages(ctx context.Context, userId int32, offset int6
 		result = append(result, domain.InboxMessageToView(m))
 	}
 	return result, nil
+}
+
+func (p *Player) OnBroadcastMessage(f MessageBroadcastHandler) {
+	p.broadcastMessageHandler = f
+}
+
+func (p *Player) BroadcastMessage(ctx context.Context, text string) (int, error) {
+	players, err := p.playerStore.GetAll(ctx)
+	if err != nil {
+		return 0, fmt.Errorf("failed to get players: %w", err)
+	}
+	var errs []error
+	count := 0
+	messages := make(map[int32]domain.InboxMessage)
+
+	for _, player := range players {
+		msg := domain.InboxMessage{
+			ID:        domain.NewID(domain.ResourceTypeInboxMessage),
+			UserID:    player,
+			CreatedAt: time.Now().UTC(),
+			Content: domain.InboxMessageContent{
+				Announcement: &domain.InboxMessageAnnouncement{Text: text},
+			},
+		}
+		messages[player] = msg
+		err := p.inboxStore.CreateMessage(ctx, nil, msg)
+		errs = append(errs, err)
+		if err == nil {
+			count++
+		}
+	}
+	p.broadcastMessageHandler(func(userId int32) *domain.InboxMessageView {
+		msg, ok := messages[userId]
+		if !ok {
+			return nil
+		}
+		r := domain.InboxMessageToView(msg)
+		return &r
+	})
+
+	return count, errors.Join(errs...)
 }

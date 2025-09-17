@@ -120,3 +120,20 @@ func (s sqlPlayerRepository) update(ctx context.Context, tx domain.Tx, old, upda
 	}
 	return nil
 }
+
+func (s sqlPlayerRepository) GetAll(ctx context.Context) ([]int32, error) {
+	rows, err := s.db.QueryContext(ctx, `SELECT user_id FROM players ;`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var result []int32
+	for rows.Next() {
+		var userId int32
+		if err := rows.Scan(&userId); err != nil {
+			return nil, err
+		}
+		result = append(result, userId)
+	}
+	return result, rows.Err()
+}

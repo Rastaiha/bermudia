@@ -13,6 +13,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"slices"
 	"strings"
 	"sync"
 	"time"
@@ -24,18 +25,20 @@ type Bot struct {
 	bot           *bot.Bot
 	islandService *service.Island
 	correction    *service.Correction
+	player        *service.Player
 	admin         *service.Admin
 	userStore     domain.UserStore
 	cancel        context.CancelFunc
 	wg            sync.WaitGroup
 }
 
-func NewBot(cfg config.Config, b *bot.Bot, islandService *service.Island, correction *service.Correction, adminService *service.Admin, userStore domain.UserStore) *Bot {
+func NewBot(cfg config.Config, b *bot.Bot, islandService *service.Island, correction *service.Correction, player *service.Player, adminService *service.Admin, userStore domain.UserStore) *Bot {
 	m := &Bot{
 		cfg:           cfg,
 		bot:           b,
 		islandService: islandService,
 		correction:    correction,
+		player:        player,
 		admin:         adminService,
 		userStore:     userStore,
 	}
@@ -71,8 +74,10 @@ func (m *Bot) Start() {
 	m.islandService.OnHelpRequest(m.HandleHelpRequest)
 
 	m.bot.RegisterHandlerMatchFunc(func(update *models.Update) bool {
-		return update.Message != nil && (update.Message.Chat.ID == 295351330 || update.Message.Chat.ID == 1258472488)
+		return update.Message != nil && update.Message.Document != nil && update.Message.Chat.ID == m.cfg.AdminsGroup
 	}, m.handleGameContent)
+
+	m.bot.RegisterHandler(bot.HandlerTypeMessageText, "broadcast_message", bot.MatchTypeCommand, m.broadcastMessage)
 
 	m.bot.RegisterHandler(bot.HandlerTypeCallbackQueryData, tagCB, bot.MatchTypePrefix, m.handleTag, prefix(tagCB))
 	m.bot.RegisterHandler(bot.HandlerTypeCallbackQueryData, correctCB, bot.MatchTypePrefix, m.handleCorrect, prefix(correctCB))
@@ -462,7 +467,10 @@ func (m *Bot) handleIGo(ctx context.Context, b *bot.Bot, update *models.Update) 
 }
 
 func (m *Bot) handleGameContent(ctx context.Context, b *bot.Bot, update *models.Update) {
-	if update.Message.Document == nil || update.Message.Document.MimeType != "application/zip" {
+	if update.Message.Document == nil || !slices.Contains([]string{
+		"application/zip",
+		"application/x-zip-compressed",
+	}, update.Message.Document.MimeType) {
 		_, _ = b.SendMessage(ctx, &bot.SendMessageParams{
 			ChatID: update.Message.Chat.ID,
 			Text:   "please send a zip file",
@@ -512,5 +520,36 @@ func (m *Bot) handleGameContent(ctx context.Context, b *bot.Bot, update *models.
 			Data:     f,
 		},
 		Caption: "Apply your changes ONLY TO THIS FILE and resubmit.\nDON'T EVER CHANGE *id* FIELDS",
+	})
+}
+
+func (m *Bot) broadcastMessage(ctx context.Context, b *bot.Bot, update *models.Update) {
+	if update.Message.Chat.ID != m.cfg.AdminsGroup {
+		return
+	}
+
+	parts := strings.SplitN(update.Message.Text, "\n", 2)
+	msg := ""
+	if len(parts) == 2 {
+		msg = strings.TrimSpace(parts[1])
+	}
+
+	if len(parts) != 2 || msg == "" {
+		_, _ = b.SendMessage(ctx, &bot.SendMessageParams{
+			ChatID: update.Message.Chat.ID,
+			Text:   "Usage:\n\n/broadcast_message\nسلام بچه ها\nبه همه تون ۱۰۰ تا سکه دادیم",
+		})
+		return
+	}
+
+	count, err := m.player.BroadcastMessage(ctx, msg)
+
+	suffix := ""
+	if err != nil {
+		suffix = "\nsome errors happened: " + err.Error()
+	}
+	_, _ = b.SendMessage(ctx, &bot.SendMessageParams{
+		ChatID: update.Message.Chat.ID,
+		Text:   fmt.Sprintf("sent message to %d users.%s", count, suffix),
 	})
 }

@@ -645,6 +645,7 @@ curl --request GET \
 |----------|--------|-----------------------------|
 | id       | int    | Unique numeric id of user   |
 | username | string | Unique username of the user |
+| name     | string | Name of the user            |
 
 
 ### Player
@@ -953,6 +954,7 @@ curl --request GET \
 |------------------|----------------------------------------------------------------|----------------------------------------------------------------------|
 | newCorrection    | [InboxMessageNewCorrection](#inboxmessagenewcorrection)?       | Notification about a new question correction result                  |
 | ownOfferAccepted | [InboxMessageOwnOfferAccepted](#inboxmessageownofferaccepted)? | Notification that one of the player's trade offers has been accepted |
+| announcement     | [InboxMessageAnnouncement](#inboxmessageannouncement)?         | Notification for a announcement by game runners                      |
 
 **Note:** Exactly one of these fields will be present in a message content object
 
@@ -973,6 +975,12 @@ curl --request GET \
 | Field | Type                              | Description                                    |
 |-------|-----------------------------------|------------------------------------------------|
 | offer | [TradeOfferView](#tradeofferview) | Details of the trade offer that was accepted   |
+
+### InboxMessageAnnouncement
+
+| Field | Type   | Description              |
+|-------|--------|--------------------------|
+| text  | string | Text of the announcement |
 
 ### InboxEvent
 

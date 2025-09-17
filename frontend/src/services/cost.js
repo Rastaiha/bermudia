@@ -1,6 +1,6 @@
 const ITEM_NAMES = {
-    masterKey: { name: 'دینامیت' },
-    blueKey: { name: 'چکش آهنی' },
+    masterKey: { name: 'TNT' },
+    blueKey: { name: 'چکش فولادی' },
     redKey: { name: 'چکش نقره‌ای' },
     goldenKey: { name: 'چکش طلایی' },
     fuel: { name: 'سوخت' },
