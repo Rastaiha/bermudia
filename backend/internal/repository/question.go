@@ -148,6 +148,24 @@ func (s sqlQuestionRepository) GetAnswer(ctx context.Context, userId int32, ques
 	return answer, nil
 }
 
+func (s sqlQuestionRepository) GetPendingAnswers(ctx context.Context, ifBefore time.Time) ([]domain.Answer, error) {
+	var answers []domain.Answer
+	rows, err := s.db.QueryContext(ctx, `SELECT `+s.answerColumnsToSelect()+` FROM answers WHERE updated_at < $1`, ifBefore.UTC())
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var answer domain.Answer
+		err := s.scanAnswer(rows, &answer)
+		if err != nil {
+			return nil, err
+		}
+		answers = append(answers, answer)
+	}
+	return answers, nil
+}
+
 func (s sqlQuestionRepository) MarkHelpRequest(ctx context.Context, userId int32, questionId string) error {
 	_, err := s.db.ExecContext(ctx, `UPDATE answers SET requested_help = TRUE WHERE user_id = $1 AND question_id = $2`, userId, questionId)
 	return err

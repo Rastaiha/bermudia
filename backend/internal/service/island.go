@@ -8,10 +8,13 @@ import (
 	"github.com/go-telegram/bot"
 	"github.com/go-telegram/bot/models"
 	"io"
+	"log/slog"
+	"time"
 )
 
 type Island struct {
 	bot                 *bot.Bot
+	userStore           domain.UserStore
 	islandStore         domain.IslandStore
 	questionStore       domain.QuestionStore
 	playerStore         domain.PlayerStore
@@ -27,14 +30,52 @@ type NewPortableIslandCallback func(userId int32)
 
 type HelpRequestCallback func(territory string, user *domain.User, question domain.BookQuestion) error
 
-func NewIsland(bot *bot.Bot, islandStore domain.IslandStore, questionStore domain.QuestionStore, playerStore domain.PlayerStore, treasureStore domain.TreasureStore) *Island {
+func NewIsland(bot *bot.Bot, userStore domain.UserStore, islandStore domain.IslandStore, questionStore domain.QuestionStore, playerStore domain.PlayerStore, treasureStore domain.TreasureStore) *Island {
 	return &Island{
 		bot:           bot,
+		userStore:     userStore,
 		islandStore:   islandStore,
 		questionStore: questionStore,
 		playerStore:   playerStore,
 		treasureStore: treasureStore,
 	}
+}
+
+func (i *Island) Start() {
+	resend := func(now time.Time) {
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second*60)
+		defer cancel()
+
+		answers, err := i.questionStore.GetPendingAnswers(ctx, now.UTC().Add(20*time.Minute))
+		if err != nil {
+			slog.Error("failed to get pending answers", slog.String("error", err.Error()))
+			return
+		}
+
+		for _, a := range answers {
+			user, err := i.userStore.Get(ctx, a.UserID)
+			if err != nil {
+				continue
+			}
+			question, err := i.questionStore.GetQuestion(ctx, a.QuestionID)
+			if err != nil {
+				continue
+			}
+			territory := ""
+			if islandHeader, err := i.islandStore.GetIslandHeaderByBookIdAndUserId(ctx, question.BookID, user.ID); err == nil {
+				if !islandHeader.FromPool {
+					territory = islandHeader.TerritoryID
+				}
+			}
+			i.onNewAnswer(user.Username, territory, question, a)
+		}
+	}
+	go func() {
+		resend(time.Now())
+		for now := range time.Tick(20 * time.Minute) {
+			resend(now)
+		}
+	}()
 }
 
 func (i *Island) GetIsland(ctx context.Context, userId int32, islandId string) (*domain.IslandContent, error) {
