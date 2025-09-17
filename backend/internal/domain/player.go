@@ -168,7 +168,7 @@ func RefuelCheck(player Player, territory *Territory) (result RefuelCheckResult)
 	}
 	if coinBound < fuelCapBound {
 		result.MaxAvailableAmount = coinBound
-		result.MaxReason = "موجودی سکه شما تنها برای خرید این میزان سوخت کافی است."
+		result.MaxReason = "موجودی کلاه شما تنها برای خرید این میزان سوخت کافی است."
 	} else {
 		result.MaxAvailableAmount = fuelCapBound
 		result.MaxReason = "باک شما بیش از این مقدار گنجایش ندارد."
@@ -329,7 +329,7 @@ func getMigrationOption(player Player, knowledgeCriteriaPassed bool, territory T
 	if option.MustPayCost {
 		_, ok := deductCost(player, option.MigrationCost)
 		if !ok {
-			option.Reason = "شما دانش یا سکه کافی برای مهاجرت ندارید."
+			option.Reason = "شما دانش یا کلاه کافی برای مهاجرت ندارید."
 			return
 		}
 	}
