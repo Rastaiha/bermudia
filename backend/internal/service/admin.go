@@ -293,7 +293,7 @@ type User struct {
 	MeetLink          string `json:"meetLink"`
 }
 
-func (a *Admin) CreateUser(ctx context.Context, user User) (User, error) {
+func (a *Admin) CreateUser(ctx context.Context, index int, user User) (User, error) {
 	if user.Username == "" {
 		return User{}, fmt.Errorf("username is required")
 	}
@@ -311,7 +311,7 @@ func (a *Admin) CreateUser(ctx context.Context, user User) (User, error) {
 	}
 
 	id := rand.Int31()
-	startingTerritory := territories[int(id)%len(territories)]
+	startingTerritory := territories[index%len(territories)]
 	if startingTerritory.ID != "" {
 		for _, t := range territories {
 			if t.ID == user.StartingTerritory {

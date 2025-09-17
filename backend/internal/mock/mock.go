@@ -88,11 +88,11 @@ func createMockUsers(adminService *service.Admin, files fs.FS, writeBack string,
 	ctx := context.Background()
 	var errs []error
 	result := make([]service.User, 0, len(users))
-	for _, u := range users {
+	for i, u := range users {
 		if u.Password == "" && defaultPass != "" {
 			u.Password = defaultPass
 		}
-		u, err := adminService.CreateUser(ctx, u)
+		u, err := adminService.CreateUser(ctx, i, u)
 		errs = append(errs, err)
 		result = append(result, u)
 	}
