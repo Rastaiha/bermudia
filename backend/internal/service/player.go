@@ -496,7 +496,7 @@ func (p *Player) UnlockTreasure(ctx context.Context, userId int32, treasureId st
 	if err != nil {
 		return nil, err
 	}
-	islandTreasure := domain.GetIslandTreasureOfUserTreasure(updatedUserTreasure)
+	islandTreasure := domain.GetIslandTreasureOfUserTreasure(updatedUserTreasure, true)
 	return &islandTreasure, p.applyAndSendPlayerUpdateEvent(ctx, player, event)
 }
 

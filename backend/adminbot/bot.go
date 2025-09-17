@@ -3,6 +3,7 @@ package adminbot
 import (
 	"context"
 	"fmt"
+	"github.com/Rastaiha/bermudia/api/handler"
 	"github.com/Rastaiha/bermudia/internal/config"
 	"github.com/Rastaiha/bermudia/internal/domain"
 	"github.com/Rastaiha/bermudia/internal/mock"
@@ -23,6 +24,7 @@ import (
 type Bot struct {
 	cfg           config.Config
 	bot           *bot.Bot
+	apiGateway    *handler.Handler
 	islandService *service.Island
 	correction    *service.Correction
 	player        *service.Player
@@ -33,10 +35,11 @@ type Bot struct {
 	wg            sync.WaitGroup
 }
 
-func NewBot(cfg config.Config, b *bot.Bot, islandService *service.Island, correction *service.Correction, player *service.Player, adminService *service.Admin, userStore domain.UserStore, gameState domain.GameStateStore) *Bot {
+func NewBot(cfg config.Config, b *bot.Bot, apiGateway *handler.Handler, islandService *service.Island, correction *service.Correction, player *service.Player, adminService *service.Admin, userStore domain.UserStore, gameState domain.GameStateStore) *Bot {
 	m := &Bot{
 		cfg:           cfg,
 		bot:           b,
+		apiGateway:    apiGateway,
 		islandService: islandService,
 		correction:    correction,
 		player:        player,
@@ -82,6 +85,7 @@ func (m *Bot) Start() {
 	m.bot.RegisterHandler(bot.HandlerTypeMessageText, "broadcast_message", bot.MatchTypeCommand, m.broadcastMessage)
 	m.bot.RegisterHandler(bot.HandlerTypeMessageText, "pause_game", bot.MatchTypeCommand, m.pause)
 	m.bot.RegisterHandler(bot.HandlerTypeMessageText, "resume_game", bot.MatchTypeCommand, m.resume)
+	m.bot.RegisterHandler(bot.HandlerTypeMessageText, "connections", bot.MatchTypeCommand, m.connection)
 
 	m.bot.RegisterHandler(bot.HandlerTypeCallbackQueryData, tagCB, bot.MatchTypePrefix, m.handleTag, prefix(tagCB))
 	m.bot.RegisterHandler(bot.HandlerTypeCallbackQueryData, correctCB, bot.MatchTypePrefix, m.handleCorrect, prefix(correctCB))
@@ -592,4 +596,22 @@ func (m *Bot) resume(ctx context.Context, b *bot.Bot, update *models.Update) {
 			Text:   "game resumed successfully",
 		})
 	}
+}
+
+func (m *Bot) connection(ctx context.Context, b *bot.Bot, update *models.Update) {
+	if update.Message.Chat.ID != m.cfg.AdminsGroup {
+		return
+	}
+	stats := m.apiGateway.Actives()
+	var sb strings.Builder
+	for name, value := range stats {
+		sb.WriteString(name)
+		sb.WriteString(": ")
+		sb.WriteString(fmt.Sprint(value))
+		sb.WriteString("\n")
+	}
+	_, _ = b.SendMessage(ctx, &bot.SendMessageParams{
+		ChatID: update.Message.Chat.ID,
+		Text:   sb.String(),
+	})
 }
