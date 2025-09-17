@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	fuelTankCapacity                = 10
+	fuelTankCapacity                = 15
 	initialFuelAmount               = fuelTankCapacity
 	travelFuelConsumption           = 1
 	initialCoinsAmount              = 100
