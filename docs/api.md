@@ -743,6 +743,7 @@ curl --request GET \
 |----------|----------------|-----------------------------------------------------------------------------------------|
 | id       | string         | Unique identifier for the treasure                                                      |
 | unlocked | bool           | Whether the treasure has been unlocked by the player                                    |
+| visible  | bool           | Whether the treasure should be shown to player                                          |
 | reward   | [Cost](#cost)? | If _unlocked_ is true, shows the achieved reward. Length of _reward.items_ can be zero. |
 
 

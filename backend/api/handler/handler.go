@@ -134,6 +134,14 @@ func (h *Handler) Stop() {
 	}
 }
 
+func (h *Handler) Actives() map[string]int {
+	return map[string]int{
+		"players": h.playerHub.Actives(),
+		"market":  h.tradeHub.Actives(),
+		"inbox":   h.inboxHub.Actives(),
+	}
+}
+
 // Simple CORS middleware
 func corsMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

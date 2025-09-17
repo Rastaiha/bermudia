@@ -78,13 +78,15 @@ type IslandIFrame struct {
 type IslandTreasure struct {
 	ID       string `json:"id"`
 	Unlocked bool   `json:"unlocked"`
+	Visible  bool   `json:"visible"`
 	Reward   *Cost  `json:"reward,omitempty"`
 }
 
-func GetIslandTreasureOfUserTreasure(treasure UserTreasure) IslandTreasure {
+func GetIslandTreasureOfUserTreasure(treasure UserTreasure, visible bool) IslandTreasure {
 	return IslandTreasure{
 		ID:       treasure.TreasureID,
 		Unlocked: treasure.Unlocked,
+		Visible:  visible,
 		Reward:   treasure.Reward,
 	}
 }

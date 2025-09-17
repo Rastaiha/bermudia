@@ -160,3 +160,9 @@ func (h *Hub) Broadcast(callback func(userId int32, c *Connection)) {
 		callback(userId, conn)
 	}
 }
+
+func (h *Hub) Actives() int {
+	h.lock.RLock()
+	defer h.lock.RUnlock()
+	return len(h.connections)
+}

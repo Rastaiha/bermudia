@@ -109,7 +109,7 @@ func (i *Island) GetIsland(ctx context.Context, userId int32, islandId string) (
 		if err != nil {
 			return nil, err
 		}
-		content.Treasures = append(content.Treasures, domain.GetIslandTreasureOfUserTreasure(userTreasure))
+		content.Treasures = append(content.Treasures, domain.GetIslandTreasureOfUserTreasure(userTreasure, player.AtIsland == islandId))
 	}
 
 	return content, nil
