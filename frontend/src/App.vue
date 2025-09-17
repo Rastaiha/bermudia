@@ -1,5 +1,4 @@
 <template>
-    <UnreadMessageIndicator />
     <router-view />
     <ModalsContainer />
     <audio
@@ -13,7 +12,6 @@
 import { ModalsContainer } from 'vue-final-modal';
 import { ref } from 'vue';
 import { useAudioPlayer } from '@/composables/useAudioPlayer.js';
-import UnreadMessageIndicator from '@/components/features/notification/UnreadMessageIndicator.vue';
 
 const audioPlayer = ref(null);
 

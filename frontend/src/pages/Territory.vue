@@ -25,6 +25,8 @@
 
             <Toolbar :player="player" />
 
+            <UnreadMessageIndicator />
+
             <UserProfile :username="username" />
 
             <PlayerInfo :player="player" />
@@ -72,6 +74,7 @@ import LoadingBar from '@/components/common/LoadingBar.vue';
 import Toolbar from '@/components/layout/Toolbar.vue';
 import StarryNight from '@/components/common/StarryNight.vue';
 import UserProfile from '@/components/layout/UserProfile.vue';
+import UnreadMessageIndicator from '@/components/features/notification/UnreadMessageIndicator.vue';
 
 const route = useRoute();
 const router = useRouter();
