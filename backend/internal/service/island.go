@@ -194,7 +194,7 @@ func (i *Island) OnHelpRequest(f HelpRequestCallback) {
 
 func (i *Island) RequestHelpToAnswer(ctx context.Context, user *domain.User, questionId string) (string, error) {
 	if user.MeetLink == "" {
-		return "", errors.New("meet link not found")
+		return "", errors.New("این قابلیت فعلاً در دسترس نیست")
 	}
 
 	question, err := i.questionStore.GetQuestion(ctx, questionId)
