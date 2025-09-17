@@ -1,5 +1,12 @@
 package domain
 
+var (
+	ErrMeetUnavailable = Error{
+		text:   "این قابلیت فعلاً در دسترس نیست.",
+		reason: ErrorReasonResourceNotFound,
+	}
+)
+
 type IslandHeader struct {
 	ID          string `json:"id"`
 	Name        string `json:"name"`
