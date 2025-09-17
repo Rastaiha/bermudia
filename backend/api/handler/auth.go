@@ -32,6 +32,21 @@ func (h *Handler) authMiddleware(next http.Handler) http.Handler {
 	})
 }
 
+func (h *Handler) pauseCheckMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		isPaused, err := h.authService.IsGamePaused(r.Context())
+		if err != nil {
+			handleError(w, err)
+			return
+		}
+		if isPaused {
+			sendError(w, http.StatusLocked, "بازی در حال حاضر متوقف شده است.")
+			return
+		}
+		next.ServeHTTP(w, r)
+	})
+}
+
 type loginRequest struct {
 	Username string `json:"username"`
 	Password string `json:"password"`

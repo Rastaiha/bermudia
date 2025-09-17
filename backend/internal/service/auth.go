@@ -11,12 +11,13 @@ import (
 )
 
 type Auth struct {
-	userStore domain.UserStore
-	cfg       config.Config
+	cfg            config.Config
+	userStore      domain.UserStore
+	gameStateStore domain.GameStateStore
 }
 
-func NewAuth(cfg config.Config, userStore domain.UserStore) *Auth {
-	return &Auth{cfg: cfg, userStore: userStore}
+func NewAuth(cfg config.Config, userStore domain.UserStore, gameStateStore domain.GameStateStore) *Auth {
+	return &Auth{cfg: cfg, userStore: userStore, gameStateStore: gameStateStore}
 }
 
 func (a *Auth) Login(ctx context.Context, username, password string) (string, error) {
@@ -76,4 +77,8 @@ func (a *Auth) ValidateToken(ctx context.Context, tokenStr string) (*domain.User
 		return nil, false
 	}
 	return user, true
+}
+
+func (a *Auth) IsGamePaused(ctx context.Context) (bool, error) {
+	return a.gameStateStore.GetIsPaused(ctx)
 }

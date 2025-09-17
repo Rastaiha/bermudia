@@ -46,7 +46,9 @@ func New(cfg config.Config, authService *service.Auth, territoryService *service
 func (h *Handler) Start() {
 	r := chi.NewRouter()
 
-	r.Use(logger(h.cfg.DevMode))
+	if h.cfg.DevMode {
+		r.Use(logger())
+	}
 	r.Use(corsMiddleware)
 	r.Use(middleware.Recoverer)
 	r.Use(middleware.Timeout(30 * time.Second))
@@ -62,7 +64,7 @@ func (h *Handler) Start() {
 
 		// Authenticated endpoints
 		r.Group(func(r chi.Router) {
-			r.Use(h.authMiddleware)
+			r.Use(h.authMiddleware, h.pauseCheckMiddleware)
 			r.Get("/me", func(w http.ResponseWriter, r *http.Request) {
 				user, err := getUser(r.Context())
 				if err != nil {
@@ -149,11 +151,7 @@ func corsMiddleware(next http.Handler) http.Handler {
 
 var tokenPattern = regexp.MustCompile(`token?=(\S+) `)
 
-func logger(devMode bool) func(http.Handler) http.Handler {
-	level := slog.LevelWarn
-	if devMode {
-		level = slog.LevelDebug
-	}
+func logger() func(http.Handler) http.Handler {
 	return middleware.RequestLogger(&middleware.DefaultLogFormatter{
 		Logger: slog.NewLogLogger(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
 			ReplaceAttr: func(_ []string, a slog.Attr) slog.Attr {
@@ -170,6 +168,6 @@ func logger(devMode bool) func(http.Handler) http.Handler {
 				tokenRemoved = append(tokenRemoved, msg[submatch[3]:]...)
 				return slog.String(a.Key, string(tokenRemoved))
 			},
-		}), level),
+		}), slog.LevelDebug),
 	})
 }
