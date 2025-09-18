@@ -31,6 +31,7 @@ type Player struct {
 	tradeEventBroadcastHandler TradeEventBroadcastHandler
 	inboxEventHandler          func(e *domain.InboxEvent)
 	broadcastMessageHandler    MessageBroadcastHandler
+	playerLocationsCache       *cache.Cache
 	cron                       gocron.Scheduler
 }
 
@@ -1051,4 +1052,3 @@ func (p *Player) ResolveInvestmentSession(ctx context.Context, sessionID string,
 
 	return
 }
-
