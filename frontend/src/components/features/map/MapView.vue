@@ -80,7 +80,7 @@
                 territory.position.y +
                 ')'
             "
-            :style="{ transition: shipTransition }"
+            :style="{ transition: otherShipsTransition }"
             @mouseenter="updateHoveredShipPosition(user, $event)"
             @mouseleave="hoveredShip = null"
         >
@@ -116,9 +116,11 @@ const svgRef = ref(null);
 let panzoomInstance = null;
 let potentialClickNode = null;
 let lastTapTime = 0;
+let intervalId = null;
 
 const shipTransform = ref('');
 const shipTransition = ref('none');
+const otherShipsTransition = ref(null);
 const previousAtIsland = ref(null);
 
 const BOAT_WIDTH = 0.08;
@@ -313,20 +315,30 @@ const zoomToPlayer = () => {
 
 const fetchOtherPlayers = async () => {
     const otherPlayers = await getPlayersLocation(props.territoryId);
-    const result = {};
+    const result = users.value;
 
     for (let i = 0; i < otherPlayers.length; i++) {
-        if (i == 10) break;
         let island = otherPlayers[i];
-        island.players.forEach(user => {
-            result[user.name] = {
-                island: island.islandId,
-                position: getShipPositionRandom(island.islandId),
-                delay: Math.random() * -2,
-            };
-        });
+        for (let j = 0; j < island.players.length; j++) {
+            if (j == 10) break;
+            let user = island.players[j];
+            if (
+                !result[user.name] ||
+                island.islandId != result[user.name].island
+            ) {
+                result[user.name] = {
+                    island: island.islandId,
+                    position: getShipPositionRandom(island.islandId),
+                    delay: Math.random() * -2,
+                };
+            }
+        }
     }
     users.value = result;
+    otherShipsTransition.value = 'transform 2s ease-in-out';
+    setTimeout(() => {
+        otherShipsTransition.value = 'none';
+    }, 3000);
 };
 
 const shipSrc = name => {
@@ -340,10 +352,12 @@ const shipSrc = name => {
 onMounted(() => {
     initializePanzoom();
     fetchOtherPlayers();
+    intervalId = setInterval(fetchOtherPlayers, 20000);
 });
 
 onUnmounted(() => {
     if (panzoomInstance) panzoomInstance.dispose();
+    if (intervalId) clearInterval(intervalId);
 });
 
 defineExpose({
