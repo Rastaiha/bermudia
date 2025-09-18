@@ -17,6 +17,7 @@
                 :islands="islands"
                 :edges="edges"
                 :player="player"
+                :username="username"
                 :dynamic-view-box="dynamicViewBox"
                 :territory-id="territoryId"
                 @node-click="showInfoBox"

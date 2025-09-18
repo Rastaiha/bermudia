@@ -51,7 +51,7 @@
             :style="{ transition: shipTransition }"
         >
             <image
-                href="/images/ships/1.png"
+                :href="shipSrc(username)"
                 :width="BOAT_WIDTH"
                 :height="BOAT_HEIGHT"
                 class="animate-boat"
@@ -72,7 +72,7 @@
             :style="{ transition: shipTransition }"
         >
             <image
-                href="/images/ships/1.png"
+                :href="shipSrc(user)"
                 :width="BOAT_WIDTH * 0.6"
                 :height="BOAT_HEIGHT * 0.6"
             />
@@ -91,6 +91,7 @@ const props = defineProps({
     player: { type: Object },
     dynamicViewBox: { type: String, required: true },
     territoryId: { type: String, required: true },
+    username: { type: String, required: true },
 });
 
 const emit = defineEmits(['nodeClick', 'mapTransformed']);
@@ -301,6 +302,14 @@ const fetchOtherPlayers = async () => {
     });
 
     users.value = result;
+};
+
+const shipSrc = name => {
+    let sum = 0;
+    for (let i = 0; i < name.length; i++) {
+        sum += name.charCodeAt(0);
+    }
+    return '/images/ships/' + ((sum % 11) + 1) + '.png';
 };
 
 onMounted(() => {
