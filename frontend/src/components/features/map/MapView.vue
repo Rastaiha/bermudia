@@ -1,4 +1,15 @@
 <template>
+    <div
+        v-if="hoveredShip"
+        class="absolute bg-[#000000A0] text-white p-4 rounded-full text-sm pointer-events-none z-2000"
+        :style="{
+            left: hoveredShip.x + 'px',
+            top: hoveredShip.y - 30 + 'px',
+            transform: 'translateX(-50%)',
+        }"
+    >
+        {{ hoveredShip.name }}
+    </div>
     <svg
         v-if="islands.length > 0"
         ref="svgRef"
@@ -61,7 +72,7 @@
         <g
             v-for="(territory, user) in users"
             :key="user"
-            class="user-ship pointer-events-none"
+            class="user-ship"
             :transform="
                 'translate(' +
                 territory.position.x +
@@ -70,11 +81,14 @@
                 ')'
             "
             :style="{ transition: shipTransition }"
+            @mouseenter="updateHoveredShipPosition(user, $event)"
+            @mouseleave="hoveredShip = null"
         >
             <image
                 :href="shipSrc(user)"
                 :width="BOAT_WIDTH * 0.6"
                 :height="BOAT_HEIGHT * 0.6"
+                class="cursor-pointer"
             />
         </g>
     </svg>
@@ -97,6 +111,7 @@ const props = defineProps({
 const emit = defineEmits(['nodeClick', 'mapTransformed']);
 
 const users = ref({});
+const hoveredShip = ref(null);
 const svgRef = ref(null);
 let panzoomInstance = null;
 let potentialClickNode = null;
@@ -125,6 +140,15 @@ const getShipPositionRandom = atIsland => {
     const x = island.x - island.width / 4 + (Math.cos(theta) * r) / 2;
     const y = island.y - island.height / 4 + (Math.sin(theta) * r) / 2; //todo improve the randommizing function
     return { x, y };
+};
+
+const updateHoveredShipPosition = (user, event) => {
+    const bbox = event.target.getBoundingClientRect();
+    hoveredShip.value = {
+        name: user,
+        x: bbox.left + bbox.width / 2,
+        y: bbox.top,
+    };
 };
 
 watch(
