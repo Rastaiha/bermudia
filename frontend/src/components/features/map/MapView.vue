@@ -59,7 +59,7 @@
         </g>
 
         <g
-            v-for="(territory, user) in users()"
+            v-for="(territory, user) in users"
             :key="user"
             class="user-ship pointer-events-none"
             :transform="
@@ -75,8 +75,6 @@
                 href="/images/ships/1.png"
                 :width="BOAT_WIDTH * 0.6"
                 :height="BOAT_HEIGHT * 0.6"
-                class="animate-boat"
-                :style="{ animationDelay: territory.delay + 's' }"
             />
         </g>
     </svg>
@@ -85,6 +83,7 @@
 <script setup>
 import { ref, onMounted, onUnmounted, computed, watch, nextTick } from 'vue';
 import panzoom from 'panzoom';
+import { getPlayersLocation } from '@/services/api';
 
 const props = defineProps({
     islands: { type: Array, required: true },
@@ -96,28 +95,7 @@ const props = defineProps({
 
 const emit = defineEmits(['nodeClick', 'mapTransformed']);
 
-const users = () => {
-    const data = {
-        users: [
-            { islandId: 'asset_1757105101817', users: ['test5', 'tes6'] },
-            { islandId: 'asset_1757105080853', users: ['olagh', 'boz'] },
-        ],
-    };
-    const result = {};
-
-    data.users.forEach(island => {
-        island.users.forEach(user => {
-            result[user] = {
-                island: island.islandId,
-                position: getShipPositionRandom(island.islandId),
-                delay: Math.random() * -2,
-            };
-        });
-    });
-
-    return result;
-};
-
+const users = ref({});
 const svgRef = ref(null);
 let panzoomInstance = null;
 let potentialClickNode = null;
@@ -141,8 +119,10 @@ const getShipPosition = atIsland => {
 const getShipPositionRandom = atIsland => {
     const island = props.islands.find(island => island.id === atIsland);
     if (!island) return { x: 0, y: 0 };
-    const x = island.x + Math.random() * 0.08 - 0.06;
-    const y = island.y + Math.random() * 0.08 - 0.03; //todo improve the randommizing function
+    const theta = Math.random() * 360;
+    const r = Math.max(island.width) * 1.2;
+    const x = island.x - island.width / 4 + (Math.cos(theta) * r) / 2;
+    const y = island.y - island.height / 4 + (Math.sin(theta) * r) / 2; //todo improve the randommizing function
     return { x, y };
 };
 
@@ -306,8 +286,26 @@ const zoomToPlayer = () => {
     panzoomInstance.smoothMoveTo(finalPanX, finalPanY);
 };
 
+const fetchOtherPlayers = async () => {
+    const otherPlayers = await getPlayersLocation(props.territoryId);
+    const result = {};
+
+    otherPlayers.forEach(island => {
+        island.players.forEach(user => {
+            result[user.name] = {
+                island: island.islandId,
+                position: getShipPositionRandom(island.islandId),
+                delay: Math.random() * -2,
+            };
+        });
+    });
+
+    users.value = result;
+};
+
 onMounted(() => {
     initializePanzoom();
+    fetchOtherPlayers();
 });
 
 onUnmounted(() => {
