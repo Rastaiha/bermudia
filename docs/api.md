@@ -542,6 +542,46 @@ curl --request GET \
 
 ---
 
+### Invest Check
+
+_This endpoint **is authenticated** and needs an auth token for access._
+
+Returns the active investment session, previous user investments and whether the user can make another investment.
+
+Does not receive anything.
+
+Returns the [InvestCheckResult](#investcheckresult) in response.
+
+**Endpoint:** `POST /invest_check`
+
+```shell
+curl --request POST \
+  --url https://bermudia-api-internal.darkube.app/api/v1/invest_check \
+  --header 'Authorization: TOKEN'
+```
+
+---
+
+### Invest
+
+_This endpoint **is authenticated** and needs an auth token for access._
+
+Makes another investment in a session.
+
+Receives [InvestRequest](#investrequest)
+
+Returns the new [UserInvestment](#userinvestment) in response.
+
+**Endpoint:** `POST /invest_check`
+
+```shell
+curl --request POST \
+  --url https://bermudia-api-internal.darkube.app/api/v1/invest \
+  --header 'Authorization: TOKEN'
+```
+
+---
+
 ## Data Models
 
 ### LoginRequest
@@ -637,6 +677,14 @@ curl --request GET \
 | Field   | Type   | Description                        |
 |---------|--------|------------------------------------|
 | offerID | string | The unique identifier of the offer |
+
+
+### InvestRequest
+
+| Field     | Type   | Description              |
+|-----------|--------|--------------------------|
+| sessionID | string | ID of investment session |
+| coin      | int    | Amount of coin to invest |
 
 
 ### Me
@@ -998,3 +1046,31 @@ curl --request GET \
 | Field  | Type   | Description                                                    |
 |--------|--------|----------------------------------------------------------------|
 | offset | string | Synchronization offset for inbox message stream positioning    |
+
+
+### InvestCheckResult
+
+| Field       | Type                                     | Description                                                   |
+|-------------|------------------------------------------|---------------------------------------------------------------|
+| feasible    | boolean                                  | True if player can make investment, false otherwise           |
+| reason      | string?                                  | If _feasible_ is false, this field is present and reports why |
+| session     | [InvestmentSession](#investmentsession)? | Current active session if there is one.                       |
+| investments | [UserInvestment](#userinvestment)?       | Current user investments, if any.                             |
+| maxCoin     | int                                      | Maximum number of coins player can invest.                    |
+
+
+### InvestmentSession
+
+| Field | Type   | Description                                                       |
+|-------|--------|-------------------------------------------------------------------|
+| id    | string | ID of session                                                     |
+| text  | string | A description to show to user                                     |
+| endAt | string | The time that this investment session ends. In Unix milliseconds. |
+
+
+### UserInvestment
+
+| Field | Type | Description              |
+|-------|------|--------------------------|
+| coin  | int  | Amount of coins invested |
+
