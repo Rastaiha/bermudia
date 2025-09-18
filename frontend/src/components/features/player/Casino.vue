@@ -35,7 +35,7 @@
         </div>
 
         <div
-            class="w-full flex flex-col justify-center items-center space-y-6 py-4 min-h-[200px]"
+            class="w-full flex flex-col justify-center items-center space-y-6 min-h-[200px]"
         >
             <div v-if="isLoading" class="text-amber-200 text-lg">
                 در حال بارگذاری اطلاعات بورس...
@@ -47,10 +47,13 @@
                     class="w-full max-w-md mx-auto"
                 >
                     <p
-                        class="text-s text-amber-100 mb-6 text-justify preserve-lines"
+                        class="text-s text-amber-100 mb-2 text-justify preserve-lines"
                     >
                         {{ checkResult.session.text }}
                     </p>
+                    <div v-if="countdown" class="text-amber-200 text-lg">
+                        زمان باقی‌مانده: {{ countdown }}
+                    </div>
                     <div class="space-y-4">
                         <div>
                             <label
@@ -132,7 +135,7 @@
 import { VueFinalModal } from 'vue-final-modal';
 import { glossary } from '@/services/glossary.js';
 import { investCheck, invest } from '@/services/api/index.js';
-import { onMounted, ref, watch } from 'vue';
+import { onMounted, onUnmounted, ref, watch } from 'vue';
 import { useToast } from 'vue-toastification';
 import { COST_ITEMS_INFO } from '@/services/cost.js';
 
@@ -143,6 +146,8 @@ const isInvesting = ref(false);
 const checkResult = ref(null);
 const investAmount = ref(0);
 const toast = useToast();
+const countdown = ref('');
+let countdownInterval = null;
 
 watch(investAmount, newValue => {
     if (checkResult.value && newValue > checkResult.value.maxCoin) {
@@ -152,6 +157,46 @@ watch(investAmount, newValue => {
         investAmount.value = 0;
     }
 });
+
+function updateCountdown() {
+    if (!checkResult.value?.session?.endAt) {
+        countdown.value = '';
+        return;
+    }
+
+    const now = new Date().getTime();
+    const endTime = new Date(
+        parseInt(checkResult.value.session.endAt)
+    ).getTime();
+    const distance = endTime - now;
+
+    if (distance < 0) {
+        clearInterval(countdownInterval);
+        countdown.value = 'پایان یافته';
+        doInvestCheck();
+        return;
+    }
+
+    const hours = Math.floor(
+        (distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)
+    );
+    const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+    const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+    countdown.value = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+}
+
+watch(
+    checkResult,
+    newResult => {
+        clearInterval(countdownInterval);
+        if (newResult?.session?.endAt) {
+            updateCountdown();
+            countdownInterval = setInterval(updateCountdown, 1000);
+        }
+    },
+    { immediate: true }
+);
 
 async function doInvestCheck() {
     isLoading.value = true;
@@ -186,11 +231,13 @@ function handleClose() {
 }
 
 onMounted(doInvestCheck);
+
+onUnmounted(() => {
+    clearInterval(countdownInterval);
+});
 </script>
 
 <style>
-@import url('https://fonts.googleapis.com/css?family=Montserrat:400,400i,700');
-
 .preserve-lines {
     white-space: pre-wrap;
 }
