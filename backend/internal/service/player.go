@@ -25,6 +25,7 @@ type Player struct {
 	treasureStore              domain.TreasureStore
 	marketStore                domain.MarketStore
 	inboxStore                 domain.InboxStore
+	investStore                domain.InvestStore
 	playerUpdateEventHandler   func(event *domain.FullPlayerUpdateEvent)
 	tradeEventBroadcastHandler TradeEventBroadcastHandler
 	inboxEventHandler          func(e *domain.InboxEvent)
@@ -36,7 +37,7 @@ type TradeEventBroadcastHandler func(func(userId int32) *domain.TradeEvent)
 
 type MessageBroadcastHandler func(func(userId int32) *domain.InboxMessageView)
 
-func NewPlayer(cfg config.Config, db *sql.DB, userStore domain.UserStore, playerStore domain.PlayerStore, territoryStore domain.TerritoryStore, questionStore domain.QuestionStore, islandStore domain.IslandStore, treasureStore domain.TreasureStore, marketStore domain.MarketStore, inboxStore domain.InboxStore) *Player {
+func NewPlayer(cfg config.Config, db *sql.DB, userStore domain.UserStore, playerStore domain.PlayerStore, territoryStore domain.TerritoryStore, questionStore domain.QuestionStore, islandStore domain.IslandStore, treasureStore domain.TreasureStore, marketStore domain.MarketStore, inboxStore domain.InboxStore, investStore domain.InvestStore) *Player {
 	return &Player{
 		cfg:            cfg,
 		db:             db,
@@ -48,6 +49,7 @@ func NewPlayer(cfg config.Config, db *sql.DB, userStore domain.UserStore, player
 		treasureStore:  treasureStore,
 		marketStore:    marketStore,
 		inboxStore:     inboxStore,
+		investStore:    investStore,
 	}
 }
 
@@ -850,4 +852,79 @@ func (p *Player) BroadcastMessage(ctx context.Context, text string) (int, error)
 	})
 
 	return count, errors.Join(errs...)
+}
+
+func (p *Player) InvestCheck(ctx context.Context, user *domain.User) (*domain.InvestmentCheckResult, error) {
+	player, err := p.playerStore.Get(ctx, user.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	activeSession, err := p.investStore.GetActiveSession(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	var investments []domain.UserInvestment
+	if activeSession != nil {
+		investments, err = p.investStore.GetUserInvestments(ctx, activeSession.ID, user.ID)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	result := domain.InvestCheck(activeSession, investments, player)
+	return &result, nil
+}
+
+// Invest allows a player to make an investment
+func (p *Player) Invest(ctx context.Context, user *domain.User, sessionId string, coinAmount int32) (*domain.UserInvestment, error) {
+	player, err := p.playerStore.Get(ctx, user.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	session, err := p.investStore.GetSession(ctx, sessionId)
+	if err != nil {
+		return nil, err
+	}
+
+	investments, err := p.investStore.GetUserInvestments(ctx, session.ID, user.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	event, userInvestment, err := domain.Invest(*session, investments, player, coinAmount)
+	if err != nil {
+		return nil, err
+	}
+
+	tx, err := p.db.BeginTx(ctx, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to start transaction: %w", err)
+	}
+	defer func() {
+		if err == nil {
+			err = p.sendPlayerUpdateEventErr(ctx, event)
+		}
+	}()
+	defer func() {
+		if err != nil {
+			err = errors.Join(err, tx.Rollback())
+		} else {
+			err = tx.Commit()
+		}
+	}()
+
+	err = p.investStore.AddUserInvestment(ctx, tx, userInvestment)
+	if err != nil {
+		return nil, err
+	}
+
+	err = p.playerStore.Update(ctx, tx, player, *event.Player)
+	if err != nil {
+		return nil, err
+	}
+
+	return &userInvestment, nil
 }

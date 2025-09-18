@@ -128,3 +128,18 @@ type GameStateStore interface {
 	GetIsPaused(ctx context.Context) (bool, error)
 	SetIsPaused(ctx context.Context, isPaused bool) error
 }
+
+type InvestStore interface {
+	// GetActiveSession returns the closest investment session where EndAt is in the future
+	GetActiveSession(ctx context.Context) (*InvestmentSession, error)
+	GetSession(ctx context.Context, id string) (*InvestmentSession, error)
+
+	// CreateInvestmentSession creates a new investment session
+	CreateInvestmentSession(ctx context.Context, tx Tx, session InvestmentSession) error
+
+	// AddUserInvestment adds a user's investment to a session
+	AddUserInvestment(ctx context.Context, tx Tx, investment UserInvestment) error
+
+	// GetUserInvestments returns all investments for a specific user in a specific session
+	GetUserInvestments(ctx context.Context, sessionID string, userID int32) ([]UserInvestment, error)
+}
