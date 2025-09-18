@@ -35,37 +35,52 @@
         </div>
 
         <div
-            class="w-full flex flex-col justify-center items-center space-y-6 py-8 min-h-[200px]"
+            class="w-full flex flex-col justify-center items-center space-y-6 py-4 min-h-[200px]"
         >
             <div v-if="isLoading" class="text-amber-200 text-lg">
                 در حال بارگذاری اطلاعات بورس...
             </div>
 
             <div v-else-if="checkResult" class="w-full text-center">
-                <!-- Case 1: Market is OPEN and user can invest -->
                 <div
                     v-if="checkResult.feasible"
                     class="w-full max-w-md mx-auto"
                 >
-                    <p class="text-xs text-amber-100 mb-6 preserve-lines">
+                    <p
+                        class="text-s text-amber-100 mb-6 text-justify preserve-lines"
+                    >
                         {{ checkResult.session.text }}
                     </p>
                     <div class="space-y-4">
                         <div>
-                            <label class="block text-sm text-amber-200 mb-2"
-                                >مبلغ سرمایه‌گذاری (کلاه)</label
+                            <label
+                                class="block text-sm text-amber-200 mb-2 flex items-center justify-center gap-1"
                             >
+                                <span>مبلغ سرمایه‌گذاری</span>
+                                <img
+                                    :src="COST_ITEMS_INFO.coin.icon"
+                                    class="w-8 h-8"
+                                />
+                            </label>
                             <input
                                 v-model.number="investAmount"
                                 type="number"
                                 :max="checkResult.maxCoin"
                                 min="0"
                                 class="w-full p-3 text-lg text-center text-gray-100 bg-slate-800/70 rounded-lg border-2 border-slate-600 focus:border-cyan-500 focus:ring-0 outline-none transition-colors"
-                                placeholder="مبلغ به کلاه"
+                                :placeholder="`مبلغ به ${glossary.coin}`"
                             />
-                            <p class="text-xs text-gray-400 mt-2">
-                                حداکثر:
-                                {{ checkResult.maxCoin.toLocaleString() }} کلاه
+                            <p
+                                class="text-xs text-gray-400 mt-2 flex items-center justify-center gap-1"
+                            >
+                                <span>حداکثر:</span>
+                                <span>{{
+                                    checkResult.maxCoin.toLocaleString()
+                                }}</span>
+                                <img
+                                    :src="COST_ITEMS_INFO.coin.icon"
+                                    class="w-8 h-8"
+                                />
                             </p>
                         </div>
                         <button
@@ -82,20 +97,27 @@
                         </button>
                     </div>
                 </div>
-
                 <div v-else>
-                    <div v-if="checkResult.investedCoin > 0">
+                    <div v-if="checkResult.investments.length > 0">
                         <p class="text-lg text-gray-200">
                             شما در این دوره سرمایه‌گذاری کرده‌اید.
                         </p>
                         <div
-                            class="mt-4 text-3xl font-bold text-amber-300 bg-black/20 py-4 rounded-lg"
+                            v-for="(coins, index) in checkResult.investments"
+                            :key="index"
+                            class="mt-4 text-3xl font-bold text-amber-300 bg-black/20 py-4 rounded-lg flex items-center justify-center gap-2"
                         >
-                            {{ checkResult.investedCoin.toLocaleString() }} کلاه
+                            <span>{{ coins.coin }}</span>
+                            <img
+                                :src="COST_ITEMS_INFO.coin.icon"
+                                class="w-8 h-8"
+                            />
                         </div>
                     </div>
-
                     <div v-else>
+                        <h2 class="text-3xl font-bold text-red-400">
+                            بورس بسته است
+                        </h2>
                         <p class="text-amber-200 mt-4 text-lg">
                             {{ checkResult.reason }}
                         </p>
@@ -110,8 +132,9 @@
 import { VueFinalModal } from 'vue-final-modal';
 import { glossary } from '@/services/glossary.js';
 import { investCheck, invest } from '@/services/api/index.js';
-import { onMounted, ref } from 'vue';
+import { onMounted, ref, watch } from 'vue';
 import { useToast } from 'vue-toastification';
+import { COST_ITEMS_INFO } from '@/services/cost.js';
 
 const emit = defineEmits(['close']);
 
@@ -120,6 +143,15 @@ const isInvesting = ref(false);
 const checkResult = ref(null);
 const investAmount = ref(0);
 const toast = useToast();
+
+watch(investAmount, newValue => {
+    if (checkResult.value && newValue > checkResult.value.maxCoin) {
+        investAmount.value = checkResult.value.maxCoin;
+    }
+    if (newValue < 0) {
+        investAmount.value = 0;
+    }
+});
 
 async function doInvestCheck() {
     isLoading.value = true;
