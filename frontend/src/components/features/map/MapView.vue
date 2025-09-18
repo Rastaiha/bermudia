@@ -57,6 +57,28 @@
                 class="animate-boat"
             />
         </g>
+
+        <g
+            v-for="(territory, user) in users()"
+            :key="user"
+            class="user-ship pointer-events-none"
+            :transform="
+                'translate(' +
+                territory.position.x +
+                ' ' +
+                territory.position.y +
+                ')'
+            "
+            :style="{ transition: shipTransition }"
+        >
+            <image
+                href="/images/ships/spaceship.png"
+                :width="BOAT_WIDTH * 0.6"
+                :height="BOAT_HEIGHT * 0.6"
+                class="animate-boat"
+                :style="{ animationDelay: territory.delay + 's' }"
+            />
+        </g>
     </svg>
 </template>
 
@@ -73,6 +95,28 @@ const props = defineProps({
 });
 
 const emit = defineEmits(['nodeClick', 'mapTransformed']);
+
+const users = () => {
+    const data = {
+        users: [
+            { islandId: 'asset_1757105101817', users: ['test5', 'tes6'] },
+            { islandId: 'asset_1757105080853', users: ['olagh', 'boz'] },
+        ],
+    };
+    const result = {};
+
+    data.users.forEach(island => {
+        island.users.forEach(user => {
+            result[user] = {
+                island: island.islandId,
+                position: getShipPositionRandom(island.islandId),
+                delay: Math.random() * -2,
+            };
+        });
+    });
+
+    return result;
+};
 
 const svgRef = ref(null);
 let panzoomInstance = null;
@@ -91,6 +135,14 @@ const getShipPosition = atIsland => {
     if (!island) return { x: 0, y: 0 };
     const x = island.x;
     const y = island.y - island.height / 2;
+    return { x, y };
+};
+
+const getShipPositionRandom = atIsland => {
+    const island = props.islands.find(island => island.id === atIsland);
+    if (!island) return { x: 0, y: 0 };
+    const x = island.x + Math.random() * 0.08 - 0.06;
+    const y = island.y + Math.random() * 0.08 - 0.03; //todo improve the randommizing function
     return { x, y };
 };
 
