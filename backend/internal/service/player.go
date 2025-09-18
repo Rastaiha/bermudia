@@ -8,6 +8,7 @@ import (
 	"github.com/Rastaiha/bermudia/internal/config"
 	"github.com/Rastaiha/bermudia/internal/domain"
 	"github.com/go-co-op/gocron/v2"
+	"github.com/patrickmn/go-cache"
 	"log/slog"
 	"sync"
 	"sync/atomic"
@@ -30,6 +31,7 @@ type Player struct {
 	tradeEventBroadcastHandler TradeEventBroadcastHandler
 	inboxEventHandler          func(e *domain.InboxEvent)
 	broadcastMessageHandler    MessageBroadcastHandler
+	playerLocationsCache       *cache.Cache
 	cron                       gocron.Scheduler
 }
 
@@ -39,17 +41,18 @@ type MessageBroadcastHandler func(func(userId int32) *domain.InboxMessageView)
 
 func NewPlayer(cfg config.Config, db *sql.DB, userStore domain.UserStore, playerStore domain.PlayerStore, territoryStore domain.TerritoryStore, questionStore domain.QuestionStore, islandStore domain.IslandStore, treasureStore domain.TreasureStore, marketStore domain.MarketStore, inboxStore domain.InboxStore, investStore domain.InvestStore) *Player {
 	return &Player{
-		cfg:            cfg,
-		db:             db,
-		userStore:      userStore,
-		playerStore:    playerStore,
-		territoryStore: territoryStore,
-		questionStore:  questionStore,
-		islandStore:    islandStore,
-		treasureStore:  treasureStore,
-		marketStore:    marketStore,
-		inboxStore:     inboxStore,
-		investStore:    investStore,
+		cfg:                  cfg,
+		db:                   db,
+		userStore:            userStore,
+		playerStore:          playerStore,
+		territoryStore:       territoryStore,
+		questionStore:        questionStore,
+		islandStore:          islandStore,
+		treasureStore:        treasureStore,
+		marketStore:          marketStore,
+		inboxStore:           inboxStore,
+		investStore:          investStore,
+		playerLocationsCache: cache.New(20*time.Second, time.Minute),
 	}
 }
 
@@ -927,4 +930,65 @@ func (p *Player) Invest(ctx context.Context, user *domain.User, sessionId string
 	}
 
 	return &userInvestment, nil
+}
+
+type PlayersLocation struct {
+	IslandID string `json:"islandId"`
+	Players  []struct {
+		UserID int32  `json:"-"`
+		Name   string `json:"name"`
+	} `json:"players"`
+}
+
+func (p *Player) GetPlayerLocations(ctx context.Context, userId int32, territoryID string) ([]PlayersLocation, error) {
+	filterForUser := func(result []PlayersLocation) []PlayersLocation {
+		c := make([]PlayersLocation, 0, len(result))
+		for _, location := range result {
+			l := PlayersLocation{IslandID: location.IslandID}
+			for _, player := range location.Players {
+				if player.UserID != userId {
+					l.Players = append(l.Players, player)
+				}
+			}
+			if len(l.Players) > 0 {
+				c = append(c, l)
+			}
+		}
+		return c
+	}
+
+	v, ok := p.playerLocationsCache.Get(territoryID)
+	if ok {
+		result, _ := v.([]PlayersLocation)
+		return filterForUser(result), nil
+	}
+
+	locations, err := p.playerStore.GetLocations(ctx, territoryID)
+	if err != nil {
+		return nil, err
+	}
+	if len(locations) == 0 {
+		return nil, nil
+	}
+
+	result := make([]PlayersLocation, 0, len(locations))
+	for island, players := range locations {
+		location := PlayersLocation{
+			IslandID: island,
+		}
+		for _, userId := range players {
+			user, err := p.userStore.Get(ctx, userId)
+			if err != nil {
+				return nil, err
+			}
+			location.Players = append(location.Players, struct {
+				UserID int32  `json:"-"`
+				Name   string `json:"name"`
+			}{UserID: userId, Name: user.Name})
+		}
+		result = append(result, location)
+	}
+
+	p.playerLocationsCache.SetDefault(territoryID, result)
+	return filterForUser(result), nil
 }
