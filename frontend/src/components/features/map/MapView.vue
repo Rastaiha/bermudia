@@ -315,7 +315,9 @@ const fetchOtherPlayers = async () => {
     const otherPlayers = await getPlayersLocation(props.territoryId);
     const result = {};
 
-    otherPlayers.forEach(island => {
+    for (let i = 0; i < otherPlayers.length; i++) {
+        if (i == 10) break;
+        let island = otherPlayers[i];
         island.players.forEach(user => {
             result[user.name] = {
                 island: island.islandId,
@@ -323,8 +325,7 @@ const fetchOtherPlayers = async () => {
                 delay: Math.random() * -2,
             };
         });
-    });
-
+    }
     users.value = result;
 };
 
