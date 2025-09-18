@@ -42,6 +42,9 @@
             </div>
 
             <div v-else-if="checkResult" class="w-full text-center">
+                <div v-if="countdown" class="text-amber-200 text-lg mb-2">
+                    زمان باقی‌مانده: {{ countdown }}
+                </div>
                 <div
                     v-if="checkResult.feasible"
                     class="w-full max-w-md mx-auto"
@@ -51,9 +54,6 @@
                     >
                         {{ checkResult.session.text }}
                     </p>
-                    <div v-if="countdown" class="text-amber-200 text-lg">
-                        زمان باقی‌مانده: {{ countdown }}
-                    </div>
                     <div class="space-y-4">
                         <div>
                             <label
