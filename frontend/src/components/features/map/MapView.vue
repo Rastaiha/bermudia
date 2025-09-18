@@ -89,6 +89,7 @@
                 :width="BOAT_WIDTH * 0.6"
                 :height="BOAT_HEIGHT * 0.6"
                 class="cursor-pointer"
+                :style="{ animationDelay: territory.delay + 's' }"
             />
         </g>
     </svg>
@@ -352,7 +353,7 @@ const shipSrc = name => {
 onMounted(() => {
     initializePanzoom();
     fetchOtherPlayers();
-    intervalId = setInterval(fetchOtherPlayers, 20000);
+    intervalId = setInterval(fetchOtherPlayers, 30000);
 });
 
 onUnmounted(() => {
@@ -382,5 +383,8 @@ defineExpose({
 .animate-boat {
     animation: boat-bobbing 4s ease-in-out infinite;
     transform-origin: center;
+}
+.user-ship image {
+    animation: boat-bobbing 4s ease-in-out infinite;
 }
 </style>
