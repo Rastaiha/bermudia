@@ -69,7 +69,8 @@
 import { ref, onMounted, onUnmounted, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { useModal } from 'vue-final-modal';
-import { logout as apiLogout } from '@/services/api/index.js';
+import { logout as apiLogout, getMe } from '@/services/api/index.js';
+import { useToast } from 'vue-toastification';
 import Backpack from '@/components/features/player/Backpack.vue';
 import Bookshelf from '@/components/features/player/Bookshelf.vue';
 import Market from '@/components/features/market/Market.vue';
@@ -92,6 +93,7 @@ const props = defineProps({
 });
 
 const router = useRouter();
+const toast = useToast();
 const isMobile = ref(false);
 const isOpen = ref(false);
 
@@ -172,7 +174,27 @@ const { open: openBackpack, close: closeBackpack } = useModal({
     },
 });
 
+const handleMeetClick = async () => {
+    try {
+        const me = await getMe();
+        if (me && me.meetLink) {
+            window.open(me.meetLink, '_blank');
+        } else {
+            toast.info('در حال حاضر لینک جلسه‌ای برای شما وجود ندارد.');
+        }
+    } catch (error) {
+        console.error('Error fetching meet link:', error);
+        toast.error('خطا در دریافت لینک جلسه.');
+    }
+};
+
 const menuItems = [
+    {
+        id: 'meet',
+        icon: '/images/icons/meet.png',
+        alt: 'جلسه آنلاین',
+        action: handleMeetClick,
+    },
     {
         id: 'inbox',
         icon: '/images/icons/inbox.png',
