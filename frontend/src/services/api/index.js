@@ -234,16 +234,16 @@ export const getTradeOffers = async (offset = 0, limit = 5, by = null) => {
 export const investCheck = async () => {
     const response = await fetch(API_ENDPOINTS.investCheck, {
         method: 'POST',
-        headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
+        headers: getAuthHeaders(),
     });
     return handleResponse(response);
 };
 
-export const invest = async (sessionId, coin) => {
+export const invest = async (sessionID, coin) => {
     const response = await fetch(API_ENDPOINTS.invest, {
         method: 'POST',
         headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
-        body: JSON.stringify({ sessionID: sessionId, coin: coin }),
+        body: JSON.stringify({ sessionID, coin }),
     });
     return handleResponse(response);
 };
