@@ -294,13 +294,13 @@ const helpButtonIcon = computed(() => {
 });
 
 const helpButtonClass = computed(() => {
+    if (!props.challenge.submissionState.showHelp) {
+        return 'text-gray-500';
+    }
     if (props.challenge.submissionState.hasRequestedHelp) {
         return 'text-green-400';
     }
-    if (props.challenge.submissionState.canRequestHelp) {
-        return 'text-blue-400';
-    }
-    return 'text-gray-500';
+    return 'text-blue-400';
 });
 
 const helpButtonAnimationClass = computed(() => {
@@ -314,10 +314,7 @@ const helpButtonAnimationClass = computed(() => {
 });
 
 const isHelpButtonDisabled = computed(() => {
-    return (
-        !props.challenge.submissionState.canRequestHelp &&
-        !props.challenge.submissionState.hasRequestedHelp
-    );
+    return !props.challenge.submissionState.showHelp;
 });
 
 const handleHelpClick = async () => {
