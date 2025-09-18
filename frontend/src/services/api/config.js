@@ -40,7 +40,7 @@ export const API_ENDPOINTS = {
             : `${API_BASE_URL}/trade/offers?offset=${offset}&limit=${limit}&by=${by}`,
 
     // Investment:
-    investCheck: `${API_BASE_URL}/invest-check`,
+    investCheck: `${API_BASE_URL}/invest_check`,
     invest: `${API_BASE_URL}/invest`,
 
     // Inbox
