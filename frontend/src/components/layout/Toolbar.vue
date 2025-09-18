@@ -192,7 +192,7 @@ const menuItems = [
     {
         id: 'meet',
         icon: '/images/icons/meet.png',
-        alt: 'جلسه آنلاین',
+        alt: 'جلسه شخصی مخصوص شما',
         action: handleMeetClick,
     },
     {
