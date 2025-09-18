@@ -21,7 +21,7 @@
                             {{ notification.title }}
                         </h3>
                         <p
-                            class="text-gray-300 text-sm mt-1"
+                            class="text-gray-300 text-sm mt-1 preserve-lines"
                             v-html="notification.summary"
                         ></p>
                     </div>
@@ -174,7 +174,7 @@ const notification = computed(() => {
         let details = `پاسخ شما برای سوال در ${glossary.island} <strong>${correction.islandName || 'نامشخص'}</strong> در ${glossary.territory} <strong>${correction.territoryName || 'نامشخص'}</strong> تصحیح شد. <br/> وضعیت: <strong>${statusText}</strong>.`;
 
         if (correction.newState.feedback) {
-            details += `<div class="my-2.5 border-t border-gray-600"></div><span>بازخورد:</span><div class="mt-1 text-justify text-gray-300">${correction.newState.feedback}</div>`;
+            details += `<div class="my-2.5 border-t border-gray-600"></div><span>بازخورد:</span><div class="mt-1 text-justify text-gray-300 preserve-lines">${correction.newState.feedback}</div>`;
         }
 
         if (correction.reward?.items?.length > 0) {
@@ -268,5 +268,9 @@ const notification = computed(() => {
 .expand-content.expanded {
     max-height: 500px;
     transition: max-height 0.5s ease-in;
+}
+
+.preserve-lines {
+    white-space: pre-wrap;
 }
 </style>
