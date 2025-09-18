@@ -51,7 +51,7 @@
             :style="{ transition: shipTransition }"
         >
             <image
-                href="/images/ships/spaceship.png"
+                href="/images/ships/1.png"
                 :width="BOAT_WIDTH"
                 :height="BOAT_HEIGHT"
                 class="animate-boat"
@@ -72,7 +72,7 @@
             :style="{ transition: shipTransition }"
         >
             <image
-                href="/images/ships/spaceship.png"
+                href="/images/ships/1.png"
                 :width="BOAT_WIDTH * 0.6"
                 :height="BOAT_HEIGHT * 0.6"
                 class="animate-boat"
