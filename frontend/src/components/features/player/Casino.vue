@@ -42,39 +42,18 @@
             </div>
 
             <div v-else-if="checkResult" class="w-full text-center">
-                <!-- Market Closed State -->
-                <div v-if="!checkResult.feasible">
-                    <h2 class="text-3xl font-bold text-red-400">
-                        بورس بسته است
-                    </h2>
-                    <p class="text-amber-200 mt-4 text-lg">
-                        {{ checkResult.reason }}
-                    </p>
-                </div>
-
-                <!-- Market Open State -->
-                <div v-else class="w-full max-w-md mx-auto">
-                    <h2 class="text-2xl font-bold text-amber-100">
+                <!-- Case 1: Market is OPEN and user can invest -->
+                <div
+                    v-if="checkResult.feasible"
+                    class="w-full max-w-md mx-auto"
+                >
+                    <p class="text-xs text-amber-100 mb-6 preserve-lines">
                         {{ checkResult.session.text }}
-                    </h2>
-
-                    <!-- Already Invested View -->
-                    <div v-if="checkResult.investedCoin > 0" class="mt-6">
-                        <p class="text-lg text-gray-200">
-                            شما در این دوره سرمایه‌گذاری کرده‌اید.
-                        </p>
-                        <div
-                            class="mt-4 text-3xl font-bold text-amber-300 bg-black/20 py-4 rounded-lg"
-                        >
-                            {{ checkResult.investedCoin.toLocaleString() }} سکه
-                        </div>
-                    </div>
-
-                    <!-- Can Invest View -->
-                    <div v-else class="mt-6 space-y-4">
+                    </p>
+                    <div class="space-y-4">
                         <div>
                             <label class="block text-sm text-amber-200 mb-2"
-                                >مبلغ سرمایه‌گذاری (سکه)</label
+                                >مبلغ سرمایه‌گذاری (کلاه)</label
                             >
                             <input
                                 v-model.number="investAmount"
@@ -82,11 +61,11 @@
                                 :max="checkResult.maxCoin"
                                 min="0"
                                 class="w-full p-3 text-lg text-center text-gray-100 bg-slate-800/70 rounded-lg border-2 border-slate-600 focus:border-cyan-500 focus:ring-0 outline-none transition-colors"
-                                placeholder="مبلغ به سکه"
+                                placeholder="مبلغ به کلاه"
                             />
                             <p class="text-xs text-gray-400 mt-2">
                                 حداکثر:
-                                {{ checkResult.maxCoin.toLocaleString() }} سکه
+                                {{ checkResult.maxCoin.toLocaleString() }} کلاه
                             </p>
                         </div>
                         <button
@@ -103,6 +82,25 @@
                         </button>
                     </div>
                 </div>
+
+                <div v-else>
+                    <div v-if="checkResult.investedCoin > 0">
+                        <p class="text-lg text-gray-200">
+                            شما در این دوره سرمایه‌گذاری کرده‌اید.
+                        </p>
+                        <div
+                            class="mt-4 text-3xl font-bold text-amber-300 bg-black/20 py-4 rounded-lg"
+                        >
+                            {{ checkResult.investedCoin.toLocaleString() }} کلاه
+                        </div>
+                    </div>
+
+                    <div v-else>
+                        <p class="text-amber-200 mt-4 text-lg">
+                            {{ checkResult.reason }}
+                        </p>
+                    </div>
+                </div>
             </div>
         </div>
     </VueFinalModal>
@@ -114,6 +112,8 @@ import { glossary } from '@/services/glossary.js';
 import { investCheck, invest } from '@/services/api/index.js';
 import { onMounted, ref } from 'vue';
 import { useToast } from 'vue-toastification';
+
+const emit = defineEmits(['close']);
 
 const isLoading = ref(true);
 const isInvesting = ref(false);
@@ -149,17 +149,19 @@ async function handleInvest() {
     }
 }
 
-onMounted(doInvestCheck);
-
-const emit = defineEmits(['close']);
-
 function handleClose() {
     emit('close');
 }
+
+onMounted(doInvestCheck);
 </script>
 
 <style>
 @import url('https://fonts.googleapis.com/css?family=Montserrat:400,400i,700');
+
+.preserve-lines {
+    white-space: pre-wrap;
+}
 
 @keyframes init {
     0% {
