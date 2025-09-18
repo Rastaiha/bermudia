@@ -76,6 +76,20 @@ Returns a [Territory](#territory) in response.
 
 ---
 
+### Get Player Locations
+
+Retrieves player location on the territory.
+
+Returns an array of [PlayersLocation](#playerslocation) in response.
+
+**Endpoint:** `GET /territories/{territoryID}/players`
+
+**Parameters:**
+
+- `territoryID` (path parameter, required): The unique identifier of the territory
+
+---
+
 ### Get Island
 
 _This endpoint **is authenticated** and needs an auth token for access._
@@ -726,6 +740,21 @@ curl --request POST \
 | refuelIslands       | [RefuelIsland](#refuelisland)[]     | Array of refuel islands                                                                                                                                           |
 | terminalIslands     | [TerminalIsland](#terminalisland)[] | Array of terminal islands. To call [Migrate](#migrate) you must be in one of these islands                                                                        |
 | islandPrerequisites | Map<string, string[]>               | Map of island id to a list of prerequisite island ids.<br />Player can't travel to an island if they have not answered all questions in the prerequisite islands. |
+
+
+### PlayersLocation
+
+| Field    | Type                          | Description                     |
+|----------|-------------------------------|---------------------------------|
+| islandId | string                        | Unique identifier of the island |
+| players  | [][OtherPlayer](#otherplayer) | List of players in this island  |
+
+
+### OtherPlayer
+
+| Field | Type   | Description              |
+|-------|--------|--------------------------|
+| name  | string | Name of the other player |
 
 
 ### Island

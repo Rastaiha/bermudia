@@ -74,6 +74,7 @@ func (h *Handler) Start() {
 				sendResult(w, user)
 			})
 			r.Get("/territories/{territoryID}", h.GetTerritory)
+			r.Get("/territories/{territoryID}/players", h.GetPlayerLocations)
 			r.Get("/islands/{islandID}", h.GetIsland)
 			r.Post("/answer/{inputID}", h.SubmitAnswer)
 			r.Get("/answer/{inputID}/help", h.GetAnswerHelp)

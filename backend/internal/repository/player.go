@@ -174,3 +174,23 @@ func (s sqlPlayerRepository) CreatePlayerEvent(ctx context.Context, userId int32
 
 	return nil
 }
+
+func (s sqlPlayerRepository) GetLocations(ctx context.Context, territoryID string) (map[string][]int32, error) {
+	rows, err := s.db.QueryContext(ctx, `SELECT at_island, user_id FROM players WHERE at_territory = $1 `, territoryID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	result := make(map[string][]int32)
+	for rows.Next() {
+		var islandId string
+		var userId int32
+		err := rows.Scan(&islandId, &userId)
+		if err != nil {
+			return nil, err
+		}
+		result[islandId] = append(result[islandId], userId)
+	}
+	return result, nil
+}
