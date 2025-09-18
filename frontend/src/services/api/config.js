@@ -23,6 +23,7 @@ export const API_ENDPOINTS = {
 
     // Territory & Island
     getTerritory: id => `${API_BASE_URL}/territories/${id}`,
+    getPlayersLocation: id => `${API_BASE_URL}/territories/${id}/players`,
     getIsland: id => `${API_BASE_URL}/islands/${id}`,
     submitAnswer: id => `${API_BASE_URL}/answer/${id}`,
     treasureCheck: `${API_BASE_URL}/unlock_treasure_check`,

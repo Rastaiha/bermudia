@@ -2,7 +2,7 @@
     <div class="loading-container w-full max-w-md mx-auto p-4 rounded-lg">
         <div class="relative w-full h-16 flex items-center justify-center">
             <img
-                src="/images/ships/spaceship.png"
+                src="/images/ships/1.png"
                 alt="Loading spaceship"
                 class="absolute z-10 transition-all duration-300 ease-linear object-contain"
                 :style="{

@@ -1,4 +1,15 @@
 <template>
+    <div
+        v-if="hoveredShip"
+        class="absolute bg-[#000000A0] text-white p-4 rounded-full text-sm pointer-events-none z-2000"
+        :style="{
+            left: hoveredShip.x + 'px',
+            top: hoveredShip.y - 30 + 'px',
+            transform: 'translateX(-50%)',
+        }"
+    >
+        {{ hoveredShip.name }}
+    </div>
     <svg
         v-if="islands.length > 0"
         ref="svgRef"
@@ -51,10 +62,33 @@
             :style="{ transition: shipTransition }"
         >
             <image
-                href="/images/ships/spaceship.png"
+                :href="shipSrc(username)"
                 :width="BOAT_WIDTH"
                 :height="BOAT_HEIGHT"
                 class="animate-boat"
+            />
+        </g>
+
+        <g
+            v-for="(territory, user) in users"
+            :key="user"
+            class="user-ship"
+            :transform="
+                'translate(' +
+                territory.position.x +
+                ' ' +
+                territory.position.y +
+                ')'
+            "
+            :style="{ transition: shipTransition }"
+            @mouseenter="updateHoveredShipPosition(user, $event)"
+            @mouseleave="hoveredShip = null"
+        >
+            <image
+                :href="shipSrc(user)"
+                :width="BOAT_WIDTH * 0.6"
+                :height="BOAT_HEIGHT * 0.6"
+                class="cursor-pointer"
             />
         </g>
     </svg>
@@ -63,6 +97,7 @@
 <script setup>
 import { ref, onMounted, onUnmounted, computed, watch, nextTick } from 'vue';
 import panzoom from 'panzoom';
+import { getPlayersLocation } from '@/services/api';
 
 const props = defineProps({
     islands: { type: Array, required: true },
@@ -70,10 +105,13 @@ const props = defineProps({
     player: { type: Object },
     dynamicViewBox: { type: String, required: true },
     territoryId: { type: String, required: true },
+    username: { type: String, required: true },
 });
 
 const emit = defineEmits(['nodeClick', 'mapTransformed']);
 
+const users = ref({});
+const hoveredShip = ref(null);
 const svgRef = ref(null);
 let panzoomInstance = null;
 let potentialClickNode = null;
@@ -92,6 +130,25 @@ const getShipPosition = atIsland => {
     const x = island.x;
     const y = island.y - island.height / 2;
     return { x, y };
+};
+
+const getShipPositionRandom = atIsland => {
+    const island = props.islands.find(island => island.id === atIsland);
+    if (!island) return { x: 0, y: 0 };
+    const theta = Math.random() * 360;
+    const r = Math.max(island.width) * 1.2;
+    const x = island.x - island.width / 4 + (Math.cos(theta) * r) / 2;
+    const y = island.y - island.height / 4 + (Math.sin(theta) * r) / 2; //todo improve the randommizing function
+    return { x, y };
+};
+
+const updateHoveredShipPosition = (user, event) => {
+    const bbox = event.target.getBoundingClientRect();
+    hoveredShip.value = {
+        name: user,
+        x: bbox.left + bbox.width / 2,
+        y: bbox.top,
+    };
 };
 
 watch(
@@ -254,8 +311,35 @@ const zoomToPlayer = () => {
     panzoomInstance.smoothMoveTo(finalPanX, finalPanY);
 };
 
+const fetchOtherPlayers = async () => {
+    const otherPlayers = await getPlayersLocation(props.territoryId);
+    const result = {};
+
+    for (let i = 0; i < otherPlayers.length; i++) {
+        if (i == 10) break;
+        let island = otherPlayers[i];
+        island.players.forEach(user => {
+            result[user.name] = {
+                island: island.islandId,
+                position: getShipPositionRandom(island.islandId),
+                delay: Math.random() * -2,
+            };
+        });
+    }
+    users.value = result;
+};
+
+const shipSrc = name => {
+    let sum = 0;
+    for (let i = 0; i < name.length; i++) {
+        sum += name.charCodeAt(i);
+    }
+    return '/images/ships/' + ((sum % 11) + 1) + '.png';
+};
+
 onMounted(() => {
     initializePanzoom();
+    fetchOtherPlayers();
 });
 
 onUnmounted(() => {

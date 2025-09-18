@@ -70,6 +70,14 @@ export const getTerritory = async id => {
     return handleResponse(response);
 };
 
+export const getPlayersLocation = async id => {
+    const response = await fetch(API_ENDPOINTS.getPlayersLocation(id), {
+        method: 'GET',
+        headers: getAuthHeaders(),
+    });
+    return handleResponse(response);
+};
+
 export const travelCheck = async (from, dest) => {
     const response = await fetch(API_ENDPOINTS.travelCheck, {
         method: 'POST',
