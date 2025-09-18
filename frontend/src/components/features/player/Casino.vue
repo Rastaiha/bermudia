@@ -46,13 +46,13 @@
                     v-if="checkResult.feasible"
                     class="w-full max-w-md mx-auto"
                 >
-                    <p class="text-xs text-amber-100 mb-6 preserve-lines">
+                    <p class="text-xl text-amber-100 mb-6 preserve-lines">
                         {{ checkResult.session.text }}
                     </p>
                     <div class="space-y-4">
                         <div>
                             <label class="block text-sm text-amber-200 mb-2"
-                                >مبلغ سرمایه‌گذاری (کلاه)</label
+                                >مبلغ سرمایه‌گذاری ({{ glossary.coin }})</label
                             >
                             <input
                                 v-model.number="investAmount"
@@ -60,11 +60,12 @@
                                 :max="checkResult.maxCoin"
                                 min="0"
                                 class="w-full p-3 text-lg text-center text-gray-100 bg-slate-800/70 rounded-lg border-2 border-slate-600 focus:border-cyan-500 focus:ring-0 outline-none transition-colors"
-                                placeholder="مبلغ به کلاه"
+                                :placeholder="`مبلغ به ${glossary.coin}`"
                             />
                             <p class="text-xs text-gray-400 mt-2">
                                 حداکثر:
-                                {{ checkResult.maxCoin.toLocaleString() }} کلاه
+                                {{ checkResult.maxCoin.toLocaleString() }}
+                                {{ glossary.coin }}
                             </p>
                         </div>
                         <button
@@ -81,7 +82,6 @@
                         </button>
                     </div>
                 </div>
-
                 <div v-else>
                     <div v-if="checkResult.investments.length > 0">
                         <p class="text-lg text-gray-200">
@@ -92,11 +92,14 @@
                             :key="index"
                             class="mt-4 text-3xl font-bold text-amber-300 bg-black/20 py-4 rounded-lg"
                         >
+                            {{ glossary.coin }}
                             {{ coins.coin }}
                         </div>
                     </div>
-
                     <div v-else>
+                        <h2 class="text-3xl font-bold text-red-400">
+                            بورس بسته است
+                        </h2>
                         <p class="text-amber-200 mt-4 text-lg">
                             {{ checkResult.reason }}
                         </p>
