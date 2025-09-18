@@ -9,11 +9,11 @@
                 class="p-2 rounded-full"
                 @click="handleHelpClick"
             >
-                <QuestionMarkCircleIcon
+                <UserIcon
                     v-if="helpButtonIcon === 'QuestionMarkCircleIcon'"
-                    class="w-16 h-16"
+                    class="w-12 h-12"
                 />
-                <ArrowTopRightOnSquareIcon v-else class="w-8 h-8" />
+                <ArrowTopRightOnSquareIcon v-else class="w-12 h-12" />
             </button>
         </div>
         <div class="text-center pt-12">
@@ -256,10 +256,7 @@
 import { ref, computed } from 'vue';
 import { useModal } from 'vue-final-modal';
 import ConfirmModal from '@/components/common/ConfirmModal.vue';
-import {
-    QuestionMarkCircleIcon,
-    ArrowTopRightOnSquareIcon,
-} from '@heroicons/vue/24/outline';
+import { ArrowTopRightOnSquareIcon, UserIcon } from '@heroicons/vue/24/outline';
 
 const props = defineProps({
     challenge: {
