@@ -50,7 +50,7 @@
                     زمان باقی‌مانده تا بازگشایی
                 </h2>
                 <div
-                    class="flex flex-row-reverse items-center justify-center gap-4 font-mono"
+                    class="flex flex-row-reverse items-center justify-center gap-4"
                 >
                     <div class="flex flex-col items-center">
                         <div
