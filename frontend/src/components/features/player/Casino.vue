@@ -42,7 +42,6 @@
             </div>
 
             <div v-else-if="checkResult" class="w-full text-center">
-                <!-- Case 1: Market is OPEN and user can invest -->
                 <div
                     v-if="checkResult.feasible"
                     class="w-full max-w-md mx-auto"
@@ -84,14 +83,16 @@
                 </div>
 
                 <div v-else>
-                    <div v-if="checkResult.investedCoin > 0">
+                    <div v-if="checkResult.investments.length > 0">
                         <p class="text-lg text-gray-200">
                             شما در این دوره سرمایه‌گذاری کرده‌اید.
                         </p>
                         <div
+                            v-for="(coins, index) in checkResult.investments"
+                            :key="index"
                             class="mt-4 text-3xl font-bold text-amber-300 bg-black/20 py-4 rounded-lg"
                         >
-                            {{ checkResult.investedCoin.toLocaleString() }} کلاه
+                            {{ coins.coin }}
                         </div>
                     </div>
 
