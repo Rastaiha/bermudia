@@ -84,4 +84,39 @@ export const playlist = [
         url: '/audio/17.mp3',
         duration: 174,
     },
+    {
+        title: '18',
+        url: '/audio/18.mp3',
+        duration: 120,
+    },
+    {
+        title: '19',
+        url: '/audio/19.mp3',
+        duration: 148,
+    },
+    {
+        title: '20',
+        url: '/audio/20.mp3',
+        duration: 144,
+    },
+    {
+        title: '21',
+        url: '/audio/21.mp3',
+        duration: 144,
+    },
+    {
+        title: '22',
+        url: '/audio/22.mp3',
+        duration: 154,
+    },
+    {
+        title: '23',
+        url: '/audio/23.mp3',
+        duration: 145,
+    },
+    {
+        title: '24',
+        url: '/audio/24.mp3',
+        duration: 172,
+    },
 ];
