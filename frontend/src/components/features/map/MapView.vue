@@ -307,7 +307,7 @@ const fetchOtherPlayers = async () => {
 const shipSrc = name => {
     let sum = 0;
     for (let i = 0; i < name.length; i++) {
-        sum += name.charCodeAt(0);
+        sum += name.charCodeAt(i);
     }
     return '/images/ships/' + ((sum % 11) + 1) + '.png';
 };
