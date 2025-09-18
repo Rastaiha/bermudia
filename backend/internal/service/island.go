@@ -44,7 +44,7 @@ func NewIsland(bot *bot.Bot, userStore domain.UserStore, islandStore domain.Isla
 }
 
 func (i *Island) Start() {
-	resend := func(now time.Time) {
+	_ = func(now time.Time) {
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second*60)
 		defer cancel()
 
@@ -76,12 +76,12 @@ func (i *Island) Start() {
 			i.onNewAnswer(user.Username, territory, question, a)
 		}
 	}
-	go func() {
-		resend(time.Now())
-		for now := range time.Tick(20 * time.Minute) {
-			resend(now)
-		}
-	}()
+	//go func() {
+	//	resend(time.Now())
+	//	for now := range time.Tick(20 * time.Minute) {
+	//		resend(now)
+	//	}
+	//}()
 }
 
 func (i *Island) GetIsland(ctx context.Context, userId int32, islandId string) (*domain.IslandContent, error) {
