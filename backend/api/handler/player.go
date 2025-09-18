@@ -414,3 +414,46 @@ func (h *Handler) GetInboxMessages(w http.ResponseWriter, r *http.Request) {
 
 	sendResult(w, result)
 }
+
+func (h *Handler) InvestCheck(w http.ResponseWriter, r *http.Request) {
+	user, err := getUser(r.Context())
+	if err != nil {
+		handleError(w, err)
+		return
+	}
+
+	result, err := h.playerService.InvestCheck(r.Context(), user)
+	if err != nil {
+		handleError(w, err)
+		return
+	}
+
+	sendResult(w, result)
+}
+
+type investRequest struct {
+	SessionID string `json:"sessionID"`
+	Coin      int32  `json:"coin"`
+}
+
+func (h *Handler) Invest(w http.ResponseWriter, r *http.Request) {
+	user, err := getUser(r.Context())
+	if err != nil {
+		handleError(w, err)
+		return
+	}
+
+	var req investRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		sendDecodeError(w)
+		return
+	}
+
+	result, err := h.playerService.Invest(r.Context(), user, req.SessionID, req.Coin)
+	if err != nil {
+		handleError(w, err)
+		return
+	}
+
+	sendResult(w, result)
+}
