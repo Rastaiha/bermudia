@@ -3,7 +3,6 @@ package repository
 import (
 	"context"
 	"database/sql"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/Rastaiha/bermudia/internal/domain"
@@ -15,7 +14,6 @@ CREATE TABLE IF NOT EXISTS investment_sessions (
     id VARCHAR(255) PRIMARY KEY,
     text TEXT NOT NULL,
     resolved BOOLEAN NOT NULL DEFAULT false,
-    reward_thresholds JSONB NOT NULL,
     end_at TIMESTAMP NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -50,13 +48,11 @@ type sqlInvestStore struct {
 
 func (s *sqlInvestStore) GetSession(ctx context.Context, id string) (*domain.InvestmentSession, error) {
 	var session domain.InvestmentSession
-	var rewardThresholdsJSON []byte
 
-	err := s.db.QueryRowContext(ctx, `SELECT id, text, resolved, reward_thresholds, end_at FROM investment_sessions WHERE id = $1`, id).Scan(
+	err := s.db.QueryRowContext(ctx, `SELECT id, text, resolved, end_at FROM investment_sessions WHERE id = $1`, id).Scan(
 		&session.ID,
 		&session.Text,
 		&session.Resolved,
-		&rewardThresholdsJSON,
 		&session.EndAt,
 	)
 
@@ -68,18 +64,12 @@ func (s *sqlInvestStore) GetSession(ctx context.Context, id string) (*domain.Inv
 		return nil, err
 	}
 
-	// Parse reward thresholds JSON
-	err = json.Unmarshal(rewardThresholdsJSON, &session.RewardThresholds)
-	if err != nil {
-		return nil, err
-	}
-
 	return &session, nil
 }
 
 func (s *sqlInvestStore) GetActiveSession(ctx context.Context) (*domain.InvestmentSession, error) {
 	query := `
-		SELECT id, text, resolved, reward_thresholds, end_at 
+		SELECT id, text, resolved, end_at 
 		FROM investment_sessions 
 		WHERE end_at > CURRENT_TIMESTAMP AND resolved = false
 		ORDER BY end_at ASC 
@@ -87,13 +77,11 @@ func (s *sqlInvestStore) GetActiveSession(ctx context.Context) (*domain.Investme
 	`
 
 	var session domain.InvestmentSession
-	var rewardThresholdsJSON []byte
 
 	err := s.db.QueryRowContext(ctx, query).Scan(
 		&session.ID,
 		&session.Text,
 		&session.Resolved,
-		&rewardThresholdsJSON,
 		&session.EndAt,
 	)
 
@@ -104,31 +92,19 @@ func (s *sqlInvestStore) GetActiveSession(ctx context.Context) (*domain.Investme
 		return nil, err
 	}
 
-	// Parse reward thresholds JSON
-	err = json.Unmarshal(rewardThresholdsJSON, &session.RewardThresholds)
-	if err != nil {
-		return nil, err
-	}
-
 	return &session, nil
 }
 
 func (s *sqlInvestStore) CreateInvestmentSession(ctx context.Context, tx domain.Tx, session domain.InvestmentSession) error {
-	rewardThresholdsJSON, err := json.Marshal(session.RewardThresholds)
-	if err != nil {
-		return err
-	}
-
 	query := `
-		INSERT INTO investment_sessions (id, text, resolved, reward_thresholds, end_at)
+		INSERT INTO investment_sessions (id, text, resolved, end_at)
 		VALUES ($1, $2, $3, $4, $5)
 	`
 
-	_, err = tx.ExecContext(ctx, query,
+	_, err := tx.ExecContext(ctx, query,
 		session.ID,
 		session.Text,
 		session.Resolved,
-		rewardThresholdsJSON,
 		session.EndAt,
 	)
 
@@ -178,4 +154,59 @@ func (s *sqlInvestStore) GetUserInvestments(ctx context.Context, sessionID strin
 	}
 
 	return investments, rows.Err()
+}
+
+func (s *sqlInvestStore) GetAllUserInvestments(ctx context.Context, sessionID string) ([]domain.UserInvestment, error) {
+	query := `
+        SELECT session_id, user_id, coin
+        FROM user_investments
+        WHERE session_id = $1
+        ORDER BY user_id ASC
+    `
+
+	rows, err := s.db.QueryContext(ctx, query, sessionID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var investments []domain.UserInvestment
+	for rows.Next() {
+		var investment domain.UserInvestment
+		err := rows.Scan(
+			&investment.SessionID,
+			&investment.UserID,
+			&investment.Coin,
+		)
+		if err != nil {
+			return nil, err
+		}
+		investments = append(investments, investment)
+	}
+
+	return investments, rows.Err()
+}
+
+func (s *sqlInvestStore) MarkResolved(ctx context.Context, tx domain.Tx, sessionID string) error {
+	query := `
+        UPDATE investment_sessions 
+        SET resolved = true, updated_at = CURRENT_TIMESTAMP 
+        WHERE id = $1
+    `
+
+	result, err := tx.ExecContext(ctx, query, sessionID)
+	if err != nil {
+		return err
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+
+	if rowsAffected == 0 {
+		return domain.ErrInvestSessionNotFound
+	}
+
+	return nil
 }

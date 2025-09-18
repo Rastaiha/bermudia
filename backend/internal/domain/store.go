@@ -143,4 +143,7 @@ type InvestStore interface {
 
 	// GetUserInvestments returns all investments for a specific user in a specific session
 	GetUserInvestments(ctx context.Context, sessionID string, userID int32) ([]UserInvestment, error)
+
+	GetAllUserInvestments(ctx context.Context, sessionID string) ([]UserInvestment, error)
+	MarkResolved(ctx context.Context, tx Tx, sessionID string) error
 }

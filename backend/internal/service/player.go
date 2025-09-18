@@ -992,3 +992,63 @@ func (p *Player) GetPlayerLocations(ctx context.Context, userId int32, territory
 	p.playerLocationsCache.SetDefault(territoryID, result)
 	return filterForUser(result), nil
 }
+
+func (p *Player) ResolveInvestmentSession(ctx context.Context, sessionID string, coefficient float64) (affectedPlayers int, sumOfRewards int, err error) {
+	session, err := p.investStore.GetSession(ctx, sessionID)
+	if err != nil {
+		return 0, 0, err
+	}
+	investments, err := p.investStore.GetAllUserInvestments(ctx, session.ID)
+	if err != nil {
+		return 0, 0, err
+	}
+
+	rewards, err := domain.ResolveInvestments(*session, investments, coefficient)
+	if err != nil {
+		return 0, 0, err
+	}
+
+	tx, err := p.db.BeginTx(ctx, nil)
+	if err != nil {
+		return 0, 0, err
+	}
+
+	var events []domain.PlayerUpdateEvent
+	defer func() {
+		if err == nil {
+			for _, e := range events {
+				_ = p.sendPlayerUpdateEventErr(ctx, &e)
+			}
+		}
+	}()
+	defer func() {
+		if err != nil {
+			err = errors.Join(err, tx.Rollback())
+		} else {
+			err = tx.Commit()
+		}
+	}()
+
+	err = p.investStore.MarkResolved(ctx, tx, session.ID)
+	if err != nil {
+		return 0, 0, err
+	}
+
+	for userId, coinCount := range rewards {
+		player, err := p.playerStore.Get(ctx, userId)
+		if err != nil {
+			return 0, 0, err
+		}
+		event, ok := domain.GiveInvestmentReward(player, coinCount)
+		if ok {
+			if err := p.playerStore.Update(ctx, tx, player, *event.Player); err != nil {
+				return 0, 0, err
+			}
+			sumOfRewards += int(coinCount)
+			affectedPlayers++
+			events = append(events, event)
+		}
+	}
+
+	return
+}
