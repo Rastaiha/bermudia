@@ -60,6 +60,7 @@ const (
 	PlayerUpdateEventOwnOfferAccepted = "ownOfferAccepted"
 	PlayerUpdateEventOwnOfferDeleted  = "ownOfferDeleted"
 	PlayerUpdateEventInvest           = "invest"
+	PlayerUpdateEventInvestReward     = "investReward"
 )
 
 type PlayerUpdateEvent struct {
