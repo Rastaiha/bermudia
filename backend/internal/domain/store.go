@@ -68,6 +68,7 @@ type PlayerStore interface {
 	Update(ctx context.Context, tx Tx, old, updated Player) error
 	GetAll(ctx context.Context) ([]int32, error)
 	CreatePlayerEvent(ctx context.Context, userId int32, createdAt time.Time, reason string, player FullPlayer) error
+	GetLocations(ctx context.Context, territoryID string) (map[string][]int32, error)
 }
 
 type QuestionStore interface {
@@ -142,4 +143,7 @@ type InvestStore interface {
 
 	// GetUserInvestments returns all investments for a specific user in a specific session
 	GetUserInvestments(ctx context.Context, sessionID string, userID int32) ([]UserInvestment, error)
+
+	GetAllUserInvestments(ctx context.Context, sessionID string) ([]UserInvestment, error)
+	MarkResolved(ctx context.Context, tx Tx, sessionID string) error
 }

@@ -15,6 +15,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"slices"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -88,6 +89,7 @@ func (m *Bot) Start() {
 	m.bot.RegisterHandler(bot.HandlerTypeMessageText, "pause_game", bot.MatchTypeCommand, m.pause)
 	m.bot.RegisterHandler(bot.HandlerTypeMessageText, "resume_game", bot.MatchTypeCommand, m.resume)
 	m.bot.RegisterHandler(bot.HandlerTypeMessageText, "connections", bot.MatchTypeCommand, m.connection)
+	m.bot.RegisterHandler(bot.HandlerTypeMessageText, "resolve_investment_session", bot.MatchTypeCommand, m.resolveInvestmentSession)
 
 	m.bot.RegisterHandler(bot.HandlerTypeCallbackQueryData, tagCB, bot.MatchTypePrefix, m.handleTag, prefix(tagCB))
 	m.bot.RegisterHandler(bot.HandlerTypeCallbackQueryData, correctCB, bot.MatchTypePrefix, m.handleCorrect, prefix(correctCB))
@@ -661,5 +663,43 @@ func (m *Bot) connection(ctx context.Context, b *bot.Bot, update *models.Update)
 	_, _ = b.SendMessage(ctx, &bot.SendMessageParams{
 		ChatID: update.Message.Chat.ID,
 		Text:   sb.String(),
+	})
+}
+
+func (m *Bot) resolveInvestmentSession(ctx context.Context, b *bot.Bot, update *models.Update) {
+	if update.Message.Chat.ID != m.cfg.AdminsGroup {
+		return
+	}
+
+	parts := strings.Fields(update.Message.Text)
+	if len(parts) != 3 {
+		_, _ = b.SendMessage(ctx, &bot.SendMessageParams{
+			ChatID: update.Message.Chat.ID,
+			Text:   "Usage:\n\n/resolve_investment_session inv_C0B869257687000 2.0",
+		})
+		return
+	}
+
+	coefficient, err := strconv.ParseFloat(parts[2], 64)
+	if err != nil {
+		_, _ = b.SendMessage(ctx, &bot.SendMessageParams{
+			ChatID: update.Message.Chat.ID,
+			Text:   "Bad coefficient\n\nUsage:\n\n/resolve_investment_session inv_C0B869257687000 2.0",
+		})
+		return
+	}
+
+	players, rewards, err := m.player.ResolveInvestmentSession(ctx, parts[1], coefficient)
+	if err != nil {
+		_, _ = b.SendMessage(ctx, &bot.SendMessageParams{
+			ChatID: update.Message.Chat.ID,
+			Text:   "error occurred: " + err.Error(),
+		})
+		return
+	}
+
+	_, _ = b.SendMessage(ctx, &bot.SendMessageParams{
+		ChatID: update.Message.Chat.ID,
+		Text:   fmt.Sprintf("affected players: %d\ntotal coin readded: %d", players, rewards),
 	})
 }

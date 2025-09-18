@@ -80,7 +80,7 @@
                 territory.position.y +
                 ')'
             "
-            :style="{ transition: otherShipsTransition }"
+            :style="{ transition: shipTransition }"
             @mouseenter="updateHoveredShipPosition(user, $event)"
             @mouseleave="hoveredShip = null"
         >

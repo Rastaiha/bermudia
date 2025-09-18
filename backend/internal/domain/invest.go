@@ -1,7 +1,9 @@
 package domain
 
 import (
+	"errors"
 	"fmt"
+	"math"
 	"time"
 )
 
@@ -13,11 +15,10 @@ var (
 )
 
 type InvestmentSession struct {
-	ID               string
-	Text             string
-	Resolved         bool
-	RewardThresholds map[int32]float64
-	EndAt            time.Time
+	ID       string
+	Text     string
+	Resolved bool
+	EndAt    time.Time
 }
 
 type InvestmentSessionView struct {
@@ -110,4 +111,38 @@ func Invest(session InvestmentSession, investments []UserInvestment, player Play
 		Reason: PlayerUpdateEventInvest,
 		Player: &player,
 	}, ui, nil
+}
+
+func ResolveInvestments(session InvestmentSession, investments []UserInvestment, coefficient float64) (map[int32]int32, error) {
+	if session.Resolved {
+		return nil, errors.New("already resolved")
+	}
+
+	diff := session.EndAt.Sub(time.Now().UTC())
+	if diff >= 0 {
+		return nil, fmt.Errorf("%s is still remaining", diff.String())
+	}
+
+	if coefficient < 0 {
+		return nil, errors.New("coefficient must not be negative")
+	}
+
+	rewards := make(map[int32]int32)
+
+	for _, inv := range investments {
+		rewards[inv.UserID] += int32(math.Round(float64(inv.Coin) * coefficient))
+	}
+
+	return rewards, nil
+}
+
+func GiveInvestmentReward(player Player, coins int32) (PlayerUpdateEvent, bool) {
+	player = addCost(player, Cost{Items: []CostItem{{
+		Type:   CostItemTypeCoin,
+		Amount: coins,
+	}}})
+	return PlayerUpdateEvent{
+		Reason: PlayerUpdateEventInvestReward,
+		Player: &player,
+	}, coins > 0
 }

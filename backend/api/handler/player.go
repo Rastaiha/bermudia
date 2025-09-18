@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"github.com/Rastaiha/bermudia/internal/domain"
+	"github.com/go-chi/chi/v5"
 	"net/http"
 	"strconv"
 )
@@ -450,6 +451,29 @@ func (h *Handler) Invest(w http.ResponseWriter, r *http.Request) {
 	}
 
 	result, err := h.playerService.Invest(r.Context(), user, req.SessionID, req.Coin)
+	if err != nil {
+		handleError(w, err)
+		return
+	}
+
+	sendResult(w, result)
+}
+
+func (h *Handler) GetPlayerLocations(w http.ResponseWriter, r *http.Request) {
+	territoryID := chi.URLParam(r, "territoryID")
+
+	if territoryID == "" {
+		sendError(w, http.StatusBadRequest, "Territory ID is required")
+		return
+	}
+
+	user, err := getUser(r.Context())
+	if err != nil {
+		handleError(w, err)
+		return
+	}
+
+	result, err := h.playerService.GetPlayerLocations(r.Context(), user.ID, territoryID)
 	if err != nil {
 		handleError(w, err)
 		return
