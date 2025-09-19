@@ -37,7 +37,7 @@
         <div
             class="w-full flex flex-col justify-center items-center space-y-6 min-h-[200px]"
         >
-            <!-- <div v-if="isLoading" class="text-amber-200 text-lg">
+            <div v-if="isLoading" class="text-amber-200 text-lg">
                 در حال بارگذاری اطلاعات بورس...
             </div>
 
@@ -126,28 +126,6 @@
                         </p>
                     </div>
                 </div>
-            </div> -->
-            <div
-                class="w-full flex flex-col justify-center items-center space-y-4"
-            >
-                <div v-if="!isPastNoon" class="text-center">
-                    <p class="text-lg text-gray-300">
-                        زمان باقی‌مانده تا بازگشایی:
-                    </p>
-                    <div
-                        class="text-4xl font-bold text-amber-400 tracking-widest"
-                    >
-                        {{ hours }}:{{ minutes }}:{{ seconds }}
-                    </div>
-                </div>
-                <div v-else class="text-center">
-                    <h3 class="text-3xl font-bold text-green-400">
-                        درحال بازگشایی
-                    </h3>
-                    <p class="text-gray-300 mt-2">
-                        بازگشایی بورس تا دقایقی دیگر...
-                    </p>
-                </div>
             </div>
         </div>
     </VueFinalModal>
@@ -156,109 +134,107 @@
 <script setup>
 import { VueFinalModal } from 'vue-final-modal';
 import { glossary } from '@/services/glossary.js';
-// import { investCheck, invest } from '@/services/api/index.js';
-// import { onMounted, onUnmounted, ref, watch } from 'vue';
-// import { useToast } from 'vue-toastification';
-// import { COST_ITEMS_INFO } from '@/services/cost.js';
-import { useCountdownToNoon } from '@/composables/useCountdownToNoon.js';
+import { investCheck, invest } from '@/services/api/index.js';
+import { onMounted, onUnmounted, ref, watch } from 'vue';
+import { useToast } from 'vue-toastification';
+import { COST_ITEMS_INFO } from '@/services/cost.js';
 
 const emit = defineEmits(['close']);
-const { hours, minutes, seconds, isPastNoon } = useCountdownToNoon();
 
-// const isLoading = ref(true);
-// const isInvesting = ref(false);
-// const checkResult = ref(null);
-// const investAmount = ref(0);
-// const toast = useToast();
-// const countdown = ref('');
-// let countdownInterval = null;
+const isLoading = ref(true);
+const isInvesting = ref(false);
+const checkResult = ref(null);
+const investAmount = ref(0);
+const toast = useToast();
+const countdown = ref('');
+let countdownInterval = null;
 
-// watch(investAmount, newValue => {
-//     if (checkResult.value && newValue > checkResult.value.maxCoin) {
-//         investAmount.value = checkResult.value.maxCoin;
-//     }
-//     if (newValue < 0) {
-//         investAmount.value = 0;
-//     }
-// });
+watch(investAmount, newValue => {
+    if (checkResult.value && newValue > checkResult.value.maxCoin) {
+        investAmount.value = checkResult.value.maxCoin;
+    }
+    if (newValue < 0) {
+        investAmount.value = 0;
+    }
+});
 
-// function updateCountdown() {
-//     if (!checkResult.value?.session?.endAt) {
-//         countdown.value = '';
-//         return;
-//     }
+function updateCountdown() {
+    if (!checkResult.value?.session?.endAt) {
+        countdown.value = '';
+        return;
+    }
 
-//     const now = new Date().getTime();
-//     const endTime = new Date(
-//         parseInt(checkResult.value.session.endAt)
-//     ).getTime();
-//     const distance = endTime - now;
+    const now = new Date().getTime();
+    const endTime = new Date(
+        parseInt(checkResult.value.session.endAt)
+    ).getTime();
+    const distance = endTime - now;
 
-//     if (distance < 0) {
-//         clearInterval(countdownInterval);
-//         countdown.value = 'پایان یافته';
-//         doInvestCheck();
-//         return;
-//     }
+    if (distance < 0) {
+        clearInterval(countdownInterval);
+        countdown.value = 'پایان یافته';
+        doInvestCheck();
+        return;
+    }
 
-//     const hours = Math.floor(
-//         (distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)
-//     );
-//     const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
-//     const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+    const hours = Math.floor(
+        (distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)
+    );
+    const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+    const seconds = Math.floor((distance % (1000 * 60)) / 1000);
 
-//     countdown.value = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-// }
+    countdown.value = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+}
 
-// watch(
-//     checkResult,
-//     newResult => {
-//         clearInterval(countdownInterval);
-//         if (newResult?.session?.endAt) {
-//             updateCountdown();
-//             countdownInterval = setInterval(updateCountdown, 1000);
-//         }
-//     },
-//     { immediate: true }
-// );
+watch(
+    checkResult,
+    newResult => {
+        clearInterval(countdownInterval);
+        if (newResult?.session?.endAt) {
+            updateCountdown();
+            countdownInterval = setInterval(updateCountdown, 1000);
+        }
+    },
+    { immediate: true }
+);
 
-// async function doInvestCheck() {
-//     isLoading.value = true;
-//     try {
-//         const result = await investCheck();
-//         checkResult.value = result;
-//     } catch (error) {
-//         toast.error(error.message || 'خطا در دریافت اطلاعات بورس');
-//         console.error('Error calling investCheck:', error);
-//     } finally {
-//         isLoading.value = false;
-//     }
-// }
+async function doInvestCheck() {
+    isLoading.value = true;
+    try {
+        const result = await investCheck();
+        checkResult.value = result;
+    } catch (error) {
+        toast.error(error.message || 'خطا در دریافت اطلاعات بورس');
+        console.error('Error calling investCheck:', error);
+    } finally {
+        isLoading.value = false;
+    }
+}
 
-// async function handleInvest() {
-//     if (isInvesting.value) return;
-//     isInvesting.value = true;
-//     try {
-//         await invest(checkResult.value.session.id, investAmount.value);
-//         toast.success('سرمایه‌گذاری شما با موفقیت ثبت شد.');
-//         await doInvestCheck(); // Refresh the state
-//     } catch (error) {
-//         toast.error(error.message || 'خطا در سرمایه‌گذاری');
-//         console.error('Error calling invest:', error);
-//     } finally {
-//         isInvesting.value = false;
-//     }
-// }
+async function handleInvest() {
+    if (isInvesting.value) return;
+    isInvesting.value = true;
+    try {
+        await invest(checkResult.value.session.id, investAmount.value);
+        toast.success('سرمایه‌گذاری شما با موفقیت ثبت شد.');
+        await doInvestCheck(); // Refresh the state
+    } catch (error) {
+        toast.error(error.message || 'خطا در سرمایه‌گذاری');
+        console.error('Error calling invest:', error);
+    } finally {
+        isInvesting.value = false;
+    }
+}
 
 function handleClose() {
     emit('close');
 }
 
-// onMounted(doInvestCheck);
+onMounted(doInvestCheck);
 
-// onUnmounted(() => {
-//     clearInterval(countdownInterval);
-// });
+onUnmounted(() => {
+    clearInterval(countdownInterval);
+});
 </script>
 
 <style>
