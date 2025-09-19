@@ -12,7 +12,7 @@ export function useCountdownToNoon() {
     const updateCountdown = () => {
         now.value = new Date();
         const target = new Date(now.value);
-        target.setHours(10, 0, 0, 0);
+        target.setHours(12, 30, 0, 0);
 
         if (now.value >= target) {
             isPastNoon.value = true;
