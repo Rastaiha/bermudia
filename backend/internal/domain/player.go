@@ -13,7 +13,7 @@ const (
 	initialFuelAmount               = fuelTankCapacity
 	travelFuelConsumption           = 1
 	initialCoinsAmount              = 100
-	refuelCoinCostPerUnit           = 10
+	refuelCoinCostPerUnit           = 7
 	anchoringCoinCost               = 20
 	migrationMinAcceptableKnowledge = 50
 	migrationCoinCost               = 80
