@@ -73,6 +73,7 @@ func (h *Handler) Start() {
 				}
 				sendResult(w, user)
 			})
+			r.Get("/territories/{territoryID}", h.GetTerritory)
 			r.Get("/territories/{territoryID}/players", h.GetPlayerLocations)
 			r.Get("/islands/{islandID}", h.GetIsland)
 			r.Get("/player", h.GetPlayer)
