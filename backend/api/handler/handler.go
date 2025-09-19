@@ -82,7 +82,7 @@ func (h *Handler) Start() {
 			r.Post("/anchor_check", h.AnchorCheck)
 			r.Post("/unlock_treasure_check", h.UnlockTreasureCheck)
 			r.Post("/trade/make_offer_check", h.MakeOfferCheck)
-			r.Post("/trade/offers", h.GetTradeOffers)
+			r.Get("/trade/offers", h.GetTradeOffers)
 			r.Post("/invest_check", h.InvestCheck)
 			r.Get("/inbox/messages", h.GetInboxMessages)
 		})
