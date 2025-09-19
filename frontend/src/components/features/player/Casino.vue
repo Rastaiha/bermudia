@@ -145,10 +145,10 @@
                 </div>
                 <div v-else class="text-center">
                     <h3 class="text-3xl font-bold text-green-400">
-                        بازار بورس باز است!
+                        درحال بازگشایی
                     </h3>
                     <p class="text-gray-300 mt-2">
-                        می‌توانید تا ساعت ۱۲ ظهر برای خرید و فروش اقدام کنید.
+                        بازگشایی بورس تا دقایقی دیگر...
                     </p>
                 </div>
             </div>
