@@ -40,7 +40,7 @@ func CheckPlayerAccessToIslandContent(player Player, islandID string, isPortable
 
 func ShouldBeMadePortableOnAccess(header IslandHeader) bool {
 	// TODO: this is temporary solution. fix later :)
-	if strings.Contains(header.ID, "game") {
+	if strings.Contains(header.ID, "game") || strings.Contains(header.ID, "planet_final") {
 		return false
 	}
 	return header.BookID != "" && !header.FromPool
