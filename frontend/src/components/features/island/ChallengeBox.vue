@@ -291,7 +291,7 @@ const helpButtonIcon = computed(() => {
 });
 
 const helpButtonClass = computed(() => {
-    if (!props.challenge.submissionState.showHelp) {
+    if (isHelpButtonDisabled.value) {
         return 'text-gray-500';
     }
     if (props.challenge.submissionState.hasRequestedHelp) {
@@ -311,7 +311,8 @@ const helpButtonAnimationClass = computed(() => {
 });
 
 const isHelpButtonDisabled = computed(() => {
-    return !props.challenge.submissionState.showHelp;
+    return true;
+    // return !props.challenge.submissionState.showHelp;
 });
 
 const handleHelpClick = async () => {
