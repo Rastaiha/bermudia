@@ -946,7 +946,7 @@ func (p *Player) GetPlayerLocations(ctx context.Context, userId int32, territory
 		for _, location := range result {
 			l := PlayersLocation{IslandID: location.IslandID}
 			for _, player := range location.Players {
-				if player.UserID != userId {
+				if player.UserID != userId && len(l.Players) < 10 {
 					l.Players = append(l.Players, player)
 				}
 			}
