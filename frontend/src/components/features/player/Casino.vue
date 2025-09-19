@@ -130,9 +130,6 @@
             <div
                 class="w-full flex flex-col justify-center items-center space-y-4"
             >
-                <h2 class="text-2xl font-bold text-amber-200">
-                    بازار بورس برمودیا
-                </h2>
                 <div v-if="!isPastNoon" class="text-center">
                     <p class="text-lg text-gray-300">
                         زمان باقی‌مانده تا بازگشایی:
