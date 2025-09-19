@@ -62,9 +62,9 @@ func (h *Handler) Start() {
 		r.HandleFunc("/trade/events", h.StreamTradeEvents)
 		r.HandleFunc("/inbox/events", h.StreamInboxEvents)
 
-		// Authenticated endpoints
+		// Authenticated but not paused
 		r.Group(func(r chi.Router) {
-			r.Use(h.authMiddleware, h.pauseCheckMiddleware)
+			r.Use(h.authMiddleware)
 			r.Get("/me", func(w http.ResponseWriter, r *http.Request) {
 				user, err := getUser(r.Context())
 				if err != nil {
@@ -73,32 +73,38 @@ func (h *Handler) Start() {
 				}
 				sendResult(w, user)
 			})
-			r.Get("/territories/{territoryID}", h.GetTerritory)
 			r.Get("/territories/{territoryID}/players", h.GetPlayerLocations)
 			r.Get("/islands/{islandID}", h.GetIsland)
-			r.Post("/answer/{inputID}", h.SubmitAnswer)
-			r.Get("/answer/{inputID}/help", h.GetAnswerHelp)
 			r.Get("/player", h.GetPlayer)
 			r.Post("/travel_check", h.TravelCheck)
-			r.Post("/travel", h.Travel)
 			r.Post("/refuel_check", h.RefuelCheck)
-			r.Post("/refuel", h.Refuel)
 			r.Post("/anchor_check", h.AnchorCheck)
-			r.Post("/anchor", h.Anchor)
-			r.Post("/migrate_check", h.MigrateCheck)
-			r.Post("/migrate", h.Migrate)
 			r.Post("/unlock_treasure_check", h.UnlockTreasureCheck)
-			r.Post("/unlock_treasure", h.UnlockTreasure)
 			r.Route("/trade", func(r chi.Router) {
 				r.Post("/make_offer_check", h.MakeOfferCheck)
-				r.Post("/make_offer", h.MakeOffer)
-				r.Post("/accept_offer", h.AcceptOffer)
-				r.Post("/delete_offer", h.DeleteOffer)
 				r.Get("/offers", h.GetTradeOffers)
 			})
 			r.Post("/invest_check", h.InvestCheck)
-			r.Post("/invest", h.Invest)
 			r.Get("/inbox/messages", h.GetInboxMessages)
+		})
+
+		// Authenticated and paused endpoints
+		r.Group(func(r chi.Router) {
+			r.Use(h.authMiddleware, h.pauseCheckMiddleware)
+			r.Post("/answer/{inputID}", h.SubmitAnswer)
+			r.Get("/answer/{inputID}/help", h.GetAnswerHelp)
+			r.Post("/travel", h.Travel)
+			r.Post("/refuel", h.Refuel)
+			r.Post("/anchor", h.Anchor)
+			r.Post("/migrate_check", h.MigrateCheck)
+			r.Post("/migrate", h.Migrate)
+			r.Post("/unlock_treasure", h.UnlockTreasure)
+			r.Route("/trade", func(r chi.Router) {
+				r.Post("/make_offer", h.MakeOffer)
+				r.Post("/accept_offer", h.AcceptOffer)
+				r.Post("/delete_offer", h.DeleteOffer)
+			})
+			r.Post("/invest", h.Invest)
 		})
 	})
 
