@@ -25,7 +25,7 @@ var rewardSources = map[string]func(player Player) Player{
 		return giveRandomWorthOfCoins(player, 110, eduQuestionRewardTypes)
 	},
 	"final": func(player Player) Player {
-		player = addCost(player, Cost{Items: []CostItem{{Type: CostItemTypeCoin, Amount: 200}}})
+		player = addCost(player, Cost{Items: []CostItem{{Type: CostItemTypeCoin, Amount: 120}}})
 		return giveRandomWorthOfCoins(player, 60, eduQuestionRewardTypes)
 	},
 }
