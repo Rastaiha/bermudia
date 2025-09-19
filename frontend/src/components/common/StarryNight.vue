@@ -3,7 +3,7 @@
         ref="starsContainer"
         class="fixed top-0 left-0 w-full h-full -z-10"
         :style="{
-            background: 'linear-gradient(90deg, #01041F 0%, #082B33 100%)',
+            background: 'linear-gradient(180deg, #692A47 0%, #123952 100%)',
         }"
     ></div>
 </template>
