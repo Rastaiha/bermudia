@@ -316,15 +316,21 @@ const fetchOtherPlayers = async () => {
     const result = {};
 
     for (let i = 0; i < otherPlayers.length; i++) {
-        if (i == 10) break;
         let island = otherPlayers[i];
-        island.players.forEach(user => {
-            result[user.name] = {
-                island: island.islandId,
-                position: getShipPositionRandom(island.islandId),
-                delay: Math.random() * -2,
-            };
-        });
+        for (let j = 0; j < island.players.length; j++) {
+            if (j == 10) break;
+            let user = island.players[j];
+            if (
+                !result[user.name] ||
+                island.islandId != result[user.name].island
+            ) {
+                result[user.name] = {
+                    island: island.islandId,
+                    position: getShipPositionRandom(island.islandId),
+                    delay: Math.random() * -2,
+                };
+            }
+        }
     }
     users.value = result;
 };
