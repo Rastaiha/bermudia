@@ -52,12 +52,14 @@
             </div>
         </div>
 
-        <div class="flex-1 overflow-y-auto relative">
+        <div
+            class="flex-1 overflow-y-auto relative"
+            @scroll="handleOtherScroll"
+        >
             <div
                 v-if="!isOffersYours"
                 ref="otherOffersContainer"
                 class="p-4 md:p-6"
-                @scroll="handleOtherScroll"
             >
                 <div
                     v-if="otherOffers.length > 0"
