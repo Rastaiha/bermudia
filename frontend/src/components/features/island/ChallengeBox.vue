@@ -264,8 +264,7 @@ const helpButtonAnimationClass = computed(() => {
 });
 
 const isHelpButtonDisabled = computed(() => {
-    return true;
-    // return !props.challenge.submissionState.showHelp;
+    return !props.challenge.submissionState.showHelp;
 });
 
 const handleHelpClick = async () => {
