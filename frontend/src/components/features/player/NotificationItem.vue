@@ -157,7 +157,7 @@ const notification = computed(() => {
                     detailsBg: 'bg-amber-900/50',
                 };
                 break;
-            default: // wrong
+            default:
                 title = 'پاسخ شما صحیح نبود';
                 icon = XCircleIcon;
                 statusText = 'غلط';

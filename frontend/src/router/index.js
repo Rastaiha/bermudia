@@ -1,24 +1,24 @@
 import { createRouter, createWebHistory } from 'vue-router';
-import { getToken } from '@/services/api/index.js'; // For checking authentication
+import { getToken } from '@/services/api/index.js';
 
 const routes = [
     {
         path: '/',
-        redirect: { name: 'Login' }, // Redirect root to login
+        redirect: { name: 'Login' },
     },
     {
         path: '/territory/:id',
         name: 'Territory',
         component: () => import('../pages/Territory.vue'),
         props: true,
-        meta: { requiresAuth: true }, // This route requires login
+        meta: { requiresAuth: true },
     },
     {
         path: '/territory/:id/:islandId',
         name: 'Island',
         component: () => import('../pages/TerritoryIsland.vue'),
         props: true,
-        meta: { requiresAuth: true }, // This route requires login
+        meta: { requiresAuth: true },
     },
     {
         path: '/login',
@@ -32,15 +32,12 @@ const router = createRouter({
     routes,
 });
 
-// Navigation Guard to protect routes
 router.beforeEach((to, from, next) => {
-    const isLoggedIn = !!getToken(); // Check if user token exists
+    const isLoggedIn = !!getToken();
 
     if (to.meta.requiresAuth && !isLoggedIn) {
-        // If the route requires auth and user is not logged in, redirect to login page
         next({ name: 'Login' });
     } else {
-        // Otherwise, allow navigation
         next();
     }
 });

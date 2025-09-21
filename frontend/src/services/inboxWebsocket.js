@@ -4,12 +4,9 @@ import { API_ENDPOINTS } from '@/services/api/config.js';
 import { notificationService } from '@/services/notificationService.js';
 import { uiState } from '@/services/uiState.js';
 
-// --- Global State ---
-// These are exported and used by Inbox.vue directly.
 export const messages = ref([]);
 export const syncOffset = ref(null);
 
-// --- Private Singleton Logic ---
 let socket = null;
 let reconnectTimeoutId = null;
 let reconnectAttempts = 0;
@@ -54,7 +51,6 @@ function handleMessage(event) {
     }
 }
 
-// --- Composable Function ---
 export function useInboxWebSocket() {
     const scheduleReconnect = () => {
         if (reconnectAttempts >= maxReconnectAttempts) {
@@ -82,11 +78,11 @@ export function useInboxWebSocket() {
 
     const connect = () => {
         if (socket && socket.readyState < 2) {
-            return; // Already connecting/connected
+            return;
         }
         const token = getToken();
         if (!token) {
-            return; // No token, do nothing
+            return;
         }
 
         socket = new WebSocket(`${API_ENDPOINTS.inboxEvents}?token=${token}`);

@@ -22,7 +22,7 @@ const props = defineProps({
 });
 
 const calculateStarCount = () => {
-    if (!starsContainer.value) return 100; // fallback
+    if (!starsContainer.value) return 100;
 
     const rect = starsContainer.value.getBoundingClientRect();
     const screenArea = rect.width * rect.height;
@@ -42,7 +42,6 @@ const createStar = () => {
         left: ${Math.random() * 100}%;
     `;
 
-    // Add the ::before pseudo-element effect using a real element
     const twinkle = document.createElement('div');
     twinkle.style.cssText = `
         position: absolute;
@@ -81,7 +80,6 @@ const generateStars = () => {
 };
 
 const addStyles = () => {
-    // Check if styles already exist
     if (document.getElementById('starry-night-styles')) return;
 
     const style = document.createElement('style');
@@ -114,7 +112,6 @@ const cleanupStyles = () => {
 };
 
 const handleResize = () => {
-    // Debounce the resize to avoid too many recalculations
     clearTimeout(handleResize.timeoutId);
     handleResize.timeoutId = setTimeout(() => {
         generateStars();
@@ -128,12 +125,10 @@ onMounted(async () => {
 
     generateStars();
 
-    // Set up ResizeObserver to watch for container size changes
     if (window.ResizeObserver && starsContainer.value) {
         resizeObserver = new ResizeObserver(handleResize);
         resizeObserver.observe(starsContainer.value);
     } else {
-        // Fallback to window resize event for older browsers
         window.addEventListener('resize', handleResize);
     }
 });

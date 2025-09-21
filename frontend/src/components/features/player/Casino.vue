@@ -217,7 +217,7 @@ async function handleInvest() {
     try {
         await invest(checkResult.value.session.id, investAmount.value);
         toast.success('سرمایه‌گذاری شما با موفقیت ثبت شد.');
-        await doInvestCheck(); // Refresh the state
+        await doInvestCheck();
     } catch (error) {
         toast.error(error.message || 'خطا در سرمایه‌گذاری');
         console.error('Error calling invest:', error);

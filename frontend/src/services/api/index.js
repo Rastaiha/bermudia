@@ -1,6 +1,5 @@
 import { API_ENDPOINTS } from '@/services/api/config.js';
 
-// --- Helper Functions ---
 const getAuthHeaders = () => {
     const token = getToken();
     return token ? { Authorization: `Bearer ${token}` } : {};
@@ -17,7 +16,6 @@ const handleResponse = async response => {
     return data.result;
 };
 
-// --- Token Management ---
 export const setToken = token => {
     if (token) {
         localStorage.setItem('authToken', token);
@@ -33,7 +31,6 @@ export const logout = () => {
     window.location.pathname = '/login';
 };
 
-// --- API Functions ---
 export const login = async (username, password) => {
     const response = await fetch(API_ENDPOINTS.login, {
         method: 'POST',

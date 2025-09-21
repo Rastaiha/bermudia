@@ -1,5 +1,3 @@
-// frontend/src/services/apiConfig.js
-
 import { BASE_URLS } from './base_url.js';
 
 const API_BASE_URL = BASE_URLS.API;
