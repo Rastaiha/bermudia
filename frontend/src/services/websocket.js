@@ -53,7 +53,6 @@ export function usePlayerWebSocket(player, territoryId, route, router) {
 
                 if (data.playerUpdate) {
                     const reason = data.playerUpdate.reason;
-                    // These events might correspond to a new inbox message.
                     if (
                         reason === 'correction' ||
                         reason === 'ownOfferAccepted'
@@ -63,15 +62,12 @@ export function usePlayerWebSocket(player, territoryId, route, router) {
                             const allMessages =
                                 result?.messages || result || [];
 
-                            // Update the global message list for instant UI update in inbox
                             inboxMessages.value = allMessages;
 
-                            // Update notification service state
                             notificationService.setReceivedMessages(
                                 allMessages
                             );
 
-                            // If inbox is open, mark as seen immediately
                             if (uiState.isInboxOpen) {
                                 notificationService.markAllAsSeen();
                             }
