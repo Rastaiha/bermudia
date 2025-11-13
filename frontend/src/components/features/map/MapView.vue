@@ -89,6 +89,7 @@
                 :width="BOAT_WIDTH * 0.6"
                 :height="BOAT_HEIGHT * 0.6"
                 class="cursor-pointer"
+                :style="{ animationDelay: territory.delay + 's' }"
             />
         </g>
     </svg>
@@ -116,9 +117,11 @@ const svgRef = ref(null);
 let panzoomInstance = null;
 let potentialClickNode = null;
 let lastTapTime = 0;
+let intervalId = null;
 
 const shipTransform = ref('');
 const shipTransition = ref('none');
+const otherShipsTransition = ref(null);
 const previousAtIsland = ref(null);
 
 const BOAT_WIDTH = 0.08;
@@ -313,7 +316,7 @@ const zoomToPlayer = () => {
 
 const fetchOtherPlayers = async () => {
     const otherPlayers = await getPlayersLocation(props.territoryId);
-    const result = {};
+    const result = users.value;
 
     for (let i = 0; i < otherPlayers.length; i++) {
         let island = otherPlayers[i];
@@ -333,6 +336,10 @@ const fetchOtherPlayers = async () => {
         }
     }
     users.value = result;
+    otherShipsTransition.value = 'transform 2s ease-in-out';
+    setTimeout(() => {
+        otherShipsTransition.value = 'none';
+    }, 3000);
 };
 
 const shipSrc = name => {
@@ -346,10 +353,12 @@ const shipSrc = name => {
 onMounted(() => {
     initializePanzoom();
     fetchOtherPlayers();
+    intervalId = setInterval(fetchOtherPlayers, 30000);
 });
 
 onUnmounted(() => {
     if (panzoomInstance) panzoomInstance.dispose();
+    if (intervalId) clearInterval(intervalId);
 });
 
 defineExpose({
@@ -374,5 +383,8 @@ defineExpose({
 .animate-boat {
     animation: boat-bobbing 4s ease-in-out infinite;
     transform-origin: center;
+}
+.user-ship image {
+    animation: boat-bobbing 4s ease-in-out infinite;
 }
 </style>
