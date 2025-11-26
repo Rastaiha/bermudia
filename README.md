@@ -245,10 +245,6 @@ For complete API documentation, see [API Documentation](./docs/api.md).
 
 Developed by the team at [Rasta](https://rastaiha.ir).
 
-## 📄 License
-
-This project is open source. Please check the LICENSE file for more details.
-
 ## 🤝 Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request. For major changes, please open an issue first to discuss what you would like to change.
