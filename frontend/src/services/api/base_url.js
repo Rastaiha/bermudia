@@ -1,4 +1,4 @@
 export const BASE_URLS = {
-    API: 'https://bermudia-api.darkube.app/api/v1',
-    WS: 'wss://bermudia-api.darkube.app/api/v1',
+    API: 'https://bermudia-api-internal.darkube.app/api/v1',
+    WS: 'wss://bermudia-api-internal.darkube.app/api/v1',
 };
