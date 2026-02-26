@@ -19,6 +19,7 @@ import (
 
 type Handler struct {
 	cfg              config.Config
+	adminHandler     *admin
 	server           *http.Server
 	wsUpgrader       websocket.Upgrader
 	authService      *service.Auth
@@ -30,9 +31,13 @@ type Handler struct {
 	inboxHub         *hub.Hub
 }
 
-func New(cfg config.Config, authService *service.Auth, territoryService *service.Territory, islandService *service.Island, playerService *service.Player) *Handler {
+func New(cfg config.Config, authService *service.Auth, adminService *service.Admin, territoryService *service.Territory, islandService *service.Island, playerService *service.Player) *Handler {
 	return &Handler{
-		cfg:              cfg,
+		cfg: cfg,
+		adminHandler: &admin{
+			cfg:          cfg,
+			adminService: adminService,
+		},
 		authService:      authService,
 		territoryService: territoryService,
 		islandService:    islandService,
@@ -103,6 +108,12 @@ func (h *Handler) Start() {
 			r.Post("/trade/delete_offer", h.DeleteOffer)
 			r.Post("/invest", h.Invest)
 		})
+	})
+
+	r.Route("/admin", func(r chi.Router) {
+		r.Post("/login", h.adminHandler.Login)
+
+		r.Use(h.adminHandler.authMiddleware)
 	})
 
 	// Health check

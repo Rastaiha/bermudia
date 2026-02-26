@@ -8,8 +8,10 @@ import (
 	"fmt"
 	"github.com/Rastaiha/bermudia/internal/config"
 	"github.com/Rastaiha/bermudia/internal/domain"
+	"github.com/golang-jwt/jwt/v5"
 	"math/rand"
 	"slices"
+	"time"
 )
 
 type Admin struct {
@@ -337,4 +339,49 @@ func (a *Admin) CreateUser(ctx context.Context, index int, user User) (User, err
 		return user, err
 	}
 	return user, a.playerStore.Create(ctx, domain.NewPlayer(u.ID, &startingTerritory))
+}
+
+func (a *Admin) Login(_ context.Context, username string, password string) (string, error) {
+	if username != a.cfg.AdminUsername || password != a.cfg.AdminPassword {
+		return "", domain.ErrUserNotFound
+	}
+	token := jwt.NewWithClaims(jwt.SigningMethodHS512, jwt.MapClaims{
+		"admin": true,
+		"iat":   float64(time.Now().UTC().UnixNano()) / 1e9,
+	})
+	tokenString, err := token.SignedString(a.cfg.TokenSigningKeyBytes())
+	if err != nil {
+		return "", fmt.Errorf("failed to sign token: %w", err)
+	}
+	return tokenString, nil
+}
+
+func (a *Admin) ValidateToken(_ context.Context, tokenStr string) bool {
+	token, err := jwt.Parse(
+		tokenStr,
+		func(token *jwt.Token) (interface{}, error) {
+			return a.cfg.TokenSigningKeyBytes(), nil
+		},
+		jwt.WithValidMethods([]string{jwt.SigningMethodHS512.Alg()}),
+		jwt.WithIssuedAt(),
+	)
+	if err != nil {
+		return false
+	}
+	if !token.Valid {
+		return false
+	}
+	if iat, err := token.Claims.GetIssuedAt(); err != nil || time.Since(iat.Time) > 1*time.Hour {
+		return false
+	}
+	claims, ok := token.Claims.(jwt.MapClaims)
+	if !ok {
+		return false
+	}
+	v, ok := claims["admin"]
+	if !ok {
+		return false
+	}
+	isAdmin, _ := v.(bool)
+	return isAdmin
 }
