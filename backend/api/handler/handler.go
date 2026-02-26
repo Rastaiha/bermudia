@@ -113,7 +113,15 @@ func (h *Handler) Start() {
 	r.Route("/admin", func(r chi.Router) {
 		r.Post("/login", h.adminHandler.Login)
 
-		r.Use(h.adminHandler.authMiddleware)
+		r.Group(func(r chi.Router) {
+			r.Use(h.adminHandler.authMiddleware)
+			r.Post("/territories", h.adminHandler.SetTerritory)
+			r.Post("/islands/{islandID}/book", h.adminHandler.SetBookAndBindToIsland)
+			r.Post("/pools/{poolID}/book", h.adminHandler.SetBookAndBindToPool)
+			r.Get("/territories/{territoryID}/island_bindings", h.adminHandler.GetTerritoryIslandBindings)
+			r.Post("/territories/{territoryID}/island_bindings", h.adminHandler.SetTerritoryIslandBindings)
+			r.Post("/users", h.adminHandler.CreateUser)
+		})
 	})
 
 	// Health check

@@ -342,6 +342,9 @@ func (a *Admin) CreateUser(ctx context.Context, index int, user User) (User, err
 }
 
 func (a *Admin) Login(_ context.Context, username string, password string) (string, error) {
+	if username == "" || password == "" {
+		return "", domain.ErrUserNotFound
+	}
 	if username != a.cfg.AdminUsername || password != a.cfg.AdminPassword {
 		return "", domain.ErrUserNotFound
 	}
