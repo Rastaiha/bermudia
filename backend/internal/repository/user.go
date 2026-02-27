@@ -40,7 +40,7 @@ func (s sqlUser) columns() string {
 	return "SELECT id, username_display, meet_link, hashed_password, name FROM users"
 }
 
-func (s sqlUser) scan(row *sql.Row, user *domain.User) error {
+func (s sqlUser) scan(row scannable, user *domain.User) error {
 	err := row.Scan(&user.ID, &user.Username, &user.MeetLink, &user.HashedPassword, &user.Name)
 	if errors.Is(err, sql.ErrNoRows) {
 		return domain.ErrUserNotFound
@@ -71,4 +71,23 @@ func (s sqlUser) GetByUsername(ctx context.Context, username string) (*domain.Us
 	var result domain.User
 	err := s.scan(s.db.QueryRowContext(ctx, s.columns()+" WHERE username = $1", strings.ToLower(username)), &result)
 	return &result, err
+}
+
+func (s sqlUser) GetAll(ctx context.Context) (users []domain.User, err error) {
+	rows, err := s.db.QueryContext(ctx, s.columns())
+	if err != nil {
+		return nil, err
+	}
+	defer func() {
+		err = rows.Close()
+	}()
+	for rows.Next() {
+		user := domain.User{}
+		err := s.scan(rows, &user)
+		if err != nil {
+			return nil, err
+		}
+		users = append(users, user)
+	}
+	return users, nil
 }

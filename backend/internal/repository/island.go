@@ -278,6 +278,25 @@ func (s sqlIslandRepository) AddBookToPool(ctx context.Context, poolId string, b
 	return err
 }
 
+func (s sqlIslandRepository) GetBooksInPool(ctx context.Context, poolId string) (bookIds []string, err error) {
+	rows, err := s.db.QueryContext(ctx, `SELECT book_id FROM book_pools WHERE pool_id = $1`, poolId)
+	if err != nil {
+		return nil, err
+	}
+	defer func() {
+		err = rows.Close()
+	}()
+	for rows.Next() {
+		var bookId string
+		if err := rows.Scan(&bookId); err != nil {
+			return nil, err
+		}
+		bookIds = append(bookIds, bookId)
+	}
+
+	return bookIds, nil
+}
+
 func (s sqlIslandRepository) GetPoolOfBook(ctx context.Context, bookId string) (poolId string, found bool, err error) {
 	err = s.db.QueryRowContext(ctx, `SELECT pool_id FROM book_pools WHERE book_id = $1`, bookId).Scan(&poolId)
 	found = err == nil

@@ -49,6 +49,7 @@ type IslandStore interface {
 	SetTerritoryPoolSettings(ctx context.Context, territoryId string, settings TerritoryPoolSettings) error
 	GetTerritoryPoolSettings(ctx context.Context, territoryId string) (TerritoryPoolSettings, error)
 	AddBookToPool(ctx context.Context, poolId string, bookId string) error
+	GetBooksInPool(ctx context.Context, poolId string) (bookIds []string, err error)
 	GetPoolOfBook(ctx context.Context, bookId string) (poolId string, found bool, err error)
 	AssignBookToIslandFromPool(ctx context.Context, territoryId string, islandId string, userId int32) (bookId string, err error)
 	IsIslandPortable(ctx context.Context, userId int32, islandId string) (bool, error)
@@ -60,6 +61,7 @@ type UserStore interface {
 	Create(ctx context.Context, user *User) error
 	Get(ctx context.Context, id int32) (*User, error)
 	GetByUsername(ctx context.Context, username string) (*User, error)
+	GetAll(ctx context.Context) (users []User, err error)
 }
 
 type PlayerStore interface {

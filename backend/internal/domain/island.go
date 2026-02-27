@@ -13,7 +13,7 @@ type IslandHeader struct {
 	ID          string `json:"id"`
 	Name        string `json:"name"`
 	TerritoryID string `json:"territory_id"`
-	BookID      string `json:"bookId"`
+	BookID      string `json:"bookId,omitempty"`
 	FromPool    bool   `json:"fromPool"`
 }
 
@@ -127,6 +127,10 @@ const (
 
 func IsPoolIdValid(poolId string) bool {
 	return poolId == PoolEasy || poolId == PoolMedium || poolId == PoolHard
+}
+
+func PoolIds() []string {
+	return []string{PoolEasy, PoolMedium, PoolHard}
 }
 
 type TerritoryPoolSettings struct {

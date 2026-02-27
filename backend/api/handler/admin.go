@@ -62,6 +62,15 @@ func (a *admin) authMiddleware(next http.Handler) http.Handler {
 	})
 }
 
+func (a *admin) GetTerritories(w http.ResponseWriter, r *http.Request) {
+	result, err := a.adminService.GetTerritories(r.Context())
+	if err != nil {
+		a.handleAdminError(w, err)
+		return
+	}
+	sendResult(w, result)
+}
+
 func (a *admin) SetTerritory(w http.ResponseWriter, r *http.Request) {
 	var territory domain.Territory
 	if err := json.NewDecoder(r.Body).Decode(&territory); err != nil {
@@ -75,6 +84,26 @@ func (a *admin) SetTerritory(w http.ResponseWriter, r *http.Request) {
 	sendResult(w, territory)
 }
 
+func (a *admin) GetBook(w http.ResponseWriter, r *http.Request) {
+	bookID := chi.URLParam(r, "bookID")
+	result, err := a.adminService.GetBook(r.Context(), bookID)
+	if err != nil {
+		a.handleAdminError(w, err)
+		return
+	}
+	sendResult(w, result)
+}
+
+func (a *admin) GetIslandHeader(w http.ResponseWriter, r *http.Request) {
+	islandID := chi.URLParam(r, "islandID")
+	result, err := a.adminService.GetIslandHeader(r.Context(), islandID)
+	if err != nil {
+		a.handleAdminError(w, err)
+		return
+	}
+	sendResult(w, result)
+}
+
 func (a *admin) SetBookAndBindToIsland(w http.ResponseWriter, r *http.Request) {
 	islandID := chi.URLParam(r, "islandID")
 	var input service.BookInput
@@ -83,6 +112,15 @@ func (a *admin) SetBookAndBindToIsland(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	result, err := a.adminService.SetBookAndBindToIsland(r.Context(), islandID, input)
+	if err != nil {
+		a.handleAdminError(w, err)
+		return
+	}
+	sendResult(w, result)
+}
+
+func (a *admin) GetPools(w http.ResponseWriter, r *http.Request) {
+	result, err := a.adminService.GetPools(r.Context())
 	if err != nil {
 		a.handleAdminError(w, err)
 		return
@@ -165,6 +203,11 @@ func (a *admin) handleAdminError(w http.ResponseWriter, err error) {
 		}
 		return
 	}
+	switch {
+	case errors.Is(err, domain.ErrIslandNotFound):
+		sendError(w, http.StatusNotFound, err.Error())
+		return
+	}
 
 	errText := "<nil>"
 	if err != nil {
@@ -172,4 +215,13 @@ func (a *admin) handleAdminError(w http.ResponseWriter, err error) {
 	}
 	slog.Error("internal admin error", slog.String("error", errText))
 	sendError(w, http.StatusInternalServerError, fmt.Sprintf("Internal server error: %s", errText))
+}
+
+func (a *admin) GetUsers(w http.ResponseWriter, r *http.Request) {
+	result, err := a.adminService.GetUsers(r.Context())
+	if err != nil {
+		a.handleAdminError(w, err)
+		return
+	}
+	sendResult(w, result)
 }

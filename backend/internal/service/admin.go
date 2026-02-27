@@ -36,6 +36,10 @@ func NewAdmin(cfg config.Config, territoryStore domain.TerritoryStore, islandSto
 	}
 }
 
+func (a *Admin) GetTerritories(ctx context.Context) ([]domain.Territory, error) {
+	return a.territoryStore.ListTerritories(ctx)
+}
+
 func (a *Admin) SetTerritory(ctx context.Context, territory domain.Territory) error {
 	for _, island := range territory.Islands {
 		if island.ID == "" {
@@ -97,6 +101,10 @@ func (a *Admin) SetTerritory(ctx context.Context, territory domain.Territory) er
 	return a.territoryStore.SetTerritory(ctx, &territory)
 }
 
+func (a *Admin) GetIslandHeader(ctx context.Context, islandId string) (domain.IslandHeader, error) {
+	return a.islandStore.GetIslandHeader(ctx, islandId)
+}
+
 type BookInput struct {
 	BookId     string                   `json:"bookId"`
 	Components []*BookInputComponent    `json:"components"`
@@ -124,9 +132,6 @@ type IslandInputQuestion struct {
 
 func (a *Admin) SetBookAndBindToIsland(ctx context.Context, islandId string, input BookInput) (BookInput, error) {
 	territoryId, err := a.islandStore.GetTerritory(ctx, islandId)
-	if errors.Is(err, domain.ErrIslandNotFound) {
-		return input, AdminError{"island not found"}
-	}
 	if err != nil {
 		return input, err
 	}
@@ -237,6 +242,84 @@ func (a *Admin) setBook(ctx context.Context, input BookInput) (BookInput, error)
 	return input, nil
 }
 
+func (a *Admin) GetBook(ctx context.Context, bookId string) (BookInput, error) {
+	book, err := a.islandStore.GetBook(ctx, bookId)
+	if err != nil {
+		return BookInput{}, err
+	}
+	bookQuestions, err := a.questionStore.GetQuestions(ctx, bookId)
+	if err != nil {
+		return BookInput{}, err
+	}
+	treasures, err := a.treasureStore.GetTreasures(ctx, bookId)
+	if err != nil {
+		return BookInput{}, err
+	}
+
+	islandInputQuestions := make(map[string]IslandInputQuestion)
+	for _, q := range bookQuestions {
+		islandInputQuestions[q.QuestionID] = IslandInputQuestion{
+			ID:              q.QuestionID,
+			Text:            q.Text,
+			InputType:       q.InputType,
+			InputAccept:     q.InputAccept,
+			KnowledgeAmount: q.KnowledgeAmount,
+			RewardSource:    q.RewardSource,
+			Context:         q.Context,
+		}
+	}
+	result := BookInput{
+		BookId: book.ID,
+	}
+	for _, c := range book.Components {
+		if c.IFrame != nil {
+			result.Components = append(result.Components, &BookInputComponent{
+				IFrame: c.IFrame,
+			})
+			continue
+		}
+		if c.Question != nil {
+			q, ok := islandInputQuestions[c.Question.ID]
+			if !ok {
+				q.ID = c.Question.ID
+			}
+			result.Components = append(result.Components, &BookInputComponent{Question: &q})
+			delete(islandInputQuestions, c.Question.ID)
+			continue
+		}
+	}
+	for _, q := range islandInputQuestions {
+		result.Components = append(result.Components, &BookInputComponent{Question: &q})
+	}
+	for _, t := range treasures {
+		result.Treasures = append(result.Treasures, &BookTreasureComponent{
+			ID: t.ID,
+		})
+	}
+
+	return result, nil
+}
+
+type PoolOutput struct {
+	ID    string   `json:"id"`
+	Books []string `json:"books"`
+}
+
+func (a *Admin) GetPools(ctx context.Context) ([]PoolOutput, error) {
+	var result []PoolOutput
+	for _, poolId := range domain.PoolIds() {
+		books, err := a.islandStore.GetBooksInPool(ctx, poolId)
+		if err != nil {
+			return result, err
+		}
+		result = append(result, PoolOutput{
+			ID:    poolId,
+			Books: books,
+		})
+	}
+	return result, nil
+}
+
 type TerritoryIslandBindings struct {
 	TerritoryId   string                       `json:"territoryId"`
 	EmptyIslands  []string                     `json:"emptyIslands"`
@@ -305,7 +388,7 @@ func (a *Admin) SetTerritoryIslandBindings(ctx context.Context, bindings Territo
 type User struct {
 	Name              string `json:"name"`
 	Username          string `json:"username"`
-	Password          string `json:"password"`
+	Password          string `json:"password,omitempty"`
 	StartingTerritory string `json:"startingTerritory"`
 	MeetLink          string `json:"meetLink"`
 }
@@ -347,6 +430,22 @@ func (a *Admin) CreateUser(ctx context.Context, user User) (User, error) {
 		return user, err
 	}
 	return user, a.playerStore.Create(ctx, domain.NewPlayer(u.ID, startingTerritory))
+}
+
+func (a *Admin) GetUsers(ctx context.Context) ([]User, error) {
+	users, err := a.userStore.GetAll(ctx)
+	if err != nil {
+		return nil, err
+	}
+	result := make([]User, 0, len(users))
+	for _, u := range users {
+		result = append(result, User{
+			Name:     u.Name,
+			Username: u.Username,
+			MeetLink: u.MeetLink,
+		})
+	}
+	return result, nil
 }
 
 func (a *Admin) Login(_ context.Context, username string, password string) (string, error) {

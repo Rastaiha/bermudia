@@ -115,11 +115,16 @@ func (h *Handler) Start() {
 
 		r.Group(func(r chi.Router) {
 			r.Use(h.adminHandler.authMiddleware)
+			r.Get("/territories", h.adminHandler.GetTerritories)
 			r.Post("/territories", h.adminHandler.SetTerritory)
+			r.Get("/territories/{territoryID}/pool_settings", h.adminHandler.GetTerritoryIslandBindings)
+			r.Post("/territories/{territoryID}/pool_settings", h.adminHandler.SetTerritoryIslandBindings)
+			r.Get("/books/{bookID}", h.adminHandler.GetBook)
+			r.Get("/islands/{islandID}", h.adminHandler.GetIslandHeader)
 			r.Post("/islands/{islandID}/book", h.adminHandler.SetBookAndBindToIsland)
+			r.Get("/pools", h.adminHandler.GetPools)
 			r.Post("/pools/{poolID}/books", h.adminHandler.SetBookAndBindToPool)
-			r.Get("/territories/{territoryID}/pool_bindings", h.adminHandler.GetTerritoryIslandBindings)
-			r.Post("/territories/{territoryID}/pool_bindings", h.adminHandler.SetTerritoryIslandBindings)
+			r.Get("/users", h.adminHandler.GetUsers)
 			r.Post("/users", h.adminHandler.CreateUser)
 		})
 	})
