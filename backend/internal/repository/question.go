@@ -30,7 +30,7 @@ CREATE INDEX IF NOT EXISTS idx_questions_book_id ON questions (book_id);
 	answersSchema = `
 CREATE TABLE IF NOT EXISTS answers (
     user_id INT4 NOT NULL,
-    question_id VARCHAR(255) NOT NULL REFERENCES questions(id),
+    question_id VARCHAR(255) NOT NULL REFERENCES questions(question_id),
     status INT4 NOT NULL,
     requested_help BOOLEAN NOT NULL DEFAULT FALSE,
     help_state INT NOT NULL DEFAULT 0,

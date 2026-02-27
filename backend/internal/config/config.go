@@ -20,8 +20,8 @@ type Config struct {
 	CorrectionRevertWindow time.Duration `config:"correction_revert_window"`
 	CreateMock             bool          `config:"create_mock"`
 	AdminsGroup            int64         `config:"admins_group"`
-	AdminUsername          string        `json:"admin_username"`
-	AdminPassword          string        `json:"admin_password"`
+	AdminUsername          string        `config:"admin_username"`
+	AdminPassword          string        `config:"admin_password"`
 }
 
 func (c Config) TokenSigningKeyBytes() []byte {

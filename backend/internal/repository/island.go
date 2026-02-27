@@ -121,6 +121,9 @@ func (s sqlIslandRepository) SetBook(ctx context.Context, book domain.Book) erro
 func (s sqlIslandRepository) GetBook(ctx context.Context, bookId string) (*domain.Book, error) {
 	var content []byte
 	err := s.db.QueryRowContext(ctx, `SELECT content FROM books WHERE id = $1`, bookId).Scan(&content)
+	if errors.Is(err, sql.ErrNoRows) {
+		return nil, domain.ErrBookNotFound
+	}
 	if err != nil {
 		return nil, fmt.Errorf("get content of book of island: %w", err)
 	}
@@ -159,7 +162,7 @@ func (s sqlIslandRepository) scanIslandHeader(row scannable, header *domain.Isla
 }
 
 func (s sqlIslandRepository) GetIslandHeadersByTerritory(ctx context.Context, territoryId string) (result []domain.IslandHeader, err error) {
-	rows, err := s.db.QueryContext(ctx, `SELECT `+s.islandHeaderColumnsToSelect()+` WHERE territory_id = $1`, territoryId)
+	rows, err := s.db.QueryContext(ctx, `SELECT `+s.islandHeaderColumnsToSelect()+`FROM islands WHERE territory_id = $1`, territoryId)
 	if err != nil {
 		return nil, fmt.Errorf("get island headers by territory %q: %w", territoryId, err)
 	}
@@ -265,7 +268,9 @@ func (s sqlIslandRepository) GetTerritoryPoolSettings(ctx context.Context, terri
 
 	err := s.db.QueryRowContext(ctx, `SELECT easy, medium, hard FROM territory_pool_settings WHERE territory_id = $1`, territoryId).
 		Scan(&settings.Easy, &settings.Medium, &settings.Hard)
-
+	if errors.Is(err, sql.ErrNoRows) {
+		return domain.TerritoryPoolSettings{}, domain.ErrPoolSettingsNotFound
+	}
 	if err != nil {
 		return domain.TerritoryPoolSettings{}, err
 	}

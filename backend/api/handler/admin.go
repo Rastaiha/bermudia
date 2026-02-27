@@ -204,7 +204,16 @@ func (a *admin) handleAdminError(w http.ResponseWriter, err error) {
 		return
 	}
 	switch {
+	case errors.Is(err, domain.ErrTerritoryNotFound):
+		sendError(w, http.StatusNotFound, err.Error())
+		return
 	case errors.Is(err, domain.ErrIslandNotFound):
+		sendError(w, http.StatusNotFound, err.Error())
+		return
+	case errors.Is(err, domain.ErrBookNotFound):
+		sendError(w, http.StatusNotFound, err.Error())
+		return
+	case errors.Is(err, domain.ErrPoolSettingsNotFound):
 		sendError(w, http.StatusNotFound, err.Error())
 		return
 	}

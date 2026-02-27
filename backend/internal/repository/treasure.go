@@ -71,13 +71,15 @@ func (s sqlTreasureRepository) BindTreasuresToBook(ctx context.Context, bookId s
 	if err != nil {
 		return fmt.Errorf("failed to query current book questions: %w", err)
 	}
-	defer rows.Close()
 	for rows.Next() {
 		var treasureId string
 		if err := rows.Scan(&treasureId); err != nil {
 			return fmt.Errorf("failed to scan current book question: %w", err)
 		}
 		bookTreasuresBeforeChange = append(bookTreasuresBeforeChange, treasureId)
+	}
+	if err := rows.Close(); err != nil {
+		return err
 	}
 
 	for _, t := range treasures {
@@ -171,19 +173,21 @@ func (s sqlTreasureRepository) GetTreasure(ctx context.Context, treasureId strin
 	return treasure, err
 }
 
-func (s sqlTreasureRepository) GetTreasures(ctx context.Context, bookId string) ([]domain.Treasure, error) {
-	var treasures []domain.Treasure
+func (s sqlTreasureRepository) GetTreasures(ctx context.Context, bookId string) (treasures []domain.Treasure, err error) {
 	rows, err := s.db.QueryContext(ctx, `SELECT id, book_id FROM treasures WHERE book_id = $1`, bookId)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get treasures: %w", err)
 	}
-	defer rows.Close()
+	defer func() {
+		err = rows.Close()
+	}()
 	for rows.Next() {
 		var treasure domain.Treasure
 		err := rows.Scan(&treasure.ID, &treasure.BookID)
 		if err != nil {
 			return nil, fmt.Errorf("failed to scan treasures: %w", err)
 		}
+		treasures = append(treasures, treasure)
 	}
 	return treasures, nil
 }

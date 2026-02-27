@@ -41,9 +41,15 @@ func (a *Admin) GetTerritories(ctx context.Context) ([]domain.Territory, error) 
 }
 
 func (a *Admin) SetTerritory(ctx context.Context, territory domain.Territory) error {
+	if territory.ID == "" {
+		return AdminError{"id is required"}
+	}
 	for _, island := range territory.Islands {
 		if island.ID == "" {
 			return AdminError{"empty island id in island list"}
+		}
+		if island.Name == "" {
+			return AdminError{"empty island name in island list"}
 		}
 	}
 	if territory.StartIsland == "" {
@@ -331,6 +337,9 @@ func (a *Admin) GetTerritoryIslandBindings(ctx context.Context, territoryId stri
 	binding := TerritoryIslandBindings{
 		TerritoryId: territoryId,
 	}
+	if _, err := a.territoryStore.GetTerritoryByID(ctx, binding.TerritoryId); err != nil {
+		return binding, err
+	}
 	islands, err := a.islandStore.GetIslandHeadersByTerritory(ctx, territoryId)
 	if err != nil {
 		return binding, fmt.Errorf("failed to get island headers by territory %q: %w", territoryId, err)
@@ -340,10 +349,14 @@ func (a *Admin) GetTerritoryIslandBindings(ctx context.Context, territoryId stri
 			binding.PooledIslands = append(binding.PooledIslands, h.ID)
 		}
 		if !h.FromPool && h.BookID == "" {
-			binding.PooledIslands = append(binding.EmptyIslands, h.ID)
+			binding.EmptyIslands = append(binding.EmptyIslands, h.ID)
 		}
 	}
 	settings, err := a.islandStore.GetTerritoryPoolSettings(ctx, territoryId)
+	if errors.Is(err, domain.ErrPoolSettingsNotFound) {
+		err = nil
+		settings = domain.TerritoryPoolSettings{}
+	}
 	if err != nil {
 		return binding, err
 	}
@@ -355,6 +368,9 @@ func (a *Admin) SetTerritoryIslandBindings(ctx context.Context, bindings Territo
 	pooledCount := int32(len(bindings.PooledIslands))
 	if pooledCount != bindings.PoolSettings.TotalCount() {
 		return bindings, AdminError{fmt.Sprintf("number of pooled islands don't match pool settings: %d vs %d", pooledCount, bindings.PoolSettings.TotalCount())}
+	}
+	if _, err := a.territoryStore.GetTerritoryByID(ctx, bindings.TerritoryId); err != nil {
+		return bindings, err
 	}
 	err := a.islandStore.SetTerritoryPoolSettings(ctx, bindings.TerritoryId, bindings.PoolSettings)
 	if err != nil {
@@ -389,7 +405,7 @@ type User struct {
 	Name              string `json:"name"`
 	Username          string `json:"username"`
 	Password          string `json:"password,omitempty"`
-	StartingTerritory string `json:"startingTerritory"`
+	StartingTerritory string `json:"startingTerritory,omitempty"`
 	MeetLink          string `json:"meetLink"`
 }
 
@@ -481,7 +497,7 @@ func (a *Admin) ValidateToken(_ context.Context, tokenStr string) bool {
 	if !token.Valid {
 		return false
 	}
-	if iat, err := token.Claims.GetIssuedAt(); err != nil || time.Since(iat.Time) > 1*time.Hour {
+	if iat, err := token.Claims.GetIssuedAt(); err != nil || time.Since(iat.Time) > 6*time.Hour {
 		return false
 	}
 	claims, ok := token.Claims.(jwt.MapClaims)
