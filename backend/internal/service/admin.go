@@ -162,8 +162,10 @@ func (a *Admin) SetBookAndBindToPool(ctx context.Context, poolId string, input B
 }
 
 func (a *Admin) setBook(ctx context.Context, input BookInput) (BookInput, error) {
-	if input.BookId == "" || !domain.IdHasType(input.BookId, domain.ResourceTypeBook) {
+	if input.BookId == "" {
 		input.BookId = domain.NewID(domain.ResourceTypeBook)
+	} else if !domain.IdHasType(input.BookId, domain.ResourceTypeBook) {
+		return input, AdminError{fmt.Sprintf("invalid bookId %q", input.BookId)}
 	}
 	book := domain.Book{ID: input.BookId, Components: make([]domain.BookComponent, 0)}
 	var questions []domain.BookQuestion
@@ -192,8 +194,10 @@ func (a *Admin) setBook(ctx context.Context, input BookInput) (BookInput, error)
 			if c.Question.Text == "" {
 				return input, AdminError{fmt.Sprintf("empty text for book %q question at index %d", book.ID, i)}
 			}
-			if c.Question.ID == "" || !domain.IdHasType(c.Question.ID, domain.ResourceTypeQuestion) {
+			if c.Question.ID == "" {
 				c.Question.ID = domain.NewID(domain.ResourceTypeQuestion)
+			} else if !domain.IdHasType(c.Question.ID, domain.ResourceTypeQuestion) {
+				return input, AdminError{fmt.Sprintf("invalid question id %q", c.Question.ID)}
 			}
 			questions = append(questions, domain.BookQuestion{
 				QuestionID:      c.Question.ID,
@@ -211,8 +215,10 @@ func (a *Admin) setBook(ctx context.Context, input BookInput) (BookInput, error)
 		return input, AdminError{fmt.Sprintf("unknown component for book %q at index %d", book.ID, i)}
 	}
 	for _, t := range input.Treasures {
-		if t.ID == "" || !domain.IdHasType(t.ID, domain.ResourceTypeTreasure) {
+		if t.ID == "" {
 			t.ID = domain.NewID(domain.ResourceTypeTreasure)
+		} else if !domain.IdHasType(t.ID, domain.ResourceTypeTreasure) {
+			return input, AdminError{fmt.Sprintf("invalid treasure id %q", t.ID)}
 		}
 		treasures = append(treasures, domain.Treasure{ID: t.ID, BookID: input.BookId})
 	}
