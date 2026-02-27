@@ -100,6 +100,7 @@ type TreasureStore interface {
 	BindTreasuresToBook(ctx context.Context, bookId string, treasures []Treasure) error
 	GetOrCreateUserTreasure(ctx context.Context, userId int32, treasureId string) (UserTreasure, error)
 	GetTreasure(ctx context.Context, treasureId string) (Treasure, error)
+	GetTreasures(ctx context.Context, bookId string) ([]Treasure, error)
 	GetUserTreasure(ctx context.Context, userId int32, treasureId string) (UserTreasure, error)
 	UpdateUserTreasure(ctx context.Context, old UserTreasure, updated UserTreasure) error
 }

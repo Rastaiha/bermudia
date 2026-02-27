@@ -167,6 +167,7 @@ func (a *Admin) setBook(ctx context.Context, input BookInput) (BookInput, error)
 	}
 	book := domain.Book{ID: input.BookId, Components: make([]domain.BookComponent, 0)}
 	var questions []domain.BookQuestion
+	var treasures []domain.Treasure
 	for i, c := range input.Components {
 		if c.IFrame != nil {
 			if c.IFrame.Url == "" {
@@ -213,7 +214,7 @@ func (a *Admin) setBook(ctx context.Context, input BookInput) (BookInput, error)
 		if t.ID == "" || !domain.IdHasType(t.ID, domain.ResourceTypeTreasure) {
 			t.ID = domain.NewID(domain.ResourceTypeTreasure)
 		}
-		book.Treasures = append(book.Treasures, domain.Treasure{ID: t.ID, BookID: input.BookId})
+		treasures = append(treasures, domain.Treasure{ID: t.ID, BookID: input.BookId})
 	}
 	err := a.islandStore.SetBook(ctx, book)
 	if err != nil {
@@ -223,7 +224,7 @@ func (a *Admin) setBook(ctx context.Context, input BookInput) (BookInput, error)
 	if err != nil {
 		return input, fmt.Errorf("failed to bind questions to book: %w", err)
 	}
-	err = a.treasureStore.BindTreasuresToBook(ctx, book.ID, book.Treasures)
+	err = a.treasureStore.BindTreasuresToBook(ctx, book.ID, treasures)
 	if err != nil {
 		return input, fmt.Errorf("failed to bind treasures to book: %w", err)
 	}

@@ -127,6 +127,10 @@ func (i *Island) GetIsland(ctx context.Context, userId int32, islandId string) (
 	if err != nil {
 		return nil, err
 	}
+	treasures, err := i.treasureStore.GetTreasures(ctx, bookId)
+	if err != nil {
+		return nil, err
+	}
 
 	questionComponents := make(map[string]domain.IslandComponent)
 	for _, question := range bookQuestions {
@@ -169,7 +173,7 @@ func (i *Island) GetIsland(ctx context.Context, userId int32, islandId string) (
 	for _, q := range questionComponents {
 		content.Components = append(content.Components, q)
 	}
-	for _, t := range book.Treasures {
+	for _, t := range treasures {
 		userTreasure, err := i.treasureStore.GetOrCreateUserTreasure(ctx, userId, t.ID)
 		if err != nil {
 			return nil, err

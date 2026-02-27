@@ -59,7 +59,6 @@ type Island struct {
 type Book struct {
 	ID         string          `json:"id"`
 	Components []BookComponent `json:"components"`
-	Treasures  []Treasure      `json:"treasures"`
 }
 
 type BookComponent struct {
