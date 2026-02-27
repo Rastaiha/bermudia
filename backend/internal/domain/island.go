@@ -63,8 +63,12 @@ type Book struct {
 }
 
 type BookComponent struct {
-	IFrame   *IslandIFrame `json:"iframe,omitempty"`
-	Question *Question     `json:"question,omitempty"`
+	IFrame   *IslandIFrame        `json:"iframe,omitempty"`
+	Question *QuestionPlaceholder `json:"question,omitempty"`
+}
+
+type QuestionPlaceholder struct {
+	ID string `json:"id"`
 }
 
 type IslandContent struct {

@@ -113,10 +113,13 @@ type BookInputComponent struct {
 }
 
 type IslandInputQuestion struct {
-	domain.Question
-	KnowledgeAmount int32  `json:"knowledgeAmount"`
-	RewardSource    string `json:"rewardSource,omitempty"`
-	Context         string `json:"correctionHintMessage,omitempty"`
+	ID              string   `json:"id"`
+	Text            string   `json:"text"`
+	InputType       string   `json:"inputType"`
+	InputAccept     []string `json:"inputAccept"`
+	KnowledgeAmount int32    `json:"knowledgeAmount"`
+	RewardSource    string   `json:"rewardSource,omitempty"`
+	Context         string   `json:"correctionHintMessage,omitempty"`
 }
 
 func (a *Admin) SetBookAndBindToIsland(ctx context.Context, islandId string, input BookInput) (BookInput, error) {
@@ -195,11 +198,13 @@ func (a *Admin) setBook(ctx context.Context, input BookInput) (BookInput, error)
 				QuestionID:      c.Question.ID,
 				BookID:          input.BookId,
 				Text:            c.Question.Text,
+				InputType:       c.Question.InputType,
+				InputAccept:     c.Question.InputAccept,
 				KnowledgeAmount: c.Question.KnowledgeAmount,
 				RewardSource:    c.Question.RewardSource,
 				Context:         c.Question.Context,
 			})
-			book.Components = append(book.Components, domain.BookComponent{Question: &c.Question.Question})
+			book.Components = append(book.Components, domain.BookComponent{Question: &domain.QuestionPlaceholder{ID: c.Question.ID}})
 			continue
 		}
 		return input, AdminError{fmt.Sprintf("unknown component for book %q at index %d", book.ID, i)}

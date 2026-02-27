@@ -3,9 +3,11 @@ package repository
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"log/slog"
+	"slices"
 	"time"
 
 	"github.com/Rastaiha/bermudia/internal/domain"
@@ -15,8 +17,10 @@ const (
 	questionsSchema = `
 CREATE TABLE IF NOT EXISTS questions (
     question_id VARCHAR(255) PRIMARY KEY,
-    book_id VARCHAR(255) NOT NULL,
+    book_id VARCHAR(255) NOT NULL REFERENCES books(id),
     text TEXT NOT NULL,
+    input_type VARCHAR(255) NOT NULL,
+    input_accept TEXT NOT NULL,
     context TEXT NOT NULL,
     knowledge_amount INT4 NOT NULL,
     reward_source VARCHAR(255)
@@ -26,7 +30,7 @@ CREATE INDEX IF NOT EXISTS idx_questions_book_id ON questions (book_id);
 	answersSchema = `
 CREATE TABLE IF NOT EXISTS answers (
     user_id INT4 NOT NULL,
-    question_id VARCHAR(255) NOT NULL,
+    question_id VARCHAR(255) NOT NULL REFERENCES questions(id),
     status INT4 NOT NULL,
     requested_help BOOLEAN NOT NULL DEFAULT FALSE,
     help_state INT NOT NULL DEFAULT 0,
@@ -88,20 +92,48 @@ func (s sqlQuestionRepository) BindQuestionsToBook(ctx context.Context, bookId s
 			err = tx.Commit()
 		}
 	}()
-	_, err = tx.ExecContext(ctx, `DELETE FROM questions WHERE book_id = $1`, bookId)
+
+	var bookQuestionsBeforeChange []string
+	rows, err := tx.QueryContext(ctx, `SELECT question_id FROM questions WHERE book_id = $1`, bookId)
 	if err != nil {
-		return fmt.Errorf("delete questions: %w", err)
+		return fmt.Errorf("failed to query current book questions: %w", err)
 	}
+	defer rows.Close()
+	for rows.Next() {
+		var questionId string
+		if err := rows.Scan(&questionId); err != nil {
+			return fmt.Errorf("failed to scan current book question: %w", err)
+		}
+		bookQuestionsBeforeChange = append(bookQuestionsBeforeChange, questionId)
+	}
+
 	for _, q := range questions {
+		inputAccept, err := json.Marshal(q.InputAccept)
+		if err != nil {
+			return fmt.Errorf("failed to marshal input_accept: %w", err)
+		}
 		_, err = tx.ExecContext(ctx,
-			`INSERT INTO questions (question_id, book_id, text, context, knowledge_amount, reward_source) VALUES ($1, $2, $3, $4, $5, $6)
-					ON CONFLICT (question_id) DO UPDATE SET book_id = $2, text = $3, context = $4, knowledge_amount = $5, reward_source = $6`,
-			n(q.QuestionID), n(bookId), n(q.Text), q.Context, q.KnowledgeAmount, n(q.RewardSource),
+			`INSERT INTO questions (question_id, book_id, text, input_type, input_accept, context, knowledge_amount, reward_source) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+					ON CONFLICT (question_id) DO UPDATE SET book_id = $2, text = $3, input_type = $4, input_accept = $5, context = $6, knowledge_amount = $7, reward_source = $8`,
+			n(q.QuestionID), n(bookId), n(q.Text), n(q.InputType), inputAccept, q.Context, q.KnowledgeAmount, n(q.RewardSource),
 		)
 		if err != nil {
 			return fmt.Errorf("insert questions: %w", err)
 		}
 	}
+
+	for _, questionId := range bookQuestionsBeforeChange {
+		if slices.ContainsFunc(questions, func(question domain.BookQuestion) bool {
+			return question.QuestionID == questionId
+		}) {
+			continue
+		}
+		_, err := tx.ExecContext(ctx, `DELETE FROM questions WHERE question_id = $1`, questionId)
+		if err != nil {
+			return fmt.Errorf("failed to delete obsolete question %q in book %q: %w", questionId, bookId, err)
+		}
+	}
+
 	return nil
 }
 
@@ -258,13 +290,38 @@ WHERE i.id = $4 ;
 func (s sqlQuestionRepository) GetQuestion(ctx context.Context, questionId string) (domain.BookQuestion, error) {
 	var question domain.BookQuestion
 	var rewardSource sql.NullString
-	err := s.db.QueryRowContext(ctx, `SELECT question_id, book_id, text, context, knowledge_amount, reward_source FROM questions WHERE question_id = $1 ;`,
-		questionId).Scan(&question.QuestionID, &question.BookID, &question.Text, &question.Context, &question.KnowledgeAmount, &rewardSource)
+	var inputAccept string
+	err := s.db.QueryRowContext(ctx, `SELECT question_id, book_id, text, input_type, input_accept, context, knowledge_amount, reward_source FROM questions WHERE question_id = $1 ;`,
+		questionId).Scan(&question.QuestionID, &question.BookID, &question.Text, &question.InputType, &inputAccept, &question.Context, &question.KnowledgeAmount, &rewardSource)
+	_ = json.Unmarshal([]byte(inputAccept), &question.InputAccept)
 	question.RewardSource = rewardSource.String
 	if errors.Is(err, sql.ErrNoRows) {
 		return question, domain.ErrQuestionNotFound
 	}
 	return question, err
+}
+
+func (s sqlQuestionRepository) GetQuestions(ctx context.Context, bookId string) ([]domain.BookQuestion, error) {
+	var questions []domain.BookQuestion
+	rows, err := s.db.QueryContext(ctx, `SELECT question_id, book_id, text, input_type, input_accept, context, knowledge_amount, reward_source FROM questions WHERE book_id = $1 ;`,
+		bookId)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var question domain.BookQuestion
+		var rewardSource sql.NullString
+		var inputAccept string
+		err = rows.Scan(&question.QuestionID, &question.BookID, &question.Text, &question.InputType, &inputAccept, &question.Context, &question.KnowledgeAmount, &rewardSource)
+		if err != nil {
+			return nil, err
+		}
+		_ = json.Unmarshal([]byte(inputAccept), &question.InputAccept)
+		question.RewardSource = rewardSource.String
+		questions = append(questions, question)
+	}
+	return questions, nil
 }
 
 func (s sqlQuestionRepository) CreateCorrection(ctx context.Context, correction domain.Correction) error {

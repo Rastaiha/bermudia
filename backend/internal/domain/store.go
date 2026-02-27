@@ -87,6 +87,7 @@ type QuestionStore interface {
 	GetKnowledgeBars(ctx context.Context, userId int32) ([]KnowledgeBar, error)
 	HasAnsweredIsland(ctx context.Context, userId int32, islandId string) (bool, error)
 	GetQuestion(ctx context.Context, questionId string) (BookQuestion, error)
+	GetQuestions(ctx context.Context, bookId string) ([]BookQuestion, error)
 	CreateCorrection(ctx context.Context, Correction Correction) error
 	ApplyCorrection(ctx context.Context, tx Tx, ifBefore time.Time, correction Correction) (Answer, bool, error)
 	GetUnappliedCorrections(ctx context.Context, before time.Time) ([]Correction, error)
