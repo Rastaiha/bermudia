@@ -39,11 +39,11 @@ func NewAdmin(cfg config.Config, territoryStore domain.TerritoryStore, islandSto
 func (a *Admin) SetTerritory(ctx context.Context, territory domain.Territory) error {
 	for _, island := range territory.Islands {
 		if island.ID == "" {
-			return fmt.Errorf("empty island id in island list")
+			return AdminError{"empty island id in island list"}
 		}
 	}
 	if territory.StartIsland == "" {
-		return errors.New("invalid territory startIsland")
+		return AdminError{"invalid territory startIsland"}
 	}
 	isInIslands := func(id string) bool {
 		return slices.ContainsFunc(territory.Islands, func(island domain.Island) bool {
@@ -51,36 +51,36 @@ func (a *Admin) SetTerritory(ctx context.Context, territory domain.Territory) er
 		})
 	}
 	if !isInIslands(territory.StartIsland) {
-		return fmt.Errorf("startIsland %q not found in island list", territory.StartIsland)
+		return AdminError{fmt.Sprintf("startIsland %q not found in island list", territory.StartIsland)}
 	}
 	for _, e := range territory.Edges {
 		if e.From == "" || e.To == "" {
-			return fmt.Errorf("empty edge.from or edge.to: %v", e)
+			return AdminError{fmt.Sprintf("empty edge.from or edge.to: %v", e)}
 		}
 		if !isInIslands(e.From) {
-			return fmt.Errorf("edge.from %q is not in island list", e.From)
+			return AdminError{fmt.Sprintf("edge.from %q is not in island list", e.From)}
 		}
 		if !isInIslands(e.To) {
-			return fmt.Errorf("edge.to %q is not in island list", e.To)
+			return AdminError{fmt.Sprintf("edge.to %q is not in island list", e.To)}
 		}
 	}
 	for _, r := range territory.RefuelIslands {
 		if !isInIslands(r.ID) {
-			return fmt.Errorf("refuelIsland %q not found in island list", r.ID)
+			return AdminError{fmt.Sprintf("refuelIsland %q not found in island list", r.ID)}
 		}
 	}
 	for _, t := range territory.TerminalIslands {
 		if !isInIslands(t.ID) {
-			return fmt.Errorf("terminalIsland %q not found in island list", t.ID)
+			return AdminError{fmt.Sprintf("terminalIsland %q not found in island list", t.ID)}
 		}
 	}
 	for islandID, prerequisites := range territory.IslandPrerequisites {
 		if !isInIslands(islandID) {
-			return fmt.Errorf("island %q in prerequisites not found in island list", islandID)
+			return AdminError{fmt.Sprintf("island %q in prerequisites not found in island list", islandID)}
 		}
 		for _, p := range prerequisites {
 			if !isInIslands(p) {
-				return fmt.Errorf("prerequisite %q not found in island list", p)
+				return AdminError{fmt.Sprintf("prerequisite %q not found in island list", p)}
 			}
 		}
 	}
@@ -121,8 +121,11 @@ type IslandInputQuestion struct {
 
 func (a *Admin) SetBookAndBindToIsland(ctx context.Context, islandId string, input BookInput) (BookInput, error) {
 	territoryId, err := a.islandStore.GetTerritory(ctx, islandId)
+	if errors.Is(err, domain.ErrIslandNotFound) {
+		return input, AdminError{"island not found"}
+	}
 	if err != nil {
-		return input, fmt.Errorf("island %q does not have territory", islandId)
+		return input, err
 	}
 	input, err = a.setBook(ctx, input)
 	if err != nil {
@@ -142,7 +145,7 @@ func (a *Admin) SetBookAndBindToIsland(ctx context.Context, islandId string, inp
 
 func (a *Admin) SetBookAndBindToPool(ctx context.Context, poolId string, input BookInput) (BookInput, error) {
 	if !domain.IsPoolIdValid(poolId) {
-		return input, fmt.Errorf("invalid poolId %q", poolId)
+		return input, AdminError{fmt.Sprintf("invalid poolId %q", poolId)}
 	}
 	input, err := a.setBook(ctx, input)
 	if err != nil {
@@ -164,26 +167,26 @@ func (a *Admin) setBook(ctx context.Context, input BookInput) (BookInput, error)
 	for i, c := range input.Components {
 		if c.IFrame != nil {
 			if c.IFrame.Url == "" {
-				return input, fmt.Errorf("empty url for book %q iframe component at index %d", book.ID, i)
+				return input, AdminError{fmt.Sprintf("empty url for book %q iframe component at index %d", book.ID, i)}
 			}
 			book.Components = append(book.Components, domain.BookComponent{IFrame: c.IFrame})
 			continue
 		}
 		if c.Question != nil {
 			if c.Question.InputType == "" {
-				return input, fmt.Errorf("empty inputType for book %q question at index %d", book.ID, i)
+				return input, AdminError{fmt.Sprintf("empty inputType for book %q question at index %d", book.ID, i)}
 			}
 			if c.Question.InputType == "file" && len(c.Question.InputAccept) == 0 {
-				return input, fmt.Errorf("empty inputAccept for book %q question at index %d", book.ID, i)
+				return input, AdminError{fmt.Sprintf("empty inputAccept for book %q question at index %d", book.ID, i)}
 			}
 			if c.Question.KnowledgeAmount < 0 {
-				return input, fmt.Errorf("negative knowledgeAmount for book %q question at index %d", book.ID, i)
+				return input, AdminError{fmt.Sprintf("negative knowledgeAmount for book %q question at index %d", book.ID, i)}
 			}
 			if !domain.IsValidRewardSource(c.Question.RewardSource) {
-				return input, fmt.Errorf("invalid reward source %q", c.Question.RewardSource)
+				return input, AdminError{fmt.Sprintf("invalid reward source %q", c.Question.RewardSource)}
 			}
 			if c.Question.Text == "" {
-				return input, fmt.Errorf("empty text for book %q question at index %d", book.ID, i)
+				return input, AdminError{fmt.Sprintf("empty text for book %q question at index %d", book.ID, i)}
 			}
 			if c.Question.ID == "" || !domain.IdHasType(c.Question.ID, domain.ResourceTypeQuestion) {
 				c.Question.ID = domain.NewID(domain.ResourceTypeQuestion)
@@ -199,7 +202,7 @@ func (a *Admin) setBook(ctx context.Context, input BookInput) (BookInput, error)
 			book.Components = append(book.Components, domain.BookComponent{Question: &c.Question.Question})
 			continue
 		}
-		return input, fmt.Errorf("unknown component for book %q at index %d", book.ID, i)
+		return input, AdminError{fmt.Sprintf("unknown component for book %q at index %d", book.ID, i)}
 	}
 	for _, t := range input.Treasures {
 		if t.ID == "" || !domain.IdHasType(t.ID, domain.ResourceTypeTreasure) {
@@ -256,7 +259,7 @@ func (a *Admin) GetTerritoryIslandBindings(ctx context.Context, territoryId stri
 func (a *Admin) SetTerritoryIslandBindings(ctx context.Context, bindings TerritoryIslandBindings) (TerritoryIslandBindings, error) {
 	pooledCount := int32(len(bindings.PooledIslands))
 	if pooledCount != bindings.PoolSettings.TotalCount() {
-		return bindings, fmt.Errorf("number of pooled islands don't match pool settings: %d vs %d", pooledCount, bindings.PoolSettings.TotalCount())
+		return bindings, AdminError{fmt.Sprintf("number of pooled islands don't match pool settings: %d vs %d", pooledCount, bindings.PoolSettings.TotalCount())}
 	}
 	err := a.islandStore.SetTerritoryPoolSettings(ctx, bindings.TerritoryId, bindings.PoolSettings)
 	if err != nil {
@@ -295,41 +298,34 @@ type User struct {
 	MeetLink          string `json:"meetLink"`
 }
 
-func (a *Admin) CreateUser(ctx context.Context, index int, user User) (User, error) {
+func (a *Admin) CreateUser(ctx context.Context, user User) (User, error) {
 	if user.Username == "" {
-		return User{}, fmt.Errorf("username is required")
+		return User{}, AdminError{"username is required"}
 	}
 	if user.Password == "" {
 		b := make([]byte, 8)
 		_, _ = cRand.Read(b)
 		user.Password = base64.RawURLEncoding.EncodeToString(b)
 	}
-	territories, err := a.territoryStore.ListTerritories(ctx)
+	if user.StartingTerritory == "" {
+		return User{}, AdminError{"startingTerritory is required"}
+	}
+
+	startingTerritory, err := a.territoryStore.GetTerritoryByID(ctx, user.StartingTerritory)
+	if errors.Is(err, domain.ErrTerritoryNotFound) {
+		return user, AdminError{fmt.Sprintf("failed to find starting territory %q", user.StartingTerritory)}
+	}
 	if err != nil {
 		return user, err
 	}
-	if len(territories) == 0 {
-		return user, errors.New("no territory found")
-	}
-
-	id := rand.Int31()
-	startingTerritory := territories[index%len(territories)]
-	if startingTerritory.ID != "" {
-		for _, t := range territories {
-			if t.ID == user.StartingTerritory {
-				startingTerritory = t
-				break
-			}
-		}
-	}
-	user.StartingTerritory = startingTerritory.ID
 
 	hp, err := domain.HashPassword(user.Password)
 	if err != nil {
 		return user, err
 	}
+
 	u := &domain.User{
-		ID:             id,
+		ID:             rand.Int31(),
 		Username:       user.Username,
 		Name:           user.Name,
 		MeetLink:       user.MeetLink,
@@ -338,7 +334,7 @@ func (a *Admin) CreateUser(ctx context.Context, index int, user User) (User, err
 	if err := a.userStore.Create(ctx, u); err != nil {
 		return user, err
 	}
-	return user, a.playerStore.Create(ctx, domain.NewPlayer(u.ID, &startingTerritory))
+	return user, a.playerStore.Create(ctx, domain.NewPlayer(u.ID, startingTerritory))
 }
 
 func (a *Admin) Login(_ context.Context, username string, password string) (string, error) {
@@ -387,4 +383,12 @@ func (a *Admin) ValidateToken(_ context.Context, tokenStr string) bool {
 	}
 	isAdmin, _ := v.(bool)
 	return isAdmin
+}
+
+type AdminError struct {
+	text string
+}
+
+func (e AdminError) Error() string {
+	return e.text
 }

@@ -1,14 +1,16 @@
 package handler
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"github.com/Rastaiha/bermudia/internal/config"
 	"github.com/Rastaiha/bermudia/internal/domain"
 	"github.com/Rastaiha/bermudia/internal/service"
 	"github.com/go-chi/chi/v5"
+	"log/slog"
 	"net/http"
-	"strconv"
 	"strings"
 )
 
@@ -35,7 +37,7 @@ func (a *admin) Login(w http.ResponseWriter, r *http.Request) {
 			sendError(w, http.StatusNotFound, "نام کاربری یا کلمه عبور اشتباه است")
 			return
 		}
-		handleError(w, err)
+		a.handleAdminError(w, err)
 		return
 	}
 	sendResult(w, map[string]any{
@@ -67,7 +69,7 @@ func (a *admin) SetTerritory(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err := a.adminService.SetTerritory(r.Context(), territory); err != nil {
-		handleError(w, err)
+		a.handleAdminError(w, err)
 		return
 	}
 	sendResult(w, territory)
@@ -82,7 +84,7 @@ func (a *admin) SetBookAndBindToIsland(w http.ResponseWriter, r *http.Request) {
 	}
 	result, err := a.adminService.SetBookAndBindToIsland(r.Context(), islandID, input)
 	if err != nil {
-		handleError(w, err)
+		a.handleAdminError(w, err)
 		return
 	}
 	sendResult(w, result)
@@ -97,7 +99,7 @@ func (a *admin) SetBookAndBindToPool(w http.ResponseWriter, r *http.Request) {
 	}
 	result, err := a.adminService.SetBookAndBindToPool(r.Context(), poolID, input)
 	if err != nil {
-		handleError(w, err)
+		a.handleAdminError(w, err)
 		return
 	}
 	sendResult(w, result)
@@ -107,7 +109,7 @@ func (a *admin) GetTerritoryIslandBindings(w http.ResponseWriter, r *http.Reques
 	territoryID := chi.URLParam(r, "territoryID")
 	result, err := a.adminService.GetTerritoryIslandBindings(r.Context(), territoryID)
 	if err != nil {
-		handleError(w, err)
+		a.handleAdminError(w, err)
 		return
 	}
 	sendResult(w, result)
@@ -121,32 +123,53 @@ func (a *admin) SetTerritoryIslandBindings(w http.ResponseWriter, r *http.Reques
 	}
 	result, err := a.adminService.SetTerritoryIslandBindings(r.Context(), bindings)
 	if err != nil {
-		handleError(w, err)
+		a.handleAdminError(w, err)
 		return
 	}
 	sendResult(w, result)
 }
 
 func (a *admin) CreateUser(w http.ResponseWriter, r *http.Request) {
-	indexStr := r.URL.Query().Get("index")
-	index := 0
-	if indexStr != "" {
-		var err error
-		index, err = strconv.Atoi(indexStr)
-		if err != nil {
-			sendError(w, http.StatusBadRequest, "invalid index query parameter")
-			return
-		}
-	}
 	var user service.User
 	if err := json.NewDecoder(r.Body).Decode(&user); err != nil {
 		sendDecodeError(w)
 		return
 	}
-	result, err := a.adminService.CreateUser(r.Context(), index, user)
+	result, err := a.adminService.CreateUser(r.Context(), user)
 	if err != nil {
-		handleError(w, err)
+		a.handleAdminError(w, err)
 		return
 	}
 	sendResult(w, result)
+}
+
+func (a *admin) handleAdminError(w http.ResponseWriter, err error) {
+	if errors.Is(err, context.Canceled) {
+		sendError(w, http.StatusRequestTimeout, "Request cancelled")
+		return
+	}
+	var adminError service.AdminError
+	if errors.As(err, &adminError) {
+		sendError(w, http.StatusBadRequest, adminError.Error())
+		return
+	}
+	var domainError domain.Error
+	if errors.As(err, &domainError) {
+		switch domainError.Reason() {
+		case domain.ErrorReasonResourceNotFound:
+			sendError(w, http.StatusNotFound, domainError.Error())
+		case domain.ErrorReasonRuleViolation:
+			sendError(w, http.StatusConflict, domainError.Error())
+		default:
+			sendError(w, http.StatusInternalServerError, domainError.Error())
+		}
+		return
+	}
+
+	errText := "<nil>"
+	if err != nil {
+		errText = err.Error()
+	}
+	slog.Error("internal admin error", slog.String("error", errText))
+	sendError(w, http.StatusInternalServerError, fmt.Sprintf("Internal server error: %s", errText))
 }
