@@ -59,12 +59,15 @@ type Island struct {
 type Book struct {
 	ID         string          `json:"id"`
 	Components []BookComponent `json:"components"`
-	Treasures  []Treasure      `json:"treasures"`
 }
 
 type BookComponent struct {
-	IFrame   *IslandIFrame `json:"iframe,omitempty"`
-	Question *Question     `json:"question,omitempty"`
+	IFrame   *IslandIFrame        `json:"iframe,omitempty"`
+	Question *QuestionPlaceholder `json:"question,omitempty"`
+}
+
+type QuestionPlaceholder struct {
+	ID string `json:"id"`
 }
 
 type IslandContent struct {
@@ -124,6 +127,10 @@ const (
 
 func IsPoolIdValid(poolId string) bool {
 	return poolId == PoolEasy || poolId == PoolMedium || poolId == PoolHard
+}
+
+func PoolIds() []string {
+	return []string{PoolEasy, PoolMedium, PoolHard}
 }
 
 type TerritoryPoolSettings struct {

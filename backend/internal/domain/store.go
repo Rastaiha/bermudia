@@ -15,9 +15,11 @@ var (
 	ErrAnswerNotPending           = errors.New("answer not in pending state")
 	ErrQuestionNotRelatedToIsland = errors.New("question not related to island")
 	ErrInvalidIslandHeader        = errors.New("invalid island header")
+	ErrPoolSettingsNotFound       = errors.New("pool settings not found")
 	ErrPoolSettingExhausted       = errors.New("pool setting exhausted")
 	ErrBookPoolExhausted          = errors.New("book pool exhausted")
 	ErrNoBookAssignedFromPool     = errors.New("no book assigned from pool")
+	ErrBookNotFound               = errors.New("book not found")
 	ErrEmptyIsland                = errors.New("empty island")
 	ErrUserTreasureConflict       = errors.New("user treasure update conflict")
 	ErrAlreadyApplied             = errors.New("already applied")
@@ -49,6 +51,7 @@ type IslandStore interface {
 	SetTerritoryPoolSettings(ctx context.Context, territoryId string, settings TerritoryPoolSettings) error
 	GetTerritoryPoolSettings(ctx context.Context, territoryId string) (TerritoryPoolSettings, error)
 	AddBookToPool(ctx context.Context, poolId string, bookId string) error
+	GetBooksInPool(ctx context.Context, poolId string) (bookIds []string, err error)
 	GetPoolOfBook(ctx context.Context, bookId string) (poolId string, found bool, err error)
 	AssignBookToIslandFromPool(ctx context.Context, territoryId string, islandId string, userId int32) (bookId string, err error)
 	IsIslandPortable(ctx context.Context, userId int32, islandId string) (bool, error)
@@ -60,6 +63,7 @@ type UserStore interface {
 	Create(ctx context.Context, user *User) error
 	Get(ctx context.Context, id int32) (*User, error)
 	GetByUsername(ctx context.Context, username string) (*User, error)
+	GetAll(ctx context.Context) (users []User, err error)
 }
 
 type PlayerStore interface {
@@ -87,6 +91,7 @@ type QuestionStore interface {
 	GetKnowledgeBars(ctx context.Context, userId int32) ([]KnowledgeBar, error)
 	HasAnsweredIsland(ctx context.Context, userId int32, islandId string) (bool, error)
 	GetQuestion(ctx context.Context, questionId string) (BookQuestion, error)
+	GetQuestions(ctx context.Context, bookId string) ([]BookQuestion, error)
 	CreateCorrection(ctx context.Context, Correction Correction) error
 	ApplyCorrection(ctx context.Context, tx Tx, ifBefore time.Time, correction Correction) (Answer, bool, error)
 	GetUnappliedCorrections(ctx context.Context, before time.Time) ([]Correction, error)
@@ -99,6 +104,7 @@ type TreasureStore interface {
 	BindTreasuresToBook(ctx context.Context, bookId string, treasures []Treasure) error
 	GetOrCreateUserTreasure(ctx context.Context, userId int32, treasureId string) (UserTreasure, error)
 	GetTreasure(ctx context.Context, treasureId string) (Treasure, error)
+	GetTreasures(ctx context.Context, bookId string) ([]Treasure, error)
 	GetUserTreasure(ctx context.Context, userId int32, treasureId string) (UserTreasure, error)
 	UpdateUserTreasure(ctx context.Context, old UserTreasure, updated UserTreasure) error
 }

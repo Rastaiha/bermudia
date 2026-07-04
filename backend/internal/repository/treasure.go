@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"slices"
 	"time"
 
 	"github.com/Rastaiha/bermudia/internal/domain"
@@ -15,14 +16,14 @@ const (
 	treasuresSchema = `
 CREATE TABLE IF NOT EXISTS treasures (
     id VARCHAR(255) PRIMARY KEY,
-    book_id VARCHAR(255) NOT NULL
+    book_id VARCHAR(255) NOT NULL REFERENCES books(id)
 );
 CREATE INDEX IF NOT EXISTS idx_treasures_book_id ON treasures (book_id);
 `
 	userTreasuresSchema = `
 CREATE TABLE IF NOT EXISTS user_treasures (
     user_id INT4 NOT NULL,
-    treasure_id VARCHAR(255) NOT NULL,
+    treasure_id VARCHAR(255) NOT NULL REFERENCES treasures(id),
     unlocked BOOLEAN NOT NULL,
     cost TEXT NOT NULL,
     alt_cost TEXT NOT NULL,
@@ -64,10 +65,23 @@ func (s sqlTreasureRepository) BindTreasuresToBook(ctx context.Context, bookId s
 			err = tx.Commit()
 		}
 	}()
-	_, err = tx.ExecContext(ctx, `DELETE FROM treasures WHERE book_id = $1`, bookId)
+
+	var bookTreasuresBeforeChange []string
+	rows, err := tx.QueryContext(ctx, `SELECT id FROM treasures WHERE book_id = $1`, bookId)
 	if err != nil {
-		return fmt.Errorf("delete treasures: %w", err)
+		return fmt.Errorf("failed to query current book questions: %w", err)
 	}
+	for rows.Next() {
+		var treasureId string
+		if err := rows.Scan(&treasureId); err != nil {
+			return fmt.Errorf("failed to scan current book question: %w", err)
+		}
+		bookTreasuresBeforeChange = append(bookTreasuresBeforeChange, treasureId)
+	}
+	if err := rows.Close(); err != nil {
+		return err
+	}
+
 	for _, t := range treasures {
 		_, err = tx.ExecContext(ctx, `INSERT INTO treasures (id, book_id) VALUES ($1, $2) ON CONFLICT (id) DO UPDATE SET book_id = $2`,
 			n(t.ID), n(bookId),
@@ -76,6 +90,19 @@ func (s sqlTreasureRepository) BindTreasuresToBook(ctx context.Context, bookId s
 			return fmt.Errorf("insert treasures: %w", err)
 		}
 	}
+
+	for _, tId := range bookTreasuresBeforeChange {
+		if slices.ContainsFunc(treasures, func(treasure domain.Treasure) bool {
+			return treasure.ID == tId
+		}) {
+			continue
+		}
+		_, err := tx.ExecContext(ctx, `DELETE FROM treasures WHERE id = $1`, tId)
+		if err != nil {
+			return fmt.Errorf("failed to delete obsolete treasure %q in book %q: %w", tId, bookId, err)
+		}
+	}
+
 	return nil
 }
 
@@ -144,6 +171,25 @@ func (s sqlTreasureRepository) GetTreasure(ctx context.Context, treasureId strin
 		return treasure, domain.ErrTreasureNotFound
 	}
 	return treasure, err
+}
+
+func (s sqlTreasureRepository) GetTreasures(ctx context.Context, bookId string) (treasures []domain.Treasure, err error) {
+	rows, err := s.db.QueryContext(ctx, `SELECT id, book_id FROM treasures WHERE book_id = $1`, bookId)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get treasures: %w", err)
+	}
+	defer func() {
+		err = rows.Close()
+	}()
+	for rows.Next() {
+		var treasure domain.Treasure
+		err := rows.Scan(&treasure.ID, &treasure.BookID)
+		if err != nil {
+			return nil, fmt.Errorf("failed to scan treasures: %w", err)
+		}
+		treasures = append(treasures, treasure)
+	}
+	return treasures, nil
 }
 
 func (s sqlTreasureRepository) GetUserTreasure(ctx context.Context, userId int32, treasureId string) (domain.UserTreasure, error) {

@@ -5,17 +5,12 @@ import (
 	"time"
 )
 
-type Question struct {
-	ID          string   `json:"id"`
-	Text        string   `json:"text"`
-	InputType   string   `json:"inputType"`
-	InputAccept []string `json:"inputAccept"`
-}
-
 type BookQuestion struct {
 	QuestionID      string
 	BookID          string
 	Text            string
+	InputType       string
+	InputAccept     []string
 	KnowledgeAmount int32
 	RewardSource    string
 	Context         string

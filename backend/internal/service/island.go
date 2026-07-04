@@ -123,7 +123,31 @@ func (i *Island) GetIsland(ctx context.Context, userId int32, islandId string) (
 	if err != nil {
 		return nil, err
 	}
+	bookQuestions, err := i.questionStore.GetQuestions(ctx, bookId)
+	if err != nil {
+		return nil, err
+	}
+	treasures, err := i.treasureStore.GetTreasures(ctx, bookId)
+	if err != nil {
+		return nil, err
+	}
 
+	questionComponents := make(map[string]domain.IslandComponent)
+	for _, question := range bookQuestions {
+		answer, err := i.questionStore.GetOrCreateAnswer(ctx, userId, question.QuestionID)
+		if err != nil {
+			return nil, err
+		}
+		questionComponents[question.QuestionID] = domain.IslandComponent{
+			Input: &domain.IslandInput{
+				ID:              question.QuestionID,
+				Type:            question.InputType,
+				Accept:          question.InputAccept,
+				Description:     question.Text,
+				SubmissionState: domain.GetSubmissionState(question, answer),
+			},
+		}
+	}
 	content := &domain.IslandContent{}
 	for _, c := range book.Components {
 		if c.IFrame != nil {
@@ -131,27 +155,25 @@ func (i *Island) GetIsland(ctx context.Context, userId int32, islandId string) (
 			continue
 		}
 		if c.Question != nil {
-			question, err := i.questionStore.GetQuestion(ctx, c.Question.ID)
-			if err != nil {
-				return nil, err
+			q, ok := questionComponents[c.Question.ID]
+			if ok {
+				content.Components = append(content.Components, q)
+				delete(questionComponents, c.Question.ID)
+			} else {
+				slog.Warn("book questions configuration mismatch: missing question", slog.String("bookId", bookId), slog.String("questionId", c.Question.ID))
 			}
-			answer, err := i.questionStore.GetOrCreateAnswer(ctx, userId, c.Question.ID)
-			if err != nil {
-				return nil, err
-			}
-			content.Components = append(content.Components, domain.IslandComponent{
-				Input: &domain.IslandInput{
-					ID:              c.Question.ID,
-					Type:            c.Question.InputType,
-					Accept:          c.Question.InputAccept,
-					Description:     c.Question.Text,
-					SubmissionState: domain.GetSubmissionState(question, answer),
-				},
-			})
 			continue
 		}
 	}
-	for _, t := range book.Treasures {
+	// questionComponents should be empty here,
+	// but in case something has gone wrong in configuration, just append the remaining questions so users can answer them
+	if len(questionComponents) > 0 {
+		slog.Warn("book questions configuration mismatch", slog.String("bookId", bookId))
+	}
+	for _, q := range questionComponents {
+		content.Components = append(content.Components, q)
+	}
+	for _, t := range treasures {
 		userTreasure, err := i.treasureStore.GetOrCreateUserTreasure(ctx, userId, t.ID)
 		if err != nil {
 			return nil, err

@@ -19,6 +19,7 @@ import (
 
 type Handler struct {
 	cfg              config.Config
+	adminHandler     *admin
 	server           *http.Server
 	wsUpgrader       websocket.Upgrader
 	authService      *service.Auth
@@ -30,9 +31,13 @@ type Handler struct {
 	inboxHub         *hub.Hub
 }
 
-func New(cfg config.Config, authService *service.Auth, territoryService *service.Territory, islandService *service.Island, playerService *service.Player) *Handler {
+func New(cfg config.Config, authService *service.Auth, adminService *service.Admin, territoryService *service.Territory, islandService *service.Island, playerService *service.Player) *Handler {
 	return &Handler{
-		cfg:              cfg,
+		cfg: cfg,
+		adminHandler: &admin{
+			cfg:          cfg,
+			adminService: adminService,
+		},
 		authService:      authService,
 		territoryService: territoryService,
 		islandService:    islandService,
@@ -102,6 +107,25 @@ func (h *Handler) Start() {
 			r.Post("/trade/accept_offer", h.AcceptOffer)
 			r.Post("/trade/delete_offer", h.DeleteOffer)
 			r.Post("/invest", h.Invest)
+		})
+	})
+
+	r.Route("/admin", func(r chi.Router) {
+		r.Post("/login", h.adminHandler.Login)
+
+		r.Group(func(r chi.Router) {
+			r.Use(h.adminHandler.authMiddleware)
+			r.Get("/territories", h.adminHandler.GetTerritories)
+			r.Post("/territories", h.adminHandler.SetTerritory)
+			r.Get("/territories/{territoryID}/island_bindings", h.adminHandler.GetTerritoryIslandBindings)
+			r.Post("/territories/{territoryID}/island_bindings", h.adminHandler.SetTerritoryIslandBindings)
+			r.Get("/books/{bookID}", h.adminHandler.GetBook)
+			r.Get("/islands/{islandID}", h.adminHandler.GetIslandHeader)
+			r.Post("/islands/{islandID}/book", h.adminHandler.SetBookAndBindToIsland)
+			r.Get("/pools", h.adminHandler.GetPools)
+			r.Post("/pools/{poolID}/books", h.adminHandler.SetBookAndBindToPool)
+			r.Get("/users", h.adminHandler.GetUsers)
+			r.Post("/users", h.adminHandler.CreateUser)
 		})
 	})
 

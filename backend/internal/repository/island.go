@@ -121,6 +121,9 @@ func (s sqlIslandRepository) SetBook(ctx context.Context, book domain.Book) erro
 func (s sqlIslandRepository) GetBook(ctx context.Context, bookId string) (*domain.Book, error) {
 	var content []byte
 	err := s.db.QueryRowContext(ctx, `SELECT content FROM books WHERE id = $1`, bookId).Scan(&content)
+	if errors.Is(err, sql.ErrNoRows) {
+		return nil, domain.ErrBookNotFound
+	}
 	if err != nil {
 		return nil, fmt.Errorf("get content of book of island: %w", err)
 	}
@@ -159,7 +162,7 @@ func (s sqlIslandRepository) scanIslandHeader(row scannable, header *domain.Isla
 }
 
 func (s sqlIslandRepository) GetIslandHeadersByTerritory(ctx context.Context, territoryId string) (result []domain.IslandHeader, err error) {
-	rows, err := s.db.QueryContext(ctx, `SELECT `+s.islandHeaderColumnsToSelect()+` WHERE territory_id = $1`, territoryId)
+	rows, err := s.db.QueryContext(ctx, `SELECT `+s.islandHeaderColumnsToSelect()+`FROM islands WHERE territory_id = $1`, territoryId)
 	if err != nil {
 		return nil, fmt.Errorf("get island headers by territory %q: %w", territoryId, err)
 	}
@@ -265,7 +268,9 @@ func (s sqlIslandRepository) GetTerritoryPoolSettings(ctx context.Context, terri
 
 	err := s.db.QueryRowContext(ctx, `SELECT easy, medium, hard FROM territory_pool_settings WHERE territory_id = $1`, territoryId).
 		Scan(&settings.Easy, &settings.Medium, &settings.Hard)
-
+	if errors.Is(err, sql.ErrNoRows) {
+		return domain.TerritoryPoolSettings{}, domain.ErrPoolSettingsNotFound
+	}
 	if err != nil {
 		return domain.TerritoryPoolSettings{}, err
 	}
@@ -276,6 +281,25 @@ func (s sqlIslandRepository) GetTerritoryPoolSettings(ctx context.Context, terri
 func (s sqlIslandRepository) AddBookToPool(ctx context.Context, poolId string, bookId string) error {
 	_, err := s.db.ExecContext(ctx, `INSERT INTO book_pools (pool_id, book_id) VALUES ($1, $2) ON CONFLICT (book_id) DO UPDATE SET pool_id = EXCLUDED.pool_id ;`, n(poolId), n(bookId))
 	return err
+}
+
+func (s sqlIslandRepository) GetBooksInPool(ctx context.Context, poolId string) (bookIds []string, err error) {
+	rows, err := s.db.QueryContext(ctx, `SELECT book_id FROM book_pools WHERE pool_id = $1`, poolId)
+	if err != nil {
+		return nil, err
+	}
+	defer func() {
+		err = rows.Close()
+	}()
+	for rows.Next() {
+		var bookId string
+		if err := rows.Scan(&bookId); err != nil {
+			return nil, err
+		}
+		bookIds = append(bookIds, bookId)
+	}
+
+	return bookIds, nil
 }
 
 func (s sqlIslandRepository) GetPoolOfBook(ctx context.Context, bookId string) (poolId string, found bool, err error) {
