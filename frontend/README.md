@@ -6,22 +6,13 @@ The Bermudia frontend is a modern, responsive Vue.js 3 application that provides
 
 ### useAudioPlayer
 
-Manages audio playback:
+Drives a shared `<audio>` element based on the `set-audio-state` event and mute setting (see the "Audio System" section below for details):
 
 ```javascript
-import { useAudioPlayer } from '@/composables/useAudioPlayer'
+import { useAudioPlayer } from '@/composables/useAudioPlayer';
 
-const {
-  currentTrack,
-  isPlaying,
-  volume,
-  play,
-  pause,
-  toggle,
-  setVolume,
-  next,
-  previous
-} = useAudioPlayer()
+const audioPlayer = ref(null); // ref to an <audio> element
+const { handleSongEnd } = useAudioPlayer(audioPlayer);
 ```
 
 ### useCountdownToNoon
@@ -29,9 +20,9 @@ const {
 Provides countdown timer functionality:
 
 ```javascript
-import { useCountdownToNoon } from '@/composables/useCountdownToNoon'
+import { useCountdownToNoon } from '@/composables/useCountdownToNoon';
 
-const { timeUntilNoon, formatted } = useCountdownToNoon()
+const { timeUntilNoon, formatted } = useCountdownToNoon();
 // formatted: "2h 15m 30s"
 ```
 
@@ -40,9 +31,9 @@ const { timeUntilNoon, formatted } = useCountdownToNoon()
 Reactive current time:
 
 ```javascript
-import { useNow } from '@/composables/useNow'
+import { useNow } from '@/composables/useNow';
 
-const { now } = useNow()
+const { now } = useNow();
 // Updates every second
 ```
 
@@ -50,26 +41,27 @@ const { now } = useNow()
 
 Routes are defined in `src/router/index.js`:
 
-| Route | Component | Description |
-|-------|-----------|-------------|
-| `/` | Login.vue | Authentication page |
-| `/territory/:id` | Territory.vue | Territory map view |
-| `/territory/:territoryId/island/:islandId` | TerritoryIsland.vue | Island detail view |
+| Route                      | Component             | Description         |
+| -------------------------- | --------------------- | ------------------- |
+| `/`                        | redirects to `/login` | Root redirect       |
+| `/login`                   | Login.vue             | Authentication page |
+| `/territory/:id`           | Territory.vue         | Territory map view  |
+| `/territory/:id/:islandId` | TerritoryIsland.vue   | Island detail view  |
 
 ### Navigation Guards
 
-Protected routes require authentication:
+Routes with `meta: { requiresAuth: true }` require authentication:
 
 ```javascript
 router.beforeEach((to, from, next) => {
-  const token = localStorage.getItem('token')
-  
-  if (to.path !== '/' && !token) {
-    next('/')
-  } else {
-    next()
-  }
-})
+    const isLoggedIn = !!getToken();
+
+    if (to.meta.requiresAuth && !isLoggedIn) {
+        next({ name: 'Login' });
+    } else {
+        next();
+    }
+});
 ```
 
 ## 📱 State Management
@@ -79,24 +71,21 @@ router.beforeEach((to, from, next) => {
 Centralized UI state management in `src/services/uiState.js`:
 
 ```javascript
-import { uiState } from '@/services/uiState'
+import { uiState } from '@/services/uiState';
 
 // Show/hide components
-uiState.showMarket = true
-uiState.showBackpack = false
+uiState.showMarket = true;
+uiState.showBackpack = false;
 
 // Modal state
-uiState.modalData = { type: 'treasure', data: treasureInfo }
+uiState.modalData = { type: 'treasure', data: treasureInfo };
 ```
 
 ### Local Storage
 
-Key data persisted in localStorage:
+Key data persisted client-side:
 
-- `token`: JWT authentication token
-- `userId`: Current user ID
-- `audioSettings`: Volume and mute preferences
-- `uiPreferences`: UI customization settings
+- `authToken`: JWT authentication token, stored in `localStorage` if "remember me" is checked at login, otherwise in `sessionStorage`
 
 ## 🎮 Game Flow
 
@@ -104,21 +93,21 @@ Key data persisted in localStorage:
 
 ```vue
 <script setup>
-import { ref } from 'vue'
-import api from '@/services/api'
+import { ref } from 'vue';
+import { login, getPlayer } from '@/services/api/index.js';
+import { useRouter } from 'vue-router';
 
-const username = ref('')
-const password = ref('')
+const username = ref('');
+const password = ref('');
+const router = useRouter();
 
-const login = async () => {
-  const response = await api.post('/auth/login', {
-    username: username.value,
-    password: password.value
-  })
-  
-  localStorage.setItem('token', response.token)
-  router.push('/territory/1')
-}
+const handleLogin = async () => {
+    const result = await login(username.value, password.value);
+    // result.token is already persisted to localStorage/sessionStorage by login()
+
+    const playerData = await getPlayer();
+    router.push({ name: 'Territory', params: { id: playerData.atTerritory } });
+};
 </script>
 ```
 
@@ -126,20 +115,18 @@ const login = async () => {
 
 ```vue
 <script setup>
-import { ref, onMounted } from 'vue'
-import api from '@/services/api'
+import { ref, onMounted } from 'vue';
+import { getTerritory } from '@/services/api/index.js';
 
-const territories = ref([])
-const currentTerritory = ref(null)
+const territory = ref(null);
 
 onMounted(async () => {
-  territories.value = await api.get('/territories')
-  currentTerritory.value = territories.value[0]
-})
+    territory.value = await getTerritory(territoryId);
+});
 
-const navigateToIsland = (islandId) => {
-  router.push(`/territory/${currentTerritory.value.id}/island/${islandId}`)
-}
+const navigateToIsland = islandId => {
+    router.push({ name: 'Island', params: { id: territoryId, islandId } });
+};
 </script>
 ```
 
@@ -147,38 +134,21 @@ const navigateToIsland = (islandId) => {
 
 ```vue
 <script setup>
-import { ref } from 'vue'
-import api from '@/services/api'
-import { showNotification } from '@/services/notificationService'
+import { ref } from 'vue';
+import { submitAnswer } from '@/services/api/index.js';
+import { useToast } from 'vue-toastification';
 
-const challenge = ref(null)
-const answer = ref('')
+const toast = useToast();
+const island = ref(null);
 
-const submitAnswer = async () => {
-  try {
-    const result = await api.post(`/islands/${islandId}/challenge`, {
-      answer: answer.value,
-      question_id: challenge.value.id
-    })
-    
-    if (result.correct) {
-      showNotification({
-        type: 'success',
-        message: 'Correct answer! +' + result.reward.coins + ' coins'
-      })
-    } else {
-      showNotification({
-        type: 'error',
-        message: 'Incorrect answer. Try again!'
-      })
+const handleSubmit = async formData => {
+    try {
+        const result = await submitAnswer(island.value.id, formData);
+        toast.success('Correct answer!');
+    } catch (error) {
+        toast.error(error.message || 'Error submitting answer');
     }
-  } catch (error) {
-    showNotification({
-      type: 'error',
-      message: 'Error submitting answer'
-    })
-  }
-}
+};
 </script>
 ```
 
@@ -186,56 +156,26 @@ const submitAnswer = async () => {
 
 ```vue
 <script setup>
-import { ref, onMounted } from 'vue'
-import { connectWebSocket } from '@/services/marketWebsocket'
+import { ref, onMounted } from 'vue';
+import { getTradeOffers, acceptTradeOffer } from '@/services/api/index.js';
+import { useMarketWebSocket } from '@/services/marketWebsocket';
 
-const offers = ref([])
-const ws = ref(null)
+const offers = ref([]);
 
-onMounted(() => {
-  // Connect to market websocket
-  ws.value = connectWebSocket()
-  
-  ws.value.on('market_update', (newOffers) => {
-    offers.value = newOffers
-  })
-})
+onMounted(async () => {
+    offers.value = await getTradeOffers();
+    useMarketWebSocket(/* ... */);
+});
 
-const acceptOffer = async (offerId) => {
-  await api.post(`/market/offers/${offerId}/accept`)
-  showNotification({
-    type: 'success',
-    message: 'Trade completed successfully!'
-  })
-}
+const acceptOffer = async offerId => {
+    await acceptTradeOffer(offerId);
+};
 </script>
 ```
 
 ## 🧪 Testing
 
-### Run Tests
-
-```bash
-npm run test
-# or
-yarn test
-```
-
-### Component Testing
-
-```bash
-npm run test:unit
-# or
-yarn test:unit
-```
-
-### E2E Testing
-
-```bash
-npm run test:e2e
-# or
-yarn test:e2e
-```
+There is currently no automated test suite (no unit or e2e test scripts are configured in `package.json`). Verification is done manually by running the dev server and exercising the app.
 
 ## 🔧 Development Tools
 
@@ -244,39 +184,34 @@ yarn test:e2e
 Custom Vite configuration in `vite.config.js`:
 
 ```javascript
-import { defineConfig } from 'vite'
-import vue from '@vitejs/plugin-vue'
-import path from 'path'
+import { defineConfig } from 'vite';
+import vue from '@vitejs/plugin-vue';
+import path from 'path';
+import tailwindcss from '@tailwindcss/vite';
+import svgLoader from 'vite-svg-loader';
 
 export default defineConfig({
-  plugins: [vue()],
-  resolve: {
-    alias: {
-      '@': path.resolve(__dirname, './src'),
+    resolve: {
+        alias: {
+            '@': path.resolve(__dirname, './src'),
+        },
     },
-  },
-  server: {
-    port: 5173,
-    proxy: {
-      '/api': {
-        target: 'http://localhost:8080',
-        changeOrigin: true,
-      },
-    },
-  },
-})
+    plugins: [vue(), tailwindcss(), svgLoader()],
+});
 ```
+
+Note: there is no dev-server API proxy configured — the app talks directly to the absolute API base URL defined in `src/services/api/base_url.js`.
 
 ### ESLint Configuration
 
 Code linting configured in `eslint.config.js`:
 
 ```bash
-# Run linter
+# Run linter (auto-fixes issues)
 npm run lint
 
-# Fix auto-fixable issues
-npm run lint:fix
+# Check only, no auto-fix
+npm run lint:check
 ```
 
 ### Prettier Configuration
@@ -293,14 +228,15 @@ npm run format:check
 
 ### Husky Git Hooks
 
-Pre-commit hooks ensure code quality:
+A pre-commit hook runs `lint-staged`, which lints and formats staged files automatically:
 
 ```bash
-# Hooks run automatically on git commit
-# - Linting
-# - Formatting
-# - Type checking
+# .husky/pre-commit
+cd frontend
+npx lint-staged
 ```
+
+`lint-staged` runs `eslint --fix` and `prettier --write` on staged `.js`/`.jsx`/`.vue` files, and `prettier --write` on staged `.css`/`.scss`/`.less`/`.html`/`.json`/`.md` files. There is no type checking (the project is plain JavaScript, not TypeScript).
 
 ## 📊 Performance Optimization
 
@@ -310,11 +246,11 @@ Routes are lazy-loaded for better performance:
 
 ```javascript
 const routes = [
-  {
-    path: '/territory/:id',
-    component: () => import('@/pages/Territory.vue')
-  }
-]
+    {
+        path: '/territory/:id',
+        component: () => import('@/pages/Territory.vue'),
+    },
+];
 ```
 
 ### Image Optimization
@@ -343,26 +279,9 @@ Install Vue Devtools browser extension for debugging:
 - Event tracking
 - Performance profiling
 
-### Debug Mode
-
-Enable debug mode in `.env`:
-
-```env
-VITE_DEBUG_MODE=true
-```
-
 ### Console Logging
 
-Service logs can be enabled:
-
-```javascript
-// In any service file
-const DEBUG = import.meta.env.VITE_DEBUG_MODE === 'true'
-
-if (DEBUG) {
-  console.log('API Request:', endpoint, data)
-}
-```
+There is no built-in `.env`-driven debug flag; the app does not read any `import.meta.env` variables. Add `console.log` statements directly where needed during development and remove them before committing.
 
 ## 🌐 Browser Support
 
@@ -380,42 +299,40 @@ For older browser support, consider adding polyfills.
 ```vue
 <script setup>
 // 1. Imports
-import { ref, computed, onMounted } from 'vue'
-import api from '@/services/api'
+import { ref, computed, onMounted } from 'vue';
+import { getPlayer } from '@/services/api/index.js';
 
 // 2. Props
 const props = defineProps({
-  id: String,
-  data: Object
-})
+    id: String,
+    data: Object,
+});
 
 // 3. Emits
-const emit = defineEmits(['update', 'close'])
+const emit = defineEmits(['update', 'close']);
 
 // 4. Reactive state
-const loading = ref(false)
-const items = ref([])
+const loading = ref(false);
+const player = ref(null);
 
 // 5. Computed properties
-const filteredItems = computed(() => {
-  return items.value.filter(item => item.active)
-})
+const isReady = computed(() => !loading.value && player.value !== null);
 
 // 6. Methods
 const fetchData = async () => {
-  loading.value = true
-  items.value = await api.get('/items')
-  loading.value = false
-}
+    loading.value = true;
+    player.value = await getPlayer();
+    loading.value = false;
+};
 
 // 7. Lifecycle hooks
 onMounted(() => {
-  fetchData()
-})
+    fetchData();
+});
 </script>
 
 <template>
-  <!-- Template content -->
+    <!-- Template content -->
 </template>
 
 <style scoped>
@@ -434,10 +351,10 @@ onMounted(() => {
 
 ### Authentication
 
-- JWT tokens stored in localStorage
-- Tokens included in Authorization header
-- Automatic token refresh before expiration
-- Logout clears all stored tokens
+- JWT token stored in `localStorage` or `sessionStorage` (depending on "remember me")
+- Token included in the `Authorization: Bearer <token>` header on authenticated requests
+- A `401` response automatically triggers logout (token cleared, redirect to `/login`)
+- There is no automatic token refresh
 
 ### XSS Prevention
 
@@ -464,23 +381,23 @@ npm run build
 
 Output in `dist/` directory.
 
-### Environment Variables
+### API Base URL
 
-Set production environment variables:
+There are no `.env`-based environment variables. The API and WebSocket base URLs are hardcoded in `src/services/api/base_url.js` and must be edited directly (and the app rebuilt) to point at a different backend:
 
-```env
-VITE_API_BASE_URL=https://api.bermudia.example.com/api
-VITE_WS_BASE_URL=wss://api.bermudia.example.com/api/ws
+```javascript
+export const BASE_URLS = {
+    API: 'https://bermudia-api-internal.darkube.ir/api/v1',
+    WS: 'wss://bermudia-api-internal.darkube.ir/api/v1',
+};
 ```
 
 ### Nginx Configuration
 
 The included `nginx.conf` handles:
 
-- Static file serving
-- Gzip compression
-- Caching headers
-- SPA routing fallback
+- Static file serving with SPA routing fallback (`try_files $uri /index.html`)
+- Gzip compression for common text/asset types
 
 ### Deploy to Static Hosting
 
@@ -502,11 +419,9 @@ The included `nginx.conf` handles:
 
 ```json
 {
-  "buildCommand": "npm run build",
-  "outputDirectory": "dist",
-  "rewrites": [
-    { "source": "/(.*)", "destination": "/" }
-  ]
+    "buildCommand": "npm run build",
+    "outputDirectory": "dist",
+    "rewrites": [{ "source": "/(.*)", "destination": "/" }]
 }
 ```
 
@@ -530,24 +445,24 @@ The included `nginx.conf` handles:
 
 1. Create a feature branch
 
-   ```bash
-   git checkout -b feature/new-feature
-   ```
+    ```bash
+    git checkout -b feature/new-feature
+    ```
 
 2. Make changes and test locally
 
 3. Run linter and formatter
 
-   ```bash
-   npm run lint:fix
-   npm run format
-   ```
+    ```bash
+    npm run lint
+    npm run format
+    ```
 
 4. Commit with descriptive message
 
-   ```bash
-   git commit -m "feat: add new island navigation feature"
-   ```
+    ```bash
+    git commit -m "feat: add new island navigation feature"
+    ```
 
 5. Push and create pull request
 
@@ -575,7 +490,7 @@ npm install
 
 ### WebSocket Connection Failed
 
-Check that backend WebSocket server is running and `VITE_WS_BASE_URL` is correct.
+Check that the backend WebSocket server is running and that the `WS` URL in `src/services/api/base_url.js` is correct.
 
 ### Build Errors
 
@@ -651,45 +566,39 @@ frontend/
 
 1. **Clone the repository**
 
-   ```bash
-   git clone https://github.com/Rastaiha/bermudia.git
-   cd bermudia/frontend
-   ```
+    ```bash
+    git clone https://github.com/Rastaiha/bermudia.git
+    cd bermudia/frontend
+    ```
 
 2. **Install dependencies**
 
-   ```bash
-   npm install
-   # or
-   yarn install
-   ```
+    ```bash
+    npm install
+    # or
+    yarn install
+    ```
 
-3. **Set up environment variables**
+3. **Configure the API base URL**
 
-   Create a `.env` file in the frontend directory:
+    The app does not use a `.env` file. To point at a different backend, edit `src/services/api/base_url.js` directly:
 
-   ```env
-   # API Configuration
-   VITE_API_BASE_URL=http://localhost:8080/api
-   VITE_WS_BASE_URL=ws://localhost:8080/api/ws
-   
-   # Feature Flags
-   VITE_ENABLE_AUDIO=true
-   VITE_ENABLE_ANIMATIONS=true
-   
-   # Debug
-   VITE_DEBUG_MODE=false
-   ```
+    ```javascript
+    export const BASE_URLS = {
+        API: 'http://localhost:8080/api/v1',
+        WS: 'ws://localhost:8080/api/v1',
+    };
+    ```
 
 4. **Run development server**
 
-   ```bash
-   npm run dev
-   # or
-   yarn dev
-   ```
+    ```bash
+    npm run dev
+    # or
+    yarn dev
+    ```
 
-   The application will be available at `http://localhost:5173`
+    The application will be available at `http://localhost:5173`
 
 ### Build for Production
 
@@ -729,15 +638,15 @@ docker run -p 80:80 bermudia-frontend
 version: '3.8'
 
 services:
-  frontend:
-    build: .
-    ports:
-      - "80:80"
-    environment:
-      - VITE_API_BASE_URL=http://backend:8080/api
-    depends_on:
-      - backend
+    frontend:
+        build: .
+        ports:
+            - '80:80'
+        depends_on:
+            - backend
 ```
+
+Note: since the API base URL is baked into the JS bundle at build time (see `src/services/api/base_url.js`), passing runtime environment variables to the container has no effect — the target backend URL must be set before `npm run build` runs (i.e. before/during the Docker image build).
 
 ## 📦 Component Library
 
@@ -749,11 +658,11 @@ Modal dialog for user confirmations.
 
 ```vue
 <ConfirmModal
-  :show="showConfirm"
-  title="Confirm Action"
-  message="Are you sure?"
-  @confirm="handleConfirm"
-  @cancel="handleCancel"
+    :show="showConfirm"
+    title="Confirm Action"
+    message="Are you sure?"
+    @confirm="handleConfirm"
+    @cancel="handleCancel"
 />
 ```
 
@@ -763,9 +672,9 @@ Button component that displays resource costs.
 
 ```vue
 <CostlyButton
-  :cost="{ coins: 100, fuel: 10 }"
-  :disabled="!canAfford"
-  @click="handlePurchase"
+    :cost="{ coins: 100, fuel: 10 }"
+    :disabled="!canAfford"
+    @click="handlePurchase"
 >
   Purchase Item
 </CostlyButton>
@@ -803,9 +712,9 @@ Display player's current resources.
 
 ```vue
 <MapView
-  :territories="territories"
-  :current-location="currentIsland"
-  @island-click="handleIslandClick"
+    :territories="territories"
+    :current-location="currentIsland"
+    @island-click="handleIslandClick"
 />
 ```
 
@@ -818,10 +727,7 @@ Display player's current resources.
 **ChallengeBox.vue**: Display and answer educational challenges.
 
 ```vue
-<ChallengeBox
-  :challenge="currentChallenge"
-  @submit="handleSubmit"
-/>
+<ChallengeBox :challenge="currentChallenge" @submit="handleSubmit" />
 ```
 
 **Treasure.vue**: Treasure collection interface.
@@ -838,9 +744,9 @@ Display player's current resources.
 
 ```vue
 <TradeOfferCard
-  :offer="tradeOffer"
-  @accept="handleAccept"
-  @cancel="handleCancel"
+    :offer="tradeOffer"
+    @accept="handleAccept"
+    @cancel="handleCancel"
 />
 ```
 
@@ -857,10 +763,7 @@ Display player's current resources.
 **Inbox.vue**: Message inbox with real-time updates.
 
 ```vue
-<Inbox
-  :messages="messages"
-  @mark-read="handleMarkRead"
-/>
+<Inbox :messages="messages" @mark-read="handleMarkRead" />
 ```
 
 **NotificationItem.vue**: Individual notification display.
@@ -889,62 +792,77 @@ The frontend includes a sophisticated audio system:
 
 ### Usage
 
+`useAudioPlayer` is a composable that drives a single shared `<audio>` element (passed in as a ref) based on an `eventBus` event (`set-audio-state`) and the current mute setting; it does not expose `play`/`pause`/`setVolume` methods directly:
+
 ```javascript
-import { useAudioPlayer } from '@/composables/useAudioPlayer'
+import { useAudioPlayer } from '@/composables/useAudioPlayer';
 
-const { play, pause, setVolume } = useAudioPlayer()
-
-// Play specific track
-play('background-1')
-
-// Adjust volume (0-1)
-setVolume(0.5)
+const audioPlayer = ref(null); // ref to an <audio> element
+const { handleSongEnd } = useAudioPlayer(audioPlayer);
 ```
+
+Playback is toggled elsewhere by emitting on the shared event bus (`eventBus.emit('set-audio-state', 'play' | 'pause')`), and mute state lives in `src/services/audio/settings.js` (`audioSettings.isMuted`).
 
 ### Audio Configuration
 
-Edit `src/services/audio/playlist.js`:
+The track list lives in `src/services/audio/playlist.js`:
 
 ```javascript
 export const playlist = [
-  {
-    id: 'background-1',
-    title: 'Ocean Theme',
-    src: '/audio/ocean-theme.mp3',
-    loop: true
-  },
-  // Add more tracks...
-]
+    {
+        title: '1',
+        url: '/audio/1.mp3',
+        duration: 141,
+    },
+    // ...more tracks
+];
 ```
+
+Track selection/progression logic lives in `src/services/audio/radioService.js` (`getCurrentTrack()`), not in the composable itself.
 
 ## 🎨 Styling
 
 ### Tailwind CSS
 
-The project uses Tailwind CSS for styling. Configuration in `tailwind.config.js`:
+The project uses Tailwind CSS v4, loaded via the `@tailwindcss/vite` plugin (see `vite.config.js`) and imported in `src/styles/main.css` with `@import 'tailwindcss';`. A `tailwind.config.js` is still used for theme extensions (ESM syntax, not CommonJS):
 
 ```javascript
-module.exports = {
-  content: [
-    "./index.html",
-    "./src/**/*.{vue,js,ts,jsx,tsx}",
-  ],
-  theme: {
-    extend: {
-      colors: {
-        primary: '#1e40af',
-        secondary: '#7c3aed',
-        // Add custom colors
-      },
-      fontFamily: {
-        pelak: ['Pelak', 'sans-serif'],
-        vazir: ['Vazirmatn', 'sans-serif'],
-      }
+/** @type {import('tailwindcss').Config} */
+export default {
+    content: ['./index.html', './src/**/*.{vue,js,ts,jsx,tsx}'],
+    theme: {
+        extend: {
+            fontFamily: {
+                vazir: ['Vazirmatn', 'sans-serif'],
+            },
+            transitionTimingFunction: {
+                'smooth-expand': 'cubic-bezier(0.25, 0.1, 0.25, 1.0)',
+            },
+            keyframes: {
+                'boat-animation': {
+                    '0%, 100%': {
+                        transform: 'translate(0, 0) rotate(10deg) scale(0.3)',
+                    },
+                    '35%': {
+                        transform:
+                            'translate(0.02px, 0.01px) rotate(-10deg) scale(0.3)',
+                    },
+                    '70%': {
+                        transform:
+                            'translate(-0.02px, 0.01px) rotate(3deg) scale(0.3)',
+                    },
+                },
+            },
+            animation: {
+                boat: 'boat-animation 10s linear infinite',
+            },
+        },
     },
-  },
-  plugins: [],
-}
+    plugins: [],
+};
 ```
+
+Custom fonts (`@font-face` for Pelak and Vazirmatn) are declared directly in `src/styles/main.css`, not in the Tailwind config.
 
 ### Custom Fonts
 
@@ -957,9 +875,9 @@ Usage in components:
 
 ```vue
 <template>
-  <div class="font-vazir">
-    <!-- Content with Vazirmatn font -->
-  </div>
+    <div class="font-vazir">
+        <!-- Content with Vazirmatn font -->
+    </div>
 </template>
 ```
 
@@ -967,60 +885,55 @@ Usage in components:
 
 ### API Service
 
-Located in `src/services/api/`:
+Located in `src/services/api/` (`index.js` for request functions, `config.js` for endpoint URLs, `base_url.js` for the base URL). It is a thin `fetch` wrapper exposing one named async function per endpoint, not a generic `get`/`post` client:
 
 ```javascript
-import api from '@/services/api'
+import { getPlayer, submitAnswer } from '@/services/api/index.js';
 
-// Make authenticated requests
-const player = await api.get('/player')
-const result = await api.post('/islands/123/challenge', { answer: '42' })
+const player = await getPlayer();
+const result = await submitAnswer('123', formData);
 ```
 
 ### WebSocket Service
 
-Real-time communication through WebSockets:
+Real-time communication through WebSockets, split by concern:
+
+- `src/services/websocket.js` exposes `usePlayerWebSocket(player, territoryId, route, router)` for the main player/territory event stream
+- `src/services/marketWebsocket.js` exposes `useMarketWebSocket(...)` for market updates
+- `src/services/inboxWebsocket.js` handles inbox message updates
 
 ```javascript
-import { connectWebSocket } from '@/services/websocket'
+import { usePlayerWebSocket } from '@/services/websocket';
 
-const ws = connectWebSocket()
-
-ws.on('market_update', (data) => {
-  console.log('New market offer:', data)
-})
-
-ws.on('inbox_message', (message) => {
-  console.log('New message:', message)
-})
+usePlayerWebSocket(player, territoryId, route, router);
 ```
 
 ### Event Bus
 
-Global event system for component communication:
+A shared `mitt` instance for component communication, exported as the default export:
 
 ```javascript
-import { eventBus } from '@/services/eventBus'
+import eventBus from '@/services/eventBus';
 
 // Emit event
-eventBus.emit('player:updated', playerData)
+eventBus.emit('set-audio-state', 'play');
 
 // Listen to event
-eventBus.on('player:updated', (data) => {
-  console.log('Player updated:', data)
-})
+eventBus.on('set-audio-state', state => {
+    console.log('Audio state:', state);
+});
 ```
 
 ### Notification Service
 
-Display toast notifications:
+`src/services/notificationService.js` tracks read/unread inbox message state (backed by `localStorage`), not toast notifications:
 
 ```javascript
-import { showNotification } from '@/services/notificationService'
+import { notificationService } from '@/services/notificationService';
 
-showNotification({
-  type: 'success',
-  title: 'Success!',
-  message: 'Challenge completed'
-})
+notificationService.setReceivedMessages(messages);
+notificationService.markAllAsSeen();
+// notificationService.hasUnreadMessages is a computed boolean
 ```
+
+Toast notifications (success/error/warning messages) are shown directly with `vue-toastification`'s `useToast()` composable, used ad hoc in components — there is no dedicated wrapper service for it.

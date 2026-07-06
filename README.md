@@ -20,7 +20,7 @@ Bermudia follows a modern full-stack architecture:
 - **Backend**: Go (Golang) with Chi router, WebSocket support, and PostgreSQL/SQLite
 - **Frontend**: Vue.js 3 with Vite, Tailwind CSS, and responsive design
 - **Real-time Communication**: WebSocket-based events for market, inbox, and game state
-- **External Services**: Integration with Gofino and Jitsi for extended functionality
+- **External Services**: Telegram/Bale bot API for admin/correction workflows; per-user configurable meet links for challenge help
 
 ## 📚 Documentation
 
@@ -34,10 +34,10 @@ Bermudia follows a modern full-stack architecture:
 
 ### Prerequisites
 
-- Go 1.24+ (for backend)
-- Node.js 18+ and npm/yarn (for frontend)
+- Go 1.25+ (for backend)
+- Node.js 18+ and npm (for frontend)
 - PostgreSQL 15+ or SQLite (for database)
-- Docker and Docker Compose (optional, for containerized deployment)
+- Docker (optional, for containerized deployment; there is no docker-compose.yml in this repo)
 
 ### Installation
 
@@ -53,43 +53,34 @@ cd bermudia
 ```bash
 cd backend
 go mod download
-cp .env.example .env  # Configure your environment variables
+export BERMUDIA__TOKEN_SIGNING_KEY=$(echo -n "your-secret-key" | base64)
 go run main.go
 ```
 
-The backend will start on `http://localhost:8080` by default.
+Configuration is via environment variables prefixed `BERMUDIA__` (not a `.env` file) — see the [Backend README](./backend/README.md#configuration) for the full list. The backend listens on the hardcoded port `8080`.
 
 #### 3. Frontend Setup
 
 ```bash
 cd frontend
 npm install
-cp .env.example .env  # Configure your environment variables
 npm run dev
 ```
 
-The frontend will start on `http://localhost:5173` by default.
+The frontend will start on `http://localhost:5173` by default. There is no frontend `.env` mechanism — the API/WebSocket base URLs are hardcoded in `frontend/src/services/api/base_url.js`.
 
 For detailed setup instructions, see the [Backend README](./backend/README.md) and [Frontend README](./frontend/README.md).
 
 ## 🐳 Docker Deployment
 
-Build and run with Docker Compose:
-
-```bash
-docker-compose up -d
-```
-
-This will start both the backend and frontend services with proper networking.
-
-### Individual Service Deployment
+There is no `docker-compose.yml` in this repository. Each service has its own `Dockerfile` and must be built/run individually.
 
 **Backend:**
 
 ```bash
 cd backend
 docker build -t bermudia-backend .
-docker run -p 8080:8080 bermudia-backend
+docker run -p 8080:8080 -e BERMUDIA__TOKEN_SIGNING_KEY=your-base64-secret-key bermudia-backend
 ```
 
 **Frontend:**
@@ -104,20 +95,11 @@ docker run -p 80:80 bermudia-frontend
 
 ### Backend Configuration
 
-Environment variables can be set in `backend/.env`:
-
-- `DATABASE_URL` - PostgreSQL connection string
-- `JWT_SECRET` - Secret key for JWT token generation
-- `PORT` - Server port (default: 8080)
-- `CORS_ORIGIN` - Allowed CORS origins
-- `BOT_TOKEN` - Telegram/Bale bot token for admin features
+The backend has no `.env` file. Configuration is loaded from environment variables prefixed `BERMUDIA__` (via koanf), e.g. `BERMUDIA__POSTGRES__ENABLE`, `BERMUDIA__TOKEN_SIGNING_KEY`, `BERMUDIA__BOT_TOKEN`. CORS is currently hardcoded to allow all origins. See the [Backend README](./backend/README.md#environment-variables) for the full variable table.
 
 ### Frontend Configuration
 
-Environment variables can be set in `frontend/.env`:
-
-- `VITE_API_BASE_URL` - Backend API URL
-- `VITE_WS_BASE_URL` - WebSocket server URL
+The frontend has no `.env` file either. The API and WebSocket base URLs are hardcoded in `frontend/src/services/api/base_url.js` and require a rebuild to change.
 
 ## 🎯 Game Mechanics
 
@@ -151,23 +133,19 @@ Real-time marketplace where players can:
 
 ## 🔌 External Dependencies
 
-### Bale/Telegram Bot (Correction Bot)
+### Telegram/Bale Bot (Correction Bot)
 
-The admin bot handles:
+The admin bot uses the `go-telegram/bot` library, which implements the Telegram Bot API; since Bale's bot API is practically the same, the bot is currently pointed at the Bale server (`https://tapi.bale.ai`), but it could equally be pointed at Telegram's API. It handles:
 
 - Challenge correction and verification
 - Player communication
 - Administrative notifications
 
-Configure bot token in backend environment variables.
+Configure the bot token via `BERMUDIA__BOT_TOKEN`.
 
-### Gofino Integration
+### Per-user meet link
 
-Used for extended gameplay features and social interactions.
-
-### Jitsi Integration
-
-Provides video conferencing capabilities for multiplayer features.
+Each user can have a `meetLink` (e.g. a video call link) configured; when a player requests help answering a challenge, the backend returns that user's `meetLink` (see `internal/service/island.go`). There is no Gofino or Jitsi integration in the codebase.
 
 ## 🛠️ Development
 
@@ -194,19 +172,7 @@ bermudia/
 
 ### Running Tests
 
-**Backend:**
-
-```bash
-cd backend
-go test ./...
-```
-
-**Frontend:**
-
-```bash
-cd frontend
-npm run test
-```
+Neither the backend nor the frontend currently has an automated test suite (no `*_test.go` files, and no `test` script in `frontend/package.json`).
 
 ### Code Formatting
 
@@ -224,17 +190,18 @@ npm run format
 
 ## 📖 API Overview
 
-Key API endpoints:
+Key API endpoints (all under `/api/v1` unless noted):
 
-- `POST /api/auth/login` - User authentication
-- `GET /api/territories` - List all territories
-- `GET /api/islands/:id` - Get island details
-- `POST /api/islands/:id/challenge` - Submit challenge answer
-- `GET /api/player` - Get player information
-- `GET /api/market` - Get market offers
-- `WS /api/ws` - WebSocket connection for real-time updates
+- `POST /api/v1/login` - User authentication (no self-service registration; users are created via the admin API)
+- `GET /api/v1/territories/{territoryID}` - Get territory details
+- `GET /api/v1/islands/{islandID}` - Get island details
+- `POST /api/v1/answer/{inputID}` - Submit a challenge answer (multipart form data)
+- `GET /api/v1/player` - Get player information
+- `GET /api/v1/trade/offers` - Get market trade offers
+- `GET /api/v1/events`, `/api/v1/trade/events`, `/api/v1/inbox/events` - WebSocket connections for real-time updates
+- `/admin/*` - Separate, independently authenticated admin API
 
-For complete API documentation, see [API Documentation](./docs/api.md).
+For complete endpoint documentation, see the [Backend README](./backend/README.md#api-documentation).
 
 ## 👥 Authors
 
@@ -247,7 +214,7 @@ Developed by the team at [Rasta](https://rastaiha.ir).
 
 ## 📄 License
 
-This project is open source. Please check the LICENSE file for more details.
+No LICENSE file is currently present in this repository.
 
 ## 🤝 Contributing
 
