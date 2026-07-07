@@ -16,6 +16,26 @@ const handleResponse = async response => {
     return data.result;
 };
 
+const apiGet = async url => {
+    const response = await fetch(url, {
+        method: 'GET',
+        headers: getAuthHeaders(),
+    });
+    return handleResponse(response);
+};
+
+const apiPost = async (url, body) => {
+    const response = await fetch(url, {
+        method: 'POST',
+        headers:
+            body !== undefined
+                ? { ...getAuthHeaders(), 'Content-Type': 'application/json' }
+                : getAuthHeaders(),
+        body: body !== undefined ? JSON.stringify(body) : undefined,
+    });
+    return handleResponse(response);
+};
+
 export const setToken = token => {
     if (token) {
         localStorage.setItem('authToken', token);
@@ -32,91 +52,35 @@ export const logout = () => {
 };
 
 export const login = async (username, password) => {
-    const response = await fetch(API_ENDPOINTS.login, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password }),
-    });
-    const result = await handleResponse(response);
+    const result = await apiPost(API_ENDPOINTS.login, { username, password });
     if (result.token) {
         setToken(result.token);
     }
     return result;
 };
 
-export const getMe = async () => {
-    const response = await fetch(API_ENDPOINTS.getMe, {
-        method: 'GET',
-        headers: getAuthHeaders(),
-    });
-    return handleResponse(response);
-};
+export const getMe = async () => apiGet(API_ENDPOINTS.getMe);
 
-export const getPlayer = async () => {
-    const response = await fetch(API_ENDPOINTS.getPlayer, {
-        method: 'GET',
-        headers: getAuthHeaders(),
-    });
-    return handleResponse(response);
-};
+export const getPlayer = async () => apiGet(API_ENDPOINTS.getPlayer);
 
-export const getTerritory = async id => {
-    const response = await fetch(API_ENDPOINTS.getTerritory(id), {
-        headers: getAuthHeaders(),
-    });
-    return handleResponse(response);
-};
+export const getTerritory = async id => apiGet(API_ENDPOINTS.getTerritory(id));
 
-export const getPlayersLocation = async id => {
-    const response = await fetch(API_ENDPOINTS.getPlayersLocation(id), {
-        method: 'GET',
-        headers: getAuthHeaders(),
-    });
-    return handleResponse(response);
-};
+export const getPlayersLocation = async id =>
+    apiGet(API_ENDPOINTS.getPlayersLocation(id));
 
-export const travelCheck = async (from, dest) => {
-    const response = await fetch(API_ENDPOINTS.travelCheck, {
-        method: 'POST',
-        headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
-        body: JSON.stringify({ fromIsland: from, toIsland: dest }),
-    });
-    return handleResponse(response);
-};
+export const travelCheck = async (from, dest) =>
+    apiPost(API_ENDPOINTS.travelCheck, { fromIsland: from, toIsland: dest });
 
-export const anchorCheck = async island => {
-    const response = await fetch(API_ENDPOINTS.anchorCheck, {
-        method: 'POST',
-        headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
-        body: JSON.stringify({ island: island }),
-    });
-    return handleResponse(response);
-};
+export const anchorCheck = async island =>
+    apiPost(API_ENDPOINTS.anchorCheck, { island: island });
 
-export const travelTo = async (from, dest) => {
-    const response = await fetch(API_ENDPOINTS.travelTo, {
-        method: 'POST',
-        headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
-        body: JSON.stringify({ fromIsland: from, toIsland: dest }),
-    });
-    return handleResponse(response);
-};
+export const travelTo = async (from, dest) =>
+    apiPost(API_ENDPOINTS.travelTo, { fromIsland: from, toIsland: dest });
 
-export const dropAnchorAtIsland = async currentIsland => {
-    const response = await fetch(API_ENDPOINTS.dropAnchor, {
-        method: 'POST',
-        headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
-        body: JSON.stringify({ island: currentIsland }),
-    });
-    return handleResponse(response);
-};
+export const dropAnchorAtIsland = async currentIsland =>
+    apiPost(API_ENDPOINTS.dropAnchor, { island: currentIsland });
 
-export const getIsland = async id => {
-    const response = await fetch(API_ENDPOINTS.getIsland(id), {
-        headers: getAuthHeaders(),
-    });
-    return handleResponse(response);
-};
+export const getIsland = async id => apiGet(API_ENDPOINTS.getIsland(id));
 
 export const submitAnswer = async (id, formData) => {
     const response = await fetch(API_ENDPOINTS.submitAnswer(id), {
@@ -127,139 +91,50 @@ export const submitAnswer = async (id, formData) => {
     return handleResponse(response);
 };
 
-export const requestHelp = async inputId => {
-    const response = await fetch(`${API_ENDPOINTS.requestHelp(inputId)}`, {
-        method: 'GET',
-        headers: getAuthHeaders(),
+export const requestHelp = async inputId =>
+    apiGet(API_ENDPOINTS.requestHelp(inputId));
+
+export const refuelCheck = async () => apiPost(API_ENDPOINTS.refuelCheck);
+
+export const buyFuel = async amount =>
+    apiPost(API_ENDPOINTS.buyFuel, { amount });
+
+export const migrateCheck = async () => apiPost(API_ENDPOINTS.migrateCheck);
+
+export const migrateTo = async territory =>
+    apiPost(API_ENDPOINTS.migrate, { toTerritory: territory });
+
+export const treasureCheck = async treasureId =>
+    apiPost(API_ENDPOINTS.treasureCheck, { treasureID: treasureId });
+
+export const treasureUnlock = async (treasureId, chosenCost) =>
+    apiPost(API_ENDPOINTS.treasureUnlock, {
+        treasureID: treasureId,
+        chosenCost: chosenCost,
     });
-    return handleResponse(response);
-};
 
-export const refuelCheck = async () => {
-    const response = await fetch(API_ENDPOINTS.refuelCheck, {
-        method: 'POST',
-        headers: getAuthHeaders(),
+export const makeTradeOfferCheck = async () =>
+    apiPost(API_ENDPOINTS.makeOfferCheck);
+
+export const makeTradeOffer = async (offered, requested) =>
+    apiPost(API_ENDPOINTS.makeOffer, {
+        offered: offered,
+        requested: requested,
     });
-    return handleResponse(response);
-};
 
-export const buyFuel = async amount => {
-    const response = await fetch(API_ENDPOINTS.buyFuel, {
-        method: 'POST',
-        headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
-        body: JSON.stringify({ amount }),
-    });
-    return handleResponse(response);
-};
+export const acceptTradeOffer = async offerID =>
+    apiPost(API_ENDPOINTS.acceptOffer, { offerID: offerID });
 
-export const migrateCheck = async () => {
-    const response = await fetch(API_ENDPOINTS.migrateCheck, {
-        method: 'POST',
-        headers: getAuthHeaders(),
-    });
-    return handleResponse(response);
-};
+export const deleteTradeOffer = async offerID =>
+    apiPost(API_ENDPOINTS.deleteOffer, { offerID: offerID });
 
-export const migrateTo = async territory => {
-    const response = await fetch(API_ENDPOINTS.migrate, {
-        method: 'POST',
-        headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
-        body: JSON.stringify({ toTerritory: territory }),
-    });
-    return handleResponse(response);
-};
+export const getTradeOffers = async (offset = 0, limit = 5, by = null) =>
+    apiGet(API_ENDPOINTS.getOffers(offset, limit, by));
 
-export const treasureCheck = async treasureId => {
-    const response = await fetch(API_ENDPOINTS.treasureCheck, {
-        method: 'POST',
-        headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
-        body: JSON.stringify({ treasureID: treasureId }),
-    });
-    return handleResponse(response);
-};
+export const investCheck = async () => apiPost(API_ENDPOINTS.investCheck);
 
-export const treasureUnlock = async (treasureId, chosenCost) => {
-    const response = await fetch(API_ENDPOINTS.treasureUnlock, {
-        method: 'POST',
-        headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            treasureID: treasureId,
-            chosenCost: chosenCost,
-        }),
-    });
-    return handleResponse(response);
-};
+export const invest = async (sessionID, coin) =>
+    apiPost(API_ENDPOINTS.invest, { sessionID, coin });
 
-export const makeTradeOfferCheck = async () => {
-    const response = await fetch(API_ENDPOINTS.makeOfferCheck, {
-        method: 'POST',
-        headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
-    });
-    return handleResponse(response);
-};
-
-export const makeTradeOffer = async (offered, requested) => {
-    const response = await fetch(API_ENDPOINTS.makeOffer, {
-        method: 'POST',
-        headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
-        body: JSON.stringify({ offered: offered, requested: requested }),
-    });
-    return handleResponse(response);
-};
-
-export const acceptTradeOffer = async offerID => {
-    const response = await fetch(API_ENDPOINTS.acceptOffer, {
-        method: 'POST',
-        headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
-        body: JSON.stringify({ offerID: offerID }),
-    });
-    return handleResponse(response);
-};
-
-export const deleteTradeOffer = async offerID => {
-    const response = await fetch(API_ENDPOINTS.deleteOffer, {
-        method: 'POST',
-        headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
-        body: JSON.stringify({ offerID: offerID }),
-    });
-    return handleResponse(response);
-};
-
-export const getTradeOffers = async (offset = 0, limit = 5, by = null) => {
-    const response = await fetch(
-        `${API_ENDPOINTS.getOffers(offset, limit, by)}`,
-        {
-            method: 'GET',
-            headers: getAuthHeaders(),
-        }
-    );
-    return handleResponse(response);
-};
-
-export const investCheck = async () => {
-    const response = await fetch(API_ENDPOINTS.investCheck, {
-        method: 'POST',
-        headers: getAuthHeaders(),
-    });
-    return handleResponse(response);
-};
-
-export const invest = async (sessionID, coin) => {
-    const response = await fetch(API_ENDPOINTS.invest, {
-        method: 'POST',
-        headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
-        body: JSON.stringify({ sessionID, coin }),
-    });
-    return handleResponse(response);
-};
-
-export const getInboxMessages = async (offset = null, limit = 15) => {
-    const response = await fetch(
-        API_ENDPOINTS.getInboxMessages(offset, limit),
-        {
-            method: 'GET',
-            headers: getAuthHeaders(),
-        }
-    );
-    return handleResponse(response);
-};
+export const getInboxMessages = async (offset = null, limit = 15) =>
+    apiGet(API_ENDPOINTS.getInboxMessages(offset, limit));
