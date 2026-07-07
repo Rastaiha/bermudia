@@ -23,9 +23,12 @@ describe('notificationService', () => {
             const stored = JSON.parse(
                 localStorage.getItem('received_messages')
             );
-            expect(stored).toEqual([
-                { createdAt: '2026-01-01', reason: 'coin' },
-            ]);
+            expect(stored).toHaveLength(1);
+            expect(stored[0]).toMatchObject({
+                createdAt: '2026-01-01',
+                reason: 'coin',
+            });
+            expect(stored[0].key).toBeTypeOf('string');
         });
 
         it('filters out messages missing createdAt or content', () => {
@@ -39,9 +42,11 @@ describe('notificationService', () => {
             const stored = JSON.parse(
                 localStorage.getItem('received_messages')
             );
-            expect(stored).toEqual([
-                { createdAt: '2026-01-01', reason: 'reward' },
-            ]);
+            expect(stored).toHaveLength(1);
+            expect(stored[0]).toMatchObject({
+                createdAt: '2026-01-01',
+                reason: 'reward',
+            });
         });
 
         it('persists the received messages to localStorage', () => {
@@ -82,9 +87,27 @@ describe('notificationService', () => {
         it('persists seen messages so they survive re-init', () => {
             notificationService.setReceivedMessages([msg('a')]);
             notificationService.markAllAsSeen();
-            expect(JSON.parse(localStorage.getItem('seen_messages'))).toEqual([
-                { createdAt: 'a', reason: 'reward' },
+            const stored = JSON.parse(localStorage.getItem('seen_messages'));
+            expect(stored).toHaveLength(1);
+            expect(stored[0]).toMatchObject({
+                createdAt: 'a',
+                reason: 'reward',
+            });
+            expect(stored[0].key).toBeTypeOf('string');
+        });
+
+        it('detects a new unseen message that shares a createdAt with a seen one', () => {
+            // Two distinct messages batched at the same timestamp: only the
+            // first has been seen, so the badge must still flag the second.
+            notificationService.setReceivedMessages([msg('same', 'coin')]);
+            notificationService.markAllAsSeen();
+            expect(notificationService.hasUnreadMessages.value).toBe(false);
+
+            notificationService.setReceivedMessages([
+                msg('same', 'coin'),
+                msg('same', 'reward'),
             ]);
+            expect(notificationService.hasUnreadMessages.value).toBe(true);
         });
     });
 });

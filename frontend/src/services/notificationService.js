@@ -14,12 +14,19 @@ function init() {
     state.seenMessages = getJSON(SEEN_MESSAGES_KEY);
 }
 
+// Stable key for messages that lack a server-side id and may share a createdAt.
+function keyOf(msg, index) {
+    const reason = Object.keys(msg.content)[0];
+    return `${msg.createdAt}|${reason}|${JSON.stringify(msg.content)}|${index}`;
+}
+
 function setReceivedMessages(messages) {
     const messageInfos = messages
         .filter(msg => msg && msg.createdAt && msg.content)
-        .map(msg => ({
+        .map((msg, index) => ({
             createdAt: msg.createdAt,
             reason: Object.keys(msg.content)[0],
+            key: keyOf(msg, index),
         }));
     state.receivedMessages = messageInfos;
     setJSON(RECEIVED_MESSAGES_KEY, state.receivedMessages);
@@ -31,17 +38,8 @@ function markAllAsSeen() {
 }
 
 const hasUnreadMessages = computed(() => {
-    const receivedIds = new Set(
-        state.receivedMessages.map(msg => msg.createdAt)
-    );
-    const seenIds = new Set(state.seenMessages.map(msg => msg.createdAt));
-
-    for (const id of receivedIds) {
-        if (!seenIds.has(id)) {
-            return true;
-        }
-    }
-    return false;
+    const seenKeys = new Set(state.seenMessages.map(msg => msg.key));
+    return state.receivedMessages.some(msg => !seenKeys.has(msg.key));
 });
 
 init();
