@@ -5,152 +5,77 @@ import emitter from '@/services/eventBus.js';
 import { notificationService } from '@/services/notificationService.js';
 import { uiState } from '@/services/uiState.js';
 import { messages as inboxMessages } from '@/services/inboxWebsocket.js';
+import { createReconnectingSocket } from '@/services/ws/reconnectingSocket.js';
 
 export function usePlayerWebSocket(player, territoryId, route, router) {
-    let socket = null;
-    let reconnectTimeoutId = null;
-    let reconnectAttempts = 0;
-    const maxReconnectAttempts = 10;
-    const baseReconnectDelay = 1000;
+    const handleMessage = async data => {
+        console.log('WebSocket message received:', data);
 
-    const disconnect = () => {
-        if (reconnectTimeoutId) clearTimeout(reconnectTimeoutId);
+        if (!data.playerUpdate) return;
 
-        if (socket) {
-            socket.onclose = null;
-            socket.onmessage = null;
-            socket.onerror = null;
-            socket.onopen = null;
-            socket.close(1000, 'Connection closed intentionally by client');
-            socket = null;
-            console.log('WebSocket connection cleanly disconnected.');
-        }
-    };
-
-    const connect = () => {
-        if (socket) return;
-
-        const token = getToken();
-        if (!token) {
-            console.error(
-                'WebSocket: No auth token found, connection aborted.'
-            );
-            return;
-        }
-
-        console.log('Attempting to connect WebSocket...');
-        socket = new WebSocket(`${API_ENDPOINTS.events}?token=${token}`);
-
-        socket.onopen = () => {
-            console.log('WebSocket connection established.');
-            reconnectAttempts = 0;
-        };
-
-        socket.onmessage = async event => {
+        const reason = data.playerUpdate.reason;
+        if (reason === 'correction' || reason === 'ownOfferAccepted') {
             try {
-                const data = JSON.parse(event.data);
-                console.log('WebSocket message received:', data);
+                const result = await getInboxMessages(null, 20);
+                const allMessages = result?.messages || result || [];
 
-                if (data.playerUpdate) {
-                    const reason = data.playerUpdate.reason;
-                    if (
-                        reason === 'correction' ||
-                        reason === 'ownOfferAccepted'
-                    ) {
-                        try {
-                            const result = await getInboxMessages(null, 20);
-                            const allMessages =
-                                result?.messages || result || [];
+                inboxMessages.value = allMessages;
 
-                            inboxMessages.value = allMessages;
+                notificationService.setReceivedMessages(allMessages);
 
-                            notificationService.setReceivedMessages(
-                                allMessages
-                            );
-
-                            if (uiState.isInboxOpen) {
-                                notificationService.markAllAsSeen();
-                            }
-                        } catch (apiError) {
-                            console.error(
-                                'Failed to fetch inbox messages after playerUpdate event:',
-                                apiError
-                            );
-                        }
-                    }
-
-                    const oldPlayerState = JSON.parse(
-                        JSON.stringify(player.value)
-                    );
-                    const newPlayerState = data.playerUpdate.player;
-
-                    player.value = newPlayerState;
-
-                    if (reason === 'unlockTreasure') {
-                        emitter.emit('treasure-unlocked', {
-                            oldPlayerState,
-                            newPlayerState,
-                        });
-                    }
-
-                    if (
-                        router &&
-                        route &&
-                        territoryId &&
-                        territoryId.value &&
-                        newPlayerState.atTerritory != territoryId.value &&
-                        !route.params.islandId
-                    ) {
-                        router.push({
-                            name: 'Territory',
-                            params: { id: newPlayerState.atTerritory },
-                        });
-                    }
+                if (uiState.isInboxOpen) {
+                    notificationService.markAllAsSeen();
                 }
-            } catch (error) {
-                console.error('Error parsing WebSocket message:', error);
+            } catch (apiError) {
+                console.error(
+                    'Failed to fetch inbox messages after playerUpdate event:',
+                    apiError
+                );
             }
-        };
-
-        socket.onclose = event => {
-            console.log('WebSocket connection closed. Code:', event.code);
-            socket = null;
-
-            if (event.code !== 1000) {
-                scheduleReconnect();
-            }
-        };
-
-        socket.onerror = error => {
-            console.error('WebSocket error:', error);
-        };
-    };
-
-    const scheduleReconnect = () => {
-        if (reconnectAttempts >= maxReconnectAttempts) {
-            console.error(
-                'Max WebSocket reconnection attempts reached. Giving up.'
-            );
-            return;
         }
-        const delay = Math.min(
-            baseReconnectDelay * Math.pow(2, reconnectAttempts),
-            30000
-        );
-        reconnectAttempts++;
 
-        console.log(
-            `Scheduling WebSocket reconnection attempt ${reconnectAttempts} in ${delay}ms`
-        );
-        reconnectTimeoutId = setTimeout(connect, delay);
+        const oldPlayerState = JSON.parse(JSON.stringify(player.value));
+        const newPlayerState = data.playerUpdate.player;
+
+        player.value = newPlayerState;
+
+        if (reason === 'unlockTreasure') {
+            emitter.emit('treasure-unlocked', {
+                oldPlayerState,
+                newPlayerState,
+            });
+        }
+
+        if (
+            router &&
+            route &&
+            territoryId &&
+            territoryId.value &&
+            newPlayerState.atTerritory != territoryId.value &&
+            !route.params.islandId
+        ) {
+            router.push({
+                name: 'Territory',
+                params: { id: newPlayerState.atTerritory },
+            });
+        }
     };
+
+    const { connect, disconnect } = createReconnectingSocket({
+        buildUrl: () => {
+            const token = getToken();
+            return token ? `${API_ENDPOINTS.events}?token=${token}` : null;
+        },
+        onMessage: handleMessage,
+        label: 'WebSocket',
+    });
 
     watch(
         player,
         newPlayer => {
-            if (newPlayer && !socket) {
+            if (newPlayer) {
                 connect();
-            } else if (!newPlayer && socket) {
+            } else {
                 disconnect();
             }
         },
