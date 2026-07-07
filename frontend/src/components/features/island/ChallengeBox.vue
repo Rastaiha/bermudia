@@ -163,8 +163,10 @@
                         @keyup.enter="submit"
                     />
                     <button
-                        :disabled="!challenge.submissionState.submittable"
-                        class="btn-hover px-6 py-3 text-lg font-semibold text-white bg-[#07458bb5] rounded-lg shrink-0"
+                        :disabled="
+                            !challenge.submissionState.submittable || !hasValue
+                        "
+                        class="btn-hover px-6 py-3 text-lg font-semibold text-white bg-[#07458bb5] rounded-lg shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
                         @click="submit"
                     >
                         ارسال
@@ -283,6 +285,13 @@ const inputValue = ref(
           : ''
 );
 const fileInputId = computed(() => `file-upload-${props.challenge.id}`);
+
+// Non-empty text/number input (0 is valid).
+const hasValue = computed(() => {
+    const v = inputValue.value;
+    if (v === null || v === undefined) return false;
+    return String(v).trim() !== '';
+});
 
 const selectedFileName = computed(() => {
     if (inputValue.value instanceof File) {
