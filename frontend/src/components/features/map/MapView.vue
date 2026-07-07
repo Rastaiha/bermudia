@@ -109,7 +109,7 @@
 import { ref, onMounted, onUnmounted, computed, watch, nextTick } from 'vue';
 import panzoom from 'panzoom';
 import { getPlayersLocation } from '@/services/api';
-import { APP_CONFIG } from '@/config/appConfig.js';
+import { APP_CONFIG, BACKGROUND_MODES } from '@/config/appConfig.js';
 
 const props = defineProps({
     islands: { type: Array, required: true },
@@ -121,7 +121,7 @@ const props = defineProps({
     backgroundImage: { type: String, default: '' },
 });
 
-const stickBackground = APP_CONFIG.STICK_BACKGROUND_TO_ISLANDS;
+const stickBackground = APP_CONFIG.BACKGROUND_MODE === BACKGROUND_MODES.STICK;
 
 const backgroundAspect = ref(null);
 
