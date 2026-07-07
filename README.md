@@ -170,10 +170,6 @@ bermudia/
 └── docs/            # Documentation
 ```
 
-### Running Tests
-
-Neither the backend nor the frontend currently has an automated test suite (no `*_test.go` files, and no `test` script in `frontend/package.json`).
-
 ### Code Formatting
 
 **Backend:**
@@ -203,29 +199,6 @@ Key API endpoints (all under `/api/v1` unless noted):
 
 For complete endpoint documentation, see the [Backend README](./backend/README.md#api-documentation).
 
-## 👥 Authors
-
-- **Seyed Ali Hosseini** - Core Developer
-- **Meysam Bavi** - Core Developer
-- **Roham Ghasemi** - Core Developer
-- **Fardad Arab** - Core Developer
-
-Developed by the team at [Rasta](https://rastaiha.ir).
-
-## 📄 License
-
-No LICENSE file is currently present in this repository.
-
-## 🤝 Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request. For major changes, please open an issue first to discuss what you would like to change.
-
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
-
 ## 🐛 Bug Reports
 
 If you encounter any bugs or issues, please report them on the [Issues](https://github.com/Rastaiha/bermudia/issues) page.
@@ -236,4 +209,4 @@ For questions and support, please contact the development team at Rasta.
 
 ---
 
-Made with ❤️ by the Rasta Development Team
+Made with ❤️ by the [Rasta](https://rastaiha.ir) Development Team
