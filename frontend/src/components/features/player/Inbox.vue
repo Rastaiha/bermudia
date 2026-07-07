@@ -65,6 +65,7 @@ import { messages } from '@/services/inboxWebsocket.js';
 import NotificationItem from './NotificationItem.vue';
 import { notificationService } from '@/services/notificationService';
 import { uiState } from '@/services/uiState.js';
+import { logger } from '@/services/logger.js';
 
 const emit = defineEmits(['close']);
 
@@ -97,7 +98,7 @@ const fetchMessages = async (offset = null) => {
             notificationService.setReceivedMessages(messages.value);
         }
     } catch (error) {
-        console.error('Failed to fetch inbox messages:', error);
+        logger.error('Failed to fetch inbox messages:', error);
     } finally {
         isLoading.value = false;
         isFetchingMore.value = false;

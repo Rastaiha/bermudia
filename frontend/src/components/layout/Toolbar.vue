@@ -80,6 +80,7 @@ import MuteButton from '@/components/common/MuteButton.vue';
 import Brain from '@/components/features/player/Brain.vue';
 import Casino from '@/components/features/player/Casino.vue';
 import { glossary } from '@/services/glossary.js';
+import { logger } from '@/services/logger.js';
 
 const props = defineProps({
     player: {
@@ -183,7 +184,7 @@ const handleMeetClick = async () => {
             toast.info('در حال حاضر لینک جلسه‌ای برای شما وجود ندارد.');
         }
     } catch (error) {
-        console.error('Error fetching meet link:', error);
+        logger.error('Error fetching meet link:', error);
         toast.error('خطا در دریافت لینک جلسه.');
     }
 };
