@@ -16,22 +16,25 @@ const handleResponse = async response => {
     return data.result;
 };
 
-export const setToken = token => {
+const TOKEN_KEY = 'authToken';
+
+export const setToken = (token, remember = true) => {
+    localStorage.removeItem(TOKEN_KEY);
+    sessionStorage.removeItem(TOKEN_KEY);
     if (token) {
-        localStorage.setItem('authToken', token);
-    } else {
-        localStorage.removeItem('authToken');
+        (remember ? localStorage : sessionStorage).setItem(TOKEN_KEY, token);
     }
 };
 
-export const getToken = () => localStorage.getItem('authToken');
+export const getToken = () =>
+    localStorage.getItem(TOKEN_KEY) || sessionStorage.getItem(TOKEN_KEY);
 
 export const logout = () => {
     setToken(null);
     window.location.pathname = '/login';
 };
 
-export const login = async (username, password) => {
+export const login = async (username, password, remember = true) => {
     const response = await fetch(API_ENDPOINTS.login, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -39,7 +42,7 @@ export const login = async (username, password) => {
     });
     const result = await handleResponse(response);
     if (result.token) {
-        setToken(result.token);
+        setToken(result.token, remember);
     }
     return result;
 };
