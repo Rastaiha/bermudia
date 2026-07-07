@@ -2,7 +2,15 @@
     <div
         class="w-full h-screen flex justify-center items-center p-4 box-border overflow-hidden relative"
     >
-        <StarryNight />
+        <StarryNight v-if="starryBackground" />
+        <div
+            v-if="fixedBackground && backgroundImage"
+            class="fixed inset-0 -z-10 bg-center bg-no-repeat"
+            :style="{
+                backgroundImage: `url(${backgroundImage})`,
+                backgroundSize: 'contain',
+            }"
+        ></div>
         <div class="fixed inset-0 bg-[#0c2036] -z-20"></div>
         <div
             v-if="isLoading"
@@ -20,6 +28,7 @@
                 :username="username"
                 :dynamic-view-box="dynamicViewBox"
                 :territory-id="territoryId"
+                :background-image="backgroundImage"
                 @node-click="showInfoBox"
                 @map-transformed="updateInfoBoxPosition"
             />
@@ -67,6 +76,7 @@ import {
 import { usePlayerWebSocket } from '@/services/websocket.js';
 import { useInboxWebSocket } from '@/services/inboxWebsocket.js';
 import eventBus from '@/services/eventBus.js';
+import { APP_CONFIG, BACKGROUND_MODES } from '@/config/appConfig.js';
 
 import MapView from '@/components/features/map/MapView.vue';
 import IslandInfoBox from '@/components/features/map/IslandInfoBox.vue';
@@ -76,6 +86,10 @@ import Toolbar from '@/components/layout/Toolbar.vue';
 import StarryNight from '@/components/common/StarryNight.vue';
 import UserProfile from '@/components/layout/UserProfile.vue';
 import UnreadMessageIndicator from '@/components/features/notification/UnreadMessageIndicator.vue';
+
+const backgroundMode = APP_CONFIG.BACKGROUND_MODE;
+const fixedBackground = backgroundMode === BACKGROUND_MODES.FIXED;
+const starryBackground = backgroundMode === BACKGROUND_MODES.STARRY;
 
 const route = useRoute();
 const router = useRouter();

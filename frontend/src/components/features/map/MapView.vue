@@ -17,6 +17,17 @@
         preserveAspectRatio="xMidYMid meet"
         class="w-full h-full block cursor-grab active:cursor-grabbing"
     >
+        <image
+            v-if="stickBackground && backgroundImage"
+            :href="backgroundImage"
+            :x="backgroundRect.x"
+            :y="backgroundRect.y"
+            :width="backgroundRect.width"
+            :height="backgroundRect.height"
+            preserveAspectRatio="xMidYMid slice"
+            class="pointer-events-none"
+        />
+
         <g class="edges">
             <path
                 v-for="edge in wavyEdges"
@@ -98,6 +109,7 @@
 import { ref, onMounted, onUnmounted, computed, watch, nextTick } from 'vue';
 import panzoom from 'panzoom';
 import { getPlayersLocation } from '@/services/api';
+import { APP_CONFIG, BACKGROUND_MODES } from '@/config/appConfig.js';
 
 const props = defineProps({
     islands: { type: Array, required: true },
@@ -106,6 +118,64 @@ const props = defineProps({
     dynamicViewBox: { type: String, required: true },
     territoryId: { type: String, required: true },
     username: { type: String, required: true },
+    backgroundImage: { type: String, default: '' },
+});
+
+const stickBackground = APP_CONFIG.BACKGROUND_MODE === BACKGROUND_MODES.STICK;
+
+const backgroundAspect = ref(null);
+
+watch(
+    () => props.backgroundImage,
+    src => {
+        backgroundAspect.value = null;
+        if (!stickBackground || !src) return;
+        const img = new Image();
+        img.onload = () => {
+            if (img.naturalHeight > 0) {
+                backgroundAspect.value = img.naturalWidth / img.naturalHeight;
+            }
+        };
+        img.src = src;
+    },
+    { immediate: true }
+);
+
+const svgClientSize = ref({ width: 0, height: 0 });
+
+const backgroundRect = computed(() => {
+    const parts = props.dynamicViewBox.split(/\s+/).map(Number);
+    const [minX, minY, vbWidth, vbHeight] =
+        parts.length === 4 && parts.every(n => Number.isFinite(n))
+            ? parts
+            : [0, 0, 1, 1];
+
+    const centerX = minX + vbWidth / 2;
+    const centerY = minY + vbHeight / 2;
+
+    const { width: cw, height: ch } = svgClientSize.value;
+    let visibleW = vbWidth;
+    let visibleH = vbHeight;
+    if (cw > 0 && ch > 0) {
+        const meetScale = Math.min(cw / vbWidth, ch / vbHeight);
+        visibleW = cw / meetScale;
+        visibleH = ch / meetScale;
+    }
+
+    const aspect = backgroundAspect.value || visibleW / visibleH || 1;
+    let width = visibleW;
+    let height = visibleW / aspect;
+    if (height > visibleH) {
+        height = visibleH;
+        width = visibleH * aspect;
+    }
+
+    return {
+        x: centerX - width / 2,
+        y: centerY - height / 2,
+        width,
+        height,
+    };
 });
 
 const emit = defineEmits(['nodeClick', 'mapTransformed']);
@@ -225,6 +295,41 @@ const wavyEdges = computed(() => {
     });
 });
 
+let constraining = false;
+
+const constrainToBackground = () => {
+    if (!stickBackground || constraining || !panzoomInstance || !svgRef.value) {
+        return;
+    }
+    const svg = svgRef.value;
+
+    const view = svg.parentElement.getBoundingClientRect();
+    const map = svg.getBoundingClientRect();
+
+    const adjust = (mapMin, mapSize, viewMin, viewSize) => {
+        const mapMax = mapMin + mapSize;
+        const viewMax = viewMin + viewSize;
+        if (mapSize <= viewSize) {
+            const mapCenter = mapMin + mapSize / 2;
+            const viewCenter = viewMin + viewSize / 2;
+            return viewCenter - mapCenter;
+        }
+        if (mapMin > viewMin) return viewMin - mapMin;
+        if (mapMax < viewMax) return viewMax - mapMax;
+        return 0;
+    };
+
+    const dx = adjust(map.left, map.width, view.left, view.width);
+    const dy = adjust(map.top, map.height, view.top, view.height);
+
+    if (Math.abs(dx) < 0.5 && Math.abs(dy) < 0.5) return;
+
+    const t = panzoomInstance.getTransform();
+    constraining = true;
+    panzoomInstance.moveTo(t.x + dx, t.y + dy);
+    constraining = false;
+};
+
 const initializePanzoom = () => {
     if (!svgRef.value || panzoomInstance) return;
 
@@ -265,6 +370,7 @@ const initializePanzoom = () => {
     });
 
     panzoomInstance.on('transform', () => {
+        constrainToBackground();
         const transform = panzoomInstance.getTransform();
         emit('mapTransformed', {
             x: transform.x,
@@ -343,13 +449,33 @@ const shipSrc = name => {
     return '/images/ships/' + ((sum % 11) + 1) + '.png';
 };
 
+watch(backgroundRect, () => {
+    nextTick(constrainToBackground);
+});
+
+let svgResizeObserver = null;
+
+const measureSvg = () => {
+    if (!svgRef.value) return;
+    svgClientSize.value = {
+        width: svgRef.value.clientWidth,
+        height: svgRef.value.clientHeight,
+    };
+};
+
 onMounted(() => {
     initializePanzoom();
     fetchOtherPlayers();
+    measureSvg();
+    if (window.ResizeObserver && svgRef.value) {
+        svgResizeObserver = new ResizeObserver(measureSvg);
+        svgResizeObserver.observe(svgRef.value);
+    }
 });
 
 onUnmounted(() => {
     if (panzoomInstance) panzoomInstance.dispose();
+    if (svgResizeObserver) svgResizeObserver.disconnect();
 });
 
 defineExpose({

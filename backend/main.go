@@ -22,7 +22,11 @@ func main() {
 
 	domain.ApplyConfig(cfg)
 
-	theBot, err := bot.New(cfg.BotToken, bot.WithServerURL("https://tapi.bale.ai"))
+	botOptions := []bot.Option{bot.WithServerURL("https://tapi.bale.ai")}
+	if cfg.DevMode {
+		botOptions = append(botOptions, bot.WithSkipGetMe())
+	}
+	theBot, err := bot.New(cfg.BotToken, botOptions...)
 	if err != nil {
 		log.Fatal("failed to connect to bot api: ", err)
 	}
