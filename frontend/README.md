@@ -200,7 +200,7 @@ export default defineConfig({
 });
 ```
 
-Note: there is no dev-server API proxy configured — the app talks directly to the absolute API base URL defined in `src/services/api/base_url.js`.
+Note: there is no dev-server API proxy configured — the app talks directly to the absolute API base URL defined in `src/services/api/config.js` (overridable via `VITE_API_BASE_URL`).
 
 ### ESLint Configuration
 
@@ -383,13 +383,11 @@ Output in `dist/` directory.
 
 ### API Base URL
 
-There are no `.env`-based environment variables. The API and WebSocket base URLs are hardcoded in `src/services/api/base_url.js` and must be edited directly (and the app rebuilt) to point at a different backend:
+The API and WebSocket base URLs default to the production endpoints hardcoded in `src/services/api/config.js`. To point at a different backend, set `VITE_API_BASE_URL`/`VITE_WS_BASE_URL` in a `.env` file (see `.env.example`) and rebuild:
 
-```javascript
-export const BASE_URLS = {
-    API: 'https://bermudia-api-internal.darkube.ir/api/v1',
-    WS: 'wss://bermudia-api-internal.darkube.ir/api/v1',
-};
+```bash
+VITE_API_BASE_URL=https://bermudia-api-internal.darkube.ir/api/v1
+VITE_WS_BASE_URL=wss://bermudia-api-internal.darkube.ir/api/v1
 ```
 
 ### Nginx Configuration
@@ -490,7 +488,7 @@ npm install
 
 ### WebSocket Connection Failed
 
-Check that the backend WebSocket server is running and that the `WS` URL in `src/services/api/base_url.js` is correct.
+Check that the backend WebSocket server is running and that the `VITE_WS_BASE_URL` (or the default in `src/services/api/config.js`) is correct.
 
 ### Build Errors
 
@@ -581,13 +579,11 @@ frontend/
 
 3. **Configure the API base URL**
 
-    The app does not use a `.env` file. To point at a different backend, edit `src/services/api/base_url.js` directly:
+    The app defaults to the production backend. To point at a different backend (e.g. local dev), copy `.env.example` to `.env` and set:
 
-    ```javascript
-    export const BASE_URLS = {
-        API: 'http://localhost:8080/api/v1',
-        WS: 'ws://localhost:8080/api/v1',
-    };
+    ```bash
+    VITE_API_BASE_URL=http://localhost:8080/api/v1
+    VITE_WS_BASE_URL=ws://localhost:8080/api/v1
     ```
 
 4. **Run development server**
@@ -646,7 +642,7 @@ services:
             - backend
 ```
 
-Note: since the API base URL is baked into the JS bundle at build time (see `src/services/api/base_url.js`), passing runtime environment variables to the container has no effect — the target backend URL must be set before `npm run build` runs (i.e. before/during the Docker image build).
+Note: since `VITE_API_BASE_URL`/`VITE_WS_BASE_URL` (see `src/services/api/config.js`) are baked into the JS bundle at build time, passing runtime environment variables to the container has no effect — the target backend URL must be set before `npm run build` runs (i.e. before/during the Docker image build).
 
 ## 📦 Component Library
 
@@ -885,7 +881,7 @@ Usage in components:
 
 ### API Service
 
-Located in `src/services/api/` (`index.js` for request functions, `config.js` for endpoint URLs, `base_url.js` for the base URL). It is a thin `fetch` wrapper exposing one named async function per endpoint, not a generic `get`/`post` client:
+Located in `src/services/api/` (`index.js` for request functions, `config.js` for the base URL and endpoint URLs). It is a thin `fetch` wrapper exposing one named async function per endpoint, not a generic `get`/`post` client:
 
 ```javascript
 import { getPlayer, submitAnswer } from '@/services/api/index.js';
