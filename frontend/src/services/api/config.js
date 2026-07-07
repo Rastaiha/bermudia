@@ -1,7 +1,9 @@
-import { BASE_URLS } from './base_url.js';
-
-const API_BASE_URL = BASE_URLS.API;
-const WS_BASE_URL = BASE_URLS.WS;
+const API_BASE_URL =
+    import.meta.env.VITE_API_BASE_URL ||
+    'https://bermudia-api-internal.darkube.ir/api/v1';
+const WS_BASE_URL =
+    import.meta.env.VITE_WS_BASE_URL ||
+    'wss://bermudia-api-internal.darkube.ir/api/v1';
 
 export const API_ENDPOINTS = {
     // Authentication
