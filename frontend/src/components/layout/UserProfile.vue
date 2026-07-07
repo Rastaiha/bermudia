@@ -48,10 +48,4 @@ const profileImageUrl = computed(() => {
 .profile-container {
     transition: all 0.3s ease;
 }
-.profile-container:hover .profile-image {
-    transform: scale(1.1);
-}
-.profile-image {
-    transition: transform 0.3s ease;
-}
 </style>
