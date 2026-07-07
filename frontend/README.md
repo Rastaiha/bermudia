@@ -202,6 +202,18 @@ export default defineConfig({
 
 Note: there is no dev-server API proxy configured — the app talks directly to the absolute API base URL defined in `src/services/api/config.js` (overridable via `VITE_API_BASE_URL`).
 
+### Testing
+
+Unit tests use [Vitest](https://vitest.dev/) (configured in the `test` block of `vite.config.js`, running in a `jsdom` environment). Test files live under the top-level `tests/` directory (mirroring the `src/` layout) as `*.test.js`, and currently target the pure-logic modules — `src/services/{storage,cost,notificationService}.js`, `src/services/api/config.js`, and the `src/composables/useNow.js` / `useCountdownToNoon.js` timers.
+
+```bash
+# Run the suite once
+npm run test
+
+# Watch mode
+npm run test:watch
+```
+
 ### ESLint Configuration
 
 Code linting configured in `eslint.config.js`:
