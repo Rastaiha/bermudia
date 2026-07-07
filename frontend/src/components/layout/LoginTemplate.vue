@@ -213,14 +213,10 @@ async function handleLogin() {
             throw new Error('اطلاعات تریتوری از سرور دریافت نشد.');
         }
     } catch (err) {
-        if (err.message && err.message.includes('invalid credentials')) {
-            toast.error('نام کاربری یا رمز عبور اشتباه است.');
-        } else {
-            toast.error(
-                err.message ||
-                    'خطایی در ارتباط با سرور رخ داد. لطفا دوباره تلاش کنید.'
-            );
-        }
+        toast.error(
+            err.message ||
+                'خطایی در ارتباط با سرور رخ داد. لطفا دوباره تلاش کنید.'
+        );
     } finally {
         isLoading.value = false;
     }

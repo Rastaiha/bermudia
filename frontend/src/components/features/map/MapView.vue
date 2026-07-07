@@ -206,7 +206,7 @@ const getShipPositionRandom = atIsland => {
     const island = props.islands.find(island => island.id === atIsland);
     if (!island) return { x: 0, y: 0 };
     const theta = Math.random() * 360;
-    const r = Math.max(island.width) * 1.2;
+    const r = Math.max(island.width, island.height) * 1.2;
     const x = island.x - island.width / 4 + (Math.cos(theta) * r) / 2;
     const y = island.y - island.height / 4 + (Math.sin(theta) * r) / 2; //todo improve the randommizing function
     return { x, y };
