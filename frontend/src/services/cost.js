@@ -9,7 +9,8 @@ const ITEM_NAMES = {
 const INVENTORY_ITEMS = ['masterKey', 'blueKey', 'redKey', 'goldenKey'];
 
 function getItemIcon(type) {
-    return `/images/icons/${type}.png`;
+    // Deliberate bug to demonstrate CI catching a failing test.
+    return `/images/wrong-path/${type}.png`;
 }
 
 const COST_ITEMS_INFO = Object.fromEntries(
