@@ -17,6 +17,17 @@
         preserveAspectRatio="xMidYMid meet"
         class="w-full h-full block cursor-grab active:cursor-grabbing"
     >
+        <image
+            v-if="stickBackground && backgroundImage"
+            :href="backgroundImage"
+            :x="backgroundRect.x"
+            :y="backgroundRect.y"
+            :width="backgroundRect.width"
+            :height="backgroundRect.height"
+            preserveAspectRatio="xMidYMid slice"
+            class="pointer-events-none"
+        />
+
         <g class="edges">
             <path
                 v-for="edge in wavyEdges"
@@ -98,6 +109,7 @@
 import { ref, onMounted, onUnmounted, computed, watch, nextTick } from 'vue';
 import panzoom from 'panzoom';
 import { getPlayersLocation } from '@/services/api';
+import { APP_CONFIG } from '@/config/appConfig.js';
 
 const props = defineProps({
     islands: { type: Array, required: true },
@@ -106,6 +118,82 @@ const props = defineProps({
     dynamicViewBox: { type: String, required: true },
     territoryId: { type: String, required: true },
     username: { type: String, required: true },
+    backgroundImage: { type: String, default: '' },
+});
+
+const stickBackground = APP_CONFIG.STICK_BACKGROUND_TO_ISLANDS;
+
+// Natural aspect ratio (width / height) of the background image, once loaded.
+// We need it so the rendered rect matches the image's proportions and the image
+// neither gets cropped nor stretched.
+const backgroundAspect = ref(null);
+
+watch(
+    () => props.backgroundImage,
+    src => {
+        backgroundAspect.value = null;
+        if (!stickBackground || !src) return;
+        const img = new Image();
+        img.onload = () => {
+            if (img.naturalHeight > 0) {
+                backgroundAspect.value = img.naturalWidth / img.naturalHeight;
+            }
+        };
+        img.src = src;
+    },
+    { immediate: true }
+);
+
+// Size of the <svg> element (px). Kept reactive so the background can be sized
+// to fit the actual viewport at minimum zoom.
+const svgClientSize = ref({ width: 0, height: 0 });
+
+// When the background sticks to the islands it is rendered inside the panzoom'd
+// SVG (in the same user-space coordinates). We size the image so that at minimum
+// zoom (scale 1) the *whole* image is visible and just fits the viewport — i.e.
+// the entire artwork shows as a backdrop rather than a cropped center slice —
+// then centre it on the island cluster. Zooming in reveals detail, and
+// `constrainToBackground()` keeps the view from drifting off it.
+const backgroundRect = computed(() => {
+    const parts = props.dynamicViewBox.split(/\s+/).map(Number);
+    const [minX, minY, vbWidth, vbHeight] =
+        parts.length === 4 && parts.every(n => Number.isFinite(n))
+            ? parts
+            : [0, 0, 1, 1];
+
+    const centerX = minX + vbWidth / 2;
+    const centerY = minY + vbHeight / 2;
+
+    // At min zoom the viewBox is fitted to the <svg> box with `meet` (uniform
+    // scale = the smaller axis ratio). The window then spans this many user
+    // units — that's the area we want the whole image to fill/fit.
+    const { width: cw, height: ch } = svgClientSize.value;
+    let visibleW = vbWidth;
+    let visibleH = vbHeight;
+    if (cw > 0 && ch > 0) {
+        const meetScale = Math.min(cw / vbWidth, ch / vbHeight); // px per unit
+        visibleW = cw / meetScale;
+        visibleH = ch / meetScale;
+    }
+
+    // Fit the image inside the visible area preserving its aspect ratio
+    // (object-fit: contain), so the whole image is on screen at min zoom. The
+    // rect matches the image aspect exactly, so the `<image>`'s own
+    // preserveAspectRatio never adds a second round of letterboxing.
+    const aspect = backgroundAspect.value || visibleW / visibleH || 1;
+    let width = visibleW;
+    let height = visibleW / aspect;
+    if (height > visibleH) {
+        height = visibleH;
+        width = visibleH * aspect;
+    }
+
+    return {
+        x: centerX - width / 2,
+        y: centerY - height / 2,
+        width,
+        height,
+    };
 });
 
 const emit = defineEmits(['nodeClick', 'mapTransformed']);
@@ -225,6 +313,56 @@ const wavyEdges = computed(() => {
     });
 });
 
+// Guards against re-entrancy: adjusting the pan inside the `transform` handler
+// fires another `transform` event.
+let constraining = false;
+
+// Keeps the view sitting on top of the background so the blue backdrop only
+// ever shows as thin padding. When the background is larger than the viewport
+// (zoomed in) we clamp the pan so no edge crosses into view; when it is smaller
+// than the viewport (zoomed out) we center it. The net effect is that zooming
+// out pulls the view back toward the middle of the background.
+const constrainToBackground = () => {
+    if (!stickBackground || constraining || !panzoomInstance || !svgRef.value) {
+        return;
+    }
+    const svg = svgRef.value;
+
+    // The visible map is clipped to the <svg> element's own box (it has
+    // overflow:hidden), and panzoom applies its zoom/pan as a CSS transform on
+    // that same <svg>. So the thing that must always cover the viewport is the
+    // transformed <svg> box itself; anything the <svg> box doesn't cover shows
+    // the parent's solid backdrop. We measure in screen pixels via
+    // getBoundingClientRect so this is agnostic to how panzoom transforms.
+    const view = svg.parentElement.getBoundingClientRect();
+    const map = svg.getBoundingClientRect();
+
+    // How far to nudge the pan (screen px) so the map covers the view; if the
+    // map is smaller than the view on an axis, center it instead.
+    const adjust = (mapMin, mapSize, viewMin, viewSize) => {
+        const mapMax = mapMin + mapSize;
+        const viewMax = viewMin + viewSize;
+        if (mapSize <= viewSize) {
+            const mapCenter = mapMin + mapSize / 2;
+            const viewCenter = viewMin + viewSize / 2;
+            return viewCenter - mapCenter; // center it
+        }
+        if (mapMin > viewMin) return viewMin - mapMin; // gap on leading edge
+        if (mapMax < viewMax) return viewMax - mapMax; // gap on trailing edge
+        return 0;
+    };
+
+    const dx = adjust(map.left, map.width, view.left, view.width);
+    const dy = adjust(map.top, map.height, view.top, view.height);
+
+    if (Math.abs(dx) < 0.5 && Math.abs(dy) < 0.5) return;
+
+    const t = panzoomInstance.getTransform();
+    constraining = true;
+    panzoomInstance.moveTo(t.x + dx, t.y + dy);
+    constraining = false;
+};
+
 const initializePanzoom = () => {
     if (!svgRef.value || panzoomInstance) return;
 
@@ -265,6 +403,7 @@ const initializePanzoom = () => {
     });
 
     panzoomInstance.on('transform', () => {
+        constrainToBackground();
         const transform = panzoomInstance.getTransform();
         emit('mapTransformed', {
             x: transform.x,
@@ -343,13 +482,35 @@ const shipSrc = name => {
     return '/images/ships/' + ((sum % 11) + 1) + '.png';
 };
 
+// Re-apply the constraint when the background rect changes (e.g. its aspect
+// ratio resolves after the image loads, or the territory changes).
+watch(backgroundRect, () => {
+    nextTick(constrainToBackground);
+});
+
+let svgResizeObserver = null;
+
+const measureSvg = () => {
+    if (!svgRef.value) return;
+    svgClientSize.value = {
+        width: svgRef.value.clientWidth,
+        height: svgRef.value.clientHeight,
+    };
+};
+
 onMounted(() => {
     initializePanzoom();
     fetchOtherPlayers();
+    measureSvg();
+    if (window.ResizeObserver && svgRef.value) {
+        svgResizeObserver = new ResizeObserver(measureSvg);
+        svgResizeObserver.observe(svgRef.value);
+    }
 });
 
 onUnmounted(() => {
     if (panzoomInstance) panzoomInstance.dispose();
+    if (svgResizeObserver) svgResizeObserver.disconnect();
 });
 
 defineExpose({

@@ -1,7 +1,7 @@
 {
   "id": "territory1",
   "name": "جزایر اسرارآمیز",
-  "backgroundAsset": "/images/backgrounds/territory/background1.jpg",
+  "backgroundAsset": "/images/backgrounds/territory/1.jpg",
   "startIsland": "island_start",
   "islands": [
     {
