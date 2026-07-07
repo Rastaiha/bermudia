@@ -67,7 +67,7 @@ npm install
 npm run dev
 ```
 
-The frontend will start on `http://localhost:5173` by default. There is no frontend `.env` mechanism — the API/WebSocket base URLs are hardcoded in `frontend/src/services/api/base_url.js`.
+The frontend will start on `http://localhost:5173` by default. The API/WebSocket base URLs default to the production endpoints hardcoded in `frontend/src/services/api/config.js`, and can be overridden via `VITE_API_BASE_URL`/`VITE_WS_BASE_URL` in a `frontend/.env` file (see `frontend/.env.example`).
 
 For detailed setup instructions, see the [Backend README](./backend/README.md) and [Frontend README](./frontend/README.md).
 
@@ -99,7 +99,7 @@ The backend has no `.env` file. Configuration is loaded from environment variabl
 
 ### Frontend Configuration
 
-The frontend has no `.env` file either. The API and WebSocket base URLs are hardcoded in `frontend/src/services/api/base_url.js` and require a rebuild to change.
+The API and WebSocket base URLs default to the production endpoints hardcoded in `frontend/src/services/api/config.js`, and can be overridden via `VITE_API_BASE_URL`/`VITE_WS_BASE_URL` env vars (see `frontend/.env.example`) — a rebuild is still required since Vite inlines env vars at build time.
 
 ## 🎯 Game Mechanics
 

@@ -199,13 +199,7 @@ async function handleLogin() {
 
     isLoading.value = true;
     try {
-        const result = await login(username.value, password.value);
-
-        if (remember.value) {
-            localStorage.setItem('authToken', result.token);
-        } else {
-            sessionStorage.setItem('authToken', result.token);
-        }
+        await login(username.value, password.value, remember.value);
 
         toast.success('ورود با موفقیت انجام شد! در حال انتقال...');
 
