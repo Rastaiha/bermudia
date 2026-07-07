@@ -76,6 +76,7 @@ import {
 import { usePlayerWebSocket } from '@/services/websocket.js';
 import { useInboxWebSocket } from '@/services/inboxWebsocket.js';
 import eventBus from '@/services/eventBus.js';
+import { logger } from '@/services/logger.js';
 import { APP_CONFIG, BACKGROUND_MODES } from '@/config/appConfig.js';
 
 import MapView from '@/components/features/map/MapView.vue';
@@ -177,7 +178,7 @@ const loadPageData = async id => {
         setupTerritoryData(territoryData);
         setupPlayerAndUserData(playerAndUserData, id);
     } catch (error) {
-        console.error('Failed to load page data:', error.message);
+        logger.error('Failed to load page data:', error.message);
         if (
             !error.message.includes('authenticated') &&
             !error.message.includes('Redirecting')

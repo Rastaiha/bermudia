@@ -138,6 +138,7 @@ import { investCheck, invest } from '@/services/api/index.js';
 import { onMounted, onUnmounted, ref, watch } from 'vue';
 import { useToast } from 'vue-toastification';
 import { COST_ITEMS_INFO } from '@/services/cost.js';
+import { logger } from '@/services/logger.js';
 
 const emit = defineEmits(['close']);
 
@@ -205,7 +206,7 @@ async function doInvestCheck() {
         checkResult.value = result;
     } catch (error) {
         toast.error(error.message || 'خطا در دریافت اطلاعات بورس');
-        console.error('Error calling investCheck:', error);
+        logger.error('Error calling investCheck:', error);
     } finally {
         isLoading.value = false;
     }
@@ -220,7 +221,7 @@ async function handleInvest() {
         await doInvestCheck();
     } catch (error) {
         toast.error(error.message || 'خطا در سرمایه‌گذاری');
-        console.error('Error calling invest:', error);
+        logger.error('Error calling invest:', error);
     } finally {
         isInvesting.value = false;
     }

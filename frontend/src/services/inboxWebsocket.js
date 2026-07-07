@@ -4,6 +4,7 @@ import { API_ENDPOINTS } from '@/services/api/config.js';
 import { notificationService } from '@/services/notificationService.js';
 import { uiState } from '@/services/uiState.js';
 import { createReconnectingSocket } from '@/services/ws/reconnectingSocket.js';
+import { logger } from '@/services/logger.js';
 
 export const messages = ref([]);
 export const syncOffset = ref(null);
@@ -17,7 +18,7 @@ async function triggerNotificationCheck() {
             notificationService.markAllAsSeen();
         }
     } catch (apiError) {
-        console.error(
+        logger.error(
             '[Inbox WS] Failed to fetch inbox messages after WS event:',
             apiError
         );
@@ -26,7 +27,7 @@ async function triggerNotificationCheck() {
 
 function handleMessage(data) {
     if (data.ok === false) {
-        console.error('[InboxWS] Received error event:', data.error);
+        logger.error('[InboxWS] Received error event:', data.error);
         return;
     }
     if (data.sync) {

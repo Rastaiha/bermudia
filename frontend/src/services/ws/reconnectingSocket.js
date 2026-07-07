@@ -1,3 +1,5 @@
+import { logger } from '@/services/logger.js';
+
 const MAX_RECONNECT_ATTEMPTS = 10;
 const BASE_RECONNECT_DELAY = 1000;
 const MAX_RECONNECT_DELAY = 30000;
@@ -23,13 +25,13 @@ export function createReconnectingSocket({
             socket.onopen = null;
             socket.close(1000, 'Connection closed intentionally by client');
             socket = null;
-            console.log(`${label} connection cleanly disconnected.`);
+            logger.log(`${label} connection cleanly disconnected.`);
         }
     };
 
     const scheduleReconnect = () => {
         if (reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
-            console.error(
+            logger.error(
                 `Max ${label} reconnection attempts reached. Giving up.`
             );
             return;
@@ -40,7 +42,7 @@ export function createReconnectingSocket({
         );
         reconnectAttempts++;
 
-        console.log(
+        logger.log(
             `Scheduling ${label} reconnection attempt ${reconnectAttempts} in ${delay}ms`
         );
         reconnectTimeoutId = setTimeout(connect, delay);
@@ -51,15 +53,15 @@ export function createReconnectingSocket({
 
         const url = buildUrl();
         if (!url) {
-            console.error(`${label}: No auth token found, connection aborted.`);
+            logger.error(`${label}: No auth token found, connection aborted.`);
             return;
         }
 
-        console.log(`Attempting to connect ${label}...`);
+        logger.log(`Attempting to connect ${label}...`);
         socket = new WebSocket(url);
 
         socket.onopen = () => {
-            console.log(`${label} connection established.`);
+            logger.log(`${label} connection established.`);
             reconnectAttempts = 0;
             onOpen?.();
         };
@@ -68,12 +70,12 @@ export function createReconnectingSocket({
             try {
                 onMessage(JSON.parse(event.data));
             } catch (error) {
-                console.error(`Error parsing ${label} message:`, error);
+                logger.error(`Error parsing ${label} message:`, error);
             }
         };
 
         socket.onclose = event => {
-            console.log(`${label} connection closed. Code:`, event.code);
+            logger.log(`${label} connection closed. Code:`, event.code);
             socket = null;
 
             if (event.code !== 1000) {
@@ -82,7 +84,7 @@ export function createReconnectingSocket({
         };
 
         socket.onerror = error => {
-            console.error(`${label} error:`, error);
+            logger.error(`${label} error:`, error);
             onError?.(error);
         };
     };

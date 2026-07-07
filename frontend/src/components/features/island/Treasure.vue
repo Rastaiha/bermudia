@@ -150,6 +150,7 @@ import { treasureCheck, treasureUnlock } from '@/services/api/index.js';
 import TreasureRewardModal from '@/components/features/island/TreasureRewardModal.vue';
 import { COST_ITEMS_INFO } from '@/services/cost.js';
 import { glossary } from '@/services/glossary.js';
+import { logger } from '@/services/logger.js';
 
 const props = defineProps({
     treasureData: { type: Object, required: true },
@@ -201,7 +202,7 @@ const handleTreasureClick = async event => {
             error.message ||
                 'شرایط لازم برای باز کردن ' + glossary.treasure + ' را ندارید.'
         );
-        console.error('Failed to unlock treasure:', error);
+        logger.error('Failed to unlock treasure:', error);
     }
 };
 
@@ -230,7 +231,7 @@ onMounted(() => {
             }
         })
         .catch(error => {
-            console.error('Failed to fetch treasure info:', error);
+            logger.error('Failed to fetch treasure info:', error);
         });
 
     checkScreenSize();

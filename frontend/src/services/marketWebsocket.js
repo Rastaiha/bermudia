@@ -2,6 +2,7 @@ import { onMounted, onUnmounted } from 'vue';
 import { getToken } from '@/services/api/index.js';
 import { API_ENDPOINTS } from '@/services/api/config.js';
 import { createReconnectingSocket } from '@/services/ws/reconnectingSocket.js';
+import { logger } from '@/services/logger.js';
 
 export function useMarketWebSocket(
     mySyncTrade,
@@ -10,7 +11,7 @@ export function useMarketWebSocket(
     otherOffers
 ) {
     const handleMessage = data => {
-        console.log('Market WebSocket message received:', data);
+        logger.log('Market WebSocket message received:', data);
 
         if (data.sync) {
             mySyncTrade.value = data.sync.offset;

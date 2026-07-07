@@ -70,6 +70,7 @@ import { usePlayerWebSocket } from '@/services/websocket.js';
 import { useInboxWebSocket } from '@/services/inboxWebsocket.js';
 import { useModal } from 'vue-final-modal';
 import eventBus from '@/services/eventBus.js';
+import { logger } from '@/services/logger.js';
 
 import Iframe from '@/components/common/Iframe.vue';
 import ChallengeBox from '@/components/features/island/ChallengeBox.vue';
@@ -112,7 +113,7 @@ const fetchIslandData = async id => {
         treasures.value = islandData.treasures;
         isLoaded.value = true;
     } catch (error) {
-        console.error('Failed to load island data from API:', error);
+        logger.error('Failed to load island data from API:', error);
         loadingMessage.value = `خطا در بارگذاری سیاره: ${error.message}`;
         toast.error(error.message || 'خطا در دریافت اطلاعات سیاره');
     }
@@ -141,7 +142,7 @@ const handleChallengeSubmit = async ({ inputId, data }) => {
         toast.success(`پاسخ شما با موفقیت ثبت شد.`);
         await fetchIslandData(props.islandId);
     } catch (error) {
-        console.error('Error submitting answer:', error);
+        logger.error('Error submitting answer:', error);
         toast.error(error.message || 'خطا در ارسال پاسخ!');
     }
 };

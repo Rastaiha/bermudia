@@ -6,10 +6,11 @@ import { notificationService } from '@/services/notificationService.js';
 import { uiState } from '@/services/uiState.js';
 import { messages as inboxMessages } from '@/services/inboxWebsocket.js';
 import { createReconnectingSocket } from '@/services/ws/reconnectingSocket.js';
+import { logger } from '@/services/logger.js';
 
 export function usePlayerWebSocket(player, territoryId, route, router) {
     const handleMessage = async data => {
-        console.log('WebSocket message received:', data);
+        logger.log('WebSocket message received:', data);
 
         if (!data.playerUpdate) return;
 
@@ -27,7 +28,7 @@ export function usePlayerWebSocket(player, territoryId, route, router) {
                     notificationService.markAllAsSeen();
                 }
             } catch (apiError) {
-                console.error(
+                logger.error(
                     'Failed to fetch inbox messages after playerUpdate event:',
                     apiError
                 );
