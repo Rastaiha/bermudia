@@ -36,25 +36,28 @@ const apiPost = async (url, body) => {
     return handleResponse(response);
 };
 
-export const setToken = token => {
+const TOKEN_KEY = 'authToken';
+
+export const setToken = (token, remember = true) => {
+    localStorage.removeItem(TOKEN_KEY);
+    sessionStorage.removeItem(TOKEN_KEY);
     if (token) {
-        localStorage.setItem('authToken', token);
-    } else {
-        localStorage.removeItem('authToken');
+        (remember ? localStorage : sessionStorage).setItem(TOKEN_KEY, token);
     }
 };
 
-export const getToken = () => localStorage.getItem('authToken');
+export const getToken = () =>
+    localStorage.getItem(TOKEN_KEY) || sessionStorage.getItem(TOKEN_KEY);
 
 export const logout = () => {
     setToken(null);
     window.location.pathname = '/login';
 };
 
-export const login = async (username, password) => {
+export const login = async (username, password, remember = true) => {
     const result = await apiPost(API_ENDPOINTS.login, { username, password });
     if (result.token) {
-        setToken(result.token);
+        setToken(result.token, remember);
     }
     return result;
 };
