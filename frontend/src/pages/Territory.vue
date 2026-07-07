@@ -3,8 +3,6 @@
         class="w-full h-screen flex justify-center items-center p-4 box-border overflow-hidden relative"
     >
         <StarryNight v-if="!stickBackground" />
-        <!-- Solid backdrop kept in both modes so no area ever renders white,
-             e.g. corners the panned/zoomed map background doesn't reach. -->
         <div class="fixed inset-0 bg-[#0c2036] -z-20"></div>
         <div
             v-if="isLoading"

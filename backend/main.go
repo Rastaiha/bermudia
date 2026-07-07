@@ -24,8 +24,6 @@ func main() {
 
 	botOptions := []bot.Option{bot.WithServerURL("https://tapi.bale.ai")}
 	if cfg.DevMode {
-		// In dev mode the Bale bot API is often unreachable and not needed to
-		// exercise the game locally; skip the GetMe network call on init.
 		botOptions = append(botOptions, bot.WithSkipGetMe())
 	}
 	theBot, err := bot.New(cfg.BotToken, botOptions...)
