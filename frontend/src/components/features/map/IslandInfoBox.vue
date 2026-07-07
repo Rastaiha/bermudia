@@ -377,7 +377,6 @@ const buttonText = computed(() => {
                 case 'untouched':
                     return 'مهاجرت علمی';
             }
-            debugger;
         }
         return null;
     } else if (checkRefuelIsland() && !refuelError.value)
@@ -468,8 +467,6 @@ const actionOnClick = () => {
         travelToIsland();
         return;
     }
-    debugger;
-    return;
 };
 
 const handleMigrationClick = (event, option) => {

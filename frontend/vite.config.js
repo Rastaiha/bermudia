@@ -12,6 +12,9 @@ export default defineConfig({
         },
     },
     plugins: [vue(), tailwindcss(), svgLoader()],
+    esbuild: {
+        drop: ['debugger'],
+    },
     test: {
         environment: 'jsdom',
         globals: true,
