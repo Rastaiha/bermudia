@@ -177,12 +177,20 @@
     .panel {
         display: flex;
         flex-direction: column;
+        /* Allow the panel to shrink within VueFinalModal's centering flexbox
+         * so its own max-height (e.g. max-h-[80vh]) is actually enforced;
+         * without this the panel grows to content height and the scrollable
+         * .panel-body never gets a bounded height (messages overlap). */
+        min-height: 0;
+        max-height: 100%;
         margin-inline: 1rem;
         border-radius: 1rem;
         background-color: var(--color-panel-surface);
         border: 1px solid var(--color-panel-border);
         color: var(--color-panel-text);
         box-shadow: var(--shadow-2xl);
+        /* Clip children to the rounded box so the inner body scrolls. */
+        overflow: hidden;
     }
 
     .panel-header {
@@ -225,6 +233,13 @@
         overflow-y: auto;
         padding: 1.25rem 1.5rem;
         gap: 1rem;
+    }
+
+    /* Keep list items at their natural height so the body scrolls instead of
+     * flex-shrinking every child (which crushed messages into thin overlapping
+     * lines when the inbox held more than fit at once). */
+    .panel-body > * {
+        flex-shrink: 0;
     }
 
     .panel-row {
