@@ -1,16 +1,16 @@
 name: Frontend CI
 
+# Runs on every push/PR to main (no top-level path filter) so the required
+# `build-and-test` status is always reported — including on backend-only PRs,
+# which would otherwise leave the required check stuck "Expected — Waiting for
+# status to be reported". The actual build work is gated on whether frontend
+# files changed, so backend-only PRs pass instantly without doing real work.
+
 on:
   push:
     branches: [main]
-    paths:
-      - 'frontend/**'
-      - '.github/workflows/frontend-ci.yml'
   pull_request:
     branches: [main]
-    paths:
-      - 'frontend/**'
-      - '.github/workflows/frontend-ci.yml'
 
 jobs:
   build-and-test:
@@ -21,20 +21,38 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Detect frontend changes
+        uses: dorny/paths-filter@v3
+        id: changes
+        with:
+          filters: |
+            frontend:
+              - 'frontend/**'
+              - '.github/workflows/frontend-ci.yml'
+
+      - name: Report skip
+        if: steps.changes.outputs.frontend != 'true'
+        run: echo "No frontend changes — skipping build; reporting success."
+
       - uses: actions/setup-node@v4
+        if: steps.changes.outputs.frontend == 'true'
         with:
           node-version: '22'
           cache: npm
           cache-dependency-path: frontend/package-lock.json
 
       - name: Install dependencies
+        if: steps.changes.outputs.frontend == 'true'
         run: npm ci
 
       - name: Lint
+        if: steps.changes.outputs.frontend == 'true'
         run: npm run lint:check
 
       - name: Test
+        if: steps.changes.outputs.frontend == 'true'
         run: npm run test
 
       - name: Build
+        if: steps.changes.outputs.frontend == 'true'
         run: npm run build
