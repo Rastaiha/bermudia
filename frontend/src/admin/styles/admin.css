@@ -1,0 +1,168 @@
+/* Shared styles for the admin panel. Imported by admin pages/components.
+   Scoped conceptually via the `.admin-scope` wrapper class so these rules
+   never leak into the player app. */
+
+.admin-scope {
+    color: #e2e8f0;
+    font-family:
+        ui-sans-serif,
+        system-ui,
+        -apple-system,
+        'Segoe UI',
+        Roboto,
+        sans-serif;
+}
+
+.admin-scope .page-head {
+    margin-bottom: 24px;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+.admin-scope .page-head h1 {
+    font-size: 24px;
+    font-weight: 700;
+    color: #f8fafc;
+}
+.admin-scope .page-head p {
+    color: #94a3b8;
+    font-size: 14px;
+    margin-top: 4px;
+}
+
+.admin-scope .card {
+    background: #111827;
+    border: 1px solid #1f2937;
+    border-radius: 14px;
+    padding: 20px 22px;
+}
+
+.admin-scope .btn {
+    border: none;
+    border-radius: 10px;
+    padding: 10px 16px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    color: #fff;
+    background: #2563eb;
+    transition:
+        background 0.15s,
+        opacity 0.15s;
+}
+.admin-scope .btn:hover:not(:disabled) {
+    background: #1d4ed8;
+}
+.admin-scope .btn:disabled {
+    opacity: 0.6;
+    cursor: default;
+}
+.admin-scope .btn-ghost {
+    background: transparent;
+    border: 1px solid #334155;
+    color: #cbd5e1;
+}
+.admin-scope .btn-ghost:hover:not(:disabled) {
+    background: #1f2937;
+}
+
+.admin-scope .field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    color: #cbd5e1;
+    font-size: 13px;
+}
+.admin-scope .field input,
+.admin-scope .field select,
+.admin-scope .field textarea {
+    background: #0b1220;
+    border: 1px solid #334155;
+    border-radius: 10px;
+    padding: 10px 12px;
+    color: #f8fafc;
+    font-size: 14px;
+    outline: none;
+    font-family: inherit;
+    transition: border-color 0.15s;
+}
+.admin-scope .field input:focus,
+.admin-scope .field select:focus,
+.admin-scope .field textarea:focus {
+    border-color: #2563eb;
+}
+
+.admin-scope .hint {
+    color: #94a3b8;
+    font-size: 12.5px;
+    line-height: 1.5;
+}
+
+/* Table */
+.admin-scope .table-wrap {
+    overflow-x: auto;
+    border: 1px solid #1f2937;
+    border-radius: 14px;
+}
+.admin-scope table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+    min-width: 520px;
+}
+.admin-scope thead th {
+    text-align: left;
+    background: #0b1220;
+    color: #94a3b8;
+    font-weight: 600;
+    font-size: 12.5px;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    padding: 12px 16px;
+    border-bottom: 1px solid #1f2937;
+}
+.admin-scope tbody td {
+    padding: 12px 16px;
+    border-bottom: 1px solid #1f2937;
+    color: #e2e8f0;
+}
+.admin-scope tbody tr:last-child td {
+    border-bottom: none;
+}
+.admin-scope tbody tr:hover {
+    background: #0b1220;
+}
+
+/* Modal overlay */
+.admin-scope .modal-overlay,
+.admin-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: #020617cc;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    z-index: 1000;
+}
+.admin-modal-card {
+    width: 100%;
+    max-width: 440px;
+    background: #111827;
+    border: 1px solid #1f2937;
+    border-radius: 16px;
+    padding: 24px;
+    box-shadow: 0 20px 60px #00000066;
+    color: #e2e8f0;
+    font-family:
+        ui-sans-serif,
+        system-ui,
+        -apple-system,
+        'Segoe UI',
+        Roboto,
+        sans-serif;
+    max-height: 90vh;
+    overflow-y: auto;
+}
