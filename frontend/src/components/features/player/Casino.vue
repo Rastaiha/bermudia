@@ -107,7 +107,7 @@
                     </div>
                 </div>
                 <div v-else>
-                    <div v-if="checkResult.investments.length > 0">
+                    <div v-if="checkResult.investments?.length > 0">
                         <p class="text-lg text-content-muted">
                             شما در این دوره سرمایه‌گذاری کرده‌اید.
                         </p>
