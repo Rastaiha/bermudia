@@ -1,12 +1,25 @@
 <script setup>
-import { ref, watch } from 'vue';
+import { ref, watch, computed } from 'vue';
 import { useToast } from 'vue-toastification';
-import { getIslandHeader, getBook, setIslandBook } from '../services/api.js';
+import {
+    getIslandHeader,
+    getBook,
+    setIslandBook,
+    setPoolBook,
+} from '../services/api.js';
 
 const props = defineProps({
-    islandId: { type: String, required: true },
+    // Island mode: bind/author the book of a specific island.
+    islandId: { type: String, default: '' },
+    // Pool mode: author a book inside a difficulty pool. When set, the editor
+    // saves to POST /admin/pools/{poolId}/books instead of an island.
+    poolId: { type: String, default: '' },
+    // Optional existing book to load (used in pool mode; empty = new book).
+    initialBookId: { type: String, default: '' },
 });
 const emit = defineEmits(['saved']);
+
+const isPoolMode = computed(() => !!props.poolId);
 
 const toast = useToast();
 
@@ -34,11 +47,17 @@ const load = async () => {
     loading.value = true;
     components.value = [];
     treasures.value = [];
+    header.value = null;
+    fromPool.value = false;
     try {
-        const h = await getIslandHeader(props.islandId);
-        header.value = h;
-        fromPool.value = !!h.fromPool;
-        bookId.value = h.bookId || '';
+        if (isPoolMode.value) {
+            bookId.value = props.initialBookId || '';
+        } else {
+            const h = await getIslandHeader(props.islandId);
+            header.value = h;
+            fromPool.value = !!h.fromPool;
+            bookId.value = h.bookId || '';
+        }
 
         if (bookId.value) {
             const book = await getBook(bookId.value);
@@ -48,7 +67,7 @@ const load = async () => {
             }));
         }
     } catch (e) {
-        toast.error(`Failed to load island content: ${e.message}`);
+        toast.error(`Failed to load content: ${e.message}`);
     } finally {
         loading.value = false;
     }
@@ -147,15 +166,19 @@ const save = async () => {
     }
     saving.value = true;
     try {
-        const result = await setIslandBook(props.islandId, buildPayload());
+        const result = isPoolMode.value
+            ? await setPoolBook(props.poolId, buildPayload())
+            : await setIslandBook(props.islandId, buildPayload());
         // backend returns the canonical book (with generated ids); refresh
         bookId.value = result.bookId || bookId.value;
         components.value = (result.components || []).map(toEditable);
         treasures.value = (result.treasures || []).map(t => ({
             id: t.id || '',
         }));
-        toast.success('Island content saved');
-        emit('saved', props.islandId);
+        toast.success(
+            isPoolMode.value ? 'Pool book saved' : 'Island content saved'
+        );
+        emit('saved', { bookId: bookId.value, islandId: props.islandId });
     } catch (e) {
         toast.error(`Save failed: ${e.message}`);
     } finally {
@@ -163,7 +186,9 @@ const save = async () => {
     }
 };
 
-watch(() => props.islandId, load, { immediate: true });
+watch(() => [props.islandId, props.poolId, props.initialBookId], load, {
+    immediate: true,
+});
 </script>
 
 <template>
@@ -176,7 +201,7 @@ watch(() => props.islandId, load, { immediate: true });
                 book here won't apply while it's pool-bound.
             </div>
 
-            <div class="ice-head">
+            <div v-if="!isPoolMode" class="ice-head">
                 <div>
                     <div class="ice-title">
                         {{ header?.name || islandId }}

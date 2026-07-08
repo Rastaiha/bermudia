@@ -10,6 +10,7 @@ const nav = [
     { name: 'AdminUsers', label: 'Users', icon: '👥' },
     { name: 'AdminMap', label: 'Map Editor', icon: '🗺️' },
     { name: 'AdminIslands', label: 'Island Content', icon: '🏝️' },
+    { name: 'AdminPools', label: 'Pools', icon: '🎲' },
 ];
 
 const COLLAPSE_KEY = 'adminSidebarCollapsed';

@@ -99,3 +99,18 @@ export const getBook = async id => adminGet(ADMIN_ENDPOINTS.book(id));
 
 export const setIslandBook = async (id, input) =>
     adminPost(ADMIN_ENDPOINTS.islandBook(id), input);
+
+// --- Pools & territory island bindings ---
+export const getTerritoryIslandBindings = async territoryId =>
+    adminGet(ADMIN_ENDPOINTS.territoryIslandBindings(territoryId));
+
+export const setTerritoryIslandBindings = async bindings =>
+    adminPost(
+        ADMIN_ENDPOINTS.territoryIslandBindings(bindings.territoryId),
+        bindings
+    );
+
+export const getPools = async () => adminGet(ADMIN_ENDPOINTS.pools);
+
+export const setPoolBook = async (poolId, input) =>
+    adminPost(ADMIN_ENDPOINTS.poolBooks(poolId), input);
