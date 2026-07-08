@@ -23,10 +23,6 @@ const picker = ref(null); // { kind, target } | null
 
 const svgRef = ref(null);
 
-// Background natural aspect ratio (width / height); drives the canvas shape so
-// nothing gets cropped. Defaults to a wide-ish map until the image loads.
-const bgAspect = ref(16 / 10);
-
 const clone = obj => JSON.parse(JSON.stringify(obj));
 
 // ---- Dirty tracking ----
@@ -71,24 +67,10 @@ const selectId = id => {
     draft.value = normalizeDraft(clone(t));
     markSaved();
     selectedIslandId.value = null;
-    updateBgAspect();
 };
 
 const confirmDiscard = () =>
     window.confirm('You have unsaved changes. Discard them?');
-
-// ---- Background aspect ----
-const updateBgAspect = () => {
-    const src = draft.value?.backgroundAsset;
-    if (!src) return;
-    const img = new Image();
-    img.onload = () => {
-        if (img.naturalWidth && img.naturalHeight) {
-            bgAspect.value = img.naturalWidth / img.naturalHeight;
-        }
-    };
-    img.src = src;
-};
 
 // ---- Derived ----
 const selectedIsland = computed(() =>
@@ -110,13 +92,18 @@ const round3 = v => Math.round((Number(v) || 0) * 1000) / 1000;
 let dragState = null;
 
 // Map a client point to normalized [0,1] coords. The SVG uses
-// viewBox "0 0 1 1" with preserveAspectRatio "none", so it fills the element
-// exactly — the mapping is a simple ratio against the element's box.
+// viewBox "0 0 1 1" with preserveAspectRatio "xMidYMid meet" (to mirror the
+// game's crop-to-fill "stick" background), so the unit square is drawn
+// centered as the largest square that fits the element. We undo that
+// letterboxing to recover the normalized coordinate.
 const clientToNorm = e => {
     const rect = svgRef.value.getBoundingClientRect();
+    const side = Math.min(rect.width, rect.height);
+    const offsetX = (rect.width - side) / 2;
+    const offsetY = (rect.height - side) / 2;
     return {
-        x: (e.clientX - rect.left) / rect.width,
-        y: (e.clientY - rect.top) / rect.height,
+        x: (e.clientX - rect.left - offsetX) / side,
+        y: (e.clientY - rect.top - offsetY) / side,
     };
 };
 
@@ -280,7 +267,6 @@ const onAssetSelect = path => {
         selectedIsland.value.iconAsset = path;
     } else if (picker.value?.target === 'territory') {
         draft.value.backgroundAsset = path;
-        updateBgAspect();
     }
     picker.value = null;
 };
@@ -388,9 +374,8 @@ onMounted(loadTerritories);
                     <svg
                         ref="svgRef"
                         viewBox="0 0 1 1"
-                        preserveAspectRatio="none"
+                        preserveAspectRatio="xMidYMid meet"
                         class="map-svg"
-                        :style="{ aspectRatio: bgAspect }"
                         @pointermove="onPointerMove"
                         @pointerup="onPointerUp"
                         @pointerleave="onPointerUp"
@@ -402,7 +387,7 @@ onMounted(loadTerritories);
                             y="0"
                             width="1"
                             height="1"
-                            preserveAspectRatio="none"
+                            preserveAspectRatio="xMidYMid slice"
                             class="map-bg"
                         />
                         <rect
@@ -763,6 +748,7 @@ onMounted(loadTerritories);
 
 .map-svg {
     width: 100%;
+    aspect-ratio: 1;
     max-height: 78vh;
     display: block;
     touch-action: none;
