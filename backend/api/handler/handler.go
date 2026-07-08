@@ -5,6 +5,7 @@ import (
 	"errors"
 	"github.com/Rastaiha/bermudia/api/hub"
 	"github.com/Rastaiha/bermudia/internal/config"
+	"github.com/Rastaiha/bermudia/internal/domain"
 	"github.com/Rastaiha/bermudia/internal/service"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -31,12 +32,14 @@ type Handler struct {
 	inboxHub         *hub.Hub
 }
 
-func New(cfg config.Config, authService *service.Auth, adminService *service.Admin, territoryService *service.Territory, islandService *service.Island, playerService *service.Player) *Handler {
-	return &Handler{
+func New(cfg config.Config, authService *service.Auth, adminService *service.Admin, territoryService *service.Territory, islandService *service.Island, playerService *service.Player, gameState domain.GameStateStore) *Handler {
+	h := &Handler{
 		cfg: cfg,
 		adminHandler: &admin{
-			cfg:          cfg,
-			adminService: adminService,
+			cfg:           cfg,
+			adminService:  adminService,
+			playerService: playerService,
+			gameState:     gameState,
 		},
 		authService:      authService,
 		territoryService: territoryService,
@@ -46,6 +49,8 @@ func New(cfg config.Config, authService *service.Auth, adminService *service.Adm
 		tradeHub:         hub.NewHub(),
 		inboxHub:         hub.NewHub(),
 	}
+	h.adminHandler.actives = h.Actives
+	return h
 }
 
 func (h *Handler) Start() {
@@ -126,6 +131,10 @@ func (h *Handler) Start() {
 			r.Post("/pools/{poolID}/books", h.adminHandler.SetBookAndBindToPool)
 			r.Get("/users", h.adminHandler.GetUsers)
 			r.Post("/users", h.adminHandler.CreateUser)
+			r.Get("/game_state", h.adminHandler.GetGameState)
+			r.Post("/game_state", h.adminHandler.SetGameState)
+			r.Post("/broadcast", h.adminHandler.Broadcast)
+			r.Get("/connections", h.adminHandler.GetConnections)
 		})
 	})
 
