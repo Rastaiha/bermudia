@@ -32,6 +32,11 @@ export const adminRoutes = [
                 name: 'AdminIslands',
                 component: () => import('./pages/AdminIslands.vue'),
             },
+            {
+                path: 'pools',
+                name: 'AdminPools',
+                component: () => import('./pages/AdminPools.vue'),
+            },
         ],
     },
 ];

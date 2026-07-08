@@ -3,6 +3,8 @@ import { ref, computed, onMounted } from 'vue';
 import { useToast } from 'vue-toastification';
 import { getTerritories, setTerritory } from '../services/api.js';
 import AssetPicker from '../components/AssetPicker.vue';
+import AdminModal from '../components/AdminModal.vue';
+import IslandContentEditor from '../components/IslandContentEditor.vue';
 import '../styles/admin.css';
 
 const toast = useToast();
@@ -71,6 +73,72 @@ const selectId = id => {
 
 const confirmDiscard = () =>
     window.confirm('You have unsaved changes. Discard them?');
+
+// ---- New territory ----
+// True while editing a territory that has never been saved to the server.
+const isNewTerritory = computed(
+    () => !!draft.value && !territories.value.some(t => t.id === draft.value.id)
+);
+
+const showNewModal = ref(false);
+const newForm = ref({ id: '', name: '' });
+
+// Slugify a display name into a safe id fragment.
+const slugify = s =>
+    s
+        .trim()
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '_')
+        .replace(/^_+|_+$/g, '');
+
+const openNewTerritory = () => {
+    if (isDirty.value && !confirmDiscard()) return;
+    newForm.value = { id: '', name: '' };
+    showNewModal.value = true;
+};
+
+const createTerritory = () => {
+    const name = newForm.value.name.trim();
+    let id = newForm.value.id.trim() || slugify(name);
+    if (!name) {
+        toast.warning('Territory name is required');
+        return;
+    }
+    if (!id) {
+        toast.warning('Could not derive an id — enter one explicitly');
+        return;
+    }
+    if (territories.value.some(t => t.id === id)) {
+        toast.warning(`A territory with id "${id}" already exists`);
+        return;
+    }
+    // Seed with one island so the territory satisfies backend validation
+    // (startIsland must reference an existing island).
+    const startId = `${id}_start`;
+    draft.value = normalizeDraft({
+        id,
+        name,
+        backgroundAsset: '/images/backgrounds/territory/1.jpg',
+        startIsland: startId,
+        islands: [
+            {
+                id: startId,
+                name: 'Start',
+                x: 0.5,
+                y: 0.5,
+                width: 0.08,
+                height: 0.11,
+                iconAsset: '/images/islands/educational/1.png',
+            },
+        ],
+    });
+    selectedId.value = id;
+    selectedIslandId.value = startId;
+    // Not marked saved: it's dirty until the admin hits Save.
+    savedSnapshot.value = '';
+    showNewModal.value = false;
+    toast.info('New territory started — build it out, then Save.');
+};
 
 // ---- Derived ----
 const selectedIsland = computed(() =>
@@ -271,10 +339,45 @@ const onAssetSelect = path => {
     picker.value = null;
 };
 
+// ---- Island content editor ----
+const contentEditorFor = ref(null);
+// True when the island exists in the last-saved snapshot (so the backend
+// knows about it and getIslandHeader will succeed).
+const islandExistsOnServer = id => {
+    if (!savedSnapshot.value) return false;
+    try {
+        return JSON.parse(savedSnapshot.value).islands.some(i => i.id === id);
+    } catch {
+        return false;
+    }
+};
+const openContentEditor = () => {
+    const island = selectedIsland.value;
+    if (!island) return;
+    if (!islandExistsOnServer(island.id)) {
+        toast.info('Save the map first, then edit this island’s content.');
+        return;
+    }
+    contentEditorFor.value = { id: island.id, name: island.name };
+};
+
 // ---- Save / discard ----
 const discardChanges = () => {
     if (!isDirty.value) return;
     if (!confirmDiscard()) return;
+    if (isNewTerritory.value) {
+        // Nothing saved to revert to — drop the new draft entirely.
+        selectedIslandId.value = null;
+        if (territories.value.length) {
+            selectId(territories.value[0].id);
+        } else {
+            draft.value = null;
+            selectedId.value = '';
+            savedSnapshot.value = '';
+        }
+        toast.info('Discarded new territory');
+        return;
+    }
     const t = territories.value.find(x => x.id === selectedId.value);
     draft.value = normalizeDraft(clone(t));
     markSaved();
@@ -288,7 +391,12 @@ const save = async () => {
     try {
         await setTerritory(draft.value);
         const idx = territories.value.findIndex(t => t.id === draft.value.id);
-        if (idx >= 0) territories.value[idx] = clone(draft.value);
+        if (idx >= 0) {
+            territories.value[idx] = clone(draft.value);
+        } else {
+            // Newly created territory — add it to the list.
+            territories.value.push(clone(draft.value));
+        }
         markSaved();
         toast.success('Territory saved');
     } catch (e) {
@@ -320,15 +428,26 @@ onMounted(loadTerritories);
             </div>
             <div class="head-actions">
                 <select
-                    v-if="territories.length"
+                    v-if="territories.length || draft"
                     class="terr-select"
                     :value="selectedId"
+                    :disabled="isNewTerritory"
                     @change="selectId($event.target.value)"
                 >
                     <option v-for="t in territories" :key="t.id" :value="t.id">
                         {{ t.name || t.id }}
                     </option>
+                    <option v-if="isNewTerritory" :value="draft.id">
+                        {{ draft.name || draft.id }} (new)
+                    </option>
                 </select>
+                <button
+                    class="btn btn-ghost"
+                    title="Create a new territory"
+                    @click="openNewTerritory"
+                >
+                    + New territory
+                </button>
                 <template v-if="isDirty">
                     <span class="dirty-dot" title="Unsaved changes"></span>
                     <button class="btn btn-ghost" @click="discardChanges">
@@ -580,6 +699,13 @@ onMounted(loadTerritories);
                         </button>
                     </div>
 
+                    <button
+                        class="btn btn-ghost content-btn"
+                        @click="openContentEditor"
+                    >
+                        📝 Edit island content
+                    </button>
+
                     <div class="role-buttons">
                         <button
                             class="chip"
@@ -652,7 +778,9 @@ onMounted(loadTerritories);
             </aside>
         </div>
 
-        <p v-else class="hint">No territories found.</p>
+        <p v-else class="hint">
+            No territories yet. Click “+ New territory” to create one.
+        </p>
 
         <AssetPicker
             v-if="picker"
@@ -670,10 +798,81 @@ onMounted(loadTerritories);
             @select="onAssetSelect"
             @close="picker = null"
         />
+
+        <AdminModal
+            v-if="contentEditorFor"
+            wide
+            :title="`Edit content — ${contentEditorFor.name || contentEditorFor.id}`"
+            @close="contentEditorFor = null"
+        >
+            <IslandContentEditor :island-id="contentEditorFor.id" />
+        </AdminModal>
+
+        <AdminModal
+            v-if="showNewModal"
+            title="New territory"
+            @close="showNewModal = false"
+        >
+            <form class="new-form" @submit.prevent="createTerritory">
+                <label class="field">
+                    <span>Name *</span>
+                    <input
+                        v-model="newForm.name"
+                        type="text"
+                        placeholder="e.g. Sound Peninsula"
+                    />
+                </label>
+                <label class="field">
+                    <span>ID</span>
+                    <input
+                        v-model="newForm.id"
+                        type="text"
+                        :placeholder="slugify(newForm.name) || 'auto from name'"
+                    />
+                    <small class="field-note">
+                        Leave blank to derive from the name. Must be unique and
+                        permanent — it can’t be changed later.
+                    </small>
+                </label>
+                <p class="hint">
+                    A starter “Start” island is added automatically so the
+                    territory is valid. Build it out, then hit Save.
+                </p>
+                <div class="new-actions">
+                    <button
+                        type="button"
+                        class="btn btn-ghost"
+                        @click="showNewModal = false"
+                    >
+                        Cancel
+                    </button>
+                    <button type="submit" class="btn">Create</button>
+                </div>
+            </form>
+        </AdminModal>
     </div>
 </template>
 
 <style scoped>
+.new-form {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+.new-form .field {
+    gap: 6px;
+}
+.field-note {
+    color: #64748b;
+    font-size: 11.5px;
+    line-height: 1.5;
+}
+.new-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 4px;
+}
 .head-actions {
     display: flex;
     gap: 8px;
@@ -856,6 +1055,10 @@ onMounted(loadTerritories);
     border: 1px solid #1f2937;
     border-radius: 10px;
     padding: 4px;
+}
+.content-btn {
+    width: 100%;
+    margin-bottom: 4px;
 }
 
 .role-buttons {

@@ -41,21 +41,38 @@ const { now } = useNow();
 
 Routes are defined in `src/router/index.js`:
 
-| Route                      | Component             | Description         |
-| -------------------------- | --------------------- | ------------------- |
-| `/`                        | redirects to `/login` | Root redirect       |
-| `/login`                   | Login.vue             | Authentication page |
-| `/territory/:id`           | Territory.vue         | Territory map view  |
-| `/territory/:id/:islandId` | TerritoryIsland.vue   | Island detail view  |
+| Route                      | Component             | Description                          |
+| -------------------------- | --------------------- | ------------------------------------ |
+| `/`                        | redirects to `/login` | Root redirect                        |
+| `/login`                   | Login.vue             | Authentication page                  |
+| `/territory/:id`           | Territory.vue         | Territory map view                   |
+| `/territory/:id/:islandId` | TerritoryIsland.vue   | Island detail view                   |
+| `/admin/login`             | admin/AdminLogin.vue  | Admin authentication (separate auth) |
+| `/admin`                   | admin/AdminSettings   | Admin dashboard — General Settings   |
+| `/admin/users`             | admin/AdminUsers      | Admin — Users                        |
+| `/admin/map`               | admin/AdminMap        | Admin — Map Editor                   |
+| `/admin/islands`           | admin/AdminIslands    | Admin — Island Content               |
+| `/admin/pools`             | admin/AdminPools      | Admin — Pools                        |
+
+The `/admin/*` routes are contributed by `src/admin/router.js` (spread into
+the main route table) and lazy-loaded, so they add nothing to the player
+bundle. See the [Admin Panel](#-admin-panel) section below.
 
 ### Navigation Guards
 
-Routes with `meta: { requiresAuth: true }` require authentication:
+Player routes with `meta: { requiresAuth: true }` require a player token.
+`/admin/*` routes have their own independent guard and token — the global
+`beforeEach` delegates any path starting with `/admin` to `adminGuard`:
 
 ```javascript
 router.beforeEach((to, from, next) => {
-    const isLoggedIn = !!getToken();
+    // Admin routes use their own token, independent of the player token.
+    if (to.path.startsWith('/admin')) {
+        if (adminGuard(to, from, next)) next();
+        return;
+    }
 
+    const isLoggedIn = !!getToken();
     if (to.meta.requiresAuth && !isLoggedIn) {
         next({ name: 'Login' });
     } else {
@@ -85,7 +102,91 @@ uiState.modalData = { type: 'treasure', data: treasureInfo };
 
 Key data persisted client-side:
 
-- `authToken`: JWT authentication token, stored in `localStorage` if "remember me" is checked at login, otherwise in `sessionStorage`
+- `authToken`: player JWT, stored in `localStorage` if "remember me" is checked at login, otherwise in `sessionStorage`
+- `adminToken`: admin JWT (separate from the player token), always in `localStorage`; see [Admin Panel](#-admin-panel)
+- `adminSidebarCollapsed`: `"1"`/`"0"`, remembers whether the admin sidebar is collapsed
+
+## 🛠️ Admin Panel
+
+The admin panel is a self-contained area under `src/admin/`, isolated from
+the player app. It shares the build, deploy, and Tailwind setup but keeps its
+own routes, auth, API client, and styles so the two never bleed into each
+other.
+
+### Structure
+
+```text
+src/admin/
+├── router.js                  # adminRoutes + adminGuard (spread into src/router)
+├── layout/AdminLayout.vue     # collapsible sidebar shell (nav + logout)
+├── pages/
+│   ├── AdminLogin.vue         # admin login
+│   ├── AdminSettings.vue      # pause/resume, broadcast, live connections
+│   ├── AdminUsers.vue         # user table + create-user modal
+│   ├── AdminMap.vue           # map editor (islands/edges/roles + new territory)
+│   ├── AdminIslands.vue       # island-content table view
+│   └── AdminPools.vue         # pool bindings + pool books
+├── components/
+│   ├── AdminModal.vue         # shared modal (supports a `wide` variant)
+│   ├── AssetPicker.vue        # image picker over public/images/**
+│   └── IslandContentEditor.vue# reusable book editor (island + pool modes)
+├── services/
+│   ├── config.js              # ADMIN_ENDPOINTS (derives /admin base from API host)
+│   └── api.js                 # admin fetch wrapper + adminToken helpers
+└── styles/admin.css           # shared .admin-scope styles
+```
+
+### Auth
+
+Admin auth is completely separate from the player flow. It hits
+`POST /admin/login` (backed by the backend's `AdminUsername`/`AdminPassword`
+config, **not** the player user store) and stores the returned JWT under
+`adminToken`. A `401` from any admin request triggers `adminLogout()`. The
+admin API tree lives at `/admin/*` (not `/api/v1`); `config.js` derives its
+base URL from the player API host by stripping the `/api/v1` suffix, and it is
+overridable via `VITE_ADMIN_BASE_URL`.
+
+### Assets
+
+`AssetPicker.vue` never uploads files. It enumerates images that already exist
+in `public/images/**` via `import.meta.glob` and emits their public paths
+(e.g. `/images/islands/educational/10.png`, `/images/backgrounds/territory/1.jpg`) —
+the exact form the game stores in `iconAsset` / `backgroundAsset`. To offer a
+new image in the pickers, drop the file into the matching `public/images/`
+subdirectory.
+
+### Sections
+
+- **General Settings** — pause/resume the game, broadcast a message to every
+  player's inbox, and view live WebSocket connection counts (auto-refreshed).
+- **Users** — list users (name/username/meet link) and create new ones
+  (view/create only; there is no player-state editing).
+- **Map Editor** — always-editing canvas over the territory background:
+  drag/resize islands, pick icons/background, draw/delete edges, set the start
+  island, toggle refuel/terminal roles, edit prerequisites, **create brand-new
+  territories**, and jump to an island's content editor. A Save/Discard pair
+  appears only when there are unsaved changes.
+- **Island Content** — searchable table of every island; each opens the
+  `IslandContentEditor` to edit its book (articles/iframes, questions,
+  treasures).
+- **Pools** — mark territory islands as normal vs. pooled and set the
+  easy/medium/hard pool counts, plus author the books inside each pool (the
+  content editor runs in "pool mode").
+
+### Removal semantics (important)
+
+The backend has no general delete endpoints, so the panel can only remove what
+the backend supports, and some removals are partial. See the
+[backend README](../backend/README.md#admin-api) for the authoritative
+behavior. In short:
+
+- Removing a **question/treasure** from a book truly deletes it (but does not
+  clean up players' existing answers to that question).
+- Removing an **island** from a territory drops it from the map, but leaves a
+  stale row in the backend `islands` table (its id stays reserved to that
+  territory and can't be reused by another territory).
+- There is **no** way to remove a book from a pool, or delete a whole book or
+  territory — those endpoints don't exist.
 
 ## 🎮 Game Flow
 
