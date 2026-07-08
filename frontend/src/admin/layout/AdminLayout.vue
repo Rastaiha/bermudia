@@ -1,4 +1,5 @@
 <script setup>
+import { ref } from 'vue';
 import { RouterView, useRouter } from 'vue-router';
 import { adminLogout } from '../services/api.js';
 
@@ -11,6 +12,14 @@ const nav = [
     { name: 'AdminIslands', label: 'Island Content', icon: '🏝️' },
 ];
 
+const COLLAPSE_KEY = 'adminSidebarCollapsed';
+const collapsed = ref(localStorage.getItem(COLLAPSE_KEY) === '1');
+
+const toggleCollapse = () => {
+    collapsed.value = !collapsed.value;
+    localStorage.setItem(COLLAPSE_KEY, collapsed.value ? '1' : '0');
+};
+
 const isActive = name => router.currentRoute.value.name === name;
 
 const go = name => router.push({ name });
@@ -20,10 +29,19 @@ const onLogout = () => adminLogout();
 
 <template>
     <div class="admin-root" dir="ltr">
-        <aside class="admin-sidebar">
+        <aside class="admin-sidebar" :class="{ collapsed }">
             <div class="admin-brand">
                 <span class="admin-brand-mark">🌀</span>
-                <span class="admin-brand-text">Bermudia Admin</span>
+                <span v-if="!collapsed" class="admin-brand-text"
+                    >Bermudia Admin</span
+                >
+                <button
+                    class="admin-collapse"
+                    :title="collapsed ? 'Expand' : 'Collapse'"
+                    @click="toggleCollapse"
+                >
+                    {{ collapsed ? '»' : '«' }}
+                </button>
             </div>
             <nav class="admin-nav">
                 <button
@@ -31,15 +49,20 @@ const onLogout = () => adminLogout();
                     :key="item.name"
                     class="admin-nav-item"
                     :class="{ 'is-active': isActive(item.name) }"
+                    :title="collapsed ? item.label : ''"
                     @click="go(item.name)"
                 >
                     <span class="admin-nav-icon">{{ item.icon }}</span>
-                    <span>{{ item.label }}</span>
+                    <span v-if="!collapsed">{{ item.label }}</span>
                 </button>
             </nav>
-            <button class="admin-logout" @click="onLogout">
+            <button
+                class="admin-logout"
+                :title="collapsed ? 'Log out' : ''"
+                @click="onLogout"
+            >
                 <span class="admin-nav-icon">⎋</span>
-                <span>Log out</span>
+                <span v-if="!collapsed">Log out</span>
             </button>
         </aside>
         <main class="admin-main">
@@ -75,6 +98,11 @@ const onLogout = () => adminLogout();
     position: sticky;
     top: 0;
     height: 100vh;
+    transition: width 0.18s ease;
+}
+.admin-sidebar.collapsed {
+    width: 68px;
+    padding: 20px 10px;
 }
 
 .admin-brand {
@@ -85,8 +113,37 @@ const onLogout = () => adminLogout();
     font-weight: 700;
     font-size: 16px;
 }
+.admin-sidebar.collapsed .admin-brand {
+    padding: 8px 0 18px;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 8px;
+}
 .admin-brand-mark {
     font-size: 22px;
+}
+.admin-collapse {
+    margin-left: auto;
+    background: #0b1220;
+    border: 1px solid #334155;
+    color: #cbd5e1;
+    width: 24px;
+    height: 24px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 13px;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+.admin-collapse:hover {
+    background: #1f2937;
+    color: #f8fafc;
+}
+.admin-sidebar.collapsed .admin-collapse {
+    margin-left: 0;
 }
 
 .admin-nav {
@@ -123,6 +180,12 @@ const onLogout = () => adminLogout();
     background: #2563eb;
     color: #fff;
 }
+.admin-sidebar.collapsed .admin-nav-item,
+.admin-sidebar.collapsed .admin-logout {
+    justify-content: center;
+    gap: 0;
+    padding: 10px 0;
+}
 .admin-nav-icon {
     width: 22px;
     text-align: center;
@@ -140,8 +203,8 @@ const onLogout = () => adminLogout();
 
 .admin-main {
     flex: 1;
+    min-width: 0;
     padding: 32px 40px;
-    overflow-x: hidden;
     max-width: 100%;
 }
 

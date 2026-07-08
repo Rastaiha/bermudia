@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted, nextTick } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { useToast } from 'vue-toastification';
 import { getTerritories, setTerritory } from '../services/api.js';
 import AssetPicker from '../components/AssetPicker.vue';
@@ -12,15 +12,31 @@ const selectedId = ref('');
 const loading = ref(true);
 const saving = ref(false);
 
-// Working copy of the currently edited territory (deep-cloned from server).
+// Working copy of the currently edited territory (deep-cloned from server),
+// plus a snapshot of the last-saved state for dirty tracking.
 const draft = ref(null);
-const editMode = ref(false);
+const savedSnapshot = ref('');
 const selectedIslandId = ref(null);
 
 // Asset picker state
 const picker = ref(null); // { kind, target } | null
 
 const svgRef = ref(null);
+
+// Background natural aspect ratio (width / height); drives the canvas shape so
+// nothing gets cropped. Defaults to a wide-ish map until the image loads.
+const bgAspect = ref(16 / 10);
+
+const clone = obj => JSON.parse(JSON.stringify(obj));
+
+// ---- Dirty tracking ----
+const isDirty = computed(
+    () => draft.value && JSON.stringify(draft.value) !== savedSnapshot.value
+);
+
+const markSaved = () => {
+    savedSnapshot.value = JSON.stringify(draft.value);
+};
 
 // ---- Loading ----
 const loadTerritories = async () => {
@@ -37,8 +53,6 @@ const loadTerritories = async () => {
     }
 };
 
-const clone = obj => JSON.parse(JSON.stringify(obj));
-
 // Ensure optional arrays/maps exist so the editor can mutate them safely.
 const normalizeDraft = t => {
     t.islands ||= [];
@@ -52,10 +66,28 @@ const normalizeDraft = t => {
 const selectId = id => {
     const t = territories.value.find(x => x.id === id);
     if (!t) return;
+    if (isDirty.value && !confirmDiscard()) return;
     selectedId.value = id;
     draft.value = normalizeDraft(clone(t));
+    markSaved();
     selectedIslandId.value = null;
-    editMode.value = false;
+    updateBgAspect();
+};
+
+const confirmDiscard = () =>
+    window.confirm('You have unsaved changes. Discard them?');
+
+// ---- Background aspect ----
+const updateBgAspect = () => {
+    const src = draft.value?.backgroundAsset;
+    if (!src) return;
+    const img = new Image();
+    img.onload = () => {
+        if (img.naturalWidth && img.naturalHeight) {
+            bgAspect.value = img.naturalWidth / img.naturalHeight;
+        }
+    };
+    img.src = src;
 };
 
 // ---- Derived ----
@@ -71,30 +103,33 @@ const islandCenter = id => {
 const isRefuel = id => draft.value.refuelIslands.some(r => r.id === id);
 const isTerminal = id => draft.value.terminalIslands.some(t => t.id === id);
 
+// Display helper: keep coordinate inputs readable (3 decimals) while editing.
+const round3 = v => Math.round((Number(v) || 0) * 1000) / 1000;
+
 // ---- Island selection / drag (normalized 0..1 coordinates) ----
 let dragState = null;
 
+// Map a client point to normalized [0,1] coords. The SVG uses
+// viewBox "0 0 1 1" with preserveAspectRatio "none", so it fills the element
+// exactly — the mapping is a simple ratio against the element's box.
 const clientToNorm = e => {
-    const svg = svgRef.value;
-    const rect = svg.getBoundingClientRect();
-    // viewBox is fixed "0 0 1 1" with preserveAspectRatio xMidYMid meet.
-    const side = Math.min(rect.width, rect.height);
-    const offsetX = (rect.width - side) / 2;
-    const offsetY = (rect.height - side) / 2;
-    const x = (e.clientX - rect.left - offsetX) / side;
-    const y = (e.clientY - rect.top - offsetY) / side;
-    return { x, y };
+    const rect = svgRef.value.getBoundingClientRect();
+    return {
+        x: (e.clientX - rect.left) / rect.width,
+        y: (e.clientY - rect.top) / rect.height,
+    };
 };
 
 const onIslandPointerDown = (island, e) => {
     selectedIslandId.value = island.id;
-    if (!editMode.value || edgeMode.value) return;
+    if (edgeMode.value) return;
     e.target.setPointerCapture?.(e.pointerId);
     const start = clientToNorm(e);
     dragState = {
         id: island.id,
         dx: island.x - start.x,
         dy: island.y - start.y,
+        moved: false,
     };
 };
 
@@ -103,8 +138,9 @@ const onPointerMove = e => {
     const p = clientToNorm(e);
     const island = draft.value.islands.find(i => i.id === dragState.id);
     if (!island) return;
-    island.x = Math.min(1, Math.max(0, p.x + dragState.dx));
-    island.y = Math.min(1, Math.max(0, p.y + dragState.dy));
+    dragState.moved = true;
+    island.x = round3(Math.min(1, Math.max(0, p.x + dragState.dx)));
+    island.y = round3(Math.min(1, Math.max(0, p.y + dragState.dy)));
 };
 
 const onPointerUp = () => {
@@ -186,15 +222,11 @@ const setAsStart = () => {
 // ---- Edges ----
 const edgeMode = ref(false);
 const edgeFrom = ref(null);
+const hoveredEdge = ref(null);
 
-const startEdgeMode = () => {
-    edgeMode.value = true;
-    edgeFrom.value = selectedIslandId.value;
-};
-
-const cancelEdgeMode = () => {
-    edgeMode.value = false;
-    edgeFrom.value = null;
+const toggleEdgeMode = () => {
+    edgeMode.value = !edgeMode.value;
+    edgeFrom.value = edgeMode.value ? selectedIslandId.value : null;
 };
 
 const onIslandClickForEdge = island => {
@@ -217,7 +249,10 @@ const removeEdge = edge => {
     draft.value.edges = draft.value.edges.filter(
         e => !(e.from === edge.from && e.to === edge.to)
     );
+    hoveredEdge.value = null;
 };
+
+const edgeKey = edge => `${edge.from}-${edge.to}`;
 
 // ---- Prerequisites ----
 const prereqsOf = id => draft.value.islandPrerequisites[id] || [];
@@ -245,14 +280,19 @@ const onAssetSelect = path => {
         selectedIsland.value.iconAsset = path;
     } else if (picker.value?.target === 'territory') {
         draft.value.backgroundAsset = path;
+        updateBgAspect();
     }
     picker.value = null;
 };
 
-// ---- Save / reset ----
-const resetDraft = () => {
-    selectId(selectedId.value);
-    editMode.value = true;
+// ---- Save / discard ----
+const discardChanges = () => {
+    if (!isDirty.value) return;
+    if (!confirmDiscard()) return;
+    const t = territories.value.find(x => x.id === selectedId.value);
+    draft.value = normalizeDraft(clone(t));
+    markSaved();
+    selectedIslandId.value = null;
     toast.info('Reverted to last saved version');
 };
 
@@ -263,21 +303,13 @@ const save = async () => {
         await setTerritory(draft.value);
         const idx = territories.value.findIndex(t => t.id === draft.value.id);
         if (idx >= 0) territories.value[idx] = clone(draft.value);
+        markSaved();
         toast.success('Territory saved');
     } catch (e) {
         toast.error(`Save failed: ${e.message}`);
     } finally {
         saving.value = false;
     }
-};
-
-const enterEdit = async () => {
-    editMode.value = true;
-    await nextTick();
-};
-const exitEdit = () => {
-    editMode.value = false;
-    cancelEdgeMode();
 };
 
 // edge path helper (straight line between centers, normalized)
@@ -311,25 +343,16 @@ onMounted(loadTerritories);
                         {{ t.name || t.id }}
                     </option>
                 </select>
-                <button
-                    v-if="!editMode"
-                    class="btn"
-                    :disabled="!draft"
-                    @click="enterEdit"
-                >
-                    ✏️ Edit
-                </button>
-                <template v-else>
-                    <button class="btn btn-ghost" @click="exitEdit">
-                        Done editing
-                    </button>
-                    <button class="btn btn-ghost" @click="resetDraft">
-                        Revert
+                <template v-if="isDirty">
+                    <span class="dirty-dot" title="Unsaved changes"></span>
+                    <button class="btn btn-ghost" @click="discardChanges">
+                        Discard
                     </button>
                     <button class="btn" :disabled="saving" @click="save">
-                        {{ saving ? 'Saving…' : '💾 Save' }}
+                        {{ saving ? 'Saving…' : '💾 Save changes' }}
                     </button>
                 </template>
+                <span v-else class="saved-note">All changes saved</span>
             </div>
         </header>
 
@@ -338,133 +361,142 @@ onMounted(loadTerritories);
         <div v-else-if="draft" class="editor">
             <!-- Canvas -->
             <div class="canvas-wrap card">
-                <div v-if="editMode" class="canvas-toolbar">
+                <div class="canvas-toolbar">
                     <button class="chip" @click="addIsland">
                         ➕ Add island
                     </button>
                     <button
                         class="chip"
                         :class="{ 'chip-on': edgeMode }"
-                        @click="edgeMode ? cancelEdgeMode() : startEdgeMode()"
+                        @click="toggleEdgeMode"
                     >
                         {{
                             edgeMode
-                                ? '✓ Linking… (click two islands)'
-                                : '🔗 Link islands'
+                                ? '✓ Drawing… (click two islands)'
+                                : '↔ Draw edges'
                         }}
                     </button>
                     <button class="chip" @click="openBackgroundPicker">
                         🖼️ Background
                     </button>
                     <span class="canvas-hint">
-                        Drag islands to reposition. Click to select.
+                        Drag islands to reposition. Click an edge to delete it.
                     </span>
                 </div>
 
-                <svg
-                    ref="svgRef"
-                    viewBox="0 0 1 1"
-                    preserveAspectRatio="xMidYMid meet"
-                    class="map-svg"
-                    :class="{ 'is-edit': editMode }"
-                    @pointermove="onPointerMove"
-                    @pointerup="onPointerUp"
-                    @pointerleave="onPointerUp"
-                >
-                    <image
-                        v-if="draft.backgroundAsset"
-                        :href="draft.backgroundAsset"
-                        x="0"
-                        y="0"
-                        width="1"
-                        height="1"
-                        preserveAspectRatio="xMidYMid slice"
-                        class="map-bg"
-                    />
-                    <rect
-                        v-else
-                        x="0"
-                        y="0"
-                        width="1"
-                        height="1"
-                        fill="#0b1220"
-                    />
-
-                    <!-- edges -->
-                    <g class="edges">
-                        <path
-                            v-for="edge in draft.edges"
-                            :key="`${edge.from}-${edge.to}`"
-                            :d="edgePath(edge)"
-                            class="edge"
+                <div class="canvas-frame">
+                    <svg
+                        ref="svgRef"
+                        viewBox="0 0 1 1"
+                        preserveAspectRatio="none"
+                        class="map-svg"
+                        :style="{ aspectRatio: bgAspect }"
+                        @pointermove="onPointerMove"
+                        @pointerup="onPointerUp"
+                        @pointerleave="onPointerUp"
+                    >
+                        <image
+                            v-if="draft.backgroundAsset"
+                            :href="draft.backgroundAsset"
+                            x="0"
+                            y="0"
+                            width="1"
+                            height="1"
+                            preserveAspectRatio="none"
+                            class="map-bg"
                         />
-                    </g>
+                        <rect
+                            v-else
+                            x="0"
+                            y="0"
+                            width="1"
+                            height="1"
+                            fill="#0b1220"
+                        />
 
-                    <!-- islands -->
-                    <g class="islands">
-                        <g
-                            v-for="island in draft.islands"
-                            :key="island.id"
-                            @pointerdown.stop="
-                                onIslandPointerDown(island, $event)
-                            "
-                            @click.stop="onIslandClickForEdge(island)"
-                        >
-                            <ellipse
-                                :cx="island.x"
-                                :cy="island.y"
-                                :rx="island.width / 2 + 0.006"
-                                :ry="island.height / 2 + 0.006"
-                                fill="none"
-                                :class="[
-                                    'ring',
-                                    {
-                                        'ring-selected':
-                                            island.id === selectedIslandId,
-                                        'ring-start':
-                                            island.id === draft.startIsland,
-                                    },
-                                ]"
-                            />
-                            <image
-                                :href="island.iconAsset"
-                                :x="island.x - island.width / 2"
-                                :y="island.y - island.height / 2"
-                                :width="island.width"
-                                :height="island.height"
-                                class="island-icon"
-                                :class="{ grabbable: editMode && !edgeMode }"
-                            />
-                            <text
-                                v-if="isRefuel(island.id)"
-                                :x="island.x - island.width / 4"
-                                :y="island.y - island.height / 2 - 0.006"
-                                class="badge-text"
-                            >
-                                ⛽
-                            </text>
-                            <text
-                                v-if="isTerminal(island.id)"
-                                :x="island.x + island.width / 4"
-                                :y="island.y - island.height / 2 - 0.006"
-                                class="badge-text"
-                            >
-                                🛣️
-                            </text>
+                        <!-- edges (with wide invisible hit-area for delete) -->
+                        <g class="edges">
+                            <g v-for="edge in draft.edges" :key="edgeKey(edge)">
+                                <path
+                                    :d="edgePath(edge)"
+                                    class="edge"
+                                    :class="{
+                                        'edge-hover':
+                                            hoveredEdge === edgeKey(edge),
+                                    }"
+                                />
+                                <path
+                                    :d="edgePath(edge)"
+                                    class="edge-hit"
+                                    @pointerenter="hoveredEdge = edgeKey(edge)"
+                                    @pointerleave="hoveredEdge = null"
+                                    @click.stop="removeEdge(edge)"
+                                />
+                            </g>
                         </g>
-                    </g>
-                </svg>
+
+                        <!-- islands -->
+                        <g class="islands">
+                            <g
+                                v-for="island in draft.islands"
+                                :key="island.id"
+                                @pointerdown.stop="
+                                    onIslandPointerDown(island, $event)
+                                "
+                                @click.stop="onIslandClickForEdge(island)"
+                            >
+                                <ellipse
+                                    :cx="island.x"
+                                    :cy="island.y"
+                                    :rx="island.width / 2 + 0.006"
+                                    :ry="island.height / 2 + 0.006"
+                                    fill="none"
+                                    :class="[
+                                        'ring',
+                                        {
+                                            'ring-selected':
+                                                island.id === selectedIslandId,
+                                            'ring-start':
+                                                island.id === draft.startIsland,
+                                        },
+                                    ]"
+                                />
+                                <image
+                                    :href="island.iconAsset"
+                                    :x="island.x - island.width / 2"
+                                    :y="island.y - island.height / 2"
+                                    :width="island.width"
+                                    :height="island.height"
+                                    class="island-icon"
+                                    :class="{ grabbable: !edgeMode }"
+                                />
+                                <text
+                                    v-if="isRefuel(island.id)"
+                                    :x="island.x - island.width / 4"
+                                    :y="island.y - island.height / 2 - 0.006"
+                                    class="badge-text"
+                                >
+                                    ⛽
+                                </text>
+                                <text
+                                    v-if="isTerminal(island.id)"
+                                    :x="island.x + island.width / 4"
+                                    :y="island.y - island.height / 2 - 0.006"
+                                    class="badge-text"
+                                >
+                                    🛣️
+                                </text>
+                            </g>
+                        </g>
+                    </svg>
+                </div>
             </div>
 
             <!-- Side panel -->
             <aside class="side card">
                 <div v-if="!selectedIsland" class="side-empty">
                     <p class="hint">
-                        {{
-                            editMode
-                                ? 'Select an island to edit it, or add a new one.'
-                                : 'Select an island to inspect it. Click Edit to make changes.'
-                        }}
+                        Select an island to edit it, or add a new one.
                     </p>
                     <div class="terr-meta">
                         <div>
@@ -484,30 +516,38 @@ onMounted(loadTerritories);
 
                     <label class="field">
                         <span>Name</span>
-                        <input
-                            v-model="selectedIsland.name"
-                            :disabled="!editMode"
-                            type="text"
-                        />
+                        <input v-model="selectedIsland.name" type="text" />
                     </label>
 
                     <div class="row2">
                         <label class="field">
                             <span>X</span>
                             <input
-                                v-model.number="selectedIsland.x"
-                                :disabled="!editMode"
+                                :value="selectedIsland.x"
                                 type="number"
                                 step="0.01"
+                                min="0"
+                                max="1"
+                                @input="
+                                    selectedIsland.x = round3(
+                                        $event.target.value
+                                    )
+                                "
                             />
                         </label>
                         <label class="field">
                             <span>Y</span>
                             <input
-                                v-model.number="selectedIsland.y"
-                                :disabled="!editMode"
+                                :value="selectedIsland.y"
                                 type="number"
                                 step="0.01"
+                                min="0"
+                                max="1"
+                                @input="
+                                    selectedIsland.y = round3(
+                                        $event.target.value
+                                    )
+                                "
                             />
                         </label>
                     </div>
@@ -515,19 +555,31 @@ onMounted(loadTerritories);
                         <label class="field">
                             <span>Width</span>
                             <input
-                                v-model.number="selectedIsland.width"
-                                :disabled="!editMode"
+                                :value="selectedIsland.width"
                                 type="number"
                                 step="0.01"
+                                min="0"
+                                max="1"
+                                @input="
+                                    selectedIsland.width = round3(
+                                        $event.target.value
+                                    )
+                                "
                             />
                         </label>
                         <label class="field">
                             <span>Height</span>
                             <input
-                                v-model.number="selectedIsland.height"
-                                :disabled="!editMode"
+                                :value="selectedIsland.height"
                                 type="number"
                                 step="0.01"
+                                min="0"
+                                max="1"
+                                @input="
+                                    selectedIsland.height = round3(
+                                        $event.target.value
+                                    )
+                                "
                             />
                         </label>
                     </div>
@@ -538,103 +590,79 @@ onMounted(loadTerritories);
                             class="icon-preview"
                             alt=""
                         />
-                        <button
-                            class="btn btn-ghost"
-                            :disabled="!editMode"
-                            @click="openIconPicker"
-                        >
+                        <button class="btn btn-ghost" @click="openIconPicker">
                             Change icon
                         </button>
                     </div>
 
-                    <template v-if="editMode">
-                        <div class="role-buttons">
-                            <button
-                                class="chip"
-                                :class="{
-                                    'chip-on':
-                                        selectedIsland.id === draft.startIsland,
-                                }"
-                                @click="setAsStart"
-                            >
-                                ⭐ Start
-                            </button>
-                            <button
-                                class="chip"
-                                :class="{
-                                    'chip-on': isRefuel(selectedIsland.id),
-                                }"
-                                @click="toggleRefuel"
-                            >
-                                ⛽ Refuel
-                            </button>
-                            <button
-                                class="chip"
-                                :class="{
-                                    'chip-on': isTerminal(selectedIsland.id),
-                                }"
-                                @click="toggleTerminal"
-                            >
-                                🛣️ Terminal
-                            </button>
-                        </div>
-
-                        <div class="prereq">
-                            <span class="prereq-label">Prerequisites</span>
-                            <p class="hint">
-                                Islands that must be completed before this one
-                                unlocks.
-                            </p>
-                            <div class="prereq-list">
-                                <label
-                                    v-for="other in draft.islands.filter(
-                                        i => i.id !== selectedIsland.id
-                                    )"
-                                    :key="other.id"
-                                    class="prereq-item"
-                                >
-                                    <input
-                                        type="checkbox"
-                                        :checked="
-                                            prereqsOf(
-                                                selectedIsland.id
-                                            ).includes(other.id)
-                                        "
-                                        @change="
-                                            togglePrereq(
-                                                selectedIsland.id,
-                                                other.id
-                                            )
-                                        "
-                                    />
-                                    <span>{{ other.name || other.id }}</span>
-                                </label>
-                            </div>
-                        </div>
-
+                    <div class="role-buttons">
                         <button
-                            class="btn btn-danger"
-                            @click="removeSelectedIsland"
+                            class="chip"
+                            :class="{
+                                'chip-on':
+                                    selectedIsland.id === draft.startIsland,
+                            }"
+                            @click="setAsStart"
                         >
-                            🗑 Delete island
+                            ⭐ Start
                         </button>
-                    </template>
-                </div>
-
-                <div v-if="editMode && draft.edges.length" class="edges-list">
-                    <span class="prereq-label">Connections</span>
-                    <div
-                        v-for="edge in draft.edges"
-                        :key="`${edge.from}-${edge.to}`"
-                        class="edge-item"
-                    >
-                        <span class="edge-text"
-                            >{{ edge.from }} ↔ {{ edge.to }}</span
+                        <button
+                            class="chip"
+                            :class="{ 'chip-on': isRefuel(selectedIsland.id) }"
+                            @click="toggleRefuel"
                         >
-                        <button class="edge-x" @click="removeEdge(edge)">
-                            ✕
+                            ⛽ Refuel
+                        </button>
+                        <button
+                            class="chip"
+                            :class="{
+                                'chip-on': isTerminal(selectedIsland.id),
+                            }"
+                            @click="toggleTerminal"
+                        >
+                            🛣️ Terminal
                         </button>
                     </div>
+
+                    <div class="prereq">
+                        <span class="prereq-label">Prerequisites</span>
+                        <p class="hint">
+                            Islands that must be completed before this one
+                            unlocks.
+                        </p>
+                        <div class="prereq-list">
+                            <label
+                                v-for="other in draft.islands.filter(
+                                    i => i.id !== selectedIsland.id
+                                )"
+                                :key="other.id"
+                                class="prereq-item"
+                            >
+                                <input
+                                    type="checkbox"
+                                    :checked="
+                                        prereqsOf(selectedIsland.id).includes(
+                                            other.id
+                                        )
+                                    "
+                                    @change="
+                                        togglePrereq(
+                                            selectedIsland.id,
+                                            other.id
+                                        )
+                                    "
+                                />
+                                <span>{{ other.name || other.id }}</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <button
+                        class="btn btn-danger"
+                        @click="removeSelectedIsland"
+                    >
+                        🗑 Delete island
+                    </button>
                 </div>
             </aside>
         </div>
@@ -676,6 +704,17 @@ onMounted(loadTerritories);
     font-size: 14px;
     outline: none;
 }
+.dirty-dot {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: #eab308;
+    box-shadow: 0 0 0 3px #eab30833;
+}
+.saved-note {
+    color: #64748b;
+    font-size: 12.5px;
+}
 .btn-danger {
     background: #dc2626;
     width: 100%;
@@ -687,7 +726,7 @@ onMounted(loadTerritories);
 
 .editor {
     display: grid;
-    grid-template-columns: 1fr 320px;
+    grid-template-columns: minmax(0, 1fr) 320px;
     gap: 18px;
     align-items: start;
 }
@@ -699,6 +738,7 @@ onMounted(loadTerritories);
 
 .canvas-wrap {
     padding: 12px;
+    min-width: 0;
 }
 .canvas-toolbar {
     display: flex;
@@ -711,20 +751,25 @@ onMounted(loadTerritories);
     color: #64748b;
     font-size: 12px;
 }
+.canvas-frame {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: #0b1220;
+    border-radius: 10px;
+    overflow: hidden;
+    max-height: 78vh;
+}
 
 .map-svg {
     width: 100%;
-    aspect-ratio: 1;
-    background: #0b1220;
-    border-radius: 10px;
+    max-height: 78vh;
     display: block;
     touch-action: none;
-}
-.map-svg.is-edit {
     cursor: crosshair;
 }
 .map-bg {
-    opacity: 0.9;
+    opacity: 0.92;
 }
 
 .edge {
@@ -732,6 +777,17 @@ onMounted(loadTerritories);
     stroke: #93c5fd;
     stroke-width: 0.004;
     stroke-dasharray: 0.012, 0.008;
+    pointer-events: none;
+}
+.edge-hover {
+    stroke: #f87171;
+    stroke-width: 0.007;
+}
+.edge-hit {
+    fill: none;
+    stroke: transparent;
+    stroke-width: 0.03;
+    cursor: pointer;
 }
 
 .island-icon {
@@ -760,6 +816,7 @@ onMounted(loadTerritories);
 .side {
     position: sticky;
     top: 16px;
+    min-width: 0;
 }
 .side-empty .terr-meta {
     margin-top: 14px;
@@ -793,6 +850,11 @@ onMounted(loadTerritories);
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 10px;
+}
+/* keep number inputs from overflowing the panel */
+.row2 .field input {
+    width: 100%;
+    min-width: 0;
 }
 .icon-row {
     display: flex;
@@ -858,36 +920,5 @@ onMounted(loadTerritories);
     gap: 8px;
     font-size: 13px;
     color: #e2e8f0;
-}
-
-.edges-list {
-    margin-top: 16px;
-    border-top: 1px solid #1f2937;
-    padding-top: 14px;
-}
-.edge-item {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 8px;
-    font-size: 12px;
-    padding: 4px 0;
-    color: #cbd5e1;
-}
-.edge-text {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-.edge-x {
-    background: transparent;
-    border: none;
-    color: #f87171;
-    cursor: pointer;
-    padding: 2px 6px;
-    border-radius: 6px;
-}
-.edge-x:hover {
-    background: #7f1d1d33;
 }
 </style>
