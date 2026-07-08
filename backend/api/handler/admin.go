@@ -15,8 +15,11 @@ import (
 )
 
 type admin struct {
-	cfg          config.Config
-	adminService *service.Admin
+	cfg           config.Config
+	adminService  *service.Admin
+	playerService *service.Player
+	gameState     domain.GameStateStore
+	actives       func() map[string]int
 }
 
 type adminLoginRequest struct {
@@ -233,4 +236,56 @@ func (a *admin) GetUsers(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	sendResult(w, result)
+}
+
+func (a *admin) GetGameState(w http.ResponseWriter, r *http.Request) {
+	isPaused, err := a.gameState.GetIsPaused(r.Context())
+	if err != nil {
+		a.handleAdminError(w, err)
+		return
+	}
+	sendResult(w, map[string]any{"isPaused": isPaused})
+}
+
+type setGameStateRequest struct {
+	IsPaused bool `json:"isPaused"`
+}
+
+func (a *admin) SetGameState(w http.ResponseWriter, r *http.Request) {
+	var req setGameStateRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		sendDecodeError(w)
+		return
+	}
+	if err := a.gameState.SetIsPaused(r.Context(), req.IsPaused); err != nil {
+		a.handleAdminError(w, err)
+		return
+	}
+	sendResult(w, map[string]any{"isPaused": req.IsPaused})
+}
+
+type broadcastRequest struct {
+	Message string `json:"message"`
+}
+
+func (a *admin) Broadcast(w http.ResponseWriter, r *http.Request) {
+	var req broadcastRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		sendDecodeError(w)
+		return
+	}
+	if strings.TrimSpace(req.Message) == "" {
+		sendError(w, http.StatusBadRequest, "message is required")
+		return
+	}
+	count, err := a.playerService.BroadcastMessage(r.Context(), req.Message)
+	if err != nil {
+		a.handleAdminError(w, err)
+		return
+	}
+	sendResult(w, map[string]any{"sentTo": count})
+}
+
+func (a *admin) GetConnections(w http.ResponseWriter, r *http.Request) {
+	sendResult(w, a.actives())
 }
