@@ -290,7 +290,57 @@ GET  /admin/pools
 POST /admin/pools/{poolID}/books
 GET  /admin/users
 POST /admin/users
+GET  /admin/game_state
+POST /admin/game_state
+POST /admin/broadcast
+GET  /admin/connections
 ```
+
+`POST /admin/territories` upserts a territory by `id` (`INSERT ... ON CONFLICT
+(id) DO UPDATE`), so the same endpoint both creates and updates. `SetTerritory`
+validates that the territory has a `startIsland` present in its island list,
+that every island has an id and name, and that all edges / refuel / terminal /
+prerequisite references point to islands in the list.
+
+#### Game controls (`game_state`, `broadcast`, `connections`)
+
+These expose over HTTP what previously lived only in the Telegram/Bale admin
+bot, for the web admin panel:
+
+```http
+GET  /admin/game_state          → { "isPaused": bool }
+POST /admin/game_state          body { "isPaused": bool } → new state
+POST /admin/broadcast           body { "message": string } → { "sentTo": n }
+GET  /admin/connections         → { "players": n, "market": n, "inbox": n }
+```
+
+`game_state` reads/writes the shared `GameStateStore` that the
+`pauseCheckMiddleware` consults — pausing makes the paused-gated player
+endpoints return `423 Locked`. `broadcast` sends an announcement to every
+player's inbox. `connections` returns the live WebSocket hub counts.
+
+#### Removal / deletion semantics
+
+The admin API has **no general delete endpoints**, and the two removals it does
+perform behave differently — worth knowing before relying on the admin panel to
+"clean up" content:
+
+- **Question / treasure inside a book** — truly deleted. `POST /admin/islands/{id}/book`
+  (and the pool equivalent) diffs the submitted book against the stored one and
+  runs `DELETE FROM questions` / `DELETE FROM treasures` for anything dropped.
+  A book with zero questions is valid; the book row itself is never deleted.
+  Caveat: the delete does **not** cascade to players' existing `answers` rows,
+  so answers/corrections tied to a removed question are orphaned.
+- **Island removed from a territory** — partial. `POST /admin/territories`
+  overwrites the territory's island list, so the island disappears from the
+  map, but a row remains in the `islands` table (islands are also tracked there
+  via `ReserveIDForTerritory`, which has no delete counterpart). The id stays
+  reserved to that territory: re-adding the same id to the **same** territory
+  reclaims it, but reusing it in a **different** territory is rejected.
+- **Book from a pool / a whole book / a whole territory** — not possible. There
+  is no `RemoveBookFromPool`, no book delete, and no territory delete anywhere
+  in the backend. A book can be moved between pools (re-`POST` to a different
+  pool), but not removed from all pools.
 
 ### Health Check
 
