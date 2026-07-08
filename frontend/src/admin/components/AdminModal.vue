@@ -5,6 +5,7 @@ const emit = defineEmits(['close']);
 
 defineProps({
     title: { type: String, default: '' },
+    wide: { type: Boolean, default: false },
 });
 
 const onKey = e => {
@@ -17,7 +18,7 @@ onUnmounted(() => window.removeEventListener('keydown', onKey));
 
 <template>
     <div class="admin-modal-overlay" @click.self="emit('close')">
-        <div class="admin-modal-card" dir="ltr">
+        <div class="admin-modal-card" :class="{ wide }" dir="ltr">
             <div class="modal-head">
                 <h2>{{ title }}</h2>
                 <button class="modal-x" @click="emit('close')">✕</button>

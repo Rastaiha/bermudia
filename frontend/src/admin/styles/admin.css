@@ -166,3 +166,6 @@
     max-height: 90vh;
     overflow-y: auto;
 }
+.admin-modal-card.wide {
+    max-width: 720px;
+}

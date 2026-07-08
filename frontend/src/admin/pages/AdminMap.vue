@@ -3,6 +3,8 @@ import { ref, computed, onMounted } from 'vue';
 import { useToast } from 'vue-toastification';
 import { getTerritories, setTerritory } from '../services/api.js';
 import AssetPicker from '../components/AssetPicker.vue';
+import AdminModal from '../components/AdminModal.vue';
+import IslandContentEditor from '../components/IslandContentEditor.vue';
 import '../styles/admin.css';
 
 const toast = useToast();
@@ -269,6 +271,28 @@ const onAssetSelect = path => {
         draft.value.backgroundAsset = path;
     }
     picker.value = null;
+};
+
+// ---- Island content editor ----
+const contentEditorFor = ref(null);
+// True when the island exists in the last-saved snapshot (so the backend
+// knows about it and getIslandHeader will succeed).
+const islandExistsOnServer = id => {
+    if (!savedSnapshot.value) return false;
+    try {
+        return JSON.parse(savedSnapshot.value).islands.some(i => i.id === id);
+    } catch {
+        return false;
+    }
+};
+const openContentEditor = () => {
+    const island = selectedIsland.value;
+    if (!island) return;
+    if (!islandExistsOnServer(island.id)) {
+        toast.info('Save the map first, then edit this island’s content.');
+        return;
+    }
+    contentEditorFor.value = { id: island.id, name: island.name };
 };
 
 // ---- Save / discard ----
@@ -580,6 +604,13 @@ onMounted(loadTerritories);
                         </button>
                     </div>
 
+                    <button
+                        class="btn btn-ghost content-btn"
+                        @click="openContentEditor"
+                    >
+                        📝 Edit island content
+                    </button>
+
                     <div class="role-buttons">
                         <button
                             class="chip"
@@ -670,6 +701,15 @@ onMounted(loadTerritories);
             @select="onAssetSelect"
             @close="picker = null"
         />
+
+        <AdminModal
+            v-if="contentEditorFor"
+            wide
+            :title="`Edit content — ${contentEditorFor.name || contentEditorFor.id}`"
+            @close="contentEditorFor = null"
+        >
+            <IslandContentEditor :island-id="contentEditorFor.id" />
+        </AdminModal>
     </div>
 </template>
 
@@ -856,6 +896,10 @@ onMounted(loadTerritories);
     border: 1px solid #1f2937;
     border-radius: 10px;
     padding: 4px;
+}
+.content-btn {
+    width: 100%;
+    margin-bottom: 4px;
 }
 
 .role-buttons {
