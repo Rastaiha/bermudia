@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import { getToken } from '@/services/api/index.js';
+import { adminRoutes, adminGuard } from '@/admin/router.js';
 
 const routes = [
     {
@@ -25,6 +26,7 @@ const routes = [
         name: 'Login',
         component: () => import('../pages/Login.vue'),
     },
+    ...adminRoutes,
 ];
 
 const router = createRouter({
@@ -33,6 +35,14 @@ const router = createRouter({
 });
 
 router.beforeEach((to, from, next) => {
+    // Admin routes have their own auth flow, independent of the player token.
+    if (to.path.startsWith('/admin')) {
+        if (adminGuard(to, from, next)) {
+            next();
+        }
+        return;
+    }
+
     const isLoggedIn = !!getToken();
 
     if (to.meta.requiresAuth && !isLoggedIn) {
