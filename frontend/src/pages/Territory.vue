@@ -11,7 +11,7 @@
                 backgroundSize: 'contain',
             }"
         ></div>
-        <div class="fixed inset-0 bg-[#0c2036] -z-20"></div>
+        <div class="fixed inset-0 bg-backdrop -z-20"></div>
         <div
             v-if="isLoading"
             class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50"

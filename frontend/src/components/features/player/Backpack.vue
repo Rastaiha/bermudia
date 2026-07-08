@@ -1,23 +1,16 @@
 <template>
     <VueFinalModal
         class="flex justify-center items-center"
-        content-class="flex flex-col w-full md:w-1/3 mx-4 p-6 
-                       bg-[#1E3A8A] border-4 border-[#1E40AF] 
-                       rounded-xl shadow-xl space-y-4"
+        content-class="panel w-full md:w-1/3 max-h-[80vh]"
         overlay-transition="vfm-fade"
         content-transition="vfm-slide-up"
     >
-        <div
-            class="flex items-center justify-between border-b-2 border-[#1E40AF] pb-2 mb-4"
-        >
-            <h1 class="text-xl font-semibold text-blue-200">کوله پشتی</h1>
-            <button
-                class="p-1 rounded-full hover:bg-[#1E40AF]"
-                @click="handleClose"
-            >
+        <div class="panel-header">
+            <h1 class="panel-title">کوله پشتی</h1>
+            <button class="panel-close" @click="handleClose">
                 <svg
                     xmlns="http://www.w3.org/2000/svg"
-                    class="h-6 w-6 text-blue-200"
+                    class="h-6 w-6"
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"
@@ -32,12 +25,8 @@
             </button>
         </div>
 
-        <div class="w-full flex flex-col space-y-4">
-            <div
-                v-for="item in INVENTORY_ITEMS"
-                :key="item"
-                class="flex items-center justify-between p-3 bg-blue-900 bg-opacity-50 rounded-lg"
-            >
+        <div class="panel-body">
+            <div v-for="item in INVENTORY_ITEMS" :key="item" class="panel-row">
                 <div class="flex items-center">
                     <img
                         :src="COST_ITEMS_INFO[item].icon"
@@ -48,7 +37,7 @@
                         COST_ITEMS_INFO[item].name
                     }}</span>
                 </div>
-                <span class="text-lg font-bold text-blue-200"
+                <span class="text-lg font-bold text-accent"
                     >x {{ player[item] }}</span
                 >
             </div>

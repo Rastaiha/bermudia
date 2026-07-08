@@ -7,7 +7,7 @@
         }"
     >
         <div
-            class="flex justify-between px-1 mb-1 text-xs text-gray-300 drop-shadow-md"
+            class="flex justify-between px-1 mb-1 text-xs text-content-muted drop-shadow-md"
         >
             <span class="block">{{ barData.name }}</span>
             <span
@@ -22,7 +22,7 @@
             class="relative flex items-center h-6 rounded-md shadow-inner"
             :class="[
                 barData.englishName === 'Coin' && barData.value < 0
-                    ? 'bg-red-800/50'
+                    ? 'bg-danger-soft'
                     : 'bg-black/30',
             ]"
             :style="{
@@ -93,9 +93,9 @@ const barPercentage = computed(() => {
 
 const requiredLineClass = computed(() => {
     if (props.barData.required <= props.barData.value) {
-        return 'border-green-500';
+        return 'border-success';
     } else {
-        return 'border-red-500 border-dotted';
+        return 'border-danger border-dotted';
     }
 });
 </script>

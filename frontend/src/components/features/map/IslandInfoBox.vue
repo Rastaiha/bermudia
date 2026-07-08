@@ -50,7 +50,7 @@
                             ? refuel.maxAvailableAmount
                             : player.fuelCap - player.fuel
                     "
-                    class="w-full mt-1 rounded-lg border border-[#07458bb5] text-center bg-transparent py-1.5"
+                    class="w-full mt-1 rounded-lg border border-border text-center bg-surface-alt/60 py-1.5 focus:border-accent focus:ring-0 outline-none transition-colors"
                     @pointerdown.stop="focusFuelInput"
                     @dblclick.stop
                 />
@@ -141,7 +141,7 @@
                                     />
                                 </div>
                             </div>
-                            <p v-else class="text-red-400 text-xs px-1">
+                            <p v-else class="text-danger-content text-xs px-1">
                                 {{ option.reason }}
                             </p>
                         </div>
@@ -153,7 +153,7 @@
                 class="w-full space-y-3"
             ></div>
             <div v-else-if="checkAnchoredIsland()" class="w-full space-y-3">
-                <p class="text-center text-sm text-gray-800">
+                <p class="text-center text-sm text-content-muted">
                     شما در این سیاره قرار دارید.
                 </p>
             </div>
@@ -487,9 +487,9 @@ const knowledgeBar = computed(() => {
         required: migrate.value.minAcceptableKnowledge,
         value: migrate.value.knowledgeValue,
         icon: '/images/icons/knowledge.png',
-        shadowColor: '#ff7e5f',
-        gradientFrom: '#b65f69',
-        gradientTo: '#feb47b',
+        shadowColor: 'var(--gradient-meter-shadow)',
+        gradientFrom: 'var(--gradient-meter-from)',
+        gradientTo: 'var(--gradient-meter-to)',
     };
 });
 

@@ -1,12 +1,16 @@
 <template>
     <div
-        class="flex justify-between flex-col bg-slate-900/70 rounded-xl border border-slate-700 shadow-lg p-4 space-y-4 transition-transform hover:scale-105"
+        class="flex justify-between flex-col bg-surface-alt/70 rounded-xl border border-border-soft shadow-lg p-4 space-y-4 transition-transform hover:scale-105"
     >
         <div class="flex flex-row justify-between gap-2.5 items-center px-6">
-            <span class="text-sm font-bold text-green-400 mb-1">می‌دهد</span>
+            <span class="text-sm font-bold text-success-content mb-1"
+                >می‌دهد</span
+            >
             <span v-if="offer.byMe"></span>
             <span v-else class="text-center">{{ offer.by }}</span>
-            <span class="text-sm font-bold text-red-400 mb-1">می‌خواهد</span>
+            <span class="text-sm font-bold text-danger-content mb-1"
+                >می‌خواهد</span
+            >
         </div>
         <div
             ref="tradeCard"
@@ -27,12 +31,13 @@
                             :src="COST_ITEMS_INFO[item.type].icon"
                             class="w-10 h-10"
                         />
-                        <span class="font-semibold text-base text-slate-200">{{
-                            item.amount
-                        }}</span>
+                        <span
+                            class="font-semibold text-base text-content-muted"
+                            >{{ item.amount }}</span
+                        >
                     </div>
                 </div>
-                <div v-else class="text-slate-500">-</div>
+                <div v-else class="text-content-faint">-</div>
             </div>
 
             <div class="flex-shrink-0">
@@ -42,7 +47,7 @@
                     viewBox="0 0 24 24"
                     stroke-width="1.5"
                     stroke="currentColor"
-                    class="w-7 h-7 text-slate-400 mx-3"
+                    class="w-7 h-7 text-content-subtle mx-3"
                 >
                     <path
                         stroke-linecap="round"
@@ -67,28 +72,30 @@
                             :src="COST_ITEMS_INFO[item.type].icon"
                             class="w-10 h-10"
                         />
-                        <span class="font-semibold text-base text-slate-200">
+                        <span
+                            class="font-semibold text-base text-content-muted"
+                        >
                             {{ item.amount }}
                         </span>
                     </div>
                 </div>
-                <div v-else class="text-slate-500">-</div>
+                <div v-else class="text-content-faint">-</div>
             </div>
         </div>
 
         <div
-            class="pt-3 border-t border-slate-700 flex items-center justify-end"
+            class="pt-3 border-t border-border-soft flex items-center justify-end"
         >
             <button
                 v-if="!isMine && offer.acceptable"
-                class="px-4 py-1.5 rounded-md text-white text-sm font-bold transition-colors bg-green-500 hover:bg-green-400"
+                class="px-4 py-1.5 rounded-md text-white text-sm font-bold transition-colors bg-success hover:bg-success"
                 @click="confirmAccept"
             >
                 انجام معامله
             </button>
             <button
                 v-if="isMine"
-                class="px-4 py-1.5 rounded-md text-white text-sm font-bold transition-colors bg-red-500 hover:bg-red-400"
+                class="px-4 py-1.5 rounded-md text-white text-sm font-bold transition-colors bg-danger hover:bg-danger"
                 @click="$emit('delete', offer.id)"
             >
                 حذف

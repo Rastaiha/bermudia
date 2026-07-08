@@ -1,7 +1,7 @@
 <template>
     <div
         ref="containerRef"
-        class="relative bg-slate-900/80 border border-sky-500/40 rounded-3xl shadow-lg overflow-hidden transition-all duration-300 ease-linear"
+        class="relative bg-surface-alt/80 border border-info/40 rounded-3xl shadow-lg overflow-hidden transition-all duration-300 ease-linear"
         :class="{ 'fullscreen-active': isFullscreen }"
     >
         <button

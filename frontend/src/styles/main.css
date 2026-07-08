@@ -44,6 +44,254 @@
     --font-main: Pelak, Vazir, sans-serifs;
     --color-rasta-green: #008a00;
     --color-rasta-yellow: #f9d104;
+
+    /*
+     * ─────────────────────────────────────────────────────────────────────
+     *  THEME PALETTE — single source of truth for the whole app's look.
+     * ─────────────────────────────────────────────────────────────────────
+     *  Every menu, panel, modal, button, input and message reads from these
+     *  semantic tokens (never raw slate/amber utilities). To re-skin Bermudia
+     *  for a different event/brand, change ONLY the values in this block and
+     *  rebuild — nothing in the components needs to be touched.
+     *
+     *  Because these are declared in `@theme`, Tailwind generates matching
+     *  utilities automatically, e.g.
+     *      --color-surface  → bg-surface / text-surface / border-surface
+     *      --color-accent   → bg-accent / text-accent / ring-accent / ...
+     *      --color-danger-soft → bg-danger-soft ...
+     *
+     *  The "raw" scale below (--slate-*, --amber-*, ...) is the *current*
+     *  palette choice; the semantic tokens under it are what components use.
+     *  Swap a whole theme by repointing the semantic tokens to a different
+     *  raw scale (or new hex values).
+     */
+
+    /* ---- Scene ----------------------------------------------------------- */
+    --color-backdrop: #0c2036; /* deep page background behind the map      */
+    --color-sky-top: #692a47; /* night-sky nebula gradient (StarryNight)   */
+    --color-sky-bottom: #123952;
+
+    /* ---- Neutral surface scale (chrome) ---------------------------------- */
+    --color-surface: var(--color-slate-800); /* default panel/menu surface */
+    --color-surface-alt: var(--color-slate-900); /* insets, inputs, wells   */
+    --color-surface-raised: var(--color-slate-700); /* rows, chips, hovers  */
+    --color-border: var(--color-slate-600); /* default borders             */
+    --color-border-soft: var(--color-slate-700); /* subtle dividers/hovers  */
+    --color-border-strong: var(--color-slate-500); /* emphasized borders    */
+
+    /* ---- Content (text/icons on surfaces) -------------------------------- */
+    --color-content: var(--color-slate-100); /* primary text                */
+    --color-content-muted: var(--color-slate-300); /* secondary text        */
+    --color-content-subtle: var(--color-slate-400); /* captions, hints       */
+    --color-content-faint: var(--color-slate-500); /* disabled/placeholder  */
+
+    /* ---- Accent (primary brand / calls to action) ------------------------ */
+    --color-accent: var(--color-amber-500); /* buttons, active states       */
+    --color-accent-hover: var(--color-amber-400);
+    --color-accent-strong: var(--color-amber-300); /* highlighted values    */
+    --color-accent-content: var(--color-slate-900); /* text ON the accent   */
+
+    /* ---- Semantic states -------------------------------------------------- */
+    /* Each state has: a base (borders/icons/accents), a `-content` for text  */
+    /* on a soft background, and a `-soft` translucent fill for backgrounds.  */
+    --color-success: var(--color-green-500);
+    --color-success-content: var(--color-green-300);
+    --color-success-soft: --alpha(var(--color-green-900) / 50%);
+
+    --color-warning: var(--color-amber-500);
+    --color-warning-content: var(--color-amber-300);
+    --color-warning-soft: --alpha(var(--color-amber-900) / 50%);
+
+    --color-danger: var(--color-red-500);
+    --color-danger-content: var(--color-red-300);
+    --color-danger-soft: --alpha(var(--color-red-900) / 50%);
+
+    --color-info: var(--color-teal-500);
+    --color-info-content: var(--color-teal-300);
+    --color-info-soft: --alpha(var(--color-teal-900) / 50%);
+
+    /* A secondary informational accent (distinct from `info`, e.g. trades). */
+    --color-info-alt: var(--color-blue-500);
+    --color-info-alt-content: var(--color-blue-300);
+    --color-info-alt-soft: --alpha(var(--color-blue-900) / 50%);
+
+    /*
+     * Brand — a deep, filled accent used where white text sits ON the colour
+     * (currently only the login screen: submit button, icons, focus ring).
+     * Separate from `accent` because `accent` is a light fill with dark text.
+     */
+    --color-brand: var(--color-indigo-800);
+    --color-brand-hover: var(--color-indigo-900);
+    --color-brand-icon: var(--color-indigo-400);
+    --color-brand-icon-muted: var(--color-indigo-500);
+    --color-brand-surface: var(--color-indigo-950);
+    --color-brand-border: var(--color-indigo-900);
+    --color-brand-ring: var(--color-indigo-800);
+    --color-brand-accent: var(--color-indigo-700);
+
+    /*
+     * Decorative — non-semantic, purely illustrative colours (e.g. the wooden
+     * book spines in the library). Themed here so a re-skin can restyle them.
+     */
+    --color-book-from: var(--color-yellow-600);
+    --color-book-via: var(--color-yellow-700);
+    --color-book-to: var(--color-yellow-800);
+    --color-book-edge: var(--color-yellow-900);
+
+    /*
+     * Inventory-bar gradients (knowledge/coin/fuel meters in PlayerInfo,
+     * Brain, and the migrate panel). Referenced from JS as inline styles via
+     * var(), so a theme swap restyles every meter at once.
+     */
+    --gradient-meter-from: #b65f69;
+    --gradient-meter-to: #feb47b;
+    --gradient-meter-shadow: #ff7e5f;
+    --gradient-meter-muted-from: #364153;
+    --gradient-meter-muted-to: #000;
+    --gradient-meter-muted-shadow: #6b7280;
+
+    /*
+     * Panel-system aliases (kept for the `.panel*` classes below). These now
+     * derive from the semantic tokens, so there is a single place to change.
+     */
+    --color-panel-surface: var(--color-surface);
+    --color-panel-surface-alt: var(--color-surface-alt);
+    --color-panel-row: --alpha(var(--color-surface-raised) / 50%);
+    --color-panel-border: var(--color-border);
+    --color-panel-border-soft: var(--color-border-soft);
+    --color-panel-title: var(--color-accent);
+    --color-panel-accent: var(--color-accent);
+    --color-panel-accent-hover: var(--color-accent-hover);
+    --color-panel-text: var(--color-content);
+    --color-panel-text-muted: var(--color-content-subtle);
+}
+
+/*
+ * Shared panel design system.
+ * Apply `.panel` to a VueFinalModal `content-class`, then use
+ * `.panel-header` / `.panel-title` / `.panel-close` / `.panel-row` /
+ * `.panel-empty` / `.panel-btn` inside. This is the single source of truth
+ * for how menus and panels look — change it here, not per-component.
+ */
+@layer components {
+    .panel {
+        display: flex;
+        flex-direction: column;
+        margin-inline: 1rem;
+        border-radius: 1rem;
+        background-color: var(--color-panel-surface);
+        border: 1px solid var(--color-panel-border);
+        color: var(--color-panel-text);
+        box-shadow: var(--shadow-2xl);
+    }
+
+    .panel-header {
+        display: flex;
+        flex-shrink: 0;
+        align-items: center;
+        justify-content: space-between;
+        padding: 1.25rem 1.5rem;
+        border-bottom: 1px solid var(--color-panel-border);
+    }
+
+    .panel-title {
+        font-size: 1.5rem;
+        line-height: 2rem;
+        font-weight: 700;
+        color: var(--color-panel-title);
+    }
+
+    .panel-close {
+        display: flex;
+        padding: 0.5rem;
+        border-radius: 9999px;
+        color: var(--color-panel-text-muted);
+        transition:
+            color 150ms,
+            background-color 150ms;
+        cursor: pointer;
+    }
+
+    .panel-close:hover {
+        background-color: var(--color-panel-border-soft);
+        color: #fff;
+    }
+
+    .panel-body {
+        display: flex;
+        flex-direction: column;
+        flex: 1 1 auto;
+        min-height: 0;
+        overflow-y: auto;
+        padding: 1.25rem 1.5rem;
+        gap: 1rem;
+    }
+
+    .panel-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0.75rem;
+        border-radius: 0.5rem;
+        background-color: var(--color-panel-row);
+    }
+
+    .panel-empty {
+        display: flex;
+        flex: 1 1 auto;
+        align-items: center;
+        justify-content: center;
+        min-height: 12rem;
+        color: var(--color-panel-text-muted);
+        font-size: 1.125rem;
+    }
+
+    .panel-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        padding: 0.75rem 1.5rem;
+        border-radius: 0.5rem;
+        background-color: var(--color-panel-accent);
+        color: var(--color-accent-content);
+        font-weight: 700;
+        font-size: 1.125rem;
+        transition: all 300ms;
+        cursor: pointer;
+    }
+
+    .panel-btn:hover:not(:disabled) {
+        background-color: var(--color-panel-accent-hover);
+        box-shadow: var(--shadow-lg);
+        transform: scale(1.05);
+    }
+
+    .panel-btn:disabled {
+        background-color: var(--color-panel-border);
+        color: var(--color-panel-text-muted);
+        cursor: not-allowed;
+        transform: none;
+    }
+
+    /* Consistent scrollbar for any scrollable panel body. */
+    .panel-body::-webkit-scrollbar,
+    .scrollable-content::-webkit-scrollbar {
+        width: 8px;
+    }
+    .panel-body::-webkit-scrollbar-track,
+    .scrollable-content::-webkit-scrollbar-track {
+        background: transparent;
+    }
+    .panel-body::-webkit-scrollbar-thumb,
+    .scrollable-content::-webkit-scrollbar-thumb {
+        background-color: var(--color-border);
+        border-radius: 4px;
+    }
+    .panel-body::-webkit-scrollbar-thumb:hover,
+    .scrollable-content::-webkit-scrollbar-thumb:hover {
+        background-color: var(--color-border-strong);
+    }
 }
 
 .Vue-Toastification__toast-body {

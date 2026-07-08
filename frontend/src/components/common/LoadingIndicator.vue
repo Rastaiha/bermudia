@@ -1,6 +1,6 @@
 <template>
     <div
-        class="text-2xl text-gray-300 font-main bg-[rgb(121,200,237,0.8)] px-8 py-4 rounded-lg"
+        class="text-2xl text-content font-main bg-surface/90 border border-border shadow-2xl px-8 py-4 rounded-lg"
     >
         {{ message }}
     </div>

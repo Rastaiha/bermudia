@@ -1,6 +1,6 @@
 <template>
     <div
-        class="w-full min-h-screen p-8 box-border flex justify-center items-center bg-cover bg-fixed bg-center font-main text-gray-200"
+        class="w-full min-h-screen p-8 box-border flex justify-center items-center bg-cover bg-fixed bg-center font-main text-content-muted"
         :style="{ backgroundImage: `url(${backgroundImage})` }"
         @mousemove="updateMousePosition"
     >
@@ -49,7 +49,7 @@
 
         <div
             v-else
-            class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-gray-200 text-xl"
+            class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-content-muted text-xl"
         >
             {{ loadingMessage }}
         </div>

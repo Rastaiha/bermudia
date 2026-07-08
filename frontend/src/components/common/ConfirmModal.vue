@@ -2,70 +2,48 @@
     <VueFinalModal
         class="flex justify-center items-center"
         overlay-class="bg-black/50"
-        content-class="flex flex-col max-w-md mx-4 p-6 rounded-xl shadow-lg space-y-4 transition-colors"
+        content-class="panel max-w-md w-full !p-0"
         content-transition="vfm-slide-up"
         overlay-transition="vfm-fade"
     >
-        <div
-            class="p-4 rounded-xl"
-            :class="[
-                'flex flex-col space-y-4',
-                dark
-                    ? 'bg-slate-900 text-white border-slate-700'
-                    : 'bg-white text-gray-800',
-            ]"
-        >
-            <div class="flex items-center justify-between">
-                <h1 class="text-xl font-semibold">{{ title }}</h1>
-                <button
-                    class="p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
-                    @click="handleClose"
+        <div class="panel-header">
+            <h1 class="panel-title !text-xl">{{ title }}</h1>
+            <button class="panel-close" @click="handleClose">
+                <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    class="h-6 w-6"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
                 >
-                    <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        class="h-6 w-6"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                        :class="dark ? 'text-white' : 'text-gray-600'"
-                    >
-                        <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke-width="2"
-                            d="M6 18L18 6M6 6l12 12"
-                        />
-                    </svg>
-                </button>
-            </div>
+                    <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M6 18L18 6M6 6l12 12"
+                    />
+                </svg>
+            </button>
+        </div>
 
+        <div class="p-6 space-y-4">
             <div>
                 <slot name="content">
-                    <p class="text-gray-600 dark:text-gray-300">
+                    <p class="text-content-muted">
                         اینجا می‌توانید محتوای مودال را قرار دهید.
                     </p>
                 </slot>
             </div>
 
-            <div class="flex justify-end gap-4 mt-4">
+            <div class="flex justify-end gap-4 mt-2">
                 <button
-                    class="px-4 py-2 text-sm font-medium rounded-lg transition-colors"
-                    :class="
-                        dark
-                            ? 'text-gray-200 bg-gray-700 hover:bg-gray-600'
-                            : 'text-gray-700 bg-gray-100 hover:bg-gray-200'
-                    "
+                    class="px-4 py-2 text-sm font-medium rounded-lg transition-colors text-content-muted bg-surface-raised hover:bg-border"
                     @click="emit('cancel')"
                 >
                     انصراف
                 </button>
                 <button
-                    class="px-4 py-2 text-sm font-medium rounded-lg transition-colors"
-                    :class="
-                        dark
-                            ? 'text-white bg-blue-600 hover:bg-blue-700'
-                            : 'text-white bg-blue-600 hover:bg-blue-700'
-                    "
+                    class="panel-btn !px-5 !py-2 !text-sm"
                     @click="emit('confirm')"
                 >
                     تایید
@@ -83,6 +61,8 @@ defineProps({
         type: String,
         default: 'تایید عملیات',
     },
+    // Retained for backward compatibility with existing callers; the modal
+    // now always uses the unified slate/amber panel theme.
     dark: {
         type: Boolean,
         default: false,

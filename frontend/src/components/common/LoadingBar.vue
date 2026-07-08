@@ -15,10 +15,10 @@
             />
 
             <div
-                class="relative h-6 w-full bg-gray-700 rounded-full overflow-hidden"
+                class="relative h-6 w-full bg-surface-raised rounded-full overflow-hidden"
             >
                 <div
-                    class="absolute top-0 left-0 h-full bg-blue-500 rounded-full transition-all duration-300 ease-linear"
+                    class="absolute top-0 left-0 h-full bg-info-alt rounded-full transition-all duration-300 ease-linear"
                     :style="{ width: progress + '%' }"
                 ></div>
             </div>

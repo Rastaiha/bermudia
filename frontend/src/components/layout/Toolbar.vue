@@ -9,12 +9,12 @@
     >
         <div class="relative">
             <div
-                class="flex flex-col gap-2 rounded-r-xl bg-slate-800/80 p-2 shadow-lg backdrop-blur-sm"
+                class="flex flex-col gap-2 rounded-r-xl bg-surface/80 p-2 shadow-lg backdrop-blur-sm"
             >
                 <button
                     v-for="item in menuItems"
                     :key="item.id"
-                    class="h-12 w-12 rounded-lg p-2 transition-colors duration-200 hover:bg-slate-700/90"
+                    class="h-12 w-12 rounded-lg p-2 transition-colors duration-200 hover:bg-surface-raised/90"
                     :title="item.alt"
                     @pointerdown="handleItemClick(item)"
                 >
@@ -28,7 +28,7 @@
                 <MuteButton />
 
                 <button
-                    class="h-12 w-12 rounded-lg p-2 transition-colors duration-200 hover:bg-slate-700/90"
+                    class="h-12 w-12 rounded-lg p-2 transition-colors duration-200 hover:bg-surface-raised/90"
                     title="خروج"
                     @pointerdown="openLogoutModal"
                 >
@@ -42,7 +42,7 @@
 
             <button
                 v-if="isMobile"
-                class="absolute top-1/2 left-full h-16 w-8 -translate-y-1/2 rounded-r-xl bg-slate-800/80 p-1 shadow-lg"
+                class="absolute top-1/2 left-full h-16 w-8 -translate-y-1/2 rounded-r-xl bg-surface/80 p-1 shadow-lg"
                 @pointerdown="isOpen = !isOpen"
             >
                 <svg

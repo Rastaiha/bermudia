@@ -1,25 +1,18 @@
 <template>
     <VueFinalModal
         class="flex justify-center items-center"
-        content-class="flex flex-col w-full md:w-1/2 mx-4 p-6 
-                   bg-[#205647] border-4 border-[#508677] 
-                   rounded-xl shadow-xl space-y-4"
+        content-class="panel w-full md:w-1/2 max-h-[80vh]"
         overlay-transition="vfm-fade"
         content-transition="vfm-slide-up"
     >
-        <div
-            class="flex items-center justify-between border-b-2 border-[#508677] pb-2 mb-4"
-        >
-            <h1 class="text-xl font-semibold text-amber-200">
+        <div class="panel-header">
+            <h1 class="panel-title">
                 {{ glossary.casino }}
             </h1>
-            <button
-                class="p-1 rounded-full hover:bg-[#3E1A17]"
-                @click="handleClose"
-            >
+            <button class="panel-close" @click="handleClose">
                 <svg
                     xmlns="http://www.w3.org/2000/svg"
-                    class="h-6 w-6 text-amber-200"
+                    class="h-6 w-6"
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"
@@ -35,14 +28,14 @@
         </div>
 
         <div
-            class="w-full flex flex-col justify-center items-center space-y-6 min-h-[200px]"
+            class="panel-body !gap-6 justify-center items-center min-h-[200px]"
         >
-            <div v-if="isLoading" class="text-amber-200 text-lg">
+            <div v-if="isLoading" class="text-content-muted text-lg">
                 در حال بارگذاری اطلاعات بورس...
             </div>
 
             <div v-else-if="checkResult" class="w-full text-center">
-                <div v-if="countdown" class="text-amber-200 text-lg mb-2">
+                <div v-if="countdown" class="text-accent-strong text-lg mb-2">
                     زمان باقی‌مانده: {{ countdown }}
                 </div>
                 <div
@@ -50,14 +43,14 @@
                     class="w-full max-w-md mx-auto"
                 >
                     <p
-                        class="text-s text-amber-100 mb-2 text-justify preserve-lines"
+                        class="text-s text-content-muted mb-2 text-justify preserve-lines"
                     >
                         {{ checkResult.session.text }}
                     </p>
                     <div class="space-y-4">
                         <div>
                             <label
-                                class="block text-sm text-amber-200 mb-2 flex items-center justify-center gap-1"
+                                class="block text-sm text-content-muted mb-2 flex items-center justify-center gap-1"
                             >
                                 <span>مبلغ سرمایه‌گذاری</span>
                                 <img
@@ -70,11 +63,11 @@
                                 type="number"
                                 :max="checkResult.maxCoin"
                                 min="0"
-                                class="w-full p-3 text-lg text-center text-gray-100 bg-slate-800/70 rounded-lg border-2 border-slate-600 focus:border-cyan-500 focus:ring-0 outline-none transition-colors"
+                                class="w-full p-3 text-lg text-center text-content bg-surface-alt rounded-lg border-2 border-border focus:border-accent focus:ring-0 outline-none transition-colors"
                                 :placeholder="`مبلغ به ${glossary.coin}`"
                             />
                             <p
-                                class="text-xs text-gray-400 mt-2 flex items-center justify-center gap-1"
+                                class="text-xs text-content-subtle mt-2 flex items-center justify-center gap-1"
                             >
                                 <span>حداکثر:</span>
                                 <span>{{
@@ -92,7 +85,7 @@
                                 investAmount <= 0 ||
                                 investAmount > checkResult.maxCoin
                             "
-                            class="w-full px-6 py-3 text-lg font-semibold text-white bg-green-600 rounded-lg transition-all disabled:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-green-500"
+                            class="panel-btn w-full"
                             @click="handleInvest"
                         >
                             <span v-if="isInvesting">در حال ثبت...</span>
@@ -102,13 +95,13 @@
                 </div>
                 <div v-else>
                     <div v-if="checkResult.investments.length > 0">
-                        <p class="text-lg text-gray-200">
+                        <p class="text-lg text-content-muted">
                             شما در این دوره سرمایه‌گذاری کرده‌اید.
                         </p>
                         <div
                             v-for="(coins, index) in checkResult.investments"
                             :key="index"
-                            class="mt-4 text-3xl font-bold text-amber-300 bg-black/20 py-4 rounded-lg flex items-center justify-center gap-2"
+                            class="mt-4 text-3xl font-bold text-accent-strong bg-black/20 py-4 rounded-lg flex items-center justify-center gap-2"
                         >
                             <span>{{ coins.coin }}</span>
                             <img
@@ -118,10 +111,10 @@
                         </div>
                     </div>
                     <div v-else>
-                        <h2 class="text-3xl font-bold text-red-400">
+                        <h2 class="text-3xl font-bold text-danger-content">
                             بورس بسته است
                         </h2>
-                        <p class="text-amber-200 mt-4 text-lg">
+                        <p class="text-content-muted mt-4 text-lg">
                             {{ checkResult.reason }}
                         </p>
                     </div>

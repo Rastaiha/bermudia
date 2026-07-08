@@ -17,12 +17,12 @@
                     ? refuel.maxAvailableAmount
                     : player.fuelCap - player.fuel
             "
-            class="w-full mt-1 rounded-lg border border-[#07458bb5] text-center bg-transparent py-1.5"
+            class="w-full mt-1 rounded-lg border border-border text-center bg-surface-alt/60 py-1.5 focus:border-accent focus:ring-0 outline-none transition-colors"
             @pointerdown.stop="focusFuelInput"
             @dblclick.stop
         />
         <button
-            class="btn-hover w-full p-2 rounded-lg bg-[#07458bb5] text-white"
+            class="btn-hover w-full p-2 rounded-lg bg-accent text-accent-content font-bold"
             @pointerdown.stop="buyFuel"
         >
             {{ fuelPriceText }}

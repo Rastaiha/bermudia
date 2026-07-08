@@ -4,14 +4,14 @@
     >
         <div class="animate-fade-in-scale w-full max-w-md mx-4 relative z-10">
             <div
-                class="card-hover bg-slate-800 rounded-xl shadow-2xl overflow-hidden border border-indigo-900"
+                class="card-hover bg-surface rounded-xl shadow-2xl overflow-hidden border border-brand-border"
             >
                 <div class="p-6 sm:p-8">
                     <div class="flex justify-center mb-8">
-                        <div class="bg-indigo-950 p-4 rounded-full">
+                        <div class="bg-brand-surface p-4 rounded-full">
                             <svg
                                 xmlns="http://www.w3.org/2000/svg"
-                                class="h-12 w-12 text-indigo-400"
+                                class="h-12 w-12 text-brand-icon"
                                 fill="none"
                                 viewBox="0 0 24 24"
                                 stroke="currentColor"
@@ -27,7 +27,7 @@
                     </div>
 
                     <h1
-                        class="text-2xl font-bold text-center text-slate-100 mb-1"
+                        class="text-2xl font-bold text-center text-content mb-1"
                     >
                         ورود به سیستم
                     </h1>
@@ -36,7 +36,7 @@
                         <div>
                             <label
                                 for="username"
-                                class="block text-sm font-medium text-slate-300 mb-1"
+                                class="block text-sm font-medium text-content-muted mb-1"
                                 >نام کاربری</label
                             >
                             <div class="relative">
@@ -45,7 +45,7 @@
                                 >
                                     <svg
                                         xmlns="http://www.w3.org/2000/svg"
-                                        class="h-5 w-5 text-indigo-500"
+                                        class="h-5 w-5 text-brand-icon-muted"
                                         fill="none"
                                         viewBox="0 0 24 24"
                                         stroke="currentColor"
@@ -63,7 +63,7 @@
                                     v-model="username"
                                     autocomplete="on"
                                     type="text"
-                                    class="input-focus text-left [direction:ltr] bg-slate-700/90 border border-slate-600 text-slate-100 text-sm sm:text-base rounded-lg block w-full pl-10 p-2 sm:p-3 sm:pl-10 placeholder-slate-400"
+                                    class="input-focus text-left [direction:ltr] bg-surface-raised/90 border border-border text-content text-sm sm:text-base rounded-lg block w-full pl-10 p-2 sm:p-3 sm:pl-10 placeholder-content-subtle"
                                     placeholder="Username"
                                     required
                                 />
@@ -73,7 +73,7 @@
                         <div>
                             <label
                                 for="password"
-                                class="block text-sm font-medium text-slate-300 mb-1"
+                                class="block text-sm font-medium text-content-muted mb-1"
                                 >رمز عبور</label
                             >
                             <div class="relative">
@@ -84,7 +84,7 @@
                                     <svg
                                         v-if="!showPassword"
                                         xmlns="http://www.w3.org/2000/svg"
-                                        class="h-5 w-5 text-indigo-500"
+                                        class="h-5 w-5 text-brand-icon-muted"
                                         fill="none"
                                         viewBox="0 0 24 24"
                                         stroke="currentColor"
@@ -106,7 +106,7 @@
                                     <svg
                                         v-else
                                         xmlns="http://www.w3.org/2000/svg"
-                                        class="h-5 w-5 text-indigo-500"
+                                        class="h-5 w-5 text-brand-icon-muted"
                                         fill="none"
                                         viewBox="0 0 24 24"
                                         stroke="currentColor"
@@ -133,7 +133,7 @@
                                     v-model="password"
                                     :type="showPassword ? 'text' : 'password'"
                                     autocomplete="on"
-                                    class="input-focus text-left [direction:ltr] bg-slate-700/90 border border-slate-600 text-slate-100 text-sm sm:text-base rounded-lg block w-full pl-10 p-2 sm:p-3 sm:pl-10 placeholder-slate-400"
+                                    class="input-focus text-left [direction:ltr] bg-surface-raised/90 border border-border text-content text-sm sm:text-base rounded-lg block w-full pl-10 p-2 sm:p-3 sm:pl-10 placeholder-content-subtle"
                                     placeholder="********"
                                     required
                                 />
@@ -147,13 +147,13 @@
                                         id="remember"
                                         v-model="remember"
                                         type="checkbox"
-                                        class="w-4 h-4 bg-slate-700 rounded border border-slate-600 focus:ring-3 focus:ring-indigo-800 accent-indigo-700"
+                                        class="w-4 h-4 bg-surface-raised rounded border border-border focus:ring-3 focus:ring-brand-ring accent-brand-accent"
                                     />
                                 </div>
                                 <div class="mr-3 text-sm">
                                     <label
                                         for="remember"
-                                        class="font-medium text-slate-300"
+                                        class="font-medium text-content-muted"
                                         >مرا به خاطر بسپار</label
                                     >
                                 </div>
@@ -164,7 +164,7 @@
                         <button
                             type="submit"
                             :disabled="isLoading"
-                            class="btn-hover w-full text-white bg-indigo-800 hover:bg-indigo-900 font-medium rounded-lg text-sm px-5 py-2.5 text-center disabled:opacity-50 disabled:cursor-not-allowed"
+                            class="btn-hover w-full text-white bg-brand hover:bg-brand-hover font-medium rounded-lg text-sm px-5 py-2.5 text-center disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             <span v-if="isLoading">در حال ورود...</span>
                             <span v-else>ورود</span>
@@ -256,9 +256,10 @@ async function handleLogin() {
 }
 
 .input-focus:focus {
-    border-color: #6366f1;
-    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
-    background-color: #475569;
+    border-color: var(--color-brand-icon);
+    box-shadow: 0 0 0 3px
+        color-mix(in srgb, var(--color-brand-icon) 20%, transparent);
+    background-color: var(--color-border-strong);
 }
 
 .btn-hover {
@@ -268,8 +269,9 @@ async function handleLogin() {
 }
 
 .btn-hover:hover:not(:disabled) {
-    background-color: #312e81;
+    background-color: var(--color-brand-hover);
     transform: scale(1.03);
-    box-shadow: 0 10px 20px rgba(30, 27, 75, 0.5);
+    box-shadow: 0 10px 20px
+        color-mix(in srgb, var(--color-brand-surface) 50%, transparent);
 }
 </style>
