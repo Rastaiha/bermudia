@@ -402,12 +402,17 @@ onMounted(loadTerritories);
 }
 .settings-rows {
     display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 8px;
     margin: 12px 0;
 }
-.settings-rows .field input {
+.settings-rows .field {
     min-width: 0;
+}
+.settings-rows .field input {
+    width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
 }
 .counts {
     font-size: 13px;
