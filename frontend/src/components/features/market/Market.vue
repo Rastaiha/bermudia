@@ -1,18 +1,16 @@
 <template>
     <VueFinalModal
         class="flex justify-center items-center py-5"
-        content-class="flex flex-col h-full w-11/12 md:w-4/5 lg:w-3/5 max-w-4xl bg-slate-800 border border-slate-600 rounded-2xl shadow-2xl text-slate-100"
+        content-class="panel h-full w-11/12 md:w-4/5 lg:w-3/5 max-w-4xl !mx-0"
         overlay-transition="vfm-fade"
         content-transition="vfm-slide-up"
     >
-        <div
-            class="flex-shrink-0 flex items-center justify-between p-6 pb-4 border-b border-slate-600"
-        >
-            <h1 class="text-2xl font-bold text-amber-400">
+        <div class="panel-header">
+            <h1 class="panel-title">
                 {{ glossary.benzuelaMarketplace }}
             </h1>
             <button
-                class="p-2 rounded-full text-slate-400 hover:bg-slate-700 hover:text-white transition-colors"
+                class="panel-close"
                 aria-label="Close modal"
                 @click="handleClose"
             >
@@ -34,9 +32,11 @@
         </div>
 
         <div
-            class="flex-shrink-0 flex justify-center items-center p-4 border-b border-slate-700 bg-slate-800/50"
+            class="flex-shrink-0 flex justify-center items-center p-4 border-b border-border-soft bg-surface/50"
         >
-            <div class="flex p-1 space-x-1 reverse bg-slate-900/70 rounded-xl">
+            <div
+                class="flex p-1 space-x-1 reverse bg-surface-alt/70 rounded-xl"
+            >
                 <button
                     :class="tabClass(!isOffersYours)"
                     @click="isOffersYours = false"
@@ -73,7 +73,7 @@
                 </div>
                 <div
                     v-else-if="!otherPageIsLoading"
-                    class="text-center text-slate-400 py-8"
+                    class="text-center text-content-subtle py-8"
                 >
                     معامله‌ای برای نمایش وجود ندارد.
                 </div>
@@ -82,7 +82,7 @@
             <div v-else class="flex flex-col h-full">
                 <div class="p-4 flex-shrink-0">
                     <button
-                        class="w-full md:w-auto md:px-6 flex-shrink-0 mx-auto flex justify-center items-center p-3 rounded-lg bg-amber-500 text-slate-900 font-bold text-lg transition-all duration-300 hover:bg-amber-400 hover:shadow-lg hover:scale-105"
+                        class="panel-btn w-full md:w-auto mx-auto"
                         @click="createTrade"
                     >
                         + ساخت معامله جدید
@@ -107,7 +107,7 @@
                     </div>
                     <div
                         v-else-if="!myPageIsLoading"
-                        class="text-center text-slate-400 py-8"
+                        class="text-center text-content-subtle py-8"
                     >
                         شما هنوز معامله‌ای ثبت نکرده‌اید.
                     </div>
@@ -184,8 +184,8 @@ function handleClose() {
 
 const tabClass = isActive => {
     return isActive
-        ? 'w-full bg-amber-500 text-slate-900 rounded-lg px-4 py-2 text-sm font-bold transition-colors'
-        : 'w-full text-slate-300 hover:bg-slate-700/50 rounded-lg px-4 py-2 text-sm font-bold transition-colors';
+        ? 'w-full bg-accent text-accent-content rounded-lg px-4 py-2 text-sm font-bold transition-colors'
+        : 'w-full text-content-muted hover:bg-surface-raised/50 rounded-lg px-4 py-2 text-sm font-bold transition-colors';
 };
 
 async function loadMoreMyOffers() {
@@ -307,19 +307,19 @@ useMarketWebSocket(mySyncTrade, otherSyncTrade, myOffers, otherOffers);
     height: 10px;
 }
 ::-webkit-scrollbar-track {
-    background: #1e293b;
+    background: var(--color-surface-alt);
     border-radius: 25px;
 }
 ::-webkit-scrollbar-thumb {
-    background: #f59e0b;
+    background: var(--color-accent);
     border-radius: 25px;
-    border: 2px solid #1e293b;
+    border: 2px solid var(--color-surface-alt);
 }
 ::-webkit-scrollbar-thumb:hover {
-    background: #fcd34d;
+    background: var(--color-accent-strong);
 }
 * {
-    scrollbar-color: #f59e0b #1e293b;
+    scrollbar-color: var(--color-accent) var(--color-surface-alt);
 }
 .reverse {
     direction: rtl;

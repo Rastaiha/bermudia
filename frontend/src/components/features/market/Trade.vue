@@ -1,16 +1,14 @@
 <template>
     <VueFinalModal
         class="flex justify-center items-center py-5"
-        content-class="flex flex-col h-full w-11/12 md:w-3/4 lg:w-2/3 max-w-4xl bg-slate-800 border border-slate-600 rounded-2xl shadow-2xl text-slate-100"
+        content-class="panel h-full w-11/12 md:w-3/4 lg:w-2/3 max-w-4xl !mx-0"
         overlay-transition="vfm-fade"
         content-transition="vfm-slide-up"
     >
-        <div
-            class="flex-shrink-0 flex items-center justify-between p-6 pb-4 border-b border-slate-600"
-        >
-            <h1 class="text-2xl font-bold text-amber-400">ساخت معامله جدید</h1>
+        <div class="panel-header">
+            <h1 class="panel-title">ساخت معامله جدید</h1>
             <button
-                class="p-2 rounded-full text-slate-400 hover:bg-slate-700 hover:text-white transition-colors"
+                class="panel-close"
                 aria-label="Close modal"
                 @click="handleClose"
             >
@@ -35,14 +33,14 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
                 <div class="flex flex-col space-y-4">
                     <h2
-                        class="text-xl font-semibold text-center text-green-400"
+                        class="text-xl font-semibold text-center text-success-content"
                     >
                         شما می‌دهید
                     </h2>
                     <div
                         v-for="(entry, type) in offered"
                         :key="`offered-${type}`"
-                        class="flex items-center gap-3 p-3 bg-slate-700/50 rounded-lg border border-transparent hover:border-slate-500 transition-colors"
+                        class="flex items-center gap-3 p-3 bg-surface-raised/50 rounded-lg border border-transparent hover:border-border-strong transition-colors"
                     >
                         <img
                             :src="COST_ITEMS_INFO[type].icon"
@@ -53,14 +51,14 @@
                             <span class="font-semibold">{{
                                 COST_ITEMS_INFO[type].name
                             }}</span>
-                            <span class="text-xs text-slate-400 block"
+                            <span class="text-xs text-content-subtle block"
                                 >موجودی: {{ entry.max }}</span
                             >
                         </div>
                         <div class="flex-shrink-0">
                             <div class="flex items-center gap-1">
                                 <button
-                                    class="w-7 h-7 flex items-center justify-center bg-slate-700 text-amber-400 rounded-full font-bold text-lg transition-colors hover:bg-slate-600"
+                                    class="w-7 h-7 flex items-center justify-center bg-surface-raised text-accent rounded-full font-bold text-lg transition-colors hover:bg-border"
                                     @click="decrement(entry)"
                                 >
                                     -
@@ -68,12 +66,12 @@
                                 <input
                                     v-model.number="entry.current"
                                     type="number"
-                                    class="trade-input w-16 bg-slate-900 border-2 border-slate-600 rounded-md text-center text-lg font-semibold p-2 transition-colors focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
+                                    class="trade-input w-16 bg-surface-alt border-2 border-border rounded-md text-center text-lg font-semibold p-2 transition-colors focus:outline-none focus:ring-2 focus:ring-accent focus:border-accent"
                                     :name="`offered_${type}`"
                                     placeholder="0"
                                 />
                                 <button
-                                    class="w-7 h-7 flex items-center justify-center bg-slate-700 text-amber-400 rounded-full font-bold text-lg transition-colors hover:bg-slate-600"
+                                    class="w-7 h-7 flex items-center justify-center bg-surface-raised text-accent rounded-full font-bold text-lg transition-colors hover:bg-border"
                                     @click="increment(entry)"
                                 >
                                     +
@@ -84,13 +82,15 @@
                 </div>
 
                 <div class="flex flex-col space-y-4">
-                    <h2 class="text-xl font-semibold text-center text-red-400">
+                    <h2
+                        class="text-xl font-semibold text-center text-danger-content"
+                    >
                         شما می‌خواهید
                     </h2>
                     <div
                         v-for="(entry, type) in requested"
                         :key="`requested-${type}`"
-                        class="flex items-center gap-3 p-3 bg-slate-700/50 rounded-lg border border-transparent hover:border-slate-500 transition-colors"
+                        class="flex items-center gap-3 p-3 bg-surface-raised/50 rounded-lg border border-transparent hover:border-border-strong transition-colors"
                     >
                         <img
                             :src="COST_ITEMS_INFO[type].icon"
@@ -103,7 +103,7 @@
                         <div class="flex-shrink-0">
                             <div class="flex items-center gap-1">
                                 <button
-                                    class="w-7 h-7 flex items-center justify-center bg-slate-700 text-amber-400 rounded-full font-bold text-lg transition-colors hover:bg-slate-600"
+                                    class="w-7 h-7 flex items-center justify-center bg-surface-raised text-accent rounded-full font-bold text-lg transition-colors hover:bg-border"
                                     @click="decrement(entry)"
                                 >
                                     -
@@ -111,12 +111,12 @@
                                 <input
                                     v-model.number="entry.current"
                                     type="number"
-                                    class="trade-input w-16 bg-slate-900 border-2 border-slate-600 rounded-md text-center text-lg font-semibold p-2 transition-colors focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
+                                    class="trade-input w-16 bg-surface-alt border-2 border-border rounded-md text-center text-lg font-semibold p-2 transition-colors focus:outline-none focus:ring-2 focus:ring-accent focus:border-accent"
                                     :name="`requested_${type}`"
                                     placeholder="0"
                                 />
                                 <button
-                                    class="w-7 h-7 flex items-center justify-center bg-slate-700 text-amber-400 rounded-full font-bold text-lg transition-colors hover:bg-slate-600"
+                                    class="w-7 h-7 flex items-center justify-center bg-surface-raised text-accent rounded-full font-bold text-lg transition-colors hover:bg-border"
                                     @click="increment(entry)"
                                 >
                                     +
@@ -128,10 +128,10 @@
             </div>
         </div>
 
-        <div class="flex-shrink-0 p-6 pt-4 border-t border-slate-600">
+        <div class="flex-shrink-0 p-6 pt-4 border-t border-border">
             <button
                 :disabled="isSubmitDisabled"
-                class="w-full md:w-1/2 mx-auto flex justify-center items-center p-3 rounded-lg bg-amber-500 text-slate-900 font-bold text-lg transition-all duration-300 hover:bg-amber-400 hover:shadow-lg hover:scale-105 disabled:bg-slate-600 disabled:text-slate-400 disabled:cursor-not-allowed disabled:scale-100"
+                class="panel-btn w-full md:w-1/2 mx-auto"
                 @click="handleSubmit"
             >
                 ثبت معامله

@@ -1,6 +1,6 @@
 <template>
     <div
-        class="bg-gray-700 rounded-xl shadow-md overflow-hidden transition-all duration-300 hover:shadow-lg hover:bg-gray-600"
+        class="bg-surface-raised rounded-xl shadow-md overflow-hidden transition-all duration-300 hover:shadow-lg hover:bg-border"
         :class="notification.style.border"
     >
         <div class="p-4">
@@ -17,16 +17,16 @@
                         />
                     </div>
                     <div>
-                        <h3 class="font-bold text-gray-100">
+                        <h3 class="font-bold text-content">
                             {{ notification.title }}
                         </h3>
                         <p
-                            class="text-gray-300 text-sm mt-1 preserve-lines"
+                            class="text-content-muted text-sm mt-1 preserve-lines"
                             v-html="notification.summary"
                         ></p>
                     </div>
                 </div>
-                <span class="text-xs text-gray-400 flex-shrink-0">{{
+                <span class="text-xs text-content-subtle flex-shrink-0">{{
                     formattedDate
                 }}</span>
             </div>
@@ -51,7 +51,7 @@
                         :class="notification.style.detailsBg"
                     >
                         <div
-                            class="text-gray-200 leading-relaxed"
+                            class="text-content-muted leading-relaxed"
                             v-html="notification.details"
                         ></div>
                     </div>
@@ -118,7 +118,7 @@ const formatItemsToGrid = items => {
             };
             return `<div class="flex items-center gap-2" title="${details.name}">
                       <img src="${details.icon}" class="w-6 h-6" />
-                      <span class="font-semibold text-base text-gray-200">${item.amount}</span>
+                      <span class="font-semibold text-base text-content-muted">${item.amount}</span>
                     </div>`;
         })
         .join('');
@@ -138,11 +138,11 @@ const notification = computed(() => {
                 icon = CheckCircleIcon;
                 statusText = 'صحیح';
                 style = {
-                    border: 'border-r-4 border-green-500',
-                    bg: 'bg-green-800',
-                    icon: 'text-green-300',
-                    text: 'text-green-400 hover:text-green-300',
-                    detailsBg: 'bg-green-900/50',
+                    border: 'border-r-4 border-success',
+                    bg: 'bg-success-soft',
+                    icon: 'text-success-content',
+                    text: 'text-success-content hover:text-success-content',
+                    detailsBg: 'bg-success-soft',
                 };
                 break;
             case 'half-correct':
@@ -150,11 +150,11 @@ const notification = computed(() => {
                 icon = InformationCircleIcon;
                 statusText = 'نیمه‌درست';
                 style = {
-                    border: 'border-r-4 border-amber-500',
-                    bg: 'bg-amber-800',
-                    icon: 'text-amber-300',
-                    text: 'text-amber-400 hover:text-amber-300',
-                    detailsBg: 'bg-amber-900/50',
+                    border: 'border-r-4 border-warning',
+                    bg: 'bg-warning-soft',
+                    icon: 'text-warning-content',
+                    text: 'text-warning-content hover:text-warning-content',
+                    detailsBg: 'bg-warning-soft',
                 };
                 break;
             default:
@@ -162,11 +162,11 @@ const notification = computed(() => {
                 icon = XCircleIcon;
                 statusText = 'غلط';
                 style = {
-                    border: 'border-r-4 border-red-500',
-                    bg: 'bg-red-800',
-                    icon: 'text-red-300',
-                    text: 'text-red-400 hover:text-red-300',
-                    detailsBg: 'bg-red-900/50',
+                    border: 'border-r-4 border-danger',
+                    bg: 'bg-danger-soft',
+                    icon: 'text-danger-content',
+                    text: 'text-danger-content hover:text-danger-content',
+                    detailsBg: 'bg-danger-soft',
                 };
                 break;
         }
@@ -174,7 +174,7 @@ const notification = computed(() => {
         let details = `پاسخ شما برای سوال در ${glossary.island} <strong>${correction.islandName || 'نامشخص'}</strong> در ${glossary.territory} <strong>${correction.territoryName || 'نامشخص'}</strong> تصحیح شد. <br/> وضعیت: <strong>${statusText}</strong>.`;
 
         if (correction.newState.feedback) {
-            details += `<div class="my-2.5 border-t border-gray-600"></div><span>بازخورد:</span><div class="mt-1 text-justify text-gray-300 preserve-lines">${correction.newState.feedback}</div>`;
+            details += `<div class="my-2.5 border-t border-border"></div><span>بازخورد:</span><div class="mt-1 text-justify text-content-muted preserve-lines">${correction.newState.feedback}</div>`;
         }
 
         if (correction.reward?.items?.length > 0) {
@@ -197,11 +197,11 @@ const notification = computed(() => {
             details: null,
             icon: InformationCircleIcon,
             style: {
-                border: 'border-r-4 border-teal-500',
-                bg: 'bg-teal-800',
-                icon: 'text-teal-300',
-                text: 'text-teal-400 hover:text-teal-300',
-                detailsBg: 'bg-teal-900/50',
+                border: 'border-r-4 border-info',
+                bg: 'bg-info-soft',
+                icon: 'text-info-content',
+                text: 'text-info-content hover:text-info-content',
+                detailsBg: 'bg-info-soft',
             },
         };
     }
@@ -212,18 +212,18 @@ const notification = computed(() => {
 
         const details = `
             <p>پیشنهاد معامله شما توسط بازیکن دیگر پذیرفته شد:</p>
-            <div class="my-3 flex items-center justify-center text-center bg-gray-900/50 p-3 rounded-lg">
+            <div class="my-3 flex items-center justify-center text-center bg-surface-alt/50 p-3 rounded-lg">
                 <div class="flex-1 flex flex-col gap-2.5 items-center">
-                    <span class="text-xs text-gray-400 mb-1">شما دادید</span>
+                    <span class="text-xs text-content-subtle mb-1">شما دادید</span>
                     ${offeredGrid}
                 </div>
                 <div class="flex-shrink-0">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-7 h-7 text-gray-400 mx-3">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-7 h-7 text-content-subtle mx-3">
                       <path stroke-linecap="round" stroke-linejoin="round" d="M7.5 21 3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5" />
                     </svg>
                 </div>
                 <div class="flex-1 flex flex-col gap-2.5 items-center">
-                    <span class="text-xs text-gray-400 mb-1">شما گرفتید</span>
+                    <span class="text-xs text-content-subtle mb-1">شما گرفتید</span>
                     ${requestedGrid}
                 </div>
             </div>
@@ -236,11 +236,11 @@ const notification = computed(() => {
             details: details,
             icon: CurrencyDollarIcon,
             style: {
-                border: 'border-r-4 border-blue-500',
-                bg: 'bg-blue-800',
-                icon: 'text-blue-300',
-                text: 'text-blue-400 hover:text-blue-300',
-                detailsBg: 'bg-blue-900/50',
+                border: 'border-r-4 border-info-alt',
+                bg: 'bg-info-alt-soft',
+                icon: 'text-info-alt-content',
+                text: 'text-info-alt-content hover:text-info-alt-content',
+                detailsBg: 'bg-info-alt-soft',
             },
         };
     }
@@ -249,11 +249,11 @@ const notification = computed(() => {
         summary: 'یک پیام جدید دریافت کرده‌اید.',
         icon: 'div',
         style: {
-            border: 'border-r-4 border-gray-500',
-            bg: 'bg-gray-800',
-            icon: 'text-gray-300',
-            text: 'text-gray-400 hover:text-gray-300',
-            detailsBg: 'bg-gray-900/50',
+            border: 'border-r-4 border-border-strong',
+            bg: 'bg-surface',
+            icon: 'text-content-muted',
+            text: 'text-content-subtle hover:text-content-muted',
+            detailsBg: 'bg-surface-alt/50',
         },
     };
 });

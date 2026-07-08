@@ -50,9 +50,9 @@ const knowledgeBar = computed(() => {
         total: fetchedKnowledgeBar.total,
         value: fetchedKnowledgeBar.value,
         icon: '/images/icons/knowledge.png',
-        shadowColor: '#ff7e5f',
-        gradientFrom: '#b65f69',
-        gradientTo: '#feb47b',
+        shadowColor: 'var(--gradient-meter-shadow)',
+        gradientFrom: 'var(--gradient-meter-from)',
+        gradientTo: 'var(--gradient-meter-to)',
     };
 });
 
@@ -64,9 +64,9 @@ const fuelBar = computed(() => {
         total: props.player.fuelCap,
         value: props.player.fuel,
         icon: COST_ITEMS_INFO['fuel'].icon,
-        shadowColor: '#6B7280',
-        gradientFrom: '#364153',
-        gradientTo: '#000',
+        shadowColor: 'var(--gradient-meter-muted-shadow)',
+        gradientFrom: 'var(--gradient-meter-muted-from)',
+        gradientTo: 'var(--gradient-meter-muted-to)',
     };
 });
 
@@ -79,9 +79,9 @@ const coinBar = computed(() => {
         value: props.player.coin,
         width: 0.75,
         icon: COST_ITEMS_INFO['coin'].icon,
-        shadowColor: '#6B7280',
-        gradientFrom: '#364153',
-        gradientTo: '#000',
+        shadowColor: 'var(--gradient-meter-muted-shadow)',
+        gradientFrom: 'var(--gradient-meter-muted-from)',
+        gradientTo: 'var(--gradient-meter-muted-to)',
     };
 });
 </script>

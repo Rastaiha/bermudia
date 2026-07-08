@@ -1,25 +1,18 @@
 <template>
     <VueFinalModal
         class="flex justify-center items-center"
-        content-class="flex flex-col w-full md:w-1/2 mx-4 p-6 
-                       bg-[#5C3A21] border-4 border-[#3E2A17] 
-                       rounded-xl shadow-xl space-y-4"
+        content-class="panel w-full md:w-1/2 max-h-[80vh]"
         overlay-transition="vfm-fade"
         content-transition="vfm-slide-up"
     >
-        <div
-            class="flex items-center justify-between border-b-2 border-[#3E2A17] mb-2"
-        >
-            <h1 class="text-xl font-semibold text-amber-200">
+        <div class="panel-header">
+            <h1 class="panel-title">
                 {{ glossary.benzuelaLibrary }}
             </h1>
-            <button
-                class="p-1 rounded-full hover:bg-[#3E2A17]"
-                @click="handleClose"
-            >
+            <button class="panel-close" @click="handleClose">
                 <svg
                     xmlns="http://www.w3.org/2000/svg"
-                    class="h-6 w-6 text-amber-200"
+                    class="h-6 w-6"
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"
@@ -36,21 +29,21 @@
 
         <div
             v-if="books.length > 0"
-            class="w-full flex flex-col justify-between items-end space-y-2"
+            class="panel-body !gap-2 justify-between items-end"
         >
             <div
                 v-for="(booksInTerritory, territoryId) in booksByTerritory"
                 :key="territoryId"
                 class="w-full"
             >
-                <h3 class="text-amber-100 font-semibold mb-2 text-right">
+                <h3 class="text-accent-strong font-semibold mb-2 text-right">
                     {{ booksInTerritory[0].territoryName }}
                 </h3>
                 <div class="flex gap-1 items-end pb-2 overflow-auto">
                     <div
                         v-for="(book, bookIndex) in booksInTerritory"
                         :key="bookIndex"
-                        class="relative min-w-8 w-min h-[7rem] flex items-center justify-center bg-gradient-to-b from-yellow-600 via-yellow-700 to-yellow-800 border-l-2 border-yellow-900 rounded-sm shadow-md cursor-pointer hover:skew-x-[3deg] hover:skew-y-[3deg] transition-transform"
+                        class="relative min-w-8 w-min h-[7rem] flex items-center justify-center bg-gradient-to-b from-book-from via-book-via to-book-to border-l-2 border-book-edge rounded-sm shadow-md cursor-pointer hover:skew-x-[3deg] hover:skew-y-[3deg] transition-transform"
                         @click="navigateToIsland(territoryId, book.islandId)"
                     >
                         <div
@@ -59,18 +52,15 @@
                             {{ book.name }}
                         </div>
                         <div
-                            class="absolute left-0 top-0 h-full w-1 bg-yellow-900 rounded-l-sm"
+                            class="absolute left-0 top-0 h-full w-1 bg-book-edge rounded-l-sm"
                         ></div>
                     </div>
                 </div>
-                <div class="w-full h-1 bg-[#3E2A17] rounded-sm"></div>
+                <div class="w-full h-1 bg-border rounded-sm"></div>
             </div>
         </div>
 
-        <div
-            v-else
-            class="w-full flex justify-center items-center h-48 text-amber-200 text-lg"
-        >
+        <div v-else class="panel-empty">
             <p>هنوز هیچ {{ glossary.book }}ی دریافت نکرده اید</p>
         </div>
     </VueFinalModal>

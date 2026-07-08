@@ -15,7 +15,7 @@ const hasUnread = notificationService.hasUnreadMessages;
     position: fixed;
     top: 80px;
     left: 20px;
-    background-color: #4b5563; /* gray-600 */
+    background-color: var(--color-border);
     color: white;
     padding: 12px 16px;
     border-radius: 8px;

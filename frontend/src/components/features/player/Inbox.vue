@@ -2,46 +2,35 @@
     <VueFinalModal
         v-bind="$attrs"
         class="flex justify-center items-center"
-        content-class="flex flex-col w-full md:w-[450px] max-h-[80vh] mx-4 
-                       bg-gray-800 border-4 border-gray-700 
-                       rounded-xl shadow-xl"
+        content-class="panel w-full md:w-[450px] max-h-[80vh]"
         overlay-transition="vfm-fade"
         content-transition="vfm-slide-up"
         @update:model-value="val => (uiState.isInboxOpen = val)"
     >
-        <div class="flex-shrink-0 p-5 border-b-2 border-gray-700">
+        <div class="panel-header !flex-col !items-stretch gap-1">
             <div class="flex items-center justify-between">
-                <h1 class="text-xl font-semibold text-gray-200">صندوق پیام</h1>
-                <button
-                    class="p-1 rounded-full hover:bg-gray-700 transition-colors"
-                    @click="emit('close')"
-                >
-                    <XMarkIcon class="h-6 w-6 text-gray-300" />
+                <h1 class="panel-title">صندوق پیام</h1>
+                <button class="panel-close" @click="emit('close')">
+                    <XMarkIcon class="h-6 w-6" />
                 </button>
             </div>
-            <p v-if="messages.length > 0" class="text-sm text-gray-400 mt-1">
+            <p v-if="messages.length > 0" class="text-sm text-content-subtle">
                 {{ messages.length }} پیام
             </p>
         </div>
 
-        <div
-            v-if="isLoading"
-            class="flex-grow flex items-center justify-center"
-        >
-            <p class="text-gray-400">در حال بارگذاری پیام‌ها...</p>
+        <div v-if="isLoading" class="panel-empty">
+            <p>در حال بارگذاری پیام‌ها...</p>
         </div>
 
-        <div
-            v-else-if="messages.length === 0"
-            class="flex-grow flex items-center justify-center"
-        >
-            <p class="text-gray-400">صندوق پیام شما خالی است.</p>
+        <div v-else-if="messages.length === 0" class="panel-empty">
+            <p>صندوق پیام شما خالی است.</p>
         </div>
 
         <div
             v-else
             ref="scrollContainer"
-            class="scrollable-content flex-grow p-5 space-y-4 overflow-y-auto"
+            class="panel-body"
             @scroll="handleScroll"
         >
             <NotificationItem
@@ -50,7 +39,9 @@
                 :message="message"
             />
             <div v-if="isFetchingMore" class="text-center py-2">
-                <p class="text-gray-400 text-sm">در حال بارگذاری بیشتر...</p>
+                <p class="text-content-subtle text-sm">
+                    در حال بارگذاری بیشتر...
+                </p>
             </div>
         </div>
     </VueFinalModal>
@@ -122,19 +113,3 @@ onMounted(async () => {
     notificationService.markAllAsSeen();
 });
 </script>
-
-<style scoped>
-.scrollable-content::-webkit-scrollbar {
-    width: 8px;
-}
-.scrollable-content::-webkit-scrollbar-track {
-    background: transparent;
-}
-.scrollable-content::-webkit-scrollbar-thumb {
-    background-color: #4b5563;
-    border-radius: 4px;
-}
-.scrollable-content::-webkit-scrollbar-thumb:hover {
-    background-color: #6b7280;
-}
-</style>

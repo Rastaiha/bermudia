@@ -1,23 +1,16 @@
 <template>
     <VueFinalModal
         class="flex justify-center items-center"
-        content-class="flex flex-col w-full md:w-1/3 mx-4 p-6 bg-yellow-900/90 border-4 border-amber-500 rounded-xl shadow-xl space-y-4"
+        content-class="panel w-full md:w-1/3 max-h-[80vh] !border-accent/60"
         overlay-transition="vfm-fade"
         content-transition="vfm-slide-up"
     >
-        <div
-            class="flex items-center justify-between border-b-2 border-amber-600 pb-2 mb-4"
-        >
-            <h1 class="text-xl font-semibold text-amber-100">
-                پاداش {{ glossary.treasure }}!
-            </h1>
-            <button
-                class="p-1 rounded-full hover:bg-amber-800"
-                @click="handleClose"
-            >
+        <div class="panel-header">
+            <h1 class="panel-title !text-xl">پاداش {{ glossary.treasure }}!</h1>
+            <button class="panel-close" @click="handleClose">
                 <svg
                     xmlns="http://www.w3.org/2000/svg"
-                    class="h-6 w-6 text-amber-100"
+                    class="h-6 w-6"
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"
@@ -32,13 +25,11 @@
             </button>
         </div>
 
-        <div
-            class="flex flex-col items-center gap-4 max-h-96 overflow-y-auto p-2"
-        >
+        <div class="panel-body items-center">
             <div
                 v-for="(reward, index) in rewards.items"
                 :key="index"
-                class="flex items-center w-full bg-amber-800/50 p-3 rounded-lg border border-amber-700"
+                class="flex items-center w-full bg-accent/10 p-3 rounded-lg border border-accent/30"
             >
                 <img
                     :src="COST_ITEMS_INFO[reward.type].icon"
@@ -49,7 +40,7 @@
                     <p class="text-lg font-bold text-white">
                         {{ COST_ITEMS_INFO[reward.type].name }}
                     </p>
-                    <p class="text-md text-amber-200">
+                    <p class="text-md text-warning-content">
                         تعداد: {{ reward.amount }}
                     </p>
                 </div>

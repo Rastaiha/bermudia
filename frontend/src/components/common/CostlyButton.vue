@@ -44,11 +44,11 @@ defineProps({
     loading: Boolean,
     backgroundColor: {
         type: String,
-        default: 'green',
+        default: 'var(--color-accent)',
     },
     textColor: {
         type: String,
-        default: 'white',
+        default: 'var(--color-accent-content)',
     },
 });
 </script>

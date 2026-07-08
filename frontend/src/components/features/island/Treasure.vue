@@ -10,7 +10,7 @@
     >
         <div class="relative">
             <div
-                class="rounded-xl bg-gray-900 bg-opacity-75 p-2 lg:p-3 shadow-2xl border border-gray-700 w-fit"
+                class="rounded-xl bg-surface-alt bg-opacity-75 p-2 lg:p-3 shadow-2xl border border-border-soft w-fit"
             >
                 <div v-if="treasureData.unlocked" class="flex justify-center">
                     <img
@@ -42,7 +42,7 @@
                             />
                         </div>
 
-                        <div class="mt-2 border-t-2 border-gray-600 pt-2">
+                        <div class="mt-2 border-t-2 border-border pt-2">
                             <div
                                 v-if="!isAltCost"
                                 class="flex items-center justify-center gap-x-2 lg:gap-x-4 px-1 lg:px-2"
@@ -94,7 +94,7 @@
             <button
                 v-if="isMobile"
                 ref="toggleButton"
-                class="absolute top-0 left-1/2 h-10 w-20 -translate-x-1/2 -translate-y-full rounded-t-xl bg-gray-900/75 p-1 shadow-lg"
+                class="absolute top-0 left-1/2 h-10 w-20 -translate-x-1/2 -translate-y-full rounded-t-xl bg-surface-alt/75 p-1 shadow-lg"
                 @click.stop="isOpen = !isOpen"
             >
                 <svg
@@ -119,7 +119,7 @@
                     treasureFetchedInfo &&
                     treasureFetchedInfo.canPayAltCost
                 "
-                class="absolute bottom-2 right-0 translate-x-full h-15 w-10 rounded-r-xl bg-gray-900/75 p-1 shadow-lg altCostToggler"
+                class="absolute bottom-2 right-0 translate-x-full h-15 w-10 rounded-r-xl bg-surface-alt/75 p-1 shadow-lg altCostToggler"
                 @click.stop="isAltCost = !isAltCost"
             >
                 <svg

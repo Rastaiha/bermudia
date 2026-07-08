@@ -1,6 +1,6 @@
 <template>
     <div
-        class="relative bg-slate-900/90 border border-slate-700 rounded-2xl shadow-xl p-8 transition-all duration-500"
+        class="relative bg-surface-alt/90 border border-border-soft rounded-2xl shadow-xl p-8 transition-all duration-500"
     >
         <div class="absolute top-4 right-4">
             <button
@@ -18,7 +18,7 @@
         </div>
         <div class="text-center pt-12">
             <p
-                class="text-xl md:text-2xl font-light text-gray-200 leading-relaxed"
+                class="text-xl md:text-2xl font-light text-content-muted leading-relaxed"
             >
                 {{ challenge.description }}
             </p>
@@ -41,7 +41,7 @@
                 >
                     <svg
                         xmlns="http://www.w3.org/2000/svg"
-                        class="h-12 w-12 text-red-400"
+                        class="h-12 w-12 text-danger-content"
                         fill="none"
                         viewBox="0 0 24 24"
                         stroke="currentColor"
@@ -53,12 +53,12 @@
                             d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"
                         />
                     </svg>
-                    <p class="mt-4 text-xl font-semibold text-red-400">
+                    <p class="mt-4 text-xl font-semibold text-danger-content">
                         پاسخ شما اشتباه است
                     </p>
                     <p
                         v-if="challenge.submissionState.feedback"
-                        class="mt-2 text-sm text-gray-300 max-w-md text-justify"
+                        class="mt-2 text-sm text-content-muted max-w-md text-justify"
                     >
                         {{ challenge.submissionState.feedback }}
                     </p>
@@ -71,7 +71,7 @@
                 >
                     <svg
                         xmlns="http://www.w3.org/2000/svg"
-                        class="h-12 w-12 text-sky-400"
+                        class="h-12 w-12 text-info-content"
                         fill="none"
                         viewBox="0 0 24 24"
                         stroke="currentColor"
@@ -83,10 +83,10 @@
                             d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
                         />
                     </svg>
-                    <p class="mt-4 text-xl font-semibold text-gray-200">
+                    <p class="mt-4 text-xl font-semibold text-content-muted">
                         پاسخ شما ثبت شد
                     </p>
-                    <p class="mt-2 text-sm text-gray-400">
+                    <p class="mt-2 text-sm text-content-subtle">
                         نتیجه تا چند دقیقه دیگر اعلام می‌شود. می‌توانید به بازی
                         ادامه دهید.
                     </p>
@@ -95,7 +95,7 @@
                 <div
                     v-else-if="challenge.submissionState.status === 'correct'"
                     key="correct"
-                    class="flex flex-col items-center justify-center text-green-400"
+                    class="flex flex-col items-center justify-center text-success-content"
                 >
                     <svg
                         xmlns="http://www.w3.org/2000/svg"
@@ -123,7 +123,7 @@
                 >
                     <svg
                         xmlns="http://www.w3.org/2000/svg"
-                        class="h-12 w-12 text-amber-400"
+                        class="h-12 w-12 text-accent"
                         fill="none"
                         viewBox="0 0 24 24"
                         stroke="currentColor"
@@ -135,12 +135,12 @@
                             d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
                         />
                     </svg>
-                    <p class="mt-4 text-xl font-semibold text-amber-400">
+                    <p class="mt-4 text-xl font-semibold text-accent">
                         پاسخ شما نیمه‌درست است
                     </p>
                     <p
                         v-if="challenge.submissionState.feedback"
-                        class="mt-2 text-sm text-gray-300 max-w-md text-justify"
+                        class="mt-2 text-sm text-content-muted max-w-md text-justify"
                     >
                         {{ challenge.submissionState.feedback }}
                     </p>
@@ -158,7 +158,7 @@
                         v-model="inputValue"
                         :type="challenge.type"
                         placeholder="پاسخ..."
-                        class="w-full p-3 text-lg text-center text-gray-100 bg-slate-800/70 rounded-lg border-2 border-slate-600 focus:border-cyan-500 focus:ring-0 outline-none transition-colors"
+                        class="w-full p-3 text-lg text-center text-content bg-surface-alt rounded-lg border-2 border-border focus:border-accent focus:ring-0 outline-none transition-colors"
                         :disabled="!challenge.submissionState.submittable"
                         @keyup.enter="submit"
                     />
@@ -166,7 +166,7 @@
                         :disabled="
                             !challenge.submissionState.submittable || !hasValue
                         "
-                        class="btn-hover px-6 py-3 text-lg font-semibold text-white bg-[#07458bb5] rounded-lg shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
+                        class="btn-hover px-6 py-3 text-lg font-semibold text-accent-content bg-accent rounded-lg shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
                         @click="submit"
                     >
                         ارسال
@@ -176,10 +176,10 @@
                 <div v-else class="flex items-center justify-center gap-3">
                     <label
                         :for="fileInputId"
-                        class="btn-hover flex-grow text-center px-5 py-3 text-lg font-medium text-gray-200 bg-slate-700/80 rounded-lg border-2 border-transparent hover:border-cyan-500 cursor-pointer"
+                        class="btn-hover flex-grow text-center px-5 py-3 text-lg font-medium text-content-muted bg-surface-raised/80 rounded-lg border-2 border-transparent hover:border-accent cursor-pointer"
                     >
                         <span v-if="!selectedFileName">انتخاب فایل</span>
-                        <span v-else class="text-cyan-400">{{
+                        <span v-else class="text-accent">{{
                             selectedFileName
                         }}</span>
                     </label>
@@ -196,7 +196,7 @@
                             !challenge.submissionState.submittable ||
                             !inputValue
                         "
-                        class="btn-hover px-6 py-3 text-lg font-semibold text-white bg-green-600 rounded-lg disabled:bg-gray-600 disabled:opacity-50 disabled:transform-none disabled:filter-none shrink-0"
+                        class="btn-hover px-6 py-3 text-lg font-semibold text-accent-content bg-accent rounded-lg disabled:bg-border disabled:text-content-subtle disabled:opacity-50 disabled:transform-none disabled:filter-none shrink-0"
                         @click="submit"
                     >
                         ارسال
@@ -247,12 +247,12 @@ const helpButtonIcon = computed(() => {
 
 const helpButtonClass = computed(() => {
     if (isHelpButtonDisabled.value) {
-        return 'text-gray-500';
+        return 'text-content-faint';
     }
     if (props.challenge.submissionState.hasRequestedHelp) {
-        return 'text-green-400';
+        return 'text-success-content';
     }
-    return 'text-blue-400';
+    return 'text-accent';
 });
 
 const helpButtonAnimationClass = computed(() => {

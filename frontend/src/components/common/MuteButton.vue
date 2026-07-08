@@ -1,6 +1,6 @@
 <template>
     <button
-        class="h-12 w-12 rounded-lg p-2 transition-colors duration-200 hover:bg-slate-700/90 flex justify-center items-center"
+        class="h-12 w-12 rounded-lg p-2 transition-colors duration-200 hover:bg-surface-raised/90 flex justify-center items-center"
         title="قطع/پخش صدا"
         @pointerdown.stop="toggleMute"
     >

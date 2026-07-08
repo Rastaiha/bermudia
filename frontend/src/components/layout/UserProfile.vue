@@ -4,7 +4,7 @@
             class="profile-container flex items-center rounded-full bg-black/20 backdrop-blur-sm transition-all duration-300 ease-in-out"
         >
             <div
-                class="profile-image w-14 h-14 rounded-full bg-gray-200 overflow-hidden flex items-center justify-center"
+                class="profile-image w-14 h-14 rounded-full bg-surface-raised overflow-hidden flex items-center justify-center"
             >
                 <img
                     :src="profileImageUrl"
