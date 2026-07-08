@@ -34,6 +34,19 @@
                 در حال بارگذاری اطلاعات بورس...
             </div>
 
+            <div v-else-if="loadError" class="w-full text-center">
+                <h2 class="text-3xl font-bold text-danger-content">
+                    بورس در دسترس نیست
+                </h2>
+                <p class="text-content-muted mt-4 text-lg">
+                    در حال حاضر امکان اتصال به بورس وجود ندارد. لطفاً بعداً
+                    دوباره تلاش کنید.
+                </p>
+                <button class="panel-btn mt-6" @click="doInvestCheck">
+                    تلاش دوباره
+                </button>
+            </div>
+
             <div v-else-if="checkResult" class="w-full text-center">
                 <div v-if="countdown" class="text-accent-strong text-lg mb-2">
                     زمان باقی‌مانده: {{ countdown }}
@@ -138,6 +151,7 @@ const emit = defineEmits(['close']);
 const isLoading = ref(true);
 const isInvesting = ref(false);
 const checkResult = ref(null);
+const loadError = ref(false);
 const investAmount = ref(0);
 const toast = useToast();
 const countdown = ref('');
@@ -194,10 +208,12 @@ watch(
 
 async function doInvestCheck() {
     isLoading.value = true;
+    loadError.value = false;
     try {
         const result = await investCheck();
         checkResult.value = result;
     } catch (error) {
+        loadError.value = true;
         toast.error(error.message || 'خطا در دریافت اطلاعات بورس');
         logger.error('Error calling investCheck:', error);
     } finally {
