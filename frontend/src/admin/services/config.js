@@ -19,6 +19,7 @@ export const ADMIN_ENDPOINTS = {
 
     // Users
     users: `${ADMIN_BASE_URL}/users`,
+    player: userId => `${ADMIN_BASE_URL}/players/${userId}`,
 
     // Territories & map
     territories: `${ADMIN_BASE_URL}/territories`,
