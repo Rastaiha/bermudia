@@ -290,6 +290,8 @@ GET  /admin/pools
 POST /admin/pools/{poolID}/books
 GET  /admin/users
 POST /admin/users
+GET  /admin/players/{userID}
+POST /admin/players/{userID}
 GET  /admin/game_state
 POST /admin/game_state
 POST /admin/broadcast
@@ -301,6 +303,25 @@ GET  /admin/connections
 validates that the territory has a `startIsland` present in its island list,
 that every island has an id and name, and that all edges / refuel / terminal /
 prerequisite references point to islands in the list.
+
+#### Player state editing (`players/{userID}`)
+
+`GET /admin/users` now includes each user's numeric `id`, which keys the player
+endpoints:
+
+```http
+GET  /admin/players/{userID}    → the player's full state (same shape as GET /api/v1/player)
+POST /admin/players/{userID}    body { atTerritory, atIsland, anchored, fuel, fuelCap, coin, blueKey, redKey, goldenKey, masterKey } → updated full state
+```
+
+`POST /admin/players/{userID}` overwrites a player's scalar state. It validates
+that `atIsland` exists in `atTerritory`, rejects negative numeric fields, and
+rejects `fuel > fuelCap`. The change goes through the normal player-update
+pipeline: it is persisted, recorded in `player_events` with reason `adminEdit`,
+and pushed to the player over their WebSocket if they are online. Moving a player
+into a territory they had not visited adds it to their `visitedTerritories`.
+Knowledge bars, answered questions, and books are **not** editable through this
+endpoint — only the `players` row fields.
 
 #### Game controls (`game_state`, `broadcast`, `connections`)
 

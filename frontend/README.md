@@ -122,7 +122,7 @@ src/admin/
 ├── pages/
 │   ├── AdminLogin.vue         # admin login
 │   ├── AdminSettings.vue      # pause/resume, broadcast, live connections
-│   ├── AdminUsers.vue         # user table + create-user modal
+│   ├── AdminUsers.vue         # user table + create-user modal + manage-player-state modal
 │   ├── AdminMap.vue           # map editor (islands/edges/roles + new territory)
 │   ├── AdminIslands.vue       # island-content table view
 │   └── AdminPools.vue         # pool bindings + pool books
@@ -159,8 +159,12 @@ subdirectory.
 
 - **General Settings** — pause/resume the game, broadcast a message to every
   player's inbox, and view live WebSocket connection counts (auto-refreshed).
-- **Users** — list users (name/username/meet link) and create new ones
-  (view/create only; there is no player-state editing).
+- **Users** — list users (name/username/meet link), create new ones, and
+  **Manage state** per user: a modal that loads the player's current state and
+  lets an admin edit location (territory + island), anchored flag, fuel, fuel
+  capacity, coins, and the four key counts. Saving posts to
+  `POST /admin/players/{userID}`; changes are applied immediately and pushed to
+  the player if they are online.
 - **Map Editor** — always-editing canvas over the territory background:
   drag/resize islands, pick icons/background, draw/delete edges, set the start
   island, toggle refuel/terminal roles, edit prerequisites, **create brand-new
