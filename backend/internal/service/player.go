@@ -97,6 +97,51 @@ func (p *Player) GetPlayer(ctx context.Context, user *domain.User) (domain.FullP
 	return p.getFullPlayer(ctx, player)
 }
 
+// GetPlayerState returns the full state of a player by user id. Used by the
+// admin panel to display and edit a player's state.
+func (p *Player) GetPlayerState(ctx context.Context, userId int32) (domain.FullPlayer, error) {
+	player, err := p.playerStore.Get(ctx, userId)
+	if err != nil {
+		return domain.FullPlayer{}, err
+	}
+	return p.getFullPlayer(ctx, player)
+}
+
+// AdminEditPlayer overwrites a player's scalar state on behalf of an admin. It
+// validates the requested location against the actual territory/island, applies
+// the change through the normal update pipeline (persist + player_event + push
+// over the player's WebSocket), and returns the resulting full player state.
+func (p *Player) AdminEditPlayer(ctx context.Context, userId int32, edit domain.AdminPlayerEdit) (domain.FullPlayer, error) {
+	player, err := p.playerStore.Get(ctx, userId)
+	if err != nil {
+		return domain.FullPlayer{}, err
+	}
+
+	territory, err := p.territoryStore.GetTerritoryByID(ctx, edit.AtTerritory)
+	if err != nil {
+		return domain.FullPlayer{}, err
+	}
+	islandFound := false
+	for _, island := range territory.Islands {
+		if island.ID == edit.AtIsland {
+			islandFound = true
+			break
+		}
+	}
+	if !islandFound {
+		return domain.FullPlayer{}, domain.NewError(domain.ErrorReasonRuleViolation, fmt.Sprintf("island %q not found in territory %q", edit.AtIsland, edit.AtTerritory))
+	}
+
+	event, err := domain.AdminEditPlayer(player, edit)
+	if err != nil {
+		return domain.FullPlayer{}, err
+	}
+	if err := p.applyAndSendPlayerUpdateEvent(ctx, player, event); err != nil {
+		return domain.FullPlayer{}, err
+	}
+	return p.getFullPlayer(ctx, *event.Player)
+}
+
 func (p *Player) TravelCheck(ctx context.Context, user *domain.User, fromIsland, toIsland string) (*domain.TravelCheckResult, error) {
 	player, err := p.playerStore.Get(ctx, user.ID)
 	if err != nil {

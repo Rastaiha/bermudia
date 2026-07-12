@@ -11,6 +11,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"log/slog"
 	"net/http"
+	"strconv"
 	"strings"
 )
 
@@ -236,6 +237,48 @@ func (a *admin) GetUsers(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	sendResult(w, result)
+}
+
+func (a *admin) GetPlayerState(w http.ResponseWriter, r *http.Request) {
+	userId, err := parseUserIDParam(r)
+	if err != nil {
+		sendError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	result, err := a.playerService.GetPlayerState(r.Context(), userId)
+	if err != nil {
+		a.handleAdminError(w, err)
+		return
+	}
+	sendResult(w, result)
+}
+
+func (a *admin) EditPlayerState(w http.ResponseWriter, r *http.Request) {
+	userId, err := parseUserIDParam(r)
+	if err != nil {
+		sendError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	var edit domain.AdminPlayerEdit
+	if err := json.NewDecoder(r.Body).Decode(&edit); err != nil {
+		sendDecodeError(w)
+		return
+	}
+	result, err := a.playerService.AdminEditPlayer(r.Context(), userId, edit)
+	if err != nil {
+		a.handleAdminError(w, err)
+		return
+	}
+	sendResult(w, result)
+}
+
+func parseUserIDParam(r *http.Request) (int32, error) {
+	raw := chi.URLParam(r, "userID")
+	id, err := strconv.ParseInt(raw, 10, 32)
+	if err != nil {
+		return 0, fmt.Errorf("invalid userID %q", raw)
+	}
+	return int32(id), nil
 }
 
 func (a *admin) GetGameState(w http.ResponseWriter, r *http.Request) {

@@ -131,6 +131,8 @@ func (h *Handler) Start() {
 			r.Post("/pools/{poolID}/books", h.adminHandler.SetBookAndBindToPool)
 			r.Get("/users", h.adminHandler.GetUsers)
 			r.Post("/users", h.adminHandler.CreateUser)
+			r.Get("/players/{userID}", h.adminHandler.GetPlayerState)
+			r.Post("/players/{userID}", h.adminHandler.EditPlayerState)
 			r.Get("/game_state", h.adminHandler.GetGameState)
 			r.Post("/game_state", h.adminHandler.SetGameState)
 			r.Post("/broadcast", h.adminHandler.Broadcast)

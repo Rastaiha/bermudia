@@ -48,6 +48,7 @@ type FullPlayer struct {
 
 const (
 	PlayerUpdateEventInitial          = "initial"
+	PlayerUpdateEventAdminEdit        = "adminEdit"
 	PlayerUpdateEventTravel           = "travel"
 	PlayerUpdateEventRefuel           = "refuel"
 	PlayerUpdateEventCorrection       = "correction"
@@ -242,6 +243,74 @@ func Anchor(player Player, islandID string) (*PlayerUpdateEvent, error) {
 	player.Anchored = true
 	return &PlayerUpdateEvent{
 		Reason: PlayerUpdateEventAnchor,
+		Player: &player,
+	}, nil
+}
+
+// AdminPlayerEdit is the set of player fields an admin is allowed to overwrite
+// directly. Location fields (AtTerritory/AtIsland) are validated by the caller
+// against the actual territory/island; the numeric fields are validated here.
+type AdminPlayerEdit struct {
+	AtTerritory string `json:"atTerritory"`
+	AtIsland    string `json:"atIsland"`
+	Anchored    bool   `json:"anchored"`
+	Fuel        int32  `json:"fuel"`
+	FuelCap     int32  `json:"fuelCap"`
+	Coin        int32  `json:"coin"`
+	BlueKey     int32  `json:"blueKey"`
+	RedKey      int32  `json:"redKey"`
+	GoldenKey   int32  `json:"goldenKey"`
+	MasterKey   int32  `json:"masterKey"`
+}
+
+// AdminEditPlayer applies an admin's overwrite of a player's scalar state on top
+// of the current player, validating the numeric fields. It does not itself check
+// that AtTerritory/AtIsland exist — the service layer does that.
+func AdminEditPlayer(player Player, edit AdminPlayerEdit) (*PlayerUpdateEvent, error) {
+	if edit.AtTerritory == "" {
+		return nil, Error{reason: ErrorReasonRuleViolation, text: "atTerritory is required"}
+	}
+	if edit.AtIsland == "" {
+		return nil, Error{reason: ErrorReasonRuleViolation, text: "atIsland is required"}
+	}
+	if edit.FuelCap < 0 {
+		return nil, Error{reason: ErrorReasonRuleViolation, text: "fuelCap cannot be negative"}
+	}
+	for name, v := range map[string]int32{
+		"fuel":      edit.Fuel,
+		"coin":      edit.Coin,
+		"blueKey":   edit.BlueKey,
+		"redKey":    edit.RedKey,
+		"goldenKey": edit.GoldenKey,
+		"masterKey": edit.MasterKey,
+	} {
+		if v < 0 {
+			return nil, Error{reason: ErrorReasonRuleViolation, text: name + " cannot be negative"}
+		}
+	}
+	if edit.Fuel > edit.FuelCap {
+		return nil, Error{reason: ErrorReasonRuleViolation, text: "fuel cannot exceed fuelCap"}
+	}
+
+	// Adding a territory the player wasn't in yet should mark it visited so the
+	// map stays consistent with their location.
+	if !slices.Contains(player.VisitedTerritories, edit.AtTerritory) {
+		player.VisitedTerritories = append(player.VisitedTerritories, edit.AtTerritory)
+	}
+
+	player.AtTerritory = edit.AtTerritory
+	player.AtIsland = edit.AtIsland
+	player.Anchored = edit.Anchored
+	player.Fuel = edit.Fuel
+	player.FuelCap = edit.FuelCap
+	player.Coin = edit.Coin
+	player.BlueKey = edit.BlueKey
+	player.RedKey = edit.RedKey
+	player.GoldenKey = edit.GoldenKey
+	player.MasterKey = edit.MasterKey
+
+	return &PlayerUpdateEvent{
+		Reason: PlayerUpdateEventAdminEdit,
 		Player: &player,
 	}, nil
 }
