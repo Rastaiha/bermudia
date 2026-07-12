@@ -402,6 +402,7 @@ func (a *Admin) SetTerritoryIslandBindings(ctx context.Context, bindings Territo
 }
 
 type User struct {
+	ID                int32  `json:"id,omitempty"`
 	Name              string `json:"name"`
 	Username          string `json:"username"`
 	Password          string `json:"password,omitempty"`
@@ -456,6 +457,7 @@ func (a *Admin) GetUsers(ctx context.Context) ([]User, error) {
 	result := make([]User, 0, len(users))
 	for _, u := range users {
 		result = append(result, User{
+			ID:       u.ID,
 			Name:     u.Name,
 			Username: u.Username,
 			MeetLink: u.MeetLink,

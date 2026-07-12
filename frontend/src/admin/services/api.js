@@ -86,6 +86,12 @@ export const getUsers = async () => adminGet(ADMIN_ENDPOINTS.users);
 
 export const createUser = async user => adminPost(ADMIN_ENDPOINTS.users, user);
 
+export const getPlayerState = async userId =>
+    adminGet(ADMIN_ENDPOINTS.player(userId));
+
+export const editPlayerState = async (userId, state) =>
+    adminPost(ADMIN_ENDPOINTS.player(userId), state);
+
 // --- Territories & map ---
 export const getTerritories = async () => adminGet(ADMIN_ENDPOINTS.territories);
 
